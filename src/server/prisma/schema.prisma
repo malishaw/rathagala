@@ -1,0 +1,548 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator zod {
+  provider         = "zod-prisma-types"
+  output           = "../../types/schema-types"
+  useMultipleFiles = false
+}
+
+// Enums for Ad Listing
+enum AdType {
+  CAR
+  VAN
+  MOTORCYCLE
+  BICYCLE
+  THREE_WHEEL
+  BUS
+  LORRY
+  HEAVY_DUTY
+  TRACTOR
+  AUTO_SERVICE
+  RENTAL
+  AUTO_PARTS
+  MAINTENANCE
+  BOAT
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  PDF
+  OTHER
+}
+
+enum PaymentType {
+  BOOST
+  FEATURE
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum AdStatus {
+  ACTIVE
+  EXPIRED
+  DRAFT
+  PENDING_REVIEW
+  REJECTED
+}
+
+enum NotificationType {
+  AD_EXPIRED
+  AD_FEATURED
+  MESSAGE
+  REFERRAL
+  REVIEW
+}
+
+enum SharePlatform {
+  FACEBOOK
+  TWITTER
+  WHATSAPP
+  LINKEDIN
+  COPY_LINK
+}
+
+enum FuelType {
+  PETROL
+  DIESEL
+  HYBRID
+  ELECTRIC
+  GAS
+}
+
+enum Transmission {
+  MANUAL
+  AUTOMATIC
+  CVT
+}
+
+enum BodyType {
+  SALOON
+  HATCHBACK
+  STATION_WAGON
+}
+
+enum BikeType {
+  SCOOTER
+  E_BIKE
+  MOTORBIKES
+  QUADRICYCLES
+}
+
+enum HeavyDutyVehicleType {
+  BED_TRAILER
+  BOWSER
+  BULLDOZER
+  CRANE
+  DUMP_TRUCK
+  EXCAVATOR
+  LOADER
+  OTHER
+}
+
+model User {
+  id               String       @id @map("_id")
+  name             String
+  email            String
+  emailVerified    Boolean
+  image            String?
+  createdAt        DateTime
+  updatedAt        DateTime
+  twoFactorEnabled Boolean?
+  role             String?
+  banned           Boolean?
+  banReason        String?
+  banExpires       DateTime?
+  sessions         Session[]
+  accounts         Account[]
+  members          Member[]
+  invitations      Invitation[]
+  twofactors       TwoFactor[]
+
+  // Ad listing relations
+  adsCreated       Ad[]               @relation("AdCreatedBy")
+  mediaUploaded    Media[]            @relation("MediaUploader") // New relation
+  payments         Payment[]
+  favorites        Favorite[]
+  savedSearches    SavedSearch[]
+  messagesSent     Message[]          @relation("MessagesSent")
+  messagesReceived Message[]          @relation("MessagesReceived")
+  notifications    UserNotification[]
+  reports          Report[]
+  auditLogs        AuditLog[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id                   String   @id @map("_id")
+  expiresAt            DateTime
+  token                String
+  createdAt            DateTime
+  updatedAt            DateTime
+  ipAddress            String?
+  userAgent            String?
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeOrganizationId String?
+  impersonatedBy       String?
+
+  @@unique([token])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @map("_id")
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id @map("_id")
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("verification")
+}
+
+model Organization {
+  id          String       @id @map("_id")
+  name        String
+  slug        String?
+  logo        String?
+  createdAt   DateTime
+  metadata    String?
+  members     Member[]
+  invitations Invitation[]
+
+  // Ad listing relations
+  ads       Ad[]
+  auditLogs AuditLog[]
+
+  @@unique([slug])
+  @@map("organization")
+}
+
+model Member {
+  id             String       @id @map("_id")
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           String
+  createdAt      DateTime
+
+  @@map("member")
+}
+
+model Invitation {
+  id             String       @id @map("_id")
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  role           String?
+  status         String
+  expiresAt      DateTime
+  inviterId      String
+  user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@map("invitation")
+}
+
+model TwoFactor {
+  id          String @id @map("_id")
+  secret      String
+  backupCodes String
+  userId      String
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("twoFactor")
+}
+
+model Tasks {
+  id   String  @id @default(auto()) @map("_id") @db.ObjectId
+  name String
+  done Boolean @default(false)
+}
+
+// Ad Listing Models
+
+model Ad {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  orgId          String
+  org            Organization @relation(fields: [orgId], references: [id])
+  createdBy      String
+  creator        User         @relation("AdCreatedBy", fields: [createdBy], references: [id])
+
+  // Basic Info - Common to all types
+  title          String
+  description    String
+  type           AdType
+  price          Float?
+  published      Boolean      @default(false)
+  isDraft        Boolean      @default(false)
+  boosted        Boolean      @default(false)
+  featured       Boolean      @default(false)
+  boostExpiry    DateTime?
+  featureExpiry  DateTime?
+  status         AdStatus     @default(ACTIVE)
+  expiryDate     DateTime?
+
+  // SEO
+  seoTitle       String?
+  seoDescription String?
+  seoSlug        String? @unique
+
+  // Category & Tags
+  categoryId     String?
+  category       Category?    @relation(fields: [categoryId], references: [id])
+  tags           String[]
+
+  // Common Vehicle Fields (used by multiple types)
+  condition         String?     // New/Reconditioned/Used - Used by: Car, Van, Motor Bike, Bicycle, Three Wheeler, Bus, Lorry, Heavy Duty, Tractor, Auto Parts, Boat
+  brand             String?     // Used by: Car, Van, Motor Bike, Bicycle, Three Wheeler, Bus, Lorry, Heavy Duty, Tractor, Auto Parts
+  model             String?     // Used by: Car, Van, Motor Bike, Three Wheeler, Bus, Lorry, Heavy Duty, Tractor, Auto Parts
+  trimEdition       String?     // Used by: Car, Van, Motor Bike, Three Wheeler, Bus, Lorry, Heavy Duty, Tractor
+
+  // Year Fields (different names for different types)
+  manufacturedYear  String?     // Used by: Car, Motor Bike
+  modelYear         String?     // Used by: Van, Three Wheeler, Bus, Lorry, Heavy Duty, Tractor
+
+  // Performance Fields
+  mileage           Float?      // Used by: Car, Van, Motor Bike, Three Wheeler, Bus, Lorry
+  engineCapacity    Float?      // Used by: Car, Van, Motor Bike, Bus, Lorry
+
+  // Car & Van Specific Fields
+  fuelType          FuelType?   // Used by: Car
+  transmission      Transmission? // Used by: Car
+  bodyType          BodyType?   // Used by: Car
+
+  // Motor Bike Specific Fields
+  bikeType          BikeType?   // Used by: Motor Bike
+
+  // Heavy Duty Specific Fields
+  vehicleType       HeavyDutyVehicleType? // Used by: Heavy Duty
+
+  // Service & Parts Specific Fields
+  serviceType       String?     // Used by: Auto Service, Rental
+  partType          String?     // Used by: Auto Parts
+  maintenanceType   String?     // Used by: Maintenance
+
+  // Contact Info
+  name              String?     
+  phoneNumber       String?     
+  whatsappNumber    String?     
+  termsAndConditions Boolean?
+
+  // Location Info
+  location          String?
+  address           String?
+  province          String?
+  district          String?
+  city              String?
+
+  // Miscellaneous
+  specialNote       String?
+  metadata          Json?
+
+  // Timestamps
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  // Relations (keep existing)
+  analytics         AdAnalytics?
+  payments          Payment[]
+  favorites         Favorite[]
+  reports           Report[]
+  revisions         AdRevision[]
+  geoViews          GeoHeatmap[]
+  shareEvents       ShareEvent[]
+  media             AdMedia[]
+
+  @@map("ad")
+}
+
+
+model AdRevision {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  adId      String
+  ad        Ad       @relation(fields: [adId], references: [id])
+  version   Int
+  data      Json
+  createdAt DateTime @default(now())
+
+  @@map("adRevision")
+}
+
+model AdAnalytics {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  adId        String   @unique
+  ad          Ad       @relation(fields: [adId], references: [id])
+  views       Int      @default(0)
+  clicks      Int      @default(0)
+  impressions Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("adAnalytics")
+}
+
+model Category {
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  name String @unique
+  slug String @unique
+  ads  Ad[]
+
+  @@map("category")
+}
+
+model Tag {
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  name String @unique
+  slug String @unique
+
+  @@map("tag")
+}
+
+model Media {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  uploaderId String
+  uploader   User      @relation("MediaUploader", fields: [uploaderId], references: [id])
+  url        String
+  type       MediaType
+  filename   String?
+  size       Int?
+  createdAt  DateTime  @default(now())
+  ads        AdMedia[]
+
+  @@map("media")
+}
+
+model Payment {
+  id        String        @id @default(auto()) @map("_id") @db.ObjectId
+  adId      String
+  ad        Ad            @relation(fields: [adId], references: [id])
+  userId    String
+  user      User          @relation(fields: [userId], references: [id])
+  type      PaymentType
+  status    PaymentStatus
+  amount    Float
+  sessionId String?
+  metadata  Json?
+  createdAt DateTime      @default(now())
+
+  @@map("payment")
+}
+
+model Favorite {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String
+  adId   String
+  user   User   @relation(fields: [userId], references: [id])
+  ad     Ad     @relation(fields: [adId], references: [id])
+
+  @@map("favorite")
+}
+
+model SavedSearch {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  name      String
+  filters   Json
+  createdAt DateTime @default(now())
+
+  @@map("savedSearch")
+}
+
+model GeoHeatmap {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  adId      String
+  ad        Ad       @relation(fields: [adId], references: [id])
+  lat       Float
+  lng       Float
+  country   String?
+  region    String?
+  city      String?
+  timestamp DateTime @default(now())
+
+  @@map("geoHeatmap")
+}
+
+model Message {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId   String
+  receiverId String
+  sender     User     @relation("MessagesSent", fields: [senderId], references: [id])
+  receiver   User     @relation("MessagesReceived", fields: [receiverId], references: [id])
+  content    String
+  read       Boolean  @default(false)
+  adId       String? // Optional reference to ad being discussed
+  createdAt  DateTime @default(now())
+
+  @@map("message")
+}
+
+model UserNotification {
+  id        String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  data      Json?
+  createdAt DateTime         @default(now())
+
+  @@map("notification")
+}
+
+model ShareEvent {
+  id        String        @id @default(auto()) @map("_id") @db.ObjectId
+  adId      String
+  ad        Ad            @relation(fields: [adId], references: [id])
+  platform  SharePlatform
+  ipAddress String?
+  userAgent String?
+  sharedAt  DateTime      @default(now())
+
+  @@map("shareEvent")
+}
+
+model Report {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String
+  adId      String
+  reporter  User     @relation(fields: [userId], references: [id])
+  ad        Ad       @relation(fields: [adId], references: [id])
+  reason    String
+  details   String?
+  status    String   @default("PENDING") // PENDING, REVIEWED, RESOLVED
+  createdAt DateTime @default(now())
+
+  @@map("report")
+}
+
+model AuditLog {
+  id         String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String?
+  orgId      String?
+  user       User?         @relation(fields: [userId], references: [id])
+  org        Organization? @relation(fields: [orgId], references: [id])
+  action     String
+  resource   String? // What was affected (ad, user, etc.)
+  resourceId String? // ID of the affected resource
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime      @default(now())
+
+  @@map("auditLog")
+}
+
+model AdMedia {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  adId    String @db.ObjectId
+  mediaId String @db.ObjectId
+  ad      Ad     @relation(fields: [adId], references: [id])
+  media   Media  @relation(fields: [mediaId], references: [id])
+  order   Int    @default(0)
+
+  @@unique([adId, mediaId])
+  @@map("adMedia")
+}
