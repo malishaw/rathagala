@@ -26,7 +26,11 @@ export const list = createRoute({
   method: "get",
   request: {
     query: schemas.querySchema.extend({
-      filterByUser: z.boolean().default(false).optional(),
+      filterByUser: z
+        .string()
+        .optional()
+        .transform((val) => val === "true")
+        .pipe(z.boolean().default(false)),
     }),
   },
   responses: {

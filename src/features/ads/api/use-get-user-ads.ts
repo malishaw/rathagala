@@ -5,13 +5,14 @@ interface UserAdsParams {
   page?: number;
   limit?: number;
   search?: string | null;
+  filterByUser?: boolean;
 }
 
 export const useGetUserAds = (params: UserAdsParams = {}) => {
-  const { page = 1, limit = 10, search = "" } = params;
+  const { page = 1, limit = 10, search = "", filterByUser = true } = params;
 
   const query = useQuery({
-    queryKey: ["userAds", { page, limit, search }],
+    queryKey: ["userAds", { page, limit, search, filterByUser }],
     queryFn: async () => {
       const queryParams = {
         page: page.toString(),

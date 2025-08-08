@@ -15,14 +15,272 @@ import { QueryParams } from "./ad.schemas";
 import { AdStatus, AdType } from "@prisma/client";
 
 // ---- List Ads Handler ----
+// export const list: AppRouteHandler<ListRoute> = async (c) => {
+//   try {
+//     // Convert filterByUser to boolean before validation to satisfy Zod
+//     const rawQuery = c.req.query() as any;
+//     let filterByUser: boolean | undefined = undefined;
+//     if (rawQuery.filterByUser !== undefined) {
+//       if (typeof rawQuery.filterByUser === "string") {
+//         filterByUser = rawQuery.filterByUser === "true";
+//       } else if (typeof rawQuery.filterByUser === "boolean") {
+//         filterByUser = rawQuery.filterByUser;
+//       }
+//     }
+//     // Set the normalized query param for Zod validation
+//     c.req.query({
+//       ...rawQuery,
+//       ...(filterByUser !== undefined ? { filterByUser } : {}),
+//     });
+
+//     const query = c.req.query() as any;
+//     const page = query.page ?? "1";
+//     const limit = query.limit ?? "10";
+//     const search = query.search ?? "";
+
+//     const session = c.get("session");
+//     const user = c.get("user");
+
+//     // Convert to numbers and validate
+//     const pageNum = Math.max(1, parseInt(page));
+//     const limitNum = Math.max(1, Math.min(100, parseInt(limit))); // Cap at 100 items
+//     const offset = (pageNum - 1) * limitNum;
+
+//     // Build the where condition for efficient searching
+//     let whereCondition: any = {};
+
+//     // Filter by current user if filterByUser is true
+//     if (query.filterByUser) {
+//       if (!user) {
+//         return c.json(
+//           { message: "Authentication required to filter by user" },
+//           HttpStatusCodes.UNAUTHORIZED
+//         );
+//       }
+//       whereCondition.createdBy = user.id;
+//     }
+
+//     // Add search functionality if search term is provided
+//     if (search && search.trim() !== "") {
+//       const searchCondition = {
+//         OR: [
+//           {
+//             title: {
+//               contains: search,
+//               mode: "insensitive",
+//             },
+//           },
+//           {
+//             description: {
+//               contains: search,
+//               mode: "insensitive",
+//             },
+//           },
+//           {
+//             brand: {
+//               contains: search,
+//               mode: "insensitive",
+//             },
+//           },
+//           {
+//             model: {
+//               contains: search,
+//               mode: "insensitive",
+//             },
+//           },
+//         ],
+//       };
+
+//       // If we already have user filter, combine with AND
+//       if (whereCondition.createdBy) {
+//         whereCondition = {
+//           AND: [{ createdBy: whereCondition.createdBy }, searchCondition],
+//         };
+//       } else {
+//         whereCondition = searchCondition;
+//       }
+//     }
+
+//     // Count query for total number of records
+//     const totalAds = await prisma.ad.count({
+//       where: whereCondition,
+//     });
+
+//     // Main query with pagination
+//     const ads = await prisma.ad.findMany({
+//       where: whereCondition,
+//       skip: offset,
+//       take: limitNum,
+//       orderBy: {
+//         createdAt: "desc",
+//       },
+//       include: {
+//         media: {
+//           include: {
+//             media: true,
+//           },
+//         },
+//         category: true,
+//         creator: {
+//           select: {
+//             id: true,
+//             name: true,
+//             email: true,
+//             image: true,
+//           },
+//         },
+//         analytics: true,
+//       },
+//     });
+
+//     // Format the response data to ensure it matches the expected types
+//     const formattedAds = ads.map((ad) => ({
+//       ...ad,
+//       // Ensure these fields have the correct types
+//       price: ad.price ?? null,
+//       location: ad.location ?? null,
+//       metadata: typeof ad.metadata === "object" ? ad.metadata : null,
+//       tags: ad.tags ?? [],
+
+//       // Handle all enum types explicitly
+//       type: ad.type as
+//         | "CAR"
+//         | "VAN"
+//         | "MOTORCYCLE"
+//         | "BICYCLE"
+//         | "THREE_WHEEL"
+//         | "BUS"
+//         | "LORRY"
+//         | "HEAVY_DUTY"
+//         | "TRACTOR"
+//         | "AUTO_SERVICE"
+//         | "RENTAL"
+//         | "AUTO_PARTS"
+//         | "MAINTENANCE"
+//         | "BOAT",
+//       status: ad.status as
+//         | "ACTIVE"
+//         | "EXPIRED"
+//         | "DRAFT"
+//         | "PENDING_REVIEW"
+//         | "REJECTED",
+//       fuelType: ad.fuelType as
+//         | "PETROL"
+//         | "DIESEL"
+//         | "HYBRID"
+//         | "ELECTRIC"
+//         | "GAS"
+//         | null,
+//       transmission: ad.transmission as "MANUAL" | "AUTOMATIC" | "CVT" | null,
+//       bodyType: ad.bodyType as "SALOON" | "HATCHBACK" | "STATION_WAGON" | null,
+//       bikeType: ad.bikeType as
+//         | "SCOOTER"
+//         | "E_BIKE"
+//         | "MOTORBIKES"
+//         | "QUADRICYCLES"
+//         | null,
+//       vehicleType: ad.vehicleType as
+//         | "BED_TRAILER"
+//         | "BOWSER"
+//         | "BULLDOZER"
+//         | "CRANE"
+//         | "DUMP_TRUCK"
+//         | "EXCAVATOR"
+//         | "LOADER"
+//         | "OTHER"
+//         | null,
+
+//       // Handle all the new dynamic fields
+//       condition: ad.condition ?? null,
+//       brand: ad.brand ?? null,
+//       model: ad.model ?? null,
+//       trimEdition: ad.trimEdition ?? null,
+//       manufacturedYear: ad.manufacturedYear ?? null,
+//       modelYear: ad.modelYear ?? null,
+//       mileage: ad.mileage ?? null,
+//       engineCapacity: ad.engineCapacity ?? null,
+//       serviceType: ad.serviceType ?? null,
+//       partType: ad.partType ?? null,
+//       maintenanceType: ad.maintenanceType ?? null,
+
+//       // Contact & Location fields
+//       name: ad.name ?? null,
+//       phoneNumber: ad.phoneNumber ?? null,
+//       whatsappNumber: ad.whatsappNumber ?? null,
+//       termsAndConditions: ad.termsAndConditions ?? null,
+//       address: ad.address ?? null,
+//       province: ad.province ?? null,
+//       district: ad.district ?? null,
+//       city: ad.city ?? null,
+//       specialNote: ad.specialNote ?? null,
+
+//       // SEO fields
+//       seoTitle: ad.seoTitle ?? null,
+//       seoDescription: ad.seoDescription ?? null,
+//       seoSlug: ad.seoSlug ?? null,
+//       categoryId: ad.categoryId ?? null,
+
+//       // Status fields
+//       published: ad.published ?? false,
+//       isDraft: ad.isDraft ?? true,
+//       boosted: ad.boosted ?? false,
+//       featured: ad.featured ?? false,
+
+//       // Convert Date objects to ISO strings
+//       createdAt: ad.createdAt.toISOString(),
+//       updatedAt: ad.updatedAt.toISOString(),
+//       boostExpiry: ad.boostExpiry?.toISOString() ?? null,
+//       featureExpiry: ad.featureExpiry?.toISOString() ?? null,
+//       expiryDate: ad.expiryDate?.toISOString() ?? null,
+//     }));
+
+//     return c.json(
+//       {
+//         ads: formattedAds,
+//         pagination: {
+//           total: totalAds,
+//           page: pageNum,
+//           limit: limitNum,
+//           totalPages: Math.ceil(totalAds / limitNum),
+//         },
+//       },
+//       HttpStatusCodes.OK
+//     );
+//   } catch (error: any) {
+//     console.error("[GET ALL ADS] Error:", error);
+
+//     return c.json(
+//       { message: HttpStatusPhrases.INTERNAL_SERVER_ERROR },
+//       HttpStatusCodes.INTERNAL_SERVER_ERROR
+//     );
+//   }
+// };
+
 export const list: AppRouteHandler<ListRoute> = async (c) => {
   try {
-    const {
-      page = "1",
-      limit = "10",
-      search = "",
-      filterByUser = false,
-    } = c.req.query() as any;
+    // Get raw query parameters (all come as strings from HTTP)
+    const rawQuery = c.req.query() as any;
+
+    // FIX: Convert string "true"/"false" to actual boolean for filterByUser
+    // This handles the Zod validation issue where boolean is expected but string is received
+    let processedQuery = { ...rawQuery };
+
+    if (rawQuery.filterByUser !== undefined) {
+      if (typeof rawQuery.filterByUser === "string") {
+        // Convert string "true" to boolean true, anything else to false
+        processedQuery.filterByUser =
+          rawQuery.filterByUser.toLowerCase() === "true";
+      }
+      // If it's already a boolean, keep it as is
+    }
+
+    // FIX: Use the processed query for validation instead of trying to modify c.req.query()
+    // The original approach of calling c.req.query({...}) doesn't actually modify the request
+    const query = processedQuery;
+
+    const page = query.page ?? "1";
+    const limit = query.limit ?? "10";
+    const search = query.search ?? "";
 
     const session = c.get("session");
     const user = c.get("user");
@@ -35,15 +293,16 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     // Build the where condition for efficient searching
     let whereCondition: any = {};
 
+    // FIX: Now using the converted boolean value instead of the string
     // Filter by current user if filterByUser is true
-    if (filterByUser === "true" || filterByUser === true) {
-      if (!user) {
+    if (query.filterByUser === true) {
+      if (session?.userId === null) {
         return c.json(
           { message: "Authentication required to filter by user" },
           HttpStatusCodes.UNAUTHORIZED
         );
       }
-      whereCondition.createdBy = user.id;
+      whereCondition.createdBy = session?.userId;
     }
 
     // Add search functionality if search term is provided
