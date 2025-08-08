@@ -123,7 +123,7 @@ export default function AdDetailPage() {
   ];
 
   // Organize features/options for display
-  const features = ad.options || [];
+  const features = ad.tags || [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -372,13 +372,13 @@ export default function AdDetailPage() {
             <Card>
               <CardContent className="p-6">
                 <div className="text-3xl font-bold text-[#024950] mb-2">
-                  {ad.discountPrice
-                    ? formatPrice(ad.discountPrice)
+                  {(ad as any).discountPrice
+                    ? formatPrice((ad as any).discountPrice)
                     : formatPrice(ad.price)}
                 </div>
-                {ad.discountPrice &&
+                {(ad as any).discountPrice &&
                   ad.price &&
-                  ad.discountPrice < ad.price && (
+                  (ad as any).discountPrice < ad.price && (
                     <div className="text-xl line-through text-gray-400 mb-2">
                       {formatPrice(ad.price)}
                     </div>
@@ -464,7 +464,7 @@ export default function AdDetailPage() {
         </div>
 
         {/* Similar Vehicles */}
-        <div className="mt-8">
+        {/* <div className="mt-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">
             Similar Vehicles
           </h2>
@@ -495,7 +495,7 @@ export default function AdDetailPage() {
               </Card>
             ))}
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
