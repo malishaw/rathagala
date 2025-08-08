@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, ChevronRight, CheckCircle, Car, Edit, Trash2, Shield, CreditCard, Users, Lock } from "lucide-react";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { useRouter } from "next/navigation";
 import { betterFetch } from "@better-fetch/fetch";
 import { toast } from "sonner";
@@ -39,6 +40,9 @@ interface UserAd {
 }
 
 export default function ProfilePage() {
+  // State for delete dialog
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; ad: UserAd | null }>({ open: false, ad: null });
+  const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -209,24 +213,21 @@ export default function ProfilePage() {
   };
   
   // Handle delete ad
-  const handleDeleteAd = async (id: string) => {
+  const handleDeleteAd = async (ad: UserAd) => {
+    setIsDeleting(true);
     try {
-      // Delete ad via API
-      const { error } = await betterFetch(`/api/ad/${id}`, { 
-        method: "DELETE" 
-      });
-      
+      const { error } = await betterFetch(`/api/ad/${ad.id}`, { method: "DELETE" });
       if (error) {
         throw new Error(error.message || "Failed to delete ad");
       }
-      
-      // Refetch user ads after deletion
       userAdsQuery.refetch();
-      
       toast.success("Ad deleted successfully");
+      setDeleteDialog({ open: false, ad: null });
     } catch (error) {
       console.error("Error deleting ad:", error);
       toast.error("Failed to delete ad");
+    } finally {
+      setIsDeleting(false);
     }
   };
   
@@ -266,6 +267,31 @@ export default function ProfilePage() {
   
   return (
     <div className="max-w-6xl mx-auto py-20 px-4">
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialog.open} onOpenChange={open => setDeleteDialog(d => ({ ...d, open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the advertisement "{deleteDialog.ad?.title}" and remove its data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              asChild
+              onClick={e => {
+                e.preventDefault();
+                if (deleteDialog.ad) handleDeleteAd(deleteDialog.ad);
+              }}
+            >
+              <Button variant="destructive" disabled={isDeleting}>
+                {isDeleting ? "Deleting..." : "Delete"}
+              </Button>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {/* Success indicator */}
       {showSuccess && (
         <div className="fixed top-4 right-4 bg-green-50 text-green-700 px-4 py-2 rounded-md flex items-center shadow-md border border-green-100 z-50">
@@ -556,7 +582,7 @@ export default function ProfilePage() {
                       <div className="flex-1">
                         <div 
                           className="font-medium text-slate-800 hover:text-blue-600 cursor-pointer"
-                          onClick={() => router.push(`/ad/${ad.id}`)}
+                          onClick={() => router.push(`/${ad.id}`)}
                         >
                           {ad.title}
                         </div>
@@ -575,7 +601,7 @@ export default function ProfilePage() {
                           variant="ghost" 
                           size="sm" 
                           className="text-slate-500 hover:text-blue-600"
-                          onClick={() => router.push(`/ad/${ad.id}/edit`)}
+                          onClick={() => router.push(`/dashboard/ads/${ad.id}`)}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -583,7 +609,7 @@ export default function ProfilePage() {
                           variant="ghost" 
                           size="sm" 
                           className="text-slate-500 hover:text-red-600"
-                          onClick={() => handleDeleteAd(ad.id)}
+                          onClick={() => setDeleteDialog({ open: true, ad })}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

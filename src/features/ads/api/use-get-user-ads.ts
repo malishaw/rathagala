@@ -17,7 +17,7 @@ export const useGetUserAds = (params: UserAdsParams = {}) => {
       const queryParams = {
         page: page.toString(),
         limit: limit.toString(),
-        filterByUser: true,
+        filterByUser: filterByUser.toString(),
         ...(search && { search }),
       };
 
