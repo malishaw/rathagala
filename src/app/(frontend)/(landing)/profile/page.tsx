@@ -11,6 +11,7 @@ import { betterFetch } from "@better-fetch/fetch";
 import { toast } from "sonner";
 import { useGetUserAds } from "@/features/ads/api/use-get-user-ads";
 import { format } from "date-fns";
+import { SignoutButton } from "@/features/auth/components/signout-button";
 
 // User type from auth
 interface User {
@@ -184,28 +185,6 @@ export default function ProfilePage() {
     }
   };
   
-  // Handle sign out with loading state
-  const handleSignOut = async () => {
-    setIsSaving(true);
-    try {
-      // Call sign out API
-      const { error } = await betterFetch("/api/auth/signout", { method: "POST" });
-      
-      if (error) {
-        throw new Error(error.message || "Failed to sign out");
-      }
-      
-      toast.success("Signed out successfully");
-      setTimeout(() => {
-        router.push("/signin");
-      }, 500);
-    } catch (error) {
-      console.error("Error signing out:", error);
-      toast.error("Failed to sign out");
-      setIsSaving(false);
-    }
-  };
-  
   // Format price to display with commas
   const formatPrice = (price: number | null) => {
     if (price === null) return "Price on request";
@@ -303,18 +282,10 @@ export default function ProfilePage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-5">
         <h1 className="text-2xl font-semibold text-slate-800">Profile</h1>
-        <Button 
+        <SignoutButton 
+          variant="outline"
           className="bg-white text-red-600 hover:bg-red-50 border border-black/10 shadow-sm"
-          onClick={handleSignOut}
-          disabled={isSaving}
-        >
-          {isSaving ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Signing out...
-            </>
-          ) : "Sign Out"}
-        </Button>
+        />
       </div>
       
       <div className="flex flex-col md:flex-row gap-8 mt-6">

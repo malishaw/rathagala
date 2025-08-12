@@ -1,13 +1,36 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { ArrowRight, CarIcon, Menu, XIcon } from "lucide-react";
+import { ArrowRight, CarIcon, Menu, XIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
+import { betterFetch } from "@better-fetch/fetch";
 
 export function Header() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [scrolled, setScrolled] = useState<boolean>(false);
+  const [user, setUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Fetch user data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await betterFetch("/api/auth/get-session");
+        // Check if data exists, is an object, and has a user property
+        if (!error && data && typeof data === 'object' && 'user' in data && data.user) {
+          setUser(data.user);
+        }
+      } catch (error) {
+        console.error("Error fetching user session:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchUserData();
+  }, []);
 
   // Add scroll event listener
   useEffect(() => {
@@ -82,14 +105,39 @@ export function Header() {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link href="/signin">
+            {isLoading ? (
+              <div className="w-24 h-10 bg-teal-700 rounded animate-pulse"></div>
+            ) : user ? (
+              <Link href="/profile">
+                <Button 
+                  variant="outline"
+                  className="text-white border-white bg-teal-600/20 hover:bg-white hover:text-teal-900 transition-colors duration-200 cursor-pointer flex items-center gap-1"
+                >
+                  <UserIcon className="h-4 w-4" />
+                  Account
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/signin">
+                <Button 
+                  variant="ghost" 
+                  className="text-white hover:bg-teal-600/20 hover:text-white transition-colors duration-200 cursor-pointer"
+                >
+                  Login
+                </Button>
+              </Link>
+            )}
+
+            {user && user.role === 'admin' && (
+              <Link href="/dashboard">
               <Button 
-                variant="ghost" 
-                className="text-white hover:bg-teal-600/20 hover:text-white transition-colors duration-200 cursor-pointer"
+                variant="outline"
+                className="text-white border-white bg-teal-600/20 hover:bg-white hover:text-teal-900 transition-colors duration-200 cursor-pointer flex items-center gap-1"
               >
-                Login
+                Admin Dashboard
               </Button>
-            </Link>
+              </Link>
+            )}
 
             <Link href="/sell/new">
               <Button 
@@ -158,18 +206,34 @@ export function Header() {
                     Profile
                   </a>
                   <div className="pt-5 space-y-3">
-                    <Button
-                      asChild
-                      variant="outline"
-                      className="w-full text-white border-white hover:bg-white hover:text-teal-900"
-                    >
-                      <Link href="/login">Login</Link>
-                    </Button>
+                    {isLoading ? (
+                      <div className="w-full h-10 bg-teal-700 rounded animate-pulse"></div>
+                    ) : user ? (
+                      <Button
+                        asChild
+                        variant="outline"
+                        className="w-full text-white border-white bg-teal-600/20 hover:bg-white hover:text-teal-900 transition-colors duration-200 cursor-pointer flex items-center gap-1"
+                      >
+                        <Link href="/profile">
+                          <UserIcon className="h-4 w-4" />
+                          Account
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button
+                        asChild
+                        variant="outline"
+                        className="w-full text-white border-white hover:bg-white hover:text-teal-900"
+                      >
+                        <Link href="/signin">Login</Link>
+                      </Button>
+                    )}
+                    
                     <Button
                       asChild
                       className="w-full bg-white text-teal-900 hover:bg-teal-50"
                     >
-                      <Link href="/dashboard">Post Free Ad</Link>
+                      <Link href="/sell/new">Post Free Ad</Link>
                     </Button>
                   </div>
                 </nav>
