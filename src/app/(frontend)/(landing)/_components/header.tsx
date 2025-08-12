@@ -128,6 +128,17 @@ export function Header() {
               </Link>
             )}
 
+            {user && user.role === 'admin' && (
+              <Link href="/dashboard">
+              <Button 
+                variant="outline"
+                className="text-white border-white bg-teal-600/20 hover:bg-white hover:text-teal-900 transition-colors duration-200 cursor-pointer flex items-center gap-1"
+              >
+                Admin Dashboard
+              </Button>
+              </Link>
+            )}
+
             <Link href="/sell/new">
               <Button 
                 className="bg-white text-teal-900 hover:bg-teal-50 hover:shadow-md font-medium transition-all duration-200 cursor-pointer"
@@ -201,7 +212,7 @@ export function Header() {
                       <Button
                         asChild
                         variant="outline"
-                        className="w-full text-white border-white hover:bg-white hover:text-teal-900 flex items-center justify-center gap-1"
+                        className="w-full text-white border-white bg-teal-600/20 hover:bg-white hover:text-teal-900 transition-colors duration-200 cursor-pointer flex items-center gap-1"
                       >
                         <Link href="/profile">
                           <UserIcon className="h-4 w-4" />
