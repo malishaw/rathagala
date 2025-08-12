@@ -707,11 +707,32 @@ export default function VehicleMarketplace() {
                 </div>
               </div>
 
-              {/* Loading state */}
+              {/* Loading state with shimmer effect */}
               {isLoading && (
-                <div className="flex justify-center items-center py-16 bg-white rounded-xl shadow-sm">
-                  <Loader2 className="h-8 w-8 animate-spin text-teal-700 mr-2" />
-                  <p className="text-slate-600">Loading vehicles...</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[...Array(6)].map((_, index) => (
+                    <div key={index} className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                      <div className="p-3">
+                        {/* Title shimmer */}
+                        <div className="h-4 bg-slate-200 rounded w-3/4 mx-auto mb-3 animate-pulse"></div>
+                        
+                        <div className="flex">
+                          {/* Image shimmer */}
+                          <div className="w-32 h-20 flex-shrink-0 bg-slate-200 rounded-md animate-pulse"></div>
+                          
+                          {/* Details shimmer */}
+                          <div className="flex-1 pl-3 flex flex-col justify-between">
+                            <div>
+                              <div className="h-2 bg-slate-200 rounded w-1/2 mb-2 animate-pulse"></div>
+                              <div className="h-3 bg-slate-200 rounded w-1/3 mb-2 animate-pulse"></div>
+                              <div className="h-2 bg-slate-200 rounded w-1/4 animate-pulse"></div>
+                            </div>
+                            <div className="h-2 bg-slate-200 rounded w-1/3 mt-1 animate-pulse"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
 
