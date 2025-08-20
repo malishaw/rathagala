@@ -45,14 +45,14 @@ const vehicleTypeLabels: Record<string, string> = {
 
 // List of vehicle makes for dropdown
 const vehicleMakes = [
-  "Acura", "Alfa-Romeo", "Aprilia", "Ashok-Leyland", "Aston", "Atco", "ATHER", 
-  "Audi", "Austin", "Baic", "Bajaj", "Bentley", "BMW", "Borgward", "BYD", 
+  "Toyota","Honda","Nissan","BMW","Audi","Mercedes-Benz","Land-Rover","Jaguar","Suzuki","Mitsubishi","Ford","Acura","Lexus", "Alfa-Romeo", "Aprilia", "Ashok-Leyland", "Aston", "Atco", "ATHER", 
+   "Austin", "Baic", "Bajaj", "Bentley",  "Borgward", "BYD", 
   "Cadillac", "CAT", "Changan", "Chery", "Chevrolet", "Chrysler", "Citroen",
-  "Daewoo", "Daihatsu", "Datsun", "DFSK", "Ducati", "Fiat", "Ford", "Hero",
-  "Honda", "Hyundai", "Isuzu", "Jaguar", "Jeep", "Kawasaki", "Kia", "KTM",
-  "Land-Rover", "Lexus", "Mahindra", "Mazda", "Mercedes-Benz", "Micro", "Mini",
-  "Mitsubishi", "Nissan", "Perodua", "Peugeot", "Porsche", "Proton", "Renault",
-  "Skoda", "Subaru", "Suzuki", "Tata", "Tesla", "Toyota", "TVS", "Volkswagen",
+  "Daewoo", "Daihatsu", "Datsun", "DFSK", "Ducati", "Fiat",  "Hero",
+   "Hyundai", "Isuzu",  "Jeep", "Kawasaki", "Kia", "KTM",
+    "Mahindra", "Mazda",  "Micro", "Mini",
+    "Perodua", "Peugeot", "Porsche", "Proton", "Renault",
+  "Skoda", "Subaru",  "Tata", "Tesla",  "TVS", "Volkswagen",
   "Volvo", "Yamaha"
 ];
 
