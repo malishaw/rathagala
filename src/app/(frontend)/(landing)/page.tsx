@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo, useState } from "react";
@@ -69,8 +70,6 @@ interface FilterState {
   vehicleType: string | null;
   city: string | null;
   condition: string | null;
-  
-  // Advanced filters
   minYear: string | null;
   maxYear: string | null;
   minPrice: string | null;
@@ -422,7 +421,7 @@ export default function VehicleMarketplace() {
 
         <div className="relative container mx-auto px-4">
           <div className="text-center mb-8 md:mb-10">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 md:mb-5 font-heading">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-1 md:mb-5 font-heading">
               Find Your Perfect Vehicle
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-teal-100 max-w-2xl mx-auto">
@@ -433,8 +432,8 @@ export default function VehicleMarketplace() {
           {/* Search Form - Simplified and minimal */}
           <div className="max-w-6xl mx-auto">
             <Card className="p-5 shadow-lg bg-white rounded-xl border-0">
-              {/* Main filters - clean and minimal */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              {/* Main filters - including condition and search button in one line */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                 {/* Make filter */}
                 <Select
                   value={filters.make || "any"}
@@ -497,6 +496,22 @@ export default function VehicleMarketplace() {
                   </SelectContent>
                 </Select>
 
+                {/* Condition filter */}
+                <Select
+                  value={filters.condition || "any"}
+                  onValueChange={(value) => handleFilterChange("condition", value)}
+                >
+                  <SelectTrigger className="w-full bg-white border-slate-200">
+                    <SelectValue placeholder="Any Condition" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="any">Any Condition</SelectItem>
+                    <SelectItem value="Brand New">Brand New</SelectItem>
+                    <SelectItem value="Unregistered (Recondition)">Unregistered</SelectItem>
+                    <SelectItem value="Registered (Used)">Registered</SelectItem>
+                  </SelectContent>
+                </Select>
+
                 {/* Search button */}
                 <Button
                   className="w-full bg-teal-700 hover:bg-teal-600 text-white"
@@ -509,7 +524,7 @@ export default function VehicleMarketplace() {
               </div>
 
               {/* Advanced filters toggle and clear */}
-              <div className="flex justify-between mt-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between -mt-2 gap-3">
                 <Button
                   variant="ghost"
                   onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
@@ -536,17 +551,18 @@ export default function VehicleMarketplace() {
                 )}
               </div>
 
-              {/* Simple Advanced Filters - Reorganized for better mobile experience */}
+              {/* Advanced Filters - Including condition filter */}
               {showAdvancedFilters && (
-                <div className="mt-4 pt-4 border-t">
+                <div className="-mt-2 pt-4 border-t">
                   {/* First row - condition, min year, max year */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                    {/* Condition filter */}
                     <Select
                       value={filters.condition || "any"}
                       onValueChange={(value) => handleFilterChange("condition", value)}
                     >
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Condition" />
+                        <SelectValue placeholder="Any Condition" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="any">Any Condition</SelectItem>
@@ -556,6 +572,7 @@ export default function VehicleMarketplace() {
                       </SelectContent>
                     </Select>
 
+                    {/* Min Year */}
                     <Select
                       value={filters.minYear || "any"}
                       onValueChange={(value) => handleFilterChange("minYear", value)}
@@ -573,6 +590,7 @@ export default function VehicleMarketplace() {
                       </SelectContent>
                     </Select>
 
+                    {/* Max Year */}
                     <Select
                       value={filters.maxYear || "any"}
                       onValueChange={(value) => handleFilterChange("maxYear", value)}
@@ -826,7 +844,6 @@ export default function VehicleMarketplace() {
                                 {vehicleTypeLabels[vehicle.type] || vehicle.type}
                               </div>
                             </div>
-
                             <div className="text-xs text-slate-400 mt-1">
                               {format(new Date(vehicle.createdAt), "MMM d, yyyy")}
                             </div>

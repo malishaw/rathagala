@@ -90,19 +90,19 @@ export function Header() {
               href="/about"
               className="hover:text-teal-200 transition-colors font-medium text-sm xl:text-base"
             >
-              About
+              Want
             </Link>
             <Link
               href="/contact"
               className="hover:text-teal-200 transition-colors font-medium text-sm xl:text-base"
             >
-              Contact
+              Rental
             </Link>
             <Link
               href="/profile"
               className="hover:text-teal-200 transition-colors font-medium text-sm xl:text-base"
             >
-              Profile
+              Hire
             </Link>
           </nav>
 
@@ -165,7 +165,7 @@ export function Header() {
               </SheetTrigger>
               <SheetContent
                 side="right"
-                className="w-[280px] sm:w-[320px] bg-gradient-to-br from-teal-900 via-teal-800 to-teal-700 text-white border-teal-700 p-0"
+                className="w-[280px] sm:w-[320px] bg-gradient-to-br from-teal-900 via-teal-800 to-teal-700 text-white border-teal-700 p-0 [&>button]:hidden"
               >
                 {/* Mobile Sheet Header */}
                 <div className="flex items-center justify-between p-4 border-b border-teal-700/50">
@@ -205,21 +205,21 @@ export function Header() {
                       onClick={closeSheet}
                       className="text-base sm:text-lg py-3 px-2 rounded-lg hover:bg-teal-800/50 hover:text-teal-100 transition-all duration-200"
                     >
-                      About
+                      Want
                     </Link>
                     <Link
                       href="/contact"
                       onClick={closeSheet}
                       className="text-base sm:text-lg py-3 px-2 rounded-lg hover:bg-teal-800/50 hover:text-teal-100 transition-all duration-200"
                     >
-                      Contact
+                      Rental
                     </Link>
                     <Link
                       href="/profile"
                       onClick={closeSheet}
                       className="text-base sm:text-lg py-3 px-2 rounded-lg hover:bg-teal-800/50 hover:text-teal-100 transition-all duration-200"
                     >
-                      Profile
+                      Hire
                     </Link>
                   </nav>
 
@@ -228,7 +228,7 @@ export function Header() {
                     {isLoading ? (
                       <div className="w-full h-10 bg-teal-700/50 rounded animate-pulse"></div>
                     ) : user ? (
-                      <>
+                      <div className="space-y-3">
                         <Button
                           asChild
                           variant="outline"
@@ -250,12 +250,12 @@ export function Header() {
                             </Link>
                           </Button>
                         )}
-                      </>
+                      </div>
                     ) : (
                       <Button
                         asChild
                         variant="outline"
-                        className="w-full text-white border-white hover:bg-white hover:text-teal-900 transition-colors duration-200"
+                        className="w-full text-black border-white hover:bg-white hover:text-teal-900 transition-colors duration-200"
                       >
                         <Link href="/signin" onClick={closeSheet}>
                           Login
