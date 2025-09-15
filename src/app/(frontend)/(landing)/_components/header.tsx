@@ -84,23 +84,41 @@ export function Header() {
               Sell
             </Link>
             <Link
+              href="/want"
+              className="hover:text-teal-200 transition-colors font-medium"
+            >
+              Want
+            </Link>
+            <Link
+              href="/rent"
+              className="hover:text-teal-200 transition-colors font-medium"
+            >
+              Rent
+            </Link>
+            <Link
+              href="/hire"
+              className="hover:text-teal-200 transition-colors font-medium"
+            >
+              Hire
+            </Link>
+            {/* <Link
               href="/about"
               className="hover:text-teal-200 transition-colors font-medium"
             >
               About
-            </Link>
-            <Link
+            </Link> */}
+            {/* <Link
               href="/contact"
               className="hover:text-teal-200 transition-colors font-medium"
             >
               Contact
-            </Link>
-            <Link
+            </Link> */}
+            {/* <Link
               href="/profile"
               className="hover:text-teal-200 transition-colors font-medium"
             >
               Profile
-            </Link>
+            </Link> */}
           </nav>
 
           {/* Desktop Auth Buttons */}

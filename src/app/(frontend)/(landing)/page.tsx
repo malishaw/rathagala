@@ -27,31 +27,31 @@ import { useState as useDialogState } from "react";
 
 // Vehicle type labels
 const vehicleTypeLabels: Record<string, string> = {
-  CAR: "CAR",
-  VAN: "VAN",
-  SUV_JEEP: "SUV / JEEP",
-  MOTORCYCLE: "MOTORCYCLE",
-  CREW_CAB: "CREW CAB",
-  PICKUP_DOUBLE_CAB: "PICKUP / DOUBLE CAB",
-  BUS: "BUS",
-  LORRY: "LORRY",
-  THREE_WHEEL: "THREE WHEEL",
-  OTHER: "OTHER",
-  TRACTOR: "TRACTOR",
-  HEAVY_DUTY: "HEAVY-DUTY",
-  BICYCLE: "BICYCLE"
+  CAR: "Car",
+  VAN: "Van",
+  SUV_JEEP: "SUV / Jeep",
+  MOTORCYCLE: "Motorcycle",
+  CREW_CAB: "Crew Cab",
+  PICKUP_DOUBLE_CAB: "Pickup / Double Cab",
+  BUS: "Bus",
+  LORRY: "Lorry",
+  THREE_WHEEL: "Three Wheel",
+  OTHER: "Other",
+  TRACTOR: "Tractor",
+  HEAVY_DUTY: "Heavy-Duty",
+  BICYCLE: "Bicycle"
 };
 
 // List of vehicle makes for dropdown
 const vehicleMakes = [
-  "Acura", "Alfa-Romeo", "Aprilia", "Ashok-Leyland", "Aston", "Atco", "ATHER", 
-  "Audi", "Austin", "Baic", "Bajaj", "Bentley", "BMW", "Borgward", "BYD", 
+  "Toyota","Honda" ,"Nissan", "BMW","Mercedes-Benz","Land-Rover","Aprilia", "Ashok-Leyland", "Aston", "Atco", "ATHER", 
+  "Audi", "Austin", "Baic", "Bajaj", "Bentley",  "Borgward", "BYD", 
   "Cadillac", "CAT", "Changan", "Chery", "Chevrolet", "Chrysler", "Citroen",
   "Daewoo", "Daihatsu", "Datsun", "DFSK", "Ducati", "Fiat", "Ford", "Hero",
-  "Honda", "Hyundai", "Isuzu", "Jaguar", "Jeep", "Kawasaki", "Kia", "KTM",
-  "Land-Rover", "Lexus", "Mahindra", "Mazda", "Mercedes-Benz", "Micro", "Mini",
-  "Mitsubishi", "Nissan", "Perodua", "Peugeot", "Porsche", "Proton", "Renault",
-  "Skoda", "Subaru", "Suzuki", "Tata", "Tesla", "Toyota", "TVS", "Volkswagen",
+  "Alfa-Romeo", "Hyundai", "Isuzu", "Jaguar", "Jeep", "Kawasaki", "Kia", "KTM",
+  "Lexus", "Mahindra", "Mazda", "Micro", "Mini",
+  "Mitsubishi", , "Perodua", "Peugeot", "Porsche", "Proton", "Renault",
+  "Skoda", "Subaru", "Suzuki", "Tata", "Tesla", "Acura", "TVS", "Volkswagen",
   "Volvo", "Yamaha"
 ];
 
@@ -229,10 +229,22 @@ export default function VehicleMarketplace() {
     filterName: keyof FilterState,
     value: string | null
   ) => {
-    setFilters((prev) => ({
-      ...prev,
-      [filterName]: value === "any" ? null : value
-    }));
+    setFilters((prev) => {
+      const newFilters = {
+        ...prev,
+        [filterName]: value === "any" ? null : value
+      };
+
+      // If min year is changed, reset max year if it's less than the new min year
+      if (filterName === "minYear" && value && value !== "any") {
+        const minYearValue = parseInt(value);
+        if (prev.maxYear && parseInt(prev.maxYear) < minYearValue) {
+          newFilters.maxYear = null;
+        }
+      }
+
+      return newFilters;
+    });
   };
 
   // Apply all current filters
@@ -271,6 +283,15 @@ export default function VehicleMarketplace() {
     const currentYear = new Date().getFullYear();
     return Array.from({ length: 30 }, (_, i) => currentYear - i);
   }, []);
+
+  // Generate filtered max year options based on selected min year
+  const maxYearOptions = useMemo(() => {
+    if (!filters.minYear) {
+      return years;
+    }
+    const minYearValue = parseInt(filters.minYear);
+    return years.filter(year => year >= minYearValue);
+  }, [years, filters.minYear]);
 
   function FeaturedDealers() {
     const [showAllDealers, setShowAllDealers] = useDialogState(false);
@@ -509,7 +530,7 @@ export default function VehicleMarketplace() {
               </div>
 
               {/* Advanced filters toggle and clear */}
-              <div className="flex justify-between mt-4">
+                <div className="flex justify-center mt-4">
                 <Button
                   variant="ghost"
                   onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
@@ -518,9 +539,9 @@ export default function VehicleMarketplace() {
                 >
                   {showAdvancedFilters ? 'Hide' : 'Show'} Advanced Filters
                   <ChevronDown
-                    className={`ml-1 h-4 w-4 transition-transform ${
-                      showAdvancedFilters ? "rotate-180" : ""
-                    }`}
+                  className={`ml-1 h-4 w-4 transition-transform ${
+                    showAdvancedFilters ? "rotate-180" : ""
+                  }`}
                   />
                 </Button>
 
@@ -538,7 +559,7 @@ export default function VehicleMarketplace() {
 
               {/* Simple Advanced Filters - Reorganized for better mobile experience */}
               {showAdvancedFilters && (
-                <div className="mt-4 pt-4 border-t">
+                <div className="mt-4 pt-4 border-t text-center">
                   {/* First row - condition, min year, max year */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
                     <Select
@@ -549,10 +570,10 @@ export default function VehicleMarketplace() {
                         <SelectValue placeholder="Condition" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="any">Any Condition</SelectItem>
-                        <SelectItem value="Brand New">Brand New</SelectItem>
-                        <SelectItem value="Unregistered (Recondition)">Unregistered</SelectItem>
-                        <SelectItem value="Registered (Used)">Registered</SelectItem>
+                        <SelectItem value="any">Any</SelectItem>
+                        <SelectItem value="new">New</SelectItem>
+                        <SelectItem value="used">Used</SelectItem>
+                        <SelectItem value="antique">Antique</SelectItem>
                       </SelectContent>
                     </Select>
 
@@ -582,7 +603,7 @@ export default function VehicleMarketplace() {
                       </SelectTrigger>
                       <SelectContent className="max-h-[280px]">
                         <SelectItem value="any">Max Year</SelectItem>
-                        {[...years].reverse().map(year => (
+                        {maxYearOptions.map(year => (
                           <SelectItem key={`max-${year}`} value={year.toString()}>
                             {year}
                           </SelectItem>
@@ -593,37 +614,21 @@ export default function VehicleMarketplace() {
 
                   {/* Second row - price range, fuel type, transmission */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-                    <Select
-                      value={filters.minPrice || "any"}
-                      onValueChange={(value) => handleFilterChange("minPrice", value)}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Min Price" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="any">Min Price</SelectItem>
-                        <SelectItem value="500000">500,000</SelectItem>
-                        <SelectItem value="1000000">1,000,000</SelectItem>
-                        <SelectItem value="2000000">2,000,000</SelectItem>
-                        <SelectItem value="5000000">5,000,000</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Input
+                      type="text"
+                      placeholder="Min Price"
+                      className="w-full border-slate-200"
+                      value={filters.minPrice || ""}
+                      onChange={(e) => handleFilterChange("minPrice", e.target.value || null)}
+                    />
 
-                    <Select
-                      value={filters.maxPrice || "any"}
-                      onValueChange={(value) => handleFilterChange("maxPrice", value)}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Max Price" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="any">Max Price</SelectItem>
-                        <SelectItem value="2000000">2,000,000</SelectItem>
-                        <SelectItem value="5000000">5,000,000</SelectItem>
-                        <SelectItem value="10000000">10,000,000</SelectItem>
-                        <SelectItem value="20000000">20,000,000</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Input
+                      type="text"
+                      placeholder="Max Price"
+                      className="w-full border-slate-200"
+                      value={filters.maxPrice || ""}
+                      onChange={(e) => handleFilterChange("maxPrice", e.target.value || null)}
+                    />
 
                     <Select
                       value={filters.fuelType || "any"}
@@ -652,13 +657,13 @@ export default function VehicleMarketplace() {
                         <SelectItem value="any">Any Transmission</SelectItem>
                         <SelectItem value="Automatic">Automatic</SelectItem>
                         <SelectItem value="Manual">Manual</SelectItem>
-                        <SelectItem value="CVT">CVT</SelectItem>
+                        {/* <SelectItem value="CVT">CVT</SelectItem> */}
                       </SelectContent>
                     </Select>
                   </div>
 
                   {/* Apply button - Full width on mobile, right-aligned on desktop */}
-                  <div className="flex justify-end mt-4">
+                  <div className="flex justify-center mt-4">
                     <Button
                       onClick={applyFilters} 
                       className="w-full sm:w-auto bg-teal-700 hover:bg-teal-600 text-white"
@@ -796,9 +801,9 @@ export default function VehicleMarketplace() {
                       <div className="p-3">
                         {/* Vehicle Title - Centered */}
                         <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
-                          {[vehicle.brand, vehicle.model, vehicle.manufacturedYear, vehicle.vehicleType]
+                          {[vehicle.brand, vehicle.model, vehicle.manufacturedYear, vehicleTypeLabels[vehicle.type] || vehicle.type]
                             .filter(Boolean)
-                            .join(' ') || vehicle.title}
+                            .join(' ')}
                         </h3>
 
                         <div className="flex">

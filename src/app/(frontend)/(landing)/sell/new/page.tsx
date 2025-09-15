@@ -53,6 +53,8 @@ export default function QuickAdCreatePage() {
     name: "",
     phoneNumber: "",
     whatsappNumber: "",
+    province: "",
+    district: "",
     city: "",
     location: "",
     termsAndConditions: false,
@@ -92,9 +94,81 @@ export default function QuickAdCreatePage() {
     "Yadea", "Yamaha", "Yanmar", "Yuejin", "Zongshen", "Zotye"
   ];
   
+  // Sri Lankan provinces, districts, and cities data
+  const locationData = {
+    "Western": {
+      "Colombo": ["Colombo", "Dehiwala-Mount Lavinia", "Moratuwa", "Sri Jayawardenepura Kotte", "Maharagama", "Kesbewa", "Kaduwela", "Kotikawatta", "Kolonnawa", "Nugegoda", "Rajagiriya", "Battaramulla"],
+      "Gampaha": ["Gampaha", "Negombo", "Katunayake", "Minuwangoda", "Wattala", "Kelaniya", "Peliyagoda", "Ja-Ela", "Kandana", "Divulapitiya"],
+      "Kalutara": ["Kalutara", "Panadura", "Horana", "Beruwala", "Aluthgama", "Matugama", "Bandaragama", "Ingiriya"]
+    },
+    "Central": {
+      "Kandy": ["Kandy", "Gampola", "Nawalapitiya", "Wattegama", "Harispattuwa", "Pathadumbara", "Akurana", "Delthota"],
+      "Matale": ["Matale", "Dambulla", "Sigiriya", "Galewela", "Ukuwela", "Rattota"],
+      "Nuwara Eliya": ["Nuwara Eliya", "Hatton", "Talawakelle", "Ginigathena", "Kotagala", "Maskeliya", "Bogawantalawa"]
+    },
+    "Southern": {
+      "Galle": ["Galle", "Hikkaduwa", "Ambalangoda", "Elpitiya", "Bentota", "Baddegama", "Yakkalamulla"],
+      "Matara": ["Matara", "Weligama", "Mirissa", "Dikwella", "Hakmana", "Akuressa", "Denipitiya"],
+      "Hambantota": ["Hambantota", "Tangalle", "Tissamaharama", "Ambalantota", "Beliatta", "Weeraketiya"]
+    },
+    "Northern": {
+      "Jaffna": ["Jaffna", "Nallur", "Chavakachcheri", "Point Pedro", "Karainagar", "Velanai"],
+      "Kilinochchi": ["Kilinochchi", "Pallai", "Paranthan"],
+      "Mannar": ["Mannar", "Nanattan", "Murunkan"],
+      "Vavuniya": ["Vavuniya", "Nedunkeni", "Settikulam"],
+      "Mullaitivu": ["Mullaitivu", "Oddusuddan", "Puthukudiyiruppu"]
+    },
+    "Eastern": {
+      "Trincomalee": ["Trincomalee", "Kinniya", "Mutur", "Kuchchaveli"],
+      "Batticaloa": ["Batticaloa", "Kaluwanchikudy", "Valachchenai", "Eravur"],
+      "Ampara": ["Ampara", "Akkaraipattu", "Kalmunai", "Sainthamaruthu", "Pottuvil"]
+    },
+    "North Western": {
+      "Kurunegala": ["Kurunegala", "Kuliyapitiya", "Narammala", "Wariyapola", "Pannala", "Melsiripura"],
+      "Puttalam": ["Puttalam", "Chilaw", "Nattandiya", "Wennappuwa", "Marawila", "Dankotuwa"]
+    },
+    "North Central": {
+      "Anuradhapura": ["Anuradhapura", "Kekirawa", "Thambuttegama", "Eppawala", "Medawachchiya"],
+      "Polonnaruwa": ["Polonnaruwa", "Kaduruwela", "Medirigiriya", "Hingurakgoda"]
+    },
+    "Uva": {
+      "Badulla": ["Badulla", "Bandarawela", "Haputale", "Welimada", "Mahiyanganaya", "Passara"],
+      "Monaragala": ["Monaragala", "Bibile", "Wellawaya", "Kataragama", "Buttala"]
+    },
+    "Sabaragamuwa": {
+      "Ratnapura": ["Ratnapura", "Embilipitiya", "Balangoda", "Pelmadulla", "Eheliyagoda", "Kuruwita"],
+      "Kegalle": ["Kegalle", "Mawanella", "Warakapola", "Rambukkana", "Galigamuwa", "Yatiyantota"]
+    }
+  };
+
+  // Get available districts based on selected province
+  const getAvailableDistricts = () => {
+    if (!formData.province) return [];
+    return Object.keys(locationData[formData.province as keyof typeof locationData] || {});
+  };
+
+  // Get available cities based on selected district
+  const getAvailableCities = () => {
+    if (!formData.province || !formData.district) return [];
+    const provinceData = locationData[formData.province as keyof typeof locationData];
+    return provinceData?.[formData.district as keyof typeof provinceData] || [];
+  };
+
   // Simple form field change handler
   const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      
+      // Reset dependent fields when province or district changes
+      if (field === "province") {
+        newData.district = "";
+        newData.city = "";
+      } else if (field === "district") {
+        newData.city = "";
+      }
+      
+      return newData;
+    });
   };
   
   // Handle form submission
@@ -154,6 +228,8 @@ export default function QuickAdCreatePage() {
       whatsappNumber: formData.whatsappNumber || undefined,
 
       // Location info
+      province: formData.province || undefined,
+      district: formData.district || undefined,
       city: formData.city || undefined,
       location: formData.location || undefined,
 
@@ -223,7 +299,7 @@ export default function QuickAdCreatePage() {
         
       case 3:
         // Contact info required
-        return formData.name && formData.phoneNumber && formData.city && formData.location && formData.termsAndConditions;
+        return formData.name && formData.phoneNumber && formData.province && formData.district && formData.city && formData.location && formData.termsAndConditions;
         
       default:
         return false;
@@ -1325,12 +1401,56 @@ export default function QuickAdCreatePage() {
               </div>
               
               <div>
+                <label className="block text-sm font-medium mb-1">Province<span className="text-red-500">*</span></label>
+                <Select 
+                  value={formData.province}
+                  onValueChange={(value) => handleInputChange("province", value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select province" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.keys(locationData).map(province => (
+                      <SelectItem key={province} value={province}>{province}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">District<span className="text-red-500">*</span></label>
+                <Select 
+                  value={formData.district}
+                  onValueChange={(value) => handleInputChange("district", value)}
+                  disabled={!formData.province}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={formData.province ? "Select district" : "Select province first"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getAvailableDistricts().map(district => (
+                      <SelectItem key={district} value={district}>{district}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
                 <label className="block text-sm font-medium mb-1">City<span className="text-red-500">*</span></label>
-                <Input 
-                  placeholder="e.g., Colombo" 
+                <Select 
                   value={formData.city}
-                  onChange={(e) => handleInputChange("city", e.target.value)}
-                />
+                  onValueChange={(value) => handleInputChange("city", value)}
+                  disabled={!formData.district}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={formData.district ? "Select city" : "Select district first"} />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[280px]">
+                    {getAvailableCities().map(city => (
+                      <SelectItem key={city} value={city}>{city}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div>
