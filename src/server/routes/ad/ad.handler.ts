@@ -735,52 +735,103 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
   try {
     const adId = c.req.valid("param").id;
 
-    const ad = await prisma.ad.findUnique({
-      where: { id: adId },
-      include: {
-        media: {
+    let ad;
+    try {
+      ad = await prisma.ad.findUnique({
+        where: { id: adId },
+        include: {
+          media: {
+            include: {
+              media: true,
+            },
+          },
+          category: true,
+          creator: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+            },
+          },
+          analytics: true,
+          org: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              logo: true,
+            },
+          },
+          favorites: {
+            select: {
+              userId: true,
+            },
+          },
+          reports: {
+            select: {
+              id: true,
+              reason: true,
+              status: true,
+            },
+          },
+          shareEvents: {
+            select: {
+              platform: true,
+              sharedAt: true,
+            },
+          },
+        },
+      });
+    } catch (findError: any) {
+      // Handle Prisma inconsistent query when a required relation is missing in DB (e.g., org)
+      const msg = String(findError?.message || "");
+      if (msg.includes("Field org is required to return data")) {
+        console.warn("[GET AD] Org relation missing for ad, retrying without org include", adId);
+        // Retry without org include to return the ad even when org is missing
+        ad = await prisma.ad.findUnique({
+          where: { id: adId },
           include: {
-            media: true,
+            media: {
+              include: {
+                media: true,
+              },
+            },
+            category: true,
+            creator: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+              },
+            },
+            analytics: true,
+            // org omitted intentionally
+            favorites: {
+              select: {
+                userId: true,
+              },
+            },
+            reports: {
+              select: {
+                id: true,
+                reason: true,
+                status: true,
+              },
+            },
+            shareEvents: {
+              select: {
+                platform: true,
+                sharedAt: true,
+              },
+            },
           },
-        },
-        category: true,
-        creator: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
-          },
-        },
-        analytics: true,
-        org: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            logo: true,
-          },
-        },
-        favorites: {
-          select: {
-            userId: true,
-          },
-        },
-        reports: {
-          select: {
-            id: true,
-            reason: true,
-            status: true,
-          },
-        },
-        shareEvents: {
-          select: {
-            platform: true,
-            sharedAt: true,
-          },
-        },
-      },
-    });
+        });
+      } else {
+        throw findError;
+      }
+    }
 
     if (!ad) {
       return c.json(
