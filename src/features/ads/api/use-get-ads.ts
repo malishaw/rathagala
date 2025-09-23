@@ -6,6 +6,7 @@ interface FilterParams {
   page?: number;
   limit?: number;
   search?: string | null;
+  listingType?: string | null;
   minPrice?: number;
   maxPrice?: number;
   location?: string;
@@ -16,18 +17,20 @@ export const useGetAds = (params: FilterParams) => {
     page = 1,
     limit = 10,
     search = "",
+    listingType = "",
     minPrice,
     maxPrice,
     location,
   } = params;
 
   const query = useQuery({
-    queryKey: ["ads", { page, limit, search, minPrice, maxPrice, location }],
+    queryKey: ["ads", { page, limit, search, listingType, minPrice, maxPrice, location }],
     queryFn: async () => {
       const queryParams = {
         page: page.toString(),
         limit: limit.toString(),
         ...(search && { search }),
+        ...(listingType && listingType !== "all" && { listingType }),
         ...(minPrice !== undefined && { minPrice: minPrice.toString() }),
         ...(maxPrice !== undefined && { maxPrice: maxPrice.toString() }),
         ...(location && { location }),

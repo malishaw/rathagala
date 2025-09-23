@@ -78,28 +78,34 @@ export function Header() {
               Home
             </Link>
             <Link
-              href="/sell"
+              href="/search"
               className="hover:text-teal-200 transition-colors font-medium"
             >
               Sell
             </Link>
             <Link
-              href="/want"
+              href="/search"
               className="hover:text-teal-200 transition-colors font-medium"
             >
               Want
             </Link>
             <Link
-              href="/rent"
+              href="/search"
               className="hover:text-teal-200 transition-colors font-medium"
             >
               Rent
             </Link>
             <Link
-              href="/hire"
+              href="/search"
               className="hover:text-teal-200 transition-colors font-medium"
             >
               Hire
+            </Link>
+            <Link
+              href="/search"
+              className="hover:text-teal-200 transition-colors font-medium"
+            >
+              Search
             </Link>
             {/* <Link
               href="/about"
@@ -193,36 +199,48 @@ export function Header() {
                   </Button>
                 </div>
                 <nav className="flex flex-col space-y-5">
-                  <a
-                    href="#"
+                  <Link
+                    href="/"
                     className="text-lg hover:text-teal-200 transition-colors"
+                    onClick={() => setIsOpen(false)}
                   >
                     Home
-                  </a>
-                  <a
-                    href="#"
+                  </Link>
+                  <Link
+                    href="/search?listingType=SELL"
                     className="text-lg hover:text-teal-200 transition-colors"
+                    onClick={() => setIsOpen(false)}
                   >
                     Sell
-                  </a>
-                  <a
-                    href="#"
+                  </Link>
+                  <Link
+                    href="/search?listingType=WANT"
                     className="text-lg hover:text-teal-200 transition-colors"
+                    onClick={() => setIsOpen(false)}
                   >
-                    About
-                  </a>
-                  <a
-                    href="#"
+                    Want
+                  </Link>
+                  <Link
+                    href="/search?listingType=RENT"
                     className="text-lg hover:text-teal-200 transition-colors"
+                    onClick={() => setIsOpen(false)}
                   >
-                    Contact
-                  </a>
-                  <a
-                    href="#"
+                    Rent
+                  </Link>
+                  <Link
+                    href="/search?listingType=HIRE"
                     className="text-lg hover:text-teal-200 transition-colors"
+                    onClick={() => setIsOpen(false)}
                   >
-                    Profile
-                  </a>
+                    Hire
+                  </Link>
+                  <Link
+                    href="/search"
+                    className="text-lg hover:text-teal-200 transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Search
+                  </Link>
                   <div className="pt-5 space-y-3">
                     {isLoading ? (
                       <div className="w-full h-10 bg-teal-700 rounded animate-pulse"></div>

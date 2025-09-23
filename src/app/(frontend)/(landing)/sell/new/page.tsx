@@ -24,6 +24,9 @@ export default function QuickAdCreatePage() {
   const { mutate: createAd, isPending } = useSetupAd();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
+    // Listing type
+    listingType: "SELL",
+    
     // Basic info
     type: "CAR", // API enum value
     brand: "",
@@ -194,6 +197,7 @@ export default function QuickAdCreatePage() {
       title,
       description: formData.description || "No description provided",
       type: formData.type as any,
+      listingType: formData.listingType as any,
       price,
 
       // Common vehicle fields
@@ -255,7 +259,13 @@ export default function QuickAdCreatePage() {
   const canProceed = () => {
     switch(currentStep) {
       case 1:
-        // Basic vehicle info required - depends on vehicle type
+        // Basic vehicle info required - but relaxed for non-SELL types
+        if (formData.listingType !== "SELL") {
+          // For WANT, RENT, HIRE - only require listing type and vehicle type
+          return formData.listingType && formData.type;
+        }
+        
+        // For SELL - require detailed information as before
         if (["AUTO_SERVICE", "RENTAL", "MAINTENANCE"].includes(formData.type)) {
           return formData.type;
         }
@@ -275,10 +285,16 @@ export default function QuickAdCreatePage() {
         return basicRequired && yearRequired;
         
       case 2:
-        // Vehicle details required
+        // Vehicle details required - but relaxed for non-SELL types
+        if (formData.listingType !== "SELL") {
+          // For WANT, RENT, HIRE - only require description
+          return formData.description;
+        }
+        
+        // For SELL - require detailed information as before
         let detailsRequired = formData.price && formData.condition && formData.description;
         
-        // Type-specific required fields
+        // Type-specific required fields for SELL
         if (formData.type === "CAR") {
           detailsRequired = detailsRequired && formData.fuelType && formData.transmission;
         } else if (formData.type === "MOTORCYCLE") {
@@ -298,7 +314,7 @@ export default function QuickAdCreatePage() {
         return detailsRequired;
         
       case 3:
-        // Contact info required
+        // Contact info required for all listing types
         return formData.name && formData.phoneNumber && formData.province && formData.district && formData.city && formData.location && formData.termsAndConditions;
         
       default:
@@ -308,6 +324,37 @@ export default function QuickAdCreatePage() {
 
   // Render dynamic vehicle fields based on type
   const renderVehicleFields = () => {
+    // For non-SELL types, show minimal fields
+    if (formData.listingType !== "SELL") {
+      return (
+        <>
+          <div>
+            <label className="block text-sm font-medium mb-1">Brand (optional)</label>
+            <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select brand" />
+              </SelectTrigger>
+              <SelectContent>
+                {vehicleMakes.map((make) => (
+                  <SelectItem key={make} value={make}>{make}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">Model (optional)</label>
+            <Input 
+              placeholder="Enter model" 
+              value={formData.model}
+              onChange={(e) => handleInputChange("model", e.target.value)}
+            />
+          </div>
+        </>
+      );
+    }
+    
+    // For SELL type, show full form based on vehicle type
     switch (formData.type) {
       case "CAR":
         return (
@@ -856,6 +903,47 @@ export default function QuickAdCreatePage() {
 
   // Render step 2 dynamic fields based on vehicle type
   const renderStep2Fields = () => {
+    // For non-SELL types, show minimal fields
+    if (formData.listingType !== "SELL") {
+      return (
+        <>
+          <div>
+            <label className="block text-sm font-medium mb-1">Budget/Price Range (optional)</label>
+            <Input 
+              type="number" 
+              placeholder="e.g., 2500000" 
+              value={formData.price}
+              onChange={(e) => handleInputChange("price", e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              {formData.listingType === "WANT" ? "Your budget range" : 
+               formData.listingType === "RENT" ? "Monthly rent amount" : 
+               "Expected price range"}
+            </p>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">Preferred Condition (optional)</label>
+            <Select 
+              value={formData.condition} 
+              onValueChange={(value) => handleInputChange("condition", value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Any condition" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Any condition</SelectItem>
+                <SelectItem value="New">Brand New</SelectItem>
+                <SelectItem value="Reconditioned">Reconditioned</SelectItem>
+                <SelectItem value="Used">Used</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </>
+      );
+    }
+    
+    // For SELL type, show full detailed form
     switch (formData.type) {
       case "CAR":
         return (
@@ -1260,6 +1348,24 @@ export default function QuickAdCreatePage() {
           {/* Step 1: Basic Vehicle Info */}
           {currentStep === 1 && (
             <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">What do you want to do?<span className="text-red-500">*</span></label>
+                <Select 
+                  value={formData.listingType} 
+                  onValueChange={(value) => handleInputChange("listingType", value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select listing type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="SELL">Sell</SelectItem>
+                    <SelectItem value="WANT">Want to Buy</SelectItem>
+                    <SelectItem value="RENT">Rent Out</SelectItem>
+                    <SelectItem value="HIRE">Hire</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
               <div>
                 <label className="block text-sm font-medium mb-1">Vehicle Type<span className="text-red-500">*</span></label>
                 <Select 

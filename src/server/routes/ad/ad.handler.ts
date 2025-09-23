@@ -281,19 +281,21 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     const page = query.page ?? "1";
     const limit = query.limit ?? "10";
     const search = query.search ?? "";
+    const listingType = query.listingType ?? "";
 
     const session = c.get("session");
     const user = c.get("user");
 
+    console.log("Session : ", session);
     // Convert to numbers and validate
     const pageNum = Math.max(1, parseInt(page));
     const limitNum = Math.max(1, Math.min(100, parseInt(limit))); // Cap at 100 items
     const offset = (pageNum - 1) * limitNum;
 
-    // Build the where condition for efficient searching
-    let whereCondition: any = {};
 
-    // FIX: Now using the converted boolean value instead of the string
+    // --- Refactored filter logic: always use top-level AND array ---
+    const andFilters: any[] = [];
+
     // Filter by current user if filterByUser is true
     if (query.filterByUser === true) {
       if (session?.userId === null) {
@@ -302,81 +304,126 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
           HttpStatusCodes.UNAUTHORIZED
         );
       }
-      whereCondition.createdBy = session?.userId;
+      andFilters.push({ createdBy: session?.userId });
     }
 
     // Add search functionality if search term is provided
     if (search && search.trim() !== "") {
-      const searchCondition = {
+      andFilters.push({
         OR: [
-          {
-            title: {
-              contains: search,
-              mode: "insensitive",
-            },
-          },
-          {
-            description: {
-              contains: search,
-              mode: "insensitive",
-            },
-          },
-          {
-            brand: {
-              contains: search,
-              mode: "insensitive",
-            },
-          },
-          {
-            model: {
-              contains: search,
-              mode: "insensitive",
-            },
-          },
+          { title: { contains: search, mode: "insensitive" } },
+          { description: { contains: search, mode: "insensitive" } },
+          { brand: { contains: search, mode: "insensitive" } },
+          { model: { contains: search, mode: "insensitive" } },
         ],
-      };
+      });
+    }
 
-      // If we already have user filter, combine with AND
-      if (whereCondition.createdBy) {
-        whereCondition = {
-          AND: [{ createdBy: whereCondition.createdBy }, searchCondition],
-        };
+    // Add listingType filtering if provided
+    if (listingType && listingType.trim() !== "" && listingType.toLowerCase() !== "all") {
+      const listingTypeValue = listingType.toUpperCase();
+      console.log("Filtering by listingType:", listingTypeValue);
+      const validListingTypes = ["SELL", "WANT", "RENT", "HIRE"];
+      if (!validListingTypes.includes(listingTypeValue)) {
+        console.log("Invalid listingType:", listingTypeValue);
+        return c.json(
+          { message: "Invalid listing type. Must be one of: SELL, WANT, RENT, HIRE" },
+          400
+        );
+      }
+      if (listingTypeValue === "SELL") {
+        // Include documents where listingType is explicitly SELL or where listingType is not one of the known values
+        // This captures legacy documents where the field may be missing or invalid.
+        andFilters.push({ OR: [ { listingType: "SELL" }, { listingType: { notIn: validListingTypes } } ] });
       } else {
-        whereCondition = searchCondition;
+        andFilters.push({ listingType: listingTypeValue });
+      }
+    }
+
+    // Compose final whereCondition
+    let whereCondition: any = {};
+    if (andFilters.length === 1) {
+      whereCondition = andFilters[0];
+    } else if (andFilters.length > 1) {
+      whereCondition = { AND: andFilters };
+    }
+
+    // Debug: Log the final whereCondition before count query
+    console.log("[DEBUG] whereCondition before count:", JSON.stringify(whereCondition, null, 2));
+
+    // Quick validation: Prisma does not allow nested AND/OR at the top level
+    if (whereCondition && typeof whereCondition === "object") {
+      const keys = Object.keys(whereCondition);
+      if (keys.length === 1 && ["AND", "OR"].includes(keys[0]) && Array.isArray(whereCondition[keys[0]])) {
+        // Check for nested AND/OR inside another AND/OR
+        const arr = whereCondition[keys[0]];
+        for (const cond of arr) {
+          if (cond && typeof cond === "object") {
+            const innerKeys = Object.keys(cond);
+            if (innerKeys.length === 1 && ["AND", "OR"].includes(innerKeys[0]) && Array.isArray(cond[innerKeys[0]])) {
+              console.error("[ERROR] Nested AND/OR detected in whereCondition. Prisma does not support this structure.");
+              return c.json(
+                { message: "Invalid filter structure: Nested AND/OR detected. Please check filter logic." },
+                400
+              );
+            }
+          }
+        }
       }
     }
 
     // Count query for total number of records
-    const totalAds = await prisma.ad.count({
-      where: whereCondition,
-    });
+    let totalAds;
+    try {
+      totalAds = await prisma.ad.count({
+        where: whereCondition,
+      });
+      console.log("Total ads found:", totalAds);
+    } catch (countError: any) {
+      console.error("Error in count query:", countError);
+      // Temporarily return error details to help debugging locally
+      return c.json(
+        { message: "Database error while counting ads", details: countError.message || String(countError) },
+        HttpStatusCodes.INTERNAL_SERVER_ERROR
+      );
+    }
 
     // Main query with pagination
-    const ads = await prisma.ad.findMany({
-      where: whereCondition,
-      skip: offset,
-      take: limitNum,
-      orderBy: {
-        createdAt: "desc",
-      },
-      include: {
-        media: {
-          include: {
-            media: true,
-          },
+    let ads;
+    try {
+      ads = await prisma.ad.findMany({
+        where: whereCondition,
+        skip: offset,
+        take: limitNum,
+        orderBy: {
+          createdAt: "desc",
         },
-        category: true,
-        creator: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
+        include: {
+          media: {
+            include: {
+              media: true,
+            },
           },
+          category: true,
+          creator: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+            },
+          },
+          analytics: true,
         },
-        analytics: true,
-      },
-    });
+      });
+      console.log("Ads query successful, found:", ads.length, "ads");
+    } catch (queryError) {
+      console.error("Error in main query:", queryError);
+      return c.json(
+        { message: "Database error while fetching ads" },
+        HttpStatusCodes.INTERNAL_SERVER_ERROR
+      );
+    }
 
     // Format the response data to ensure it matches the expected types
     const formattedAds = ads.map((ad) => ({
@@ -403,6 +450,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
         | "AUTO_PARTS"
         | "MAINTENANCE"
         | "BOAT",
+  listingType: ((ad as any).listingType as "SELL" | "WANT" | "RENT" | "HIRE") ?? "SELL",
       status: ad.status as
         | "ACTIVE"
         | "EXPIRED"
@@ -554,11 +602,12 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
 
     const createdAd = await prisma.ad.create({
       data: {
-        orgId: session.activeOrganizationId,
+        orgId: session?.activeOrganizationId || null,
         createdBy: user.id,
         title: adDetails.title || "",
         description: adDetails.description || "",
         type: (adDetails.type as AdType) || AdType.CAR,
+        listingType: adDetails.listingType || "SELL",
         status: AdStatus.DRAFT,
         seoSlug: seoSlug,
 
@@ -765,6 +814,7 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
         | "AUTO_PARTS"
         | "MAINTENANCE"
         | "BOAT",
+      listingType: (ad.listingType as "SELL" | "WANT" | "RENT" | "HIRE") ?? "SELL",
       status: ad.status as
         | "ACTIVE"
         | "EXPIRED"

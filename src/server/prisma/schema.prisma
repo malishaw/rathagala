@@ -37,6 +37,13 @@ enum AdType {
   BOAT
 }
 
+enum ListingType {
+  SELL
+  WANT
+  RENT
+  HIRE
+}
+
 enum MediaType {
   IMAGE
   VIDEO
@@ -273,6 +280,7 @@ model Ad {
   title          String
   description    String
   type           AdType
+  listingType    ListingType  @default(SELL)
   price          Float?
   published      Boolean      @default(false)
   isDraft        Boolean      @default(false)
