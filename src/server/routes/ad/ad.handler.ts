@@ -563,12 +563,12 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
       ) as any;
     }
 
-    if (!session?.activeOrganizationId) {
-      return c.json(
-        { message: "Active organization is required to create an ad." },
-        HttpStatusCodes.UNAUTHORIZED
-      );
-    }
+    // if (!session?.activeOrganizationId) {
+    //   return c.json(
+    //     { message: "Active organization is required to create an ad." },
+    //     HttpStatusCodes.UNAUTHORIZED
+    //   );
+    // }
 
     // Prepare Seo slug based on title
     let seoSlug = "";
@@ -602,7 +602,7 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
 
     const createdAd = await prisma.ad.create({
       data: {
-        orgId: session?.activeOrganizationId || null,
+        orgId: session?.activeOrganizationId ||"",
         createdBy: user.id,
         title: adDetails.title || "",
         description: adDetails.description || "",

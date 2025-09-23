@@ -24,6 +24,8 @@ export const list = createRoute({
   description: "Retrieve a list of all ads",
   path: "/",
   method: "get",
+  middleware: [serverAuthMiddleware],
+
   request: {
     query: schemas.querySchema.extend({
       filterByUser: z

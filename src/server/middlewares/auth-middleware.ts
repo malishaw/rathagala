@@ -8,10 +8,13 @@ export const serverAuthMiddleware = createMiddleware(async (c, next) => {
   const session = await auth.api.getSession({ headers: c.req.raw.headers });
 
   if (!session) {
-    return c.json(
-      { message: HttpStatusPhrases.UNAUTHORIZED },
-      HttpStatusCodes.UNAUTHORIZED
-    );
+    // return c.json(
+    //   { message: HttpStatusPhrases.UNAUTHORIZED },
+    //   HttpStatusCodes.UNAUTHORIZED
+    // );
+    c.set("user", null);
+    c.set("session", null);
+    return;
   }
 
   c.set("user", session.user);
