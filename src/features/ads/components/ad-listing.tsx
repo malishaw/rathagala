@@ -2,7 +2,7 @@
 
 import React from "react";
 
-import { useGetAds } from "@/features/ads/api/use-get-ads";
+import { useGetUserAds } from "@/features/ads/api/use-get-user-ads";
 
 import { columns } from "./ad-table/columns";
 import { useAdsTableFilters } from "./ad-table/use-ads-table-filters";
@@ -31,10 +31,11 @@ const vehicleTypeLabels: Record<string, string> = {
 export function AdsTable() {
   const { page, limit, searchQuery } = useAdsTableFilters();
 
-  const { data, error, isPending } = useGetAds({
+  const { data, error, isPending } = useGetUserAds({
     limit,
     page,
-    search: searchQuery
+    search: searchQuery,
+    filterByUser: true,
   });
 
   if (isPending) {

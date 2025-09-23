@@ -310,7 +310,7 @@ export default function ProfilePage() {
             <button
               className={`w-full text-left py-2 px-3 rounded ${
                 sidebarActive === "personal" 
-                  ? "text-blue-600 font-medium" 
+                  ? "text-teal-800 font-medium" 
                   : "text-slate-700 hover:bg-slate-50"
               }`}
               onClick={() => setSidebarActive("personal")}
@@ -321,7 +321,7 @@ export default function ProfilePage() {
             <button
               className={`w-full text-left py-2 px-3 rounded ${
                 sidebarActive === "security" 
-                  ? "text-blue-600 font-medium" 
+                  ? "text-teal-800 font-medium" 
                   : "text-slate-700 hover:bg-slate-50"
               }`}
               onClick={() => setSidebarActive("security")}
@@ -332,7 +332,7 @@ export default function ProfilePage() {
             <button
               className={`w-full text-left py-2 px-3 rounded ${
                 sidebarActive === "ads" 
-                  ? "text-blue-600 font-medium" 
+                  ? "text-teal-800 font-medium" 
                   : "text-slate-700 hover:bg-slate-50"
               }`}
               onClick={() => setSidebarActive("ads")}
@@ -510,7 +510,7 @@ export default function ProfilePage() {
               <div className="flex justify-between items-center mb-5">
                 <h2 className="text-2xl font-medium">My Ads</h2>
                 <Button 
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-teal-800 hover:bg-teal-700"
                   onClick={() => router.push("/sell/new")}
                 >
                   Post New Ad

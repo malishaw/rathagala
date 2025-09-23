@@ -8,6 +8,7 @@ export const querySchema = z.object({
   page: z.string().optional().default("1"),
   limit: z.string().optional().default("10"),
   search: z.string().optional(),
+  listingType: z.string().optional(),
   minPrice: z.string().optional(),
   maxPrice: z.string().optional(),
   location: z.string().optional(),
@@ -69,6 +70,7 @@ export const createAdSchema = z
       ],
       { required_error: "Please select an ad type" }
     ),
+    listingType: z.enum(["SELL", "WANT", "RENT", "HIRE"]).default("SELL"),
 
     // Optional basic fields
     price: z.number().positive().optional(),
@@ -147,195 +149,199 @@ export const createAdSchema = z
     metadata: z.record(z.any()).optional(),
   })
   .superRefine((data, ctx) => {
-    // Type-specific validation rules
-    switch (data.type) {
-      case "CAR":
-        if (!data.condition) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Condition is required for cars",
-            path: ["condition"],
-          });
-        }
-        if (!data.brand) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Brand is required for cars",
-            path: ["brand"],
-          });
-        }
-        if (!data.model) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Model is required for cars",
-            path: ["model"],
-          });
-        }
-        if (!data.manufacturedYear) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Year of Manufacture is required for cars",
-            path: ["manufacturedYear"],
-          });
-        }
-        if (!data.fuelType) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Fuel Type is required for cars",
-            path: ["fuelType"],
-          });
-        }
-        if (!data.transmission) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Transmission is required for cars",
-            path: ["transmission"],
-          });
-        }
-        break;
+    // Only apply detailed validation for SELL listing type
+    // WANT, RENT, HIRE can be more flexible with fewer required fields
+    if (data.listingType === "SELL") {
+      // Type-specific validation rules for SELL listings
+      switch (data.type) {
+        case "CAR":
+          if (!data.condition) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Condition is required for cars",
+              path: ["condition"],
+            });
+          }
+          if (!data.brand) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Brand is required for cars",
+              path: ["brand"],
+            });
+          }
+          if (!data.model) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Model is required for cars",
+              path: ["model"],
+            });
+          }
+          if (!data.manufacturedYear) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Year of Manufacture is required for cars",
+              path: ["manufacturedYear"],
+            });
+          }
+          if (!data.fuelType) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Fuel Type is required for cars",
+              path: ["fuelType"],
+            });
+          }
+          if (!data.transmission) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Transmission is required for cars",
+              path: ["transmission"],
+            });
+          }
+          break;
 
-      case "VAN":
-        if (!data.condition) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Condition is required for vans",
-            path: ["condition"],
-          });
-        }
-        if (!data.brand) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Brand is required for vans",
-            path: ["brand"],
-          });
-        }
-        if (!data.model) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Model is required for vans",
-            path: ["model"],
-          });
-        }
-        if (!data.modelYear) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Model Year is required for vans",
-            path: ["modelYear"],
-          });
-        }
-        break;
+        case "VAN":
+          if (!data.condition) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Condition is required for vans",
+              path: ["condition"],
+            });
+          }
+          if (!data.brand) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Brand is required for vans",
+              path: ["brand"],
+            });
+          }
+          if (!data.model) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Model is required for vans",
+              path: ["model"],
+            });
+          }
+          if (!data.modelYear) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Model Year is required for vans",
+              path: ["modelYear"],
+            });
+          }
+          break;
 
-      case "MOTORCYCLE":
-        if (!data.condition) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Condition is required for motorcycles",
-            path: ["condition"],
-          });
-        }
-        if (!data.bikeType) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Bike Type is required for motorcycles",
-            path: ["bikeType"],
-          });
-        }
-        if (!data.brand) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Brand is required for motorcycles",
-            path: ["brand"],
-          });
-        }
-        if (!data.model) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Model is required for motorcycles",
-            path: ["model"],
-          });
-        }
-        if (!data.manufacturedYear) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Year of Manufacture is required for motorcycles",
-            path: ["manufacturedYear"],
-          });
-        }
-        if (!data.engineCapacity) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Engine Capacity is required for motorcycles",
-            path: ["engineCapacity"],
-          });
-        }
-        break;
+        case "MOTORCYCLE":
+          if (!data.condition) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Condition is required for motorcycles",
+              path: ["condition"],
+            });
+          }
+          if (!data.bikeType) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Bike Type is required for motorcycles",
+              path: ["bikeType"],
+            });
+          }
+          if (!data.brand) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Brand is required for motorcycles",
+              path: ["brand"],
+            });
+          }
+          if (!data.model) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Model is required for motorcycles",
+              path: ["model"],
+            });
+          }
+          if (!data.manufacturedYear) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Year of Manufacture is required for motorcycles",
+              path: ["manufacturedYear"],
+            });
+          }
+          if (!data.engineCapacity) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Engine Capacity is required for motorcycles",
+              path: ["engineCapacity"],
+            });
+          }
+          break;
 
-      case "BICYCLE":
-        if (!data.brand) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Brand is required for bicycles",
-            path: ["brand"],
-          });
-        }
-        if (!data.condition) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Condition is required for bicycles",
-            path: ["condition"],
-          });
-        }
-        break;
+        case "BICYCLE":
+          if (!data.brand) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Brand is required for bicycles",
+              path: ["brand"],
+            });
+          }
+          if (!data.condition) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Condition is required for bicycles",
+              path: ["condition"],
+            });
+          }
+          break;
 
-      case "AUTO_SERVICE":
-      case "RENTAL":
-        if (!data.serviceType) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Service Type is required",
-            path: ["serviceType"],
-          });
-        }
-        break;
+        case "AUTO_SERVICE":
+        case "RENTAL":
+          if (!data.serviceType) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Service Type is required",
+              path: ["serviceType"],
+            });
+          }
+          break;
 
-      case "AUTO_PARTS":
-        if (!data.condition) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Condition is required for auto parts",
-            path: ["condition"],
-          });
-        }
-        if (!data.partType) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Part or Accessory Type is required",
-            path: ["partType"],
-          });
-        }
-        break;
+        case "AUTO_PARTS":
+          if (!data.condition) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Condition is required for auto parts",
+              path: ["condition"],
+            });
+          }
+          if (!data.partType) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Part or Accessory Type is required",
+              path: ["partType"],
+            });
+          }
+          break;
 
-      case "MAINTENANCE":
-        if (!data.maintenanceType) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Maintenance and Repair Type is required",
-            path: ["maintenanceType"],
-          });
-        }
-        break;
+        case "MAINTENANCE":
+          if (!data.maintenanceType) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Maintenance and Repair Type is required",
+              path: ["maintenanceType"],
+            });
+          }
+          break;
 
-      case "HEAVY_DUTY":
-        if (!data.vehicleType) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Vehicle Type is required for heavy duty vehicles",
-            path: ["vehicleType"],
-          });
-        }
-        break;
+        case "HEAVY_DUTY":
+          if (!data.vehicleType) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Vehicle Type is required for heavy duty vehicles",
+              path: ["vehicleType"],
+            });
+          }
+          break;
 
-      // Add validation for other types as needed...
+        // Add validation for other types as needed...
+      }
     }
   });
 

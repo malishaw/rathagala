@@ -72,7 +72,7 @@ export const TwoFactorScalarFieldEnumSchema = z.enum(['id','secret','backupCodes
 
 export const TasksScalarFieldEnumSchema = z.enum(['id','name','done']);
 
-export const AdScalarFieldEnumSchema = z.enum(['id','orgId','createdBy','title','description','type','price','published','isDraft','boosted','featured','boostExpiry','featureExpiry','status','expiryDate','seoTitle','seoDescription','seoSlug','categoryId','tags','condition','brand','model','trimEdition','manufacturedYear','modelYear','mileage','engineCapacity','fuelType','transmission','bodyType','bikeType','vehicleType','serviceType','partType','maintenanceType','name','phoneNumber','whatsappNumber','termsAndConditions','location','address','province','district','city','specialNote','metadata','createdAt','updatedAt']);
+export const AdScalarFieldEnumSchema = z.enum(['id','orgId','createdBy','title','description','type','listingType','price','published','isDraft','boosted','featured','boostExpiry','featureExpiry','status','expiryDate','seoTitle','seoDescription','seoSlug','categoryId','tags','condition','brand','model','trimEdition','manufacturedYear','modelYear','mileage','engineCapacity','fuelType','transmission','bodyType','bikeType','vehicleType','serviceType','partType','maintenanceType','name','phoneNumber','whatsappNumber','termsAndConditions','location','address','province','district','city','specialNote','metadata','createdAt','updatedAt']);
 
 export const AdRevisionScalarFieldEnumSchema = z.enum(['id','adId','version','data','createdAt']);
 
@@ -111,6 +111,10 @@ export const QueryModeSchema = z.enum(['default','insensitive']);
 export const AdTypeSchema = z.enum(['CAR','VAN','MOTORCYCLE','BICYCLE','THREE_WHEEL','BUS','LORRY','HEAVY_DUTY','TRACTOR','AUTO_SERVICE','RENTAL','AUTO_PARTS','MAINTENANCE','BOAT']);
 
 export type AdTypeType = `${z.infer<typeof AdTypeSchema>}`
+
+export const ListingTypeSchema = z.enum(['SELL','WANT','RENT','HIRE']);
+
+export type ListingTypeType = `${z.infer<typeof ListingTypeSchema>}`
 
 export const MediaTypeSchema = z.enum(['IMAGE','VIDEO','PDF','OTHER']);
 
@@ -313,6 +317,7 @@ export type Tasks = z.infer<typeof TasksSchema>
 
 export const AdSchema = z.object({
   type: AdTypeSchema,
+  listingType: ListingTypeSchema,
   status: AdStatusSchema,
   fuelType: FuelTypeSchema.nullable(),
   transmission: TransmissionSchema.nullable(),
@@ -873,6 +878,7 @@ export const AdSelectSchema: z.ZodType<Prisma.AdSelect> = z.object({
   title: z.boolean().optional(),
   description: z.boolean().optional(),
   type: z.boolean().optional(),
+  listingType: z.boolean().optional(),
   price: z.boolean().optional(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -1987,6 +1993,7 @@ export const AdWhereInputSchema: z.ZodType<Prisma.AdWhereInput> = z.object({
   title: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   description: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   type: z.union([ z.lazy(() => EnumAdTypeFilterSchema),z.lazy(() => AdTypeSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => EnumListingTypeFilterSchema),z.lazy(() => ListingTypeSchema) ]).optional(),
   price: z.union([ z.lazy(() => FloatNullableFilterSchema),z.number() ]).optional().nullable(),
   published: z.union([ z.lazy(() => BoolFilterSchema),z.boolean() ]).optional(),
   isDraft: z.union([ z.lazy(() => BoolFilterSchema),z.boolean() ]).optional(),
@@ -2050,6 +2057,7 @@ export const AdOrderByWithRelationInputSchema: z.ZodType<Prisma.AdOrderByWithRel
   title: z.lazy(() => SortOrderSchema).optional(),
   description: z.lazy(() => SortOrderSchema).optional(),
   type: z.lazy(() => SortOrderSchema).optional(),
+  listingType: z.lazy(() => SortOrderSchema).optional(),
   price: z.lazy(() => SortOrderSchema).optional(),
   published: z.lazy(() => SortOrderSchema).optional(),
   isDraft: z.lazy(() => SortOrderSchema).optional(),
@@ -2129,6 +2137,7 @@ export const AdWhereUniqueInputSchema: z.ZodType<Prisma.AdWhereUniqueInput> = z.
   title: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   description: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   type: z.union([ z.lazy(() => EnumAdTypeFilterSchema),z.lazy(() => AdTypeSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => EnumListingTypeFilterSchema),z.lazy(() => ListingTypeSchema) ]).optional(),
   price: z.union([ z.lazy(() => FloatNullableFilterSchema),z.number() ]).optional().nullable(),
   published: z.union([ z.lazy(() => BoolFilterSchema),z.boolean() ]).optional(),
   isDraft: z.union([ z.lazy(() => BoolFilterSchema),z.boolean() ]).optional(),
@@ -2191,6 +2200,7 @@ export const AdOrderByWithAggregationInputSchema: z.ZodType<Prisma.AdOrderByWith
   title: z.lazy(() => SortOrderSchema).optional(),
   description: z.lazy(() => SortOrderSchema).optional(),
   type: z.lazy(() => SortOrderSchema).optional(),
+  listingType: z.lazy(() => SortOrderSchema).optional(),
   price: z.lazy(() => SortOrderSchema).optional(),
   published: z.lazy(() => SortOrderSchema).optional(),
   isDraft: z.lazy(() => SortOrderSchema).optional(),
@@ -2251,6 +2261,7 @@ export const AdScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.AdScalarWh
   title: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
   description: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
   type: z.union([ z.lazy(() => EnumAdTypeWithAggregatesFilterSchema),z.lazy(() => AdTypeSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => EnumListingTypeWithAggregatesFilterSchema),z.lazy(() => ListingTypeSchema) ]).optional(),
   price: z.union([ z.lazy(() => FloatNullableWithAggregatesFilterSchema),z.number() ]).optional().nullable(),
   published: z.union([ z.lazy(() => BoolWithAggregatesFilterSchema),z.boolean() ]).optional(),
   isDraft: z.union([ z.lazy(() => BoolWithAggregatesFilterSchema),z.boolean() ]).optional(),
@@ -4039,6 +4050,7 @@ export const AdCreateInputSchema: z.ZodType<Prisma.AdCreateInput> = z.object({
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -4101,6 +4113,7 @@ export const AdUncheckedCreateInputSchema: z.ZodType<Prisma.AdUncheckedCreateInp
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -4158,6 +4171,7 @@ export const AdUpdateInputSchema: z.ZodType<Prisma.AdUpdateInput> = z.object({
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -4219,6 +4233,7 @@ export const AdUncheckedUpdateInputSchema: z.ZodType<Prisma.AdUncheckedUpdateInp
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -4279,6 +4294,7 @@ export const AdCreateManyInputSchema: z.ZodType<Prisma.AdCreateManyInput> = z.ob
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -4328,6 +4344,7 @@ export const AdUpdateManyMutationInputSchema: z.ZodType<Prisma.AdUpdateManyMutat
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -4378,6 +4395,7 @@ export const AdUncheckedUpdateManyInputSchema: z.ZodType<Prisma.AdUncheckedUpdat
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -5895,6 +5913,13 @@ export const EnumAdTypeFilterSchema: z.ZodType<Prisma.EnumAdTypeFilter> = z.obje
   not: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => NestedEnumAdTypeFilterSchema) ]).optional(),
 }).strict();
 
+export const EnumListingTypeFilterSchema: z.ZodType<Prisma.EnumListingTypeFilter> = z.object({
+  equals: z.lazy(() => ListingTypeSchema).optional(),
+  in: z.lazy(() => ListingTypeSchema).array().optional(),
+  notIn: z.lazy(() => ListingTypeSchema).array().optional(),
+  not: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => NestedEnumListingTypeFilterSchema) ]).optional(),
+}).strict();
+
 export const FloatNullableFilterSchema: z.ZodType<Prisma.FloatNullableFilter> = z.object({
   equals: z.number().optional().nullable(),
   in: z.number().array().optional().nullable(),
@@ -6025,6 +6050,7 @@ export const AdCountOrderByAggregateInputSchema: z.ZodType<Prisma.AdCountOrderBy
   title: z.lazy(() => SortOrderSchema).optional(),
   description: z.lazy(() => SortOrderSchema).optional(),
   type: z.lazy(() => SortOrderSchema).optional(),
+  listingType: z.lazy(() => SortOrderSchema).optional(),
   price: z.lazy(() => SortOrderSchema).optional(),
   published: z.lazy(() => SortOrderSchema).optional(),
   isDraft: z.lazy(() => SortOrderSchema).optional(),
@@ -6083,6 +6109,7 @@ export const AdMaxOrderByAggregateInputSchema: z.ZodType<Prisma.AdMaxOrderByAggr
   title: z.lazy(() => SortOrderSchema).optional(),
   description: z.lazy(() => SortOrderSchema).optional(),
   type: z.lazy(() => SortOrderSchema).optional(),
+  listingType: z.lazy(() => SortOrderSchema).optional(),
   price: z.lazy(() => SortOrderSchema).optional(),
   published: z.lazy(() => SortOrderSchema).optional(),
   isDraft: z.lazy(() => SortOrderSchema).optional(),
@@ -6133,6 +6160,7 @@ export const AdMinOrderByAggregateInputSchema: z.ZodType<Prisma.AdMinOrderByAggr
   title: z.lazy(() => SortOrderSchema).optional(),
   description: z.lazy(() => SortOrderSchema).optional(),
   type: z.lazy(() => SortOrderSchema).optional(),
+  listingType: z.lazy(() => SortOrderSchema).optional(),
   price: z.lazy(() => SortOrderSchema).optional(),
   published: z.lazy(() => SortOrderSchema).optional(),
   isDraft: z.lazy(() => SortOrderSchema).optional(),
@@ -6190,6 +6218,16 @@ export const EnumAdTypeWithAggregatesFilterSchema: z.ZodType<Prisma.EnumAdTypeWi
   _count: z.lazy(() => NestedIntFilterSchema).optional(),
   _min: z.lazy(() => NestedEnumAdTypeFilterSchema).optional(),
   _max: z.lazy(() => NestedEnumAdTypeFilterSchema).optional()
+}).strict();
+
+export const EnumListingTypeWithAggregatesFilterSchema: z.ZodType<Prisma.EnumListingTypeWithAggregatesFilter> = z.object({
+  equals: z.lazy(() => ListingTypeSchema).optional(),
+  in: z.lazy(() => ListingTypeSchema).array().optional(),
+  notIn: z.lazy(() => ListingTypeSchema).array().optional(),
+  not: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => NestedEnumListingTypeWithAggregatesFilterSchema) ]).optional(),
+  _count: z.lazy(() => NestedIntFilterSchema).optional(),
+  _min: z.lazy(() => NestedEnumListingTypeFilterSchema).optional(),
+  _max: z.lazy(() => NestedEnumListingTypeFilterSchema).optional()
 }).strict();
 
 export const FloatNullableWithAggregatesFilterSchema: z.ZodType<Prisma.FloatNullableWithAggregatesFilter> = z.object({
@@ -8003,6 +8041,10 @@ export const EnumAdTypeFieldUpdateOperationsInputSchema: z.ZodType<Prisma.EnumAd
   set: z.lazy(() => AdTypeSchema).optional()
 }).strict();
 
+export const EnumListingTypeFieldUpdateOperationsInputSchema: z.ZodType<Prisma.EnumListingTypeFieldUpdateOperationsInput> = z.object({
+  set: z.lazy(() => ListingTypeSchema).optional()
+}).strict();
+
 export const NullableFloatFieldUpdateOperationsInputSchema: z.ZodType<Prisma.NullableFloatFieldUpdateOperationsInput> = z.object({
   set: z.number().optional().nullable(),
   increment: z.number().optional(),
@@ -8861,6 +8903,13 @@ export const NestedEnumAdTypeFilterSchema: z.ZodType<Prisma.NestedEnumAdTypeFilt
   not: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => NestedEnumAdTypeFilterSchema) ]).optional(),
 }).strict();
 
+export const NestedEnumListingTypeFilterSchema: z.ZodType<Prisma.NestedEnumListingTypeFilter> = z.object({
+  equals: z.lazy(() => ListingTypeSchema).optional(),
+  in: z.lazy(() => ListingTypeSchema).array().optional(),
+  notIn: z.lazy(() => ListingTypeSchema).array().optional(),
+  not: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => NestedEnumListingTypeFilterSchema) ]).optional(),
+}).strict();
+
 export const NestedFloatNullableFilterSchema: z.ZodType<Prisma.NestedFloatNullableFilter> = z.object({
   equals: z.number().optional().nullable(),
   in: z.number().array().optional().nullable(),
@@ -8928,6 +8977,16 @@ export const NestedEnumAdTypeWithAggregatesFilterSchema: z.ZodType<Prisma.Nested
   _count: z.lazy(() => NestedIntFilterSchema).optional(),
   _min: z.lazy(() => NestedEnumAdTypeFilterSchema).optional(),
   _max: z.lazy(() => NestedEnumAdTypeFilterSchema).optional()
+}).strict();
+
+export const NestedEnumListingTypeWithAggregatesFilterSchema: z.ZodType<Prisma.NestedEnumListingTypeWithAggregatesFilter> = z.object({
+  equals: z.lazy(() => ListingTypeSchema).optional(),
+  in: z.lazy(() => ListingTypeSchema).array().optional(),
+  notIn: z.lazy(() => ListingTypeSchema).array().optional(),
+  not: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => NestedEnumListingTypeWithAggregatesFilterSchema) ]).optional(),
+  _count: z.lazy(() => NestedIntFilterSchema).optional(),
+  _min: z.lazy(() => NestedEnumListingTypeFilterSchema).optional(),
+  _max: z.lazy(() => NestedEnumListingTypeFilterSchema).optional()
 }).strict();
 
 export const NestedFloatNullableWithAggregatesFilterSchema: z.ZodType<Prisma.NestedFloatNullableWithAggregatesFilter> = z.object({
@@ -9316,6 +9375,7 @@ export const AdCreateWithoutCreatorInputSchema: z.ZodType<Prisma.AdCreateWithout
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -9376,6 +9436,7 @@ export const AdUncheckedCreateWithoutCreatorInputSchema: z.ZodType<Prisma.AdUnch
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -9858,6 +9919,7 @@ export const AdScalarWhereInputSchema: z.ZodType<Prisma.AdScalarWhereInput> = z.
   title: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   description: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   type: z.union([ z.lazy(() => EnumAdTypeFilterSchema),z.lazy(() => AdTypeSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => EnumListingTypeFilterSchema),z.lazy(() => ListingTypeSchema) ]).optional(),
   price: z.union([ z.lazy(() => FloatNullableFilterSchema),z.number() ]).optional().nullable(),
   published: z.union([ z.lazy(() => BoolFilterSchema),z.boolean() ]).optional(),
   isDraft: z.union([ z.lazy(() => BoolFilterSchema),z.boolean() ]).optional(),
@@ -10466,6 +10528,7 @@ export const AdCreateWithoutOrgInputSchema: z.ZodType<Prisma.AdCreateWithoutOrgI
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -10526,6 +10589,7 @@ export const AdUncheckedCreateWithoutOrgInputSchema: z.ZodType<Prisma.AdUnchecke
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -11818,6 +11882,7 @@ export const AdCreateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdCreateWitho
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -11879,6 +11944,7 @@ export const AdUncheckedCreateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdUn
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -11951,6 +12017,7 @@ export const AdUpdateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdUpdateWitho
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -12011,6 +12078,7 @@ export const AdUncheckedUpdateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdUn
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -12068,6 +12136,7 @@ export const AdCreateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdCreateWitho
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -12129,6 +12198,7 @@ export const AdUncheckedCreateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdUn
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -12201,6 +12271,7 @@ export const AdUpdateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdUpdateWitho
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -12261,6 +12332,7 @@ export const AdUncheckedUpdateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdUn
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -12318,6 +12390,7 @@ export const AdCreateWithoutCategoryInputSchema: z.ZodType<Prisma.AdCreateWithou
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -12379,6 +12452,7 @@ export const AdUncheckedCreateWithoutCategoryInputSchema: z.ZodType<Prisma.AdUnc
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -12628,6 +12702,7 @@ export const AdCreateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdCreateWithou
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -12689,6 +12764,7 @@ export const AdUncheckedCreateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdUnc
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -12824,6 +12900,7 @@ export const AdUpdateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdUpdateWithou
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -12884,6 +12961,7 @@ export const AdUncheckedUpdateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdUnc
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -13071,6 +13149,7 @@ export const AdCreateWithoutFavoritesInputSchema: z.ZodType<Prisma.AdCreateWitho
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -13132,6 +13211,7 @@ export const AdUncheckedCreateWithoutFavoritesInputSchema: z.ZodType<Prisma.AdUn
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -13271,6 +13351,7 @@ export const AdUpdateWithoutFavoritesInputSchema: z.ZodType<Prisma.AdUpdateWitho
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -13331,6 +13412,7 @@ export const AdUncheckedUpdateWithoutFavoritesInputSchema: z.ZodType<Prisma.AdUn
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -13518,6 +13600,7 @@ export const AdCreateWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdCreateWithou
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -13579,6 +13662,7 @@ export const AdUncheckedCreateWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdUnc
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -13651,6 +13735,7 @@ export const AdUpdateWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdUpdateWithou
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -13711,6 +13796,7 @@ export const AdUncheckedUpdateWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdUnc
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -14158,6 +14244,7 @@ export const AdCreateWithoutShareEventsInputSchema: z.ZodType<Prisma.AdCreateWit
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -14219,6 +14306,7 @@ export const AdUncheckedCreateWithoutShareEventsInputSchema: z.ZodType<Prisma.Ad
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -14291,6 +14379,7 @@ export const AdUpdateWithoutShareEventsInputSchema: z.ZodType<Prisma.AdUpdateWit
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -14351,6 +14440,7 @@ export const AdUncheckedUpdateWithoutShareEventsInputSchema: z.ZodType<Prisma.Ad
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -14471,6 +14561,7 @@ export const AdCreateWithoutReportsInputSchema: z.ZodType<Prisma.AdCreateWithout
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -14532,6 +14623,7 @@ export const AdUncheckedCreateWithoutReportsInputSchema: z.ZodType<Prisma.AdUnch
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -14671,6 +14763,7 @@ export const AdUpdateWithoutReportsInputSchema: z.ZodType<Prisma.AdUpdateWithout
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -14731,6 +14824,7 @@ export const AdUncheckedUpdateWithoutReportsInputSchema: z.ZodType<Prisma.AdUnch
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -14980,6 +15074,7 @@ export const AdCreateWithoutMediaInputSchema: z.ZodType<Prisma.AdCreateWithoutMe
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -15041,6 +15136,7 @@ export const AdUncheckedCreateWithoutMediaInputSchema: z.ZodType<Prisma.AdUnchec
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -15138,6 +15234,7 @@ export const AdUpdateWithoutMediaInputSchema: z.ZodType<Prisma.AdUpdateWithoutMe
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -15198,6 +15295,7 @@ export const AdUncheckedUpdateWithoutMediaInputSchema: z.ZodType<Prisma.AdUnchec
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -15334,6 +15432,7 @@ export const AdCreateManyCreatorInputSchema: z.ZodType<Prisma.AdCreateManyCreato
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -15596,6 +15695,7 @@ export const AdUpdateWithoutCreatorInputSchema: z.ZodType<Prisma.AdUpdateWithout
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -15655,6 +15755,7 @@ export const AdUncheckedUpdateWithoutCreatorInputSchema: z.ZodType<Prisma.AdUnch
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -15713,6 +15814,7 @@ export const AdUncheckedUpdateManyWithoutCreatorInputSchema: z.ZodType<Prisma.Ad
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -15998,6 +16100,7 @@ export const AdCreateManyOrgInputSchema: z.ZodType<Prisma.AdCreateManyOrgInput> 
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -16101,6 +16204,7 @@ export const AdUpdateWithoutOrgInputSchema: z.ZodType<Prisma.AdUpdateWithoutOrgI
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -16160,6 +16264,7 @@ export const AdUncheckedUpdateWithoutOrgInputSchema: z.ZodType<Prisma.AdUnchecke
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -16218,6 +16323,7 @@ export const AdUncheckedUpdateManyWithoutOrgInputSchema: z.ZodType<Prisma.AdUnch
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -16506,6 +16612,7 @@ export const AdCreateManyCategoryInputSchema: z.ZodType<Prisma.AdCreateManyCateg
   title: z.string(),
   description: z.string(),
   type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
   price: z.number().optional().nullable(),
   published: z.boolean().optional(),
   isDraft: z.boolean().optional(),
@@ -16554,6 +16661,7 @@ export const AdUpdateWithoutCategoryInputSchema: z.ZodType<Prisma.AdUpdateWithou
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -16614,6 +16722,7 @@ export const AdUncheckedUpdateWithoutCategoryInputSchema: z.ZodType<Prisma.AdUnc
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
@@ -16672,6 +16781,7 @@ export const AdUncheckedUpdateManyWithoutCategoryInputSchema: z.ZodType<Prisma.A
   title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   type: z.union([ z.lazy(() => AdTypeSchema),z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema),z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
   price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
   isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),

@@ -24,6 +24,7 @@ import {
   Clock,
   Gauge
 } from "lucide-react";
+import { RevealPhoneButton } from "@/components/ui/reveal-phone-button";
 
 export default function AdDetailPage() {
   const { id } = useParams();
@@ -140,7 +141,11 @@ export default function AdDetailPage() {
               Back to Search
             </Button>
             <div className="flex-1">
-              <h1 className="text-lg sm:text-xl font-semibold">{ad.title}</h1>
+              <h1 className="text-lg sm:text-xl font-semibold">
+              {[ad.brand, ad.model, ad.manufacturedYear, ad.vehicleType]
+                .filter(Boolean)
+                .join(" ")}
+              </h1>
             </div>
             <div className="flex items-center space-x-2 mt-2 sm:mt-0">
               <Button
@@ -392,18 +397,45 @@ export default function AdDetailPage() {
 
                 <div className="space-y-2">
                   {ad.phoneNumber && (
-                    <Button className="w-full bg-[#024950] hover:bg-[#036b75] text-white">
-                      <Phone className="w-4 h-4 mr-2" />
-                      Call Seller
-                    </Button>
+                    <div className="mb-2">
+                      {/* Desktop: Masked number, reveal on click, no hyperlink */}
+                      <div className="block sm:hidden">
+                        {/* Mobile: Show as tel: link */}
+                        <a
+                          href={`tel:${ad.phoneNumber}`}
+                          className="w-full inline-block"
+                        >
+                          <Button className="w-full bg-[#024950] hover:bg-[#036b75] text-white">
+                            <Phone className="w-4 h-4 mr-2" />
+                            {ad.phoneNumber}
+                          </Button>
+                        </a>
+                      </div>
+                      <div className="hidden sm:block">
+                        {/* Desktop: Masked, reveal on click */}
+                        <RevealPhoneButton phoneNumber={ad.phoneNumber} />
+                      </div>
+                    </div>
                   )}
-                  <Button
-                    variant="outline"
-                    className="w-full border-[#024950] text-[#024950] hover:bg-[#024950] hover:text-white"
-                  >
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    Send Message
-                  </Button>
+                    <a
+                    href={
+                      ad.whatsappNumber
+                      ? `https://wa.me/${ad.whatsappNumber.replace(/\D/g, "")}`
+                      : `sms:${ad.phoneNumber || ""}`
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full inline-block"
+                    >
+                    <Button
+                      variant="outline"
+                      className="w-full border-[#024950] text-[#024950] hover:bg-[#024950] hover:text-white"
+                      disabled={!ad.whatsappNumber}
+                    >
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      {ad.whatsappNumber ? "WhatsApp" : "Message"}
+                    </Button>
+                    </a>
                 </div>
               </CardContent>
             </Card>
