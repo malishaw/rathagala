@@ -14,8 +14,11 @@ export const serverAuthMiddleware = createMiddleware(async (c, next) => {
     // );
     c.set("user", null);
     c.set("session", null);
-    return;
-  }
+    // Continue the middleware chain as an unauthenticated request.
+    // Previously this returned undefined which caused Hono to report
+    // "Context is not finalized". Always return next() (or a Response).
+    return next();
+  }           
 
   c.set("user", session.user);
   c.set("session", session.session);
