@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -91,6 +91,18 @@ export default function SearchPage() {
     location: searchParams.get('location') || 'all',
     page: parseInt(searchParams.get('page') || '1')
   });
+
+  // Keep filters in sync with URL search params (so navbar links that set listingType work)
+  useEffect(() => {
+    const lt = searchParams.get('listingType') || 'all';
+    setFilters((prev) => {
+      if (prev.listingType !== lt) {
+        return { ...prev, listingType: lt, page: 1 };
+      }
+      return prev;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // Fetch ads with current filters
   const { data, isLoading, error } = useGetAds({
