@@ -78,35 +78,35 @@ export function Header() {
               Home
             </Link>
             <Link
-              href="/search"
+              href="/search?listingType=SELL"
               className="hover:text-teal-200 transition-colors font-medium"
             >
               Sell
             </Link>
             <Link
-              href="/search"
+              href="/search?listingType=WANT"
               className="hover:text-teal-200 transition-colors font-medium"
             >
               Want
             </Link>
             <Link
-              href="/search"
+              href="/search?listingType=RENT"
               className="hover:text-teal-200 transition-colors font-medium"
             >
               Rent
             </Link>
             <Link
-              href="/search"
+              href="/search?listingType=HIRE"
               className="hover:text-teal-200 transition-colors font-medium"
             >
               Hire
             </Link>
-            <Link
+            {/* <Link
               href="/search"
               className="hover:text-teal-200 transition-colors font-medium"
             >
               Search
-            </Link>
+            </Link> */}
             {/* <Link
               href="/about"
               className="hover:text-teal-200 transition-colors font-medium"
