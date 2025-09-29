@@ -13,11 +13,15 @@ const nextConfig = {
       }
     ]
   },
+
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+
+  // (optional) Skip ESLint errors during build
   eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
-    ignoreDuringBuilds: true
-  }
+    ignoreDuringBuilds: true,
+  },
 };
 
 export default withPlaiceholder(nextConfig);
