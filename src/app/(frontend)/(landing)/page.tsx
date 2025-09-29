@@ -466,11 +466,13 @@ export default function VehicleMarketplace() {
                   </SelectTrigger>
                   <SelectContent className="max-h-[280px]">
                     <SelectItem value="any">Any Make</SelectItem>
-                    {vehicleMakes.map((make) => (
-                      <SelectItem key={make} value={make.toLowerCase()}>
-                        {make}
-                      </SelectItem>
-                    ))}
+                    {vehicleMakes.map((make) =>
+                      make ? (
+                        <SelectItem key={make} value={make.toLowerCase()}>
+                          {make}
+                        </SelectItem>
+                      ) : null
+                    )}
                   </SelectContent>
                 </Select>
 
