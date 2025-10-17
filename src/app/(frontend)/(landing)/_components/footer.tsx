@@ -20,12 +20,12 @@ export function Footer() {
             <h4 className="font-semibold mb-6 text-lg">Quick Links</h4>
             <ul className="space-y-3 text-slate-300">
               <li>
-                <a href="#" className="hover:text-white transition-colors">
+                <a href="/" className="hover:text-white transition-colors">
                   Browse Cars
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">
+                <a href="/sell/new" className="hover:text-white transition-colors">
                   Sell Your Car
                 </a>
               </li>
@@ -50,17 +50,17 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">
+                <a href="/contact" className="hover:text-white transition-colors">
                   Contact Us
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">
+                <a href="/terms" className="hover:text-white transition-colors">
                   Terms of Service
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">
+                <a href="/privacy" className="hover:text-white transition-colors">
                   Privacy Policy
                 </a>
               </li>
@@ -70,17 +70,17 @@ export function Footer() {
             <h4 className="font-semibold mb-6 text-lg">Connect</h4>
             <ul className="space-y-3 text-slate-300">
               <li>
-                <a href="#" className="hover:text-white transition-colors">
+                <a href="https://www.facebook.com/rathagala" className="hover:text-white transition-colors">
                   Facebook
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">
+                <a href="Rathagala.lk" className="hover:text-white transition-colors">
                   Instagram
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">
+                <a href="https://www.twitter.com/rathagala" className="hover:text-white transition-colors">
                   Twitter
                 </a>
               </li>

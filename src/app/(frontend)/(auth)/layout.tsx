@@ -19,7 +19,6 @@ export default async function AuthLayout({ children }: Props) {
           <div className="w-full h-[30%] bg-gradient-to-t from-transparent to-black/50 absolute top-0 left-0 z-10" />
           <div className="w-full h-[50%] bg-gradient-to-b from-transparent to-black absolute bottom-0 left-0 z-10" />
 
-          {/* Image Area */}
           <Image
             alt=""
             src={AuthBGImage}
@@ -27,7 +26,7 @@ export default async function AuthLayout({ children }: Props) {
             className="w-full h-full object-cover"
           />
 
-          <div className="relative z-20 items-center">{/* <Logo /> */}</div>
+          <div className="relative z-20 items-center"></div>
           <div className="relative z-20 mt-auto">
             <blockquote className="space-y-2 text-background">
               <p className="text-base font-heading font-semibold pr-28">
