@@ -83,7 +83,10 @@ export default function ContactPage() {
               Contact Us
             </h1>
             <p className="text-xl text-teal-100 mb-6">
-              {`We're here to help with any questions about buying or selling on Rathagala.lk`}
+              {`We're always happy to hear from you! Whether you have a question, need support, or want to partner with us, the Rathagala.lk team is here to help.`}
+            </p>
+            <p className="text-lg text-teal-100">
+              At Rathagala.lk, we value your feedback and strive to make our platform as easy and reliable as possible for vehicle buyers, sellers, and enthusiasts across Sri Lanka.
             </p>
           </div>
         </div>
@@ -103,26 +106,20 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h3 className="font-medium text-slate-800 mb-1">
-                        Email Us
+                        📧 Email Us
                       </h3>
-                      <p className="text-slate-600 text-sm mb-1">
-                        For general inquiries:
+                      <p className="text-slate-600 text-sm mb-2">
+                        For all general inquiries, support requests, or advertising opportunities:
                       </p>
                       <a
                         href="mailto:info@rathagala.lk"
-                        className="text-teal-600 hover:text-teal-700"
+                        className="text-teal-600 hover:text-teal-700 font-medium"
                       >
                         info@rathagala.lk
                       </a>
-                      <p className="text-slate-600 text-sm mt-2 mb-1">
-                        For support:
+                      <p className="text-slate-600 text-xs mt-2">
+                        Our team aims to respond to all emails within 24–48 hours on working days.
                       </p>
-                      <a
-                        href="mailto:support@rathagala.lk"
-                        className="text-teal-600 hover:text-teal-700"
-                      >
-                        support@rathagala.lk
-                      </a>
                     </div>
                   </div>
                 </Card>
@@ -130,18 +127,24 @@ export default function ContactPage() {
                 <Card className="p-6 border-slate-100">
                   <div className="flex gap-4 items-start">
                     <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal-100 text-teal-700">
-                      <Phone className="h-5 w-5" />
+                      <Mail className="h-5 w-5" />
                     </div>
                     <div>
                       <h3 className="font-medium text-slate-800 mb-1">
-                        Call Us
+                        🛠️ Technical Support
                       </h3>
-                      <p className="text-slate-600 text-sm mb-1">
-                        Customer Support:
+                      <p className="text-slate-600 text-sm mb-2">
+                        For issues with posting ads, logging in, or browsing:
                       </p>
-                      <p className="text-teal-600 mb-2">+94 11 123 4567</p>
-                      <p className="text-slate-600 text-sm mb-1">Sales Team:</p>
-                      <p className="text-teal-600">+94 77 123 4567</p>
+                      <a
+                        href="mailto:support@rathagala.lk"
+                        className="text-teal-600 hover:text-teal-700 font-medium"
+                      >
+                        support@rathagala.lk
+                      </a>
+                      <p className="text-slate-600 text-xs mt-2">
+                        We'll do our best to resolve your issue promptly.
+                      </p>
                     </div>
                   </div>
                 </Card>
@@ -153,14 +156,20 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h3 className="font-medium text-slate-800 mb-1">
-                        Visit Us
+                        🏢 Visit or Write to Us
                       </h3>
-                      <p className="text-slate-600 text-sm">
-                        123 Duplication Road
+                      <p className="text-slate-600 text-sm mb-2">
+                        If you'd like to reach us by mail or visit our office:
+                      </p>
+                      <p className="text-slate-700 text-sm">
+                        186, Depanama
                         <br />
-                        Colombo 04
+                        Pannipitiya
                         <br />
                         Sri Lanka
+                      </p>
+                      <p className="text-slate-600 text-xs mt-2">
+                        Office hours: Monday to Friday, 9:00 AM to 6:00 PM
                       </p>
                     </div>
                   </div>
@@ -169,48 +178,60 @@ export default function ContactPage() {
                 <Card className="p-6 border-slate-100">
                   <div className="flex gap-4 items-start">
                     <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal-100 text-teal-700">
-                      <Clock className="h-5 w-5" />
+                      <Mail className="h-5 w-5" />
                     </div>
                     <div>
                       <h3 className="font-medium text-slate-800 mb-1">
-                        Business Hours
+                        💬 Feedback and Suggestions
                       </h3>
-                      <p className="text-slate-600 text-sm mb-1">
-                        Monday - Friday:
+                      <p className="text-slate-600 text-sm">
+                        Your opinion matters to us! If you have ideas for improving Rathagala.lk or have noticed something that could work better, please drop us a message. We appreciate your input and use it to make Rathagala.lk better every day.
                       </p>
-                      <p className="text-slate-700">9:00 AM - 6:00 PM</p>
-                      <p className="text-slate-600 text-sm mt-2 mb-1">
-                        Saturday:
-                      </p>
-                      <p className="text-slate-700">10:00 AM - 3:00 PM</p>
-                      <p className="text-slate-600 text-sm mt-2 mb-1">
-                        Sunday:
-                      </p>
-                      <p className="text-slate-700">Closed</p>
                     </div>
                   </div>
                 </Card>
 
                 {/* Social Media Links */}
-                <div className="flex justify-start gap-4 py-4">
-                  <a
-                    href="#"
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-teal-100 text-teal-700 hover:bg-teal-200 transition-colors"
-                  >
-                    <Facebook className="h-5 w-5" />
-                  </a>
-                  <a
-                    href="#"
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-teal-100 text-teal-700 hover:bg-teal-200 transition-colors"
-                  >
-                    <Instagram className="h-5 w-5" />
-                  </a>
-                  <a
-                    href="#"
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-teal-100 text-teal-700 hover:bg-teal-200 transition-colors"
-                  >
-                    <Twitter className="h-5 w-5" />
-                  </a>
+                <div className="space-y-3">
+                  <h3 className="font-medium text-slate-800">📱 Connect With Us</h3>
+                  <p className="text-slate-600 text-sm mb-3">
+                    Stay in touch and get the latest updates, offers, and new vehicle listings:
+                  </p>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <a
+                        href="https://www.facebook.com/rathagala"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-teal-100 text-teal-700 hover:bg-teal-200 transition-colors"
+                      >
+                        <Facebook className="h-4 w-4" />
+                      </a>
+                      <span className="text-sm text-slate-600">Facebook: https://www.facebook.com/rathagala</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <a
+                        href="https://www.instagram.com/rathagala.lk"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-teal-100 text-teal-700 hover:bg-teal-200 transition-colors"
+                      >
+                        <Instagram className="h-4 w-4" />
+                      </a>
+                      <span className="text-sm text-slate-600">Instagram: Rathagala.lk</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <a
+                        href="https://www.twitter.com/rathagala"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-teal-100 text-teal-700 hover:bg-teal-200 transition-colors"
+                      >
+                        <Twitter className="h-4 w-4" />
+                      </a>
+                      <span className="text-sm text-slate-600">Twitter (X): https://www.twitter.com/rathagala</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                        <span className="text-xs">▶</span>
+                      </div>
+                      <span className="text-sm text-slate-500">YouTube: Coming soon</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -362,19 +383,23 @@ export default function ContactPage() {
               {[
                 {
                   q: "What are your office hours?",
-                  a: "Our office is open Monday to Friday from 9:00 AM to 6:00 PM, and Saturday from 10:00 AM to 3:00 PM. We are closed on Sundays and public holidays."
+                  a: "Our office is open Monday to Friday from 9:00 AM to 6:00 PM. We are closed on weekends and public holidays."
                 },
                 {
                   q: "How quickly do you respond to inquiries?",
-                  a: "We aim to respond to all email inquiries within 24 hours during business days. For urgent matters, we recommend calling our customer support number."
+                  a: "Our team aims to respond to all emails within 24–48 hours on working days. For technical support issues, we'll do our best to resolve your issue promptly."
                 },
                 {
-                  q: "Do you offer vehicle inspections?",
-                  a: "Yes, we partner with certified mechanics who can provide pre-purchase inspections. You can request this service through our contact form or by calling our office."
+                  q: "Where can I find your social media pages?",
+                  a: "You can follow us on Facebook (https://www.facebook.com/rathagala), Instagram (Rathagala.lk), and Twitter/X (https://www.twitter.com/rathagala). Our YouTube channel is coming soon!"
                 },
                 {
-                  q: "Can I visit your office without an appointment?",
-                  a: "While walk-ins are welcome, we recommend scheduling an appointment to ensure that the appropriate team member is available to assist you with your specific needs."
+                  q: "How can I provide feedback about the website?",
+                  a: "Your opinion matters to us! Please send your ideas for improving Rathagala.lk or any suggestions to info@rathagala.lk. We appreciate your input and use it to make our platform better every day."
+                },
+                {
+                  q: "What should I do if I'm having technical issues?",
+                  a: "If you experience any issues while posting an ad, logging in, or browsing the site, please email our support team at support@rathagala.lk with details about the problem."
                 }
               ].map((faq, index) => (
                 <div key={index} className="border-b border-slate-100 pb-5">
