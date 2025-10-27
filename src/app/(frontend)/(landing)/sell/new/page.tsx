@@ -1397,12 +1397,12 @@ export default function QuickAdCreatePage() {
               {/* Dynamic vehicle fields based on type */}
               {renderVehicleFields()}
               
-              <div className="pt-2">
+              {/* <div className="pt-2">
                 <div className="flex items-center bg-blue-50 p-2 rounded-md text-xs text-blue-700">
                   <CheckCircle2 className="h-4 w-4 mr-2 flex-shrink-0" />
                   <span>Title will be auto-generated from these details</span>
                 </div>
-              </div>
+              </div> */}
               
               <Button 
                 className="w-full bg-teal-700 hover:bg-teal-800"
@@ -1427,7 +1427,7 @@ export default function QuickAdCreatePage() {
                 />
               </div>
               
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium mb-1">Condition<span className="text-red-500">*</span></label>
                 <Select 
                   value={formData.condition} 
@@ -1442,7 +1442,7 @@ export default function QuickAdCreatePage() {
                     <SelectItem value="Used">Used</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
+              </div> */}
 
               {/* Dynamic fields based on vehicle type */}
               {renderStep2Fields()}

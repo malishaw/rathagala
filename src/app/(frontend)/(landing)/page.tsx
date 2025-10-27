@@ -55,11 +55,17 @@ const vehicleMakes = [
   "Volvo", "Yamaha"
 ];
 
-// Sri Lankan cities for dropdown
+// Sri Lankan cities for dropdown (expanded)
 const sriLankanCities = [
-  "Colombo", "Kandy", "Galle", "Jaffna", "Negombo", "Batticaloa", "Trincomalee",
-  "Anuradhapura", "Ratnapura", "Kotte", "Moratuwa", "Nuwara Eliya", "Gampaha",
-  "Matara", "Kurunegala", "Badulla", "Hambantota", "Kalmunai", "Vavuniya"
+  "Colombo", "Dehiwala-Mount Lavinia", "Moratuwa", "Kandy", "Gampola", "Matale",
+  "Nuwara Eliya", "Galle", "Matara", "Hambantota", "Jaffna", "Vavuniya",
+  "Trincomalee", "Batticaloa", "Ampara", "Anuradhapura", "Polonnaruwa",
+  "Kurunegala", "Puttalam", "Negombo", "Kalutara", "Ratnapura", "Kottawa",
+  "Kotte", "Homagama", "Kesbewa", "Panadura", "Horana", "Badulla",
+  "Monaragala", "Kilinochchi", "Mannar", "Mullaitivu", "Nawalapitiya",
+  "Talawakele", "Hatton", "Talawakele-Nanuoya", "Ehetuwa", "Point Pedro",
+  "Kegalle", "Maskeliya", "Akkaraipattu", "Kalmunai", "Ambalangoda",
+  "Gampaha", "Wattala", "Beliatta", "Tangalle", "Wariyapola", "Kuliyapitiya"
 ];
 
 // Define filter state interface with updated fields
@@ -81,6 +87,7 @@ interface FilterState {
 
 export default function VehicleMarketplace() {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [cityQuery, setCityQuery] = useState("");
 
   // Initialize filter state (pending filters)
   const [filters, setFilters] = useState<FilterState>({
@@ -502,21 +509,41 @@ export default function VehicleMarketplace() {
                   </SelectContent>
                 </Select>
 
-                {/* City filter */}
+                {/* City filter: Select with an inline search so options list downward */}
                 <Select
                   value={filters.city || "any"}
-                  onValueChange={(value) => handleFilterChange("city", value)}
+                  onValueChange={(value) => {
+                    // clear query when selecting
+                    setCityQuery("");
+                    handleFilterChange("city", value === "any" ? null : value);
+                  }}
                 >
                   <SelectTrigger className="w-full bg-white border-slate-200">
                     <SelectValue placeholder="Any City" />
                   </SelectTrigger>
                   <SelectContent className="max-h-[280px]">
+                    <div className="px-3 pb-2">
+                      <input
+                        aria-label="Search cities"
+                        placeholder="Search city..."
+                        value={cityQuery}
+                        onChange={(e) => setCityQuery(e.target.value)}
+                        className="w-full rounded-md py-2 px-3 bg-white border border-slate-200 text-sm"
+                      />
+                    </div>
+
                     <SelectItem value="any">Any City</SelectItem>
-                    {sriLankanCities.map((city) => (
-                      <SelectItem key={city} value={city.toLowerCase()}>
-                        {city}
-                      </SelectItem>
-                    ))}
+                    {sriLankanCities
+                      .filter((c) =>
+                        cityQuery.trim()
+                          ? c.toLowerCase().includes(cityQuery.toLowerCase())
+                          : true
+                      )
+                      .map((city) => (
+                        <SelectItem key={city} value={city.toLowerCase()}>
+                          {city}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
 
