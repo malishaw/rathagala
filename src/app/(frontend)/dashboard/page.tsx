@@ -3,11 +3,12 @@
 import React from "react";
 import Link from "next/link";
 import { format } from "date-fns";
-import { useGetUserAds } from "@/features/ads/api/use-get-user-ads";
+import { useGetAds } from "@/features/ads/api/use-get-ads";
 import { Car, TrendingUp, Clock, Star, Bell, Lightbulb } from "lucide-react";
 
 export default function DashboardPage() {
-  const latestAdsQuery = useGetUserAds({ page: 1, limit: 5, search: "", filterByUser: true });
+  // Request all ads for admin view
+  const latestAdsQuery = useGetAds({ page: 1, limit: 5, search: "" });
   const { data, isLoading, error } = latestAdsQuery;
 
   const ads = data?.ads ?? [];
@@ -130,7 +131,7 @@ export default function DashboardPage() {
 
               <div className="p-6 border-t border-slate-200 text-right">
                 <Link href="/ads" className="inline-flex items-center text-teal-700 hover:text-teal-800 font-medium hover:underline transition-colors duration-200">
-                  View all my ads
+                  View all ads
                   <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
