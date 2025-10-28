@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useGetAdById } from "@/features/ads/api/use-get-ad-by-id";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,11 +24,18 @@ import {
   Clock,
   Gauge
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 import { RevealPhoneButton } from "@/components/ui/reveal-phone-button";
 
 export default function AdDetailPage() {
   const { id } = useParams();
   const adId = Array.isArray(id) ? id[0] : id;
+  const router = useRouter();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorited, setIsFavorited] = useState(false);
 
@@ -147,7 +154,7 @@ export default function AdDetailPage() {
                 .join(" ")}
               </h1>
             </div>
-            <div className="flex items-center space-x-2 mt-2 sm:mt-0">
+              <div className="flex items-center space-x-2 mt-2 sm:mt-0">
               <Button
                 variant="ghost"
                 size="sm"
@@ -160,13 +167,63 @@ export default function AdDetailPage() {
                   }`}
                 />
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-white hover:bg-white/10"
-              >
-                <Share2 className="w-5 h-5" />
-              </Button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-white hover:bg-white/10"
+                    aria-label="Share"
+                  >
+                    <Share2 className="w-5 h-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="end" className="w-44">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const url = typeof window !== 'undefined' ? window.location.href : '';
+                      const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+                      window.open(shareUrl, '_blank', 'noopener');
+                    }}
+                  >
+                    Facebook
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const url = typeof window !== 'undefined' ? window.location.href : '';
+                      const shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}`;
+                      window.open(shareUrl, '_blank', 'noopener');
+                    }}
+                  >
+                    Twitter
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const url = typeof window !== 'undefined' ? window.location.href : '';
+                      // Instagram does not support direct URL share via web; open Instagram homepage
+                      const shareUrl = `https://www.instagram.com/`;
+                      window.open(shareUrl, '_blank', 'noopener');
+                    }}
+                  >
+                    Instagram
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const url = typeof window !== 'undefined' ? window.location.href : '';
+                      // YouTube doesn't have a direct share for arbitrary URLs; open YouTube homepage
+                      const shareUrl = `https://www.youtube.com/`;
+                      window.open(shareUrl, '_blank', 'noopener');
+                    }}
+                  >
+                    YouTube
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
@@ -456,7 +513,20 @@ export default function AdDetailPage() {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center space-x-2">
-                      <h3 className="font-semibold">{ad.name || "Seller"}</h3>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const sellerId = (ad as any).userId || (ad as any).user_id || (ad as any).sellerId || (ad as any).ownerId || (ad as any).user?.id || (ad as any).seller?.id || (ad as any).createdBy;
+                          if (sellerId) {
+                            router.push(`/search?seller=${encodeURIComponent(String(sellerId))}`);
+                          } else {
+                            router.push(`/search`);
+                          }
+                        }}
+                        className="font-semibold text-left hover:underline cursor-pointer"
+                      >
+                        {ad.name || "Seller"}
+                      </button>
                       <Shield className="w-4 h-4 text-green-500" />
                     </div>
                     <div className="text-sm text-gray-500 mb-2">
@@ -469,7 +539,21 @@ export default function AdDetailPage() {
                       {/* <span className="text-sm font-medium">4.8</span>
                       <span className="text-sm text-gray-500">(5 ads)</span> */}
                     </div>
-                    <Button variant="outline" size="sm" className="w-full">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        // Try common seller id fields on the ad object
+                        const sellerId = (ad as any).userId || (ad as any).user_id || (ad as any).sellerId || (ad as any).ownerId || (ad as any).user?.id || (ad as any).seller?.id || (ad as any).createdBy;
+                        if (sellerId) {
+                          router.push(`/search?seller=${encodeURIComponent(String(sellerId))}`);
+                        } else {
+                          // Fallback: go to search without filter
+                          router.push(`/search`);
+                        }
+                      }}
+                    >
                       View All Ads
                     </Button>
                   </div>
