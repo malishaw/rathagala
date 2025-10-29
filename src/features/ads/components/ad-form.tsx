@@ -445,11 +445,13 @@ const [formData, setFormData] = useState({
       autoTitle = formData.title || "Vehicle Ad";
   }
 
-  // Build the ad data object
+  // Normalize critical fields and build the ad data object
+  const resolvedType = formData.type && formData.type !== "" ? formData.type : (initialData?.type ?? "CAR");
+
   const adData: CreateAdSchema = {
     title: autoTitle,
     description: formData.description,
-    type: formData.type as any,
+    type: resolvedType as any,
     price: formData.price ? parseFloat(formData.price) : undefined,
     
     // Include all the dynamic fields

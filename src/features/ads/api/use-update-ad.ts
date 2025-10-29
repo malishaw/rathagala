@@ -16,16 +16,80 @@ export function useUpdateAd() {
 
   const mutation = useMutation({
     mutationFn: async ({ id, values }: UpdateAdParams) => {
-      // Fix: Use PUT instead of PATCH to match the route configuration
-      // Your ad.routes.ts defines update with "method: "put"" not "patch"
+      // Use PUT to match route configuration
       const res = await client.api.ad[":id"].$put({
         param: { id },
         json: values,
       });
 
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Failed to update ad");
+        // Clone response so we can try parsing as JSON and as text without consuming the body twice
+        const cloned = res.clone();
+        let errJson: any = null;
+        let errText: string | null = null;
+
+        try {
+          errJson = await cloned.json();
+        } catch (e) {
+          // ignore
+        }
+
+        try {
+          errText = await res.text();
+        } catch (e) {
+          // ignore
+        }
+
+        // Build a friendly message from common server validation shapes (e.g. ZodError)
+        let message = `Failed to update ad (status ${res.status})`;
+
+        if (errJson) {
+          // If server supplies a top-level `message` use it
+          if (typeof errJson.message === "string" && errJson.message.trim()) {
+            message = errJson.message;
+          } else if (errJson.error) {
+            // Handle Zod-like error shape: { error: { issues: [ { message, path, ... } ] } }
+            const err = errJson.error;
+            if (Array.isArray(err.issues) && err.issues.length > 0) {
+              try {
+                message = err.issues
+                  .map((iss: any) => {
+                    const path = Array.isArray(iss.path) && iss.path.length ? ` (field: ${iss.path.join(".")})` : "";
+                    return `${iss.message}${path}`;
+                  })
+                  .join("; ");
+              } catch (e) {
+                message = JSON.stringify(err);
+              }
+            } else if (typeof err === "string") {
+              message = err;
+            } else {
+              message = JSON.stringify(err);
+            }
+          } else {
+            // Fallback to stringifying the JSON body
+            try {
+              message = typeof errJson === "string" ? errJson : JSON.stringify(errJson);
+            } catch (e) {
+              // keep default
+            }
+          }
+        } else if (errText && errText.trim()) {
+          message = errText.trim();
+        }
+
+        // Log detailed info to help debugging (status, parsed json, raw text, url)
+        // eslint-disable-next-line no-console
+        console.error("Update ad failed", {
+          status: res.status,
+          statusText: res.statusText,
+          json: errJson,
+          text: errText,
+          url: res.url,
+          message
+        });
+
+        throw new Error(message);
       }
 
       return await res.json();

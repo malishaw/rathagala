@@ -14,247 +14,6 @@ import {
 import { QueryParams } from "./ad.schemas";
 import { AdStatus, AdType } from "@prisma/client";
 
-// ---- List Ads Handler ----
-// export const list: AppRouteHandler<ListRoute> = async (c) => {
-//   try {
-//     // Convert filterByUser to boolean before validation to satisfy Zod
-//     const rawQuery = c.req.query() as any;
-//     let filterByUser: boolean | undefined = undefined;
-//     if (rawQuery.filterByUser !== undefined) {
-//       if (typeof rawQuery.filterByUser === "string") {
-//         filterByUser = rawQuery.filterByUser === "true";
-//       } else if (typeof rawQuery.filterByUser === "boolean") {
-//         filterByUser = rawQuery.filterByUser;
-//       }
-//     }
-//     // Set the normalized query param for Zod validation
-//     c.req.query({
-//       ...rawQuery,
-//       ...(filterByUser !== undefined ? { filterByUser } : {}),
-//     });
-
-//     const query = c.req.query() as any;
-//     const page = query.page ?? "1";
-//     const limit = query.limit ?? "10";
-//     const search = query.search ?? "";
-
-//     const session = c.get("session");
-//     const user = c.get("user");
-
-//     // Convert to numbers and validate
-//     const pageNum = Math.max(1, parseInt(page));
-//     const limitNum = Math.max(1, Math.min(100, parseInt(limit))); // Cap at 100 items
-//     const offset = (pageNum - 1) * limitNum;
-
-//     // Build the where condition for efficient searching
-//     let whereCondition: any = {};
-
-//     // Filter by current user if filterByUser is true
-//     if (query.filterByUser) {
-//       if (!user) {
-//         return c.json(
-//           { message: "Authentication required to filter by user" },
-//           HttpStatusCodes.UNAUTHORIZED
-//         );
-//       }
-//       whereCondition.createdBy = user.id;
-//     }
-
-//     // Add search functionality if search term is provided
-//     if (search && search.trim() !== "") {
-//       const searchCondition = {
-//         OR: [
-//           {
-//             title: {
-//               contains: search,
-//               mode: "insensitive",
-//             },
-//           },
-//           {
-//             description: {
-//               contains: search,
-//               mode: "insensitive",
-//             },
-//           },
-//           {
-//             brand: {
-//               contains: search,
-//               mode: "insensitive",
-//             },
-//           },
-//           {
-//             model: {
-//               contains: search,
-//               mode: "insensitive",
-//             },
-//           },
-//         ],
-//       };
-
-//       // If we already have user filter, combine with AND
-//       if (whereCondition.createdBy) {
-//         whereCondition = {
-//           AND: [{ createdBy: whereCondition.createdBy }, searchCondition],
-//         };
-//       } else {
-//         whereCondition = searchCondition;
-//       }
-//     }
-
-//     // Count query for total number of records
-//     const totalAds = await prisma.ad.count({
-//       where: whereCondition,
-//     });
-
-//     // Main query with pagination
-//     const ads = await prisma.ad.findMany({
-//       where: whereCondition,
-//       skip: offset,
-//       take: limitNum,
-//       orderBy: {
-//         createdAt: "desc",
-//       },
-//       include: {
-//         media: {
-//           include: {
-//             media: true,
-//           },
-//         },
-//         category: true,
-//         creator: {
-//           select: {
-//             id: true,
-//             name: true,
-//             email: true,
-//             image: true,
-//           },
-//         },
-//         analytics: true,
-//       },
-//     });
-
-//     // Format the response data to ensure it matches the expected types
-//     const formattedAds = ads.map((ad) => ({
-//       ...ad,
-//       // Ensure these fields have the correct types
-//       price: ad.price ?? null,
-//       location: ad.location ?? null,
-//       metadata: typeof ad.metadata === "object" ? ad.metadata : null,
-//       tags: ad.tags ?? [],
-
-//       // Handle all enum types explicitly
-//       type: ad.type as
-//         | "CAR"
-//         | "VAN"
-//         | "MOTORCYCLE"
-//         | "BICYCLE"
-//         | "THREE_WHEEL"
-//         | "BUS"
-//         | "LORRY"
-//         | "HEAVY_DUTY"
-//         | "TRACTOR"
-//         | "AUTO_SERVICE"
-//         | "RENTAL"
-//         | "AUTO_PARTS"
-//         | "MAINTENANCE"
-//         | "BOAT",
-//       status: ad.status as
-//         | "ACTIVE"
-//         | "EXPIRED"
-//         | "DRAFT"
-//         | "PENDING_REVIEW"
-//         | "REJECTED",
-//       fuelType: ad.fuelType as
-//         | "PETROL"
-//         | "DIESEL"
-//         | "HYBRID"
-//         | "ELECTRIC"
-//         | "GAS"
-//         | null,
-//       transmission: ad.transmission as "MANUAL" | "AUTOMATIC" | "CVT" | null,
-//       bodyType: ad.bodyType as "SALOON" | "HATCHBACK" | "STATION_WAGON" | null,
-//       bikeType: ad.bikeType as
-//         | "SCOOTER"
-//         | "E_BIKE"
-//         | "MOTORBIKES"
-//         | "QUADRICYCLES"
-//         | null,
-//       vehicleType: ad.vehicleType as
-//         | "BED_TRAILER"
-//         | "BOWSER"
-//         | "BULLDOZER"
-//         | "CRANE"
-//         | "DUMP_TRUCK"
-//         | "EXCAVATOR"
-//         | "LOADER"
-//         | "OTHER"
-//         | null,
-
-//       // Handle all the new dynamic fields
-//       condition: ad.condition ?? null,
-//       brand: ad.brand ?? null,
-//       model: ad.model ?? null,
-//       trimEdition: ad.trimEdition ?? null,
-//       manufacturedYear: ad.manufacturedYear ?? null,
-//       modelYear: ad.modelYear ?? null,
-//       mileage: ad.mileage ?? null,
-//       engineCapacity: ad.engineCapacity ?? null,
-//       serviceType: ad.serviceType ?? null,
-//       partType: ad.partType ?? null,
-//       maintenanceType: ad.maintenanceType ?? null,
-
-//       // Contact & Location fields
-//       name: ad.name ?? null,
-//       phoneNumber: ad.phoneNumber ?? null,
-//       whatsappNumber: ad.whatsappNumber ?? null,
-//       termsAndConditions: ad.termsAndConditions ?? null,
-//       address: ad.address ?? null,
-//       province: ad.province ?? null,
-//       district: ad.district ?? null,
-//       city: ad.city ?? null,
-//       specialNote: ad.specialNote ?? null,
-
-//       // SEO fields
-//       seoTitle: ad.seoTitle ?? null,
-//       seoDescription: ad.seoDescription ?? null,
-//       seoSlug: ad.seoSlug ?? null,
-//       categoryId: ad.categoryId ?? null,
-
-//       // Status fields
-//       published: ad.published ?? false,
-//       isDraft: ad.isDraft ?? true,
-//       boosted: ad.boosted ?? false,
-//       featured: ad.featured ?? false,
-
-//       // Convert Date objects to ISO strings
-//       createdAt: ad.createdAt.toISOString(),
-//       updatedAt: ad.updatedAt.toISOString(),
-//       boostExpiry: ad.boostExpiry?.toISOString() ?? null,
-//       featureExpiry: ad.featureExpiry?.toISOString() ?? null,
-//       expiryDate: ad.expiryDate?.toISOString() ?? null,
-//     }));
-
-//     return c.json(
-//       {
-//         ads: formattedAds,
-//         pagination: {
-//           total: totalAds,
-//           page: pageNum,
-//           limit: limitNum,
-//           totalPages: Math.ceil(totalAds / limitNum),
-//         },
-//       },
-//       HttpStatusCodes.OK
-//     );
-//   } catch (error: any) {
-//     console.error("[GET ALL ADS] Error:", error);
-
-//     return c.json(
-//       { message: HttpStatusPhrases.INTERNAL_SERVER_ERROR },
-//       HttpStatusCodes.INTERNAL_SERVER_ERROR
-//     );
-//   }
-// };
 
 export const list: AppRouteHandler<ListRoute> = async (c) => {
   try {
@@ -391,6 +150,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     // Main query with pagination
     let ads;
     try {
+      // Fetch without nested media to avoid Prisma throwing when a required relation is missing
       ads = await prisma.ad.findMany({
         where: whereCondition,
         skip: offset,
@@ -399,11 +159,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
           createdAt: "desc",
         },
         include: {
-          media: {
-            include: {
-              media: true,
-            },
-          },
+          media: true, // hydrate nested Media manually to tolerate orphaned AdMedia rows
           category: true,
           creator: {
             select: {
@@ -420,10 +176,28 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     } catch (queryError) {
       console.error("Error in main query:", queryError);
       return c.json(
-        { message: "Database error while fetching ads" },
+        { message: "Database error while fetching ads " +queryError},
         HttpStatusCodes.INTERNAL_SERVER_ERROR
       );
     }
+
+    // Hydrate AdMedia.media manually and filter out orphans (AdMedia entries referencing missing Media)
+    const allAdMedia = ads.flatMap((ad: any) => ad.media || []);
+    const mediaIds = Array.from(new Set(allAdMedia.map((m: any) => m.mediaId).filter(Boolean)));
+    let mediaById: Record<string, any> = {};
+    if (mediaIds.length > 0) {
+      const medias = await prisma.media.findMany({ where: { id: { in: mediaIds } } });
+      mediaById = medias.reduce((acc: any, m: any) => {
+        acc[m.id] = m;
+        return acc;
+        }, {} as Record<string, any>);
+    }
+    ads = ads.map((ad: any) => ({
+      ...ad,
+      media: (ad.media || [])
+        .map((am: any) => ({ ...am, media: mediaById[am.mediaId] }))
+        .filter((am: any) => Boolean(am.media)),
+    }));
 
     // Format the response data to ensure it matches the expected types
     const formattedAds = ads.map((ad) => ({
@@ -735,16 +509,13 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
   try {
     const adId = c.req.valid("param").id;
 
-    let ad;
+    let ad: any;
     try {
+      // Do not include nested Media to tolerate orphaned relations; hydrate manually below
       ad = await prisma.ad.findUnique({
         where: { id: adId },
         include: {
-          media: {
-            include: {
-              media: true,
-            },
-          },
+          media: true,
           category: true,
           creator: {
             select: {
@@ -792,11 +563,7 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
         ad = await prisma.ad.findUnique({
           where: { id: adId },
           include: {
-            media: {
-              include: {
-                media: true,
-              },
-            },
+            media: true,
             category: true,
             creator: {
               select: {
@@ -838,6 +605,23 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
         { message: HttpStatusPhrases.NOT_FOUND },
         HttpStatusCodes.NOT_FOUND
       );
+    }
+
+    // Manually hydrate nested Media and filter out orphaned AdMedia entries
+    const adMediaList = (ad.media || []) as Array<any>;
+    const mediaIds = Array.from(new Set(adMediaList.map((m: any) => m.mediaId).filter(Boolean)));
+    if (mediaIds.length > 0) {
+      const medias = await prisma.media.findMany({ where: { id: { in: mediaIds } } });
+      const mediaById = medias.reduce((acc: any, m: any) => {
+        acc[m.id] = m;
+        return acc;
+      }, {} as Record<string, any>);
+      ad = {
+        ...ad,
+        media: adMediaList
+          .map((am: any) => ({ ...am, media: mediaById[am.mediaId] }))
+          .filter((am: any) => Boolean(am.media)),
+      };
     }
 
     // Format dates for the response and ensure all fields have correct types

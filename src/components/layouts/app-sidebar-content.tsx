@@ -6,11 +6,9 @@ import {
   AudioWaveform,
   Command,
   GalleryVerticalEnd,
-  Settings2,
   GraduationCapIcon,
   LayoutDashboard,
   ShieldIcon,
-  UserCog2Icon,
   UsersRoundIcon,
   NewspaperIcon
 } from "lucide-react";
@@ -19,7 +17,6 @@ import { type Session } from "@/lib/auth";
 import { NavMain } from "@/components/layouts/nav-groups/nav-main";
 import { NavOrgManagement } from "./nav-groups/nav-org-management";
 import { NavContent } from "./nav-groups/nav-content";
-import { NavSettings } from "./nav-groups/nav-settings";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 
@@ -94,28 +91,6 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
         icon: NewspaperIcon,
         roles: ["owner", "admin", "member"]
       }
-    ],
-    getSettings: (isAdmin: boolean) => [
-      ...(isAdmin
-        ? [
-            {
-              title: "User Management",
-              url: "/dashboard/user-management",
-              icon: UserCog2Icon
-            }
-          ]
-        : []),
-      {
-        title: "Settings",
-        url: "/dashboard/settings",
-        icon: Settings2,
-        items: [
-          {
-            title: "General",
-            url: "/dashboard/settings"
-          }
-        ]
-      }
     ]
   };
 
@@ -135,8 +110,7 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
           activeMember?.role === "owner" || activeMember?.role === "admin"
         )}
       />
-
-      <NavSettings items={data.getSettings(session.user.role === "admin")} />
+      {/* Settings section removed as requested */}
     </>
   );
 }

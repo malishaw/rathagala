@@ -67,6 +67,7 @@ interface SearchFilters {
   fuelType: string;
   transmission: string;
   location: string;
+  seller: string;
   page: number;
 }
 
@@ -89,6 +90,7 @@ export default function SearchPage() {
     fuelType: searchParams.get('fuelType') || 'all',
     transmission: searchParams.get('transmission') || 'all',
     location: searchParams.get('location') || 'all',
+    seller: searchParams.get('seller') || 'all',
     page: parseInt(searchParams.get('page') || '1')
   });
 
@@ -170,6 +172,14 @@ export default function SearchPage() {
       if (filters.location && filters.location !== 'all' && ad.city?.toLowerCase() !== filters.location.toLowerCase()) {
         return false;
       }
+
+      // Seller filter (match common seller fields)
+      if (filters.seller && filters.seller !== 'all') {
+        const sid = String((ad as any).userId || (ad as any).user_id || (ad as any).sellerId || (ad as any).ownerId || (ad as any).user?.id || (ad as any).seller?.id || (ad as any).createdBy || "");
+        if (!sid || sid !== filters.seller) {
+          return false;
+        }
+      }
       
       return true;
     });
@@ -200,6 +210,7 @@ export default function SearchPage() {
       fuelType: 'all',
       transmission: 'all',
       location: 'all',
+      seller: 'all',
       page: 1
     });
   };
@@ -606,7 +617,9 @@ export default function SearchPage() {
                         {/* Vehicle Image */}
                         <div className="w-32 h-20 flex-shrink-0">
                           <img
-                            src="/placeholder-image.jpg"
+                            src={(Array.isArray((vehicle as any).media) && (vehicle as any).media.length > 0
+                              ? (vehicle as any).media[0]?.media?.url
+                              : "/placeholder-image.jpg") as string}
                             alt={vehicle.title || 'Vehicle'}
                             className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
                           />

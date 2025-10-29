@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useGetAdById } from "@/features/ads/api/use-get-ad-by-id";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,11 +24,18 @@ import {
   Clock,
   Gauge
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 import { RevealPhoneButton } from "@/components/ui/reveal-phone-button";
 
 export default function AdDetailPage() {
   const { id } = useParams();
   const adId = Array.isArray(id) ? id[0] : id;
+  const router = useRouter();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorited, setIsFavorited] = useState(false);
 
@@ -53,17 +60,19 @@ export default function AdDetailPage() {
   }
 
   // Extract media and organize it for the image slider
-  // const images = ad.media && ad.media.length > 0
-  //   ? ad.media.map(item => item.url)
-  //   : ["/placeholder.svg?height=400&width=600&text=No+Image"];
+  const images: string[] = Array.isArray((ad as any).media) && (ad as any).media.length > 0
+    ? (ad as any).media
+        .map((item: any) => item?.media?.url)
+        .filter((u: any) => typeof u === "string" && u.length > 0)
+    : ["/placeholder.svg?height=400&width=600&text=No+Image"];
 
-  // const nextImage = () => {
-  //   setCurrentImageIndex((prev) => (prev + 1) % images.length);
-  // };
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  };
 
-  // const prevImage = () => {
-  //   setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
-  // };
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
 
   const formatPrice = (price: number | null | undefined) => {
     if (!price) return "Price upon request";
@@ -147,7 +156,7 @@ export default function AdDetailPage() {
                 .join(" ")}
               </h1>
             </div>
-            <div className="flex items-center space-x-2 mt-2 sm:mt-0">
+              <div className="flex items-center space-x-2 mt-2 sm:mt-0">
               <Button
                 variant="ghost"
                 size="sm"
@@ -160,13 +169,63 @@ export default function AdDetailPage() {
                   }`}
                 />
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-white hover:bg-white/10"
-              >
-                <Share2 className="w-5 h-5" />
-              </Button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-white hover:bg-white/10"
+                    aria-label="Share"
+                  >
+                    <Share2 className="w-5 h-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="end" className="w-44">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const url = typeof window !== 'undefined' ? window.location.href : '';
+                      const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+                      window.open(shareUrl, '_blank', 'noopener');
+                    }}
+                  >
+                    Facebook
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const url = typeof window !== 'undefined' ? window.location.href : '';
+                      const shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}`;
+                      window.open(shareUrl, '_blank', 'noopener');
+                    }}
+                  >
+                    Twitter
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const url = typeof window !== 'undefined' ? window.location.href : '';
+                      // Instagram does not support direct URL share via web; open Instagram homepage
+                      const shareUrl = `https://www.instagram.com/`;
+                      window.open(shareUrl, '_blank', 'noopener');
+                    }}
+                  >
+                    Instagram
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const url = typeof window !== 'undefined' ? window.location.href : '';
+                      // YouTube doesn't have a direct share for arbitrary URLs; open YouTube homepage
+                      const shareUrl = `https://www.youtube.com/`;
+                      window.open(shareUrl, '_blank', 'noopener');
+                    }}
+                  >
+                    YouTube
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
@@ -179,13 +238,33 @@ export default function AdDetailPage() {
             {/* Image Slider */}
             <Card className="overflow-hidden">
               <div className="relative">
-                {/* <div className="aspect-video bg-gray-200">
-                  <Image
+                <div className="aspect-video bg-gray-200">
+                  <img
                     src={images[currentImageIndex] || "/placeholder.svg"}
                     alt={`Vehicle image ${currentImageIndex + 1}`}
                     className="w-full h-full object-cover"
                   />
-                </div> */}
+                </div>
+
+                {/* Slider Controls */}
+                {images.length > 1 && (
+                  <>
+                    <button
+                      aria-label="Previous image"
+                      onClick={prevImage}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <button
+                      aria-label="Next image"
+                      onClick={nextImage}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </>
+                )}
 
                 {/* Status Badges */}
                 <div className="absolute top-4 left-4 flex space-x-2">
@@ -199,7 +278,7 @@ export default function AdDetailPage() {
               </div>
 
               {/* Thumbnail Reel */}
-              {/* {images.length > 1 && (
+              {images.length > 1 && (
                 <div className="p-4 bg-gray-50">
                   <div className="flex space-x-2 overflow-x-auto">
                     {images.map((image, index) => (
@@ -219,7 +298,7 @@ export default function AdDetailPage() {
                     ))}
                   </div>
                 </div>
-              )} */}
+              )}
             </Card>
 
             {/* Vehicle Details */}
@@ -388,10 +467,16 @@ export default function AdDetailPage() {
                       {formatPrice(ad.price)}
                     </div>
                   )}
-                {ad.city && (
-                  <div className="flex items-center text-gray-600 mb-4">
+                {(ad.city || ad.province) && (
+                  <div className="flex items-center text-gray-600 mb-2">
                     <MapPin className="w-4 h-4 mr-1" />
                     {[ad.city, ad.province].filter(Boolean).join(", ")}
+                  </div>
+                )}
+                {ad.location && (
+                  <div className="flex items-center text-gray-600 mb-4">
+                    <MapPin className="w-4 h-4 mr-1" />
+                    <span>{ad.location}</span>
                   </div>
                 )}
 
@@ -456,7 +541,20 @@ export default function AdDetailPage() {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center space-x-2">
-                      <h3 className="font-semibold">{ad.name || "Seller"}</h3>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const sellerId = (ad as any).userId || (ad as any).user_id || (ad as any).sellerId || (ad as any).ownerId || (ad as any).user?.id || (ad as any).seller?.id || (ad as any).createdBy;
+                          if (sellerId) {
+                            router.push(`/search?seller=${encodeURIComponent(String(sellerId))}`);
+                          } else {
+                            router.push(`/search`);
+                          }
+                        }}
+                        className="font-semibold text-left hover:underline cursor-pointer"
+                      >
+                        {ad.name || "Seller"}
+                      </button>
                       <Shield className="w-4 h-4 text-green-500" />
                     </div>
                     <div className="text-sm text-gray-500 mb-2">
@@ -469,7 +567,21 @@ export default function AdDetailPage() {
                       {/* <span className="text-sm font-medium">4.8</span>
                       <span className="text-sm text-gray-500">(5 ads)</span> */}
                     </div>
-                    <Button variant="outline" size="sm" className="w-full">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        // Try common seller id fields on the ad object
+                        const sellerId = (ad as any).userId || (ad as any).user_id || (ad as any).sellerId || (ad as any).ownerId || (ad as any).user?.id || (ad as any).seller?.id || (ad as any).createdBy;
+                        if (sellerId) {
+                          router.push(`/search?seller=${encodeURIComponent(String(sellerId))}`);
+                        } else {
+                          // Fallback: go to search without filter
+                          router.push(`/search`);
+                        }
+                      }}
+                    >
                       View All Ads
                     </Button>
                   </div>

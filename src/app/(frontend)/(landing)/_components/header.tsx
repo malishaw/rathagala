@@ -81,7 +81,7 @@ export function Header() {
               href="/search?listingType=SELL"
               className="hover:text-teal-200 transition-colors font-medium"
             >
-              Sell
+              Buy
             </Link>
             <Link
               href="/search?listingType=WANT"
