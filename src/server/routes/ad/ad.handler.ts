@@ -150,6 +150,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     // Main query with pagination
     let ads;
     try {
+      // Fetch without nested media to avoid Prisma throwing when a required relation is missing
       ads = await prisma.ad.findMany({
         where: whereCondition,
         skip: offset,
@@ -158,11 +159,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
           createdAt: "desc",
         },
         include: {
-          media: {
-            include: {
-              media: true,
-            },
-          },
+          media: true, // hydrate nested Media manually to tolerate orphaned AdMedia rows
           category: true,
           creator: {
             select: {
@@ -179,10 +176,28 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     } catch (queryError) {
       console.error("Error in main query:", queryError);
       return c.json(
-        { message: "Database error while fetching ads" },
+        { message: "Database error while fetching ads " +queryError},
         HttpStatusCodes.INTERNAL_SERVER_ERROR
       );
     }
+
+    // Hydrate AdMedia.media manually and filter out orphans (AdMedia entries referencing missing Media)
+    const allAdMedia = ads.flatMap((ad: any) => ad.media || []);
+    const mediaIds = Array.from(new Set(allAdMedia.map((m: any) => m.mediaId).filter(Boolean)));
+    let mediaById: Record<string, any> = {};
+    if (mediaIds.length > 0) {
+      const medias = await prisma.media.findMany({ where: { id: { in: mediaIds } } });
+      mediaById = medias.reduce((acc: any, m: any) => {
+        acc[m.id] = m;
+        return acc;
+        }, {} as Record<string, any>);
+    }
+    ads = ads.map((ad: any) => ({
+      ...ad,
+      media: (ad.media || [])
+        .map((am: any) => ({ ...am, media: mediaById[am.mediaId] }))
+        .filter((am: any) => Boolean(am.media)),
+    }));
 
     // Format the response data to ensure it matches the expected types
     const formattedAds = ads.map((ad) => ({
