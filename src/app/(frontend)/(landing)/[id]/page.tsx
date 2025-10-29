@@ -445,10 +445,16 @@ export default function AdDetailPage() {
                       {formatPrice(ad.price)}
                     </div>
                   )}
-                {ad.city && (
-                  <div className="flex items-center text-gray-600 mb-4">
+                {(ad.city || ad.province) && (
+                  <div className="flex items-center text-gray-600 mb-2">
                     <MapPin className="w-4 h-4 mr-1" />
                     {[ad.city, ad.province].filter(Boolean).join(", ")}
+                  </div>
+                )}
+                {ad.location && (
+                  <div className="flex items-center text-gray-600 mb-4">
+                    <MapPin className="w-4 h-4 mr-1" />
+                    <span>{ad.location}</span>
                   </div>
                 )}
 
