@@ -378,12 +378,12 @@ export function MediaGallery({
                                 </div>
                               )}
 
-                              {/* Hover actions */}
-                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                              {/* Hover actions - do not intercept clicks when hidden */}
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 pointer-events-none">
                                 <Button
                                   variant="outline"
                                   size="icon"
-                                  className="h-8 w-8 rounded-full bg-background"
+                                  className="h-8 w-8 rounded-full bg-background pointer-events-auto"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     window.open(media.url, "_blank");
@@ -394,7 +394,7 @@ export function MediaGallery({
                                 <Button
                                   variant="outline"
                                   size="icon"
-                                  className="h-8 w-8 rounded-full bg-background text-destructive hover:text-destructive"
+                                  className="h-8 w-8 rounded-full bg-background text-destructive hover:text-destructive pointer-events-auto"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     if (media)
