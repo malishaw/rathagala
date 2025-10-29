@@ -509,16 +509,13 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
   try {
     const adId = c.req.valid("param").id;
 
-    let ad;
+    let ad: any;
     try {
+      // Do not include nested Media to tolerate orphaned relations; hydrate manually below
       ad = await prisma.ad.findUnique({
         where: { id: adId },
         include: {
-          media: {
-            include: {
-              media: true,
-            },
-          },
+          media: true,
           category: true,
           creator: {
             select: {
@@ -566,11 +563,7 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
         ad = await prisma.ad.findUnique({
           where: { id: adId },
           include: {
-            media: {
-              include: {
-                media: true,
-              },
-            },
+            media: true,
             category: true,
             creator: {
               select: {
@@ -612,6 +605,23 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
         { message: HttpStatusPhrases.NOT_FOUND },
         HttpStatusCodes.NOT_FOUND
       );
+    }
+
+    // Manually hydrate nested Media and filter out orphaned AdMedia entries
+    const adMediaList = (ad.media || []) as Array<any>;
+    const mediaIds = Array.from(new Set(adMediaList.map((m: any) => m.mediaId).filter(Boolean)));
+    if (mediaIds.length > 0) {
+      const medias = await prisma.media.findMany({ where: { id: { in: mediaIds } } });
+      const mediaById = medias.reduce((acc: any, m: any) => {
+        acc[m.id] = m;
+        return acc;
+      }, {} as Record<string, any>);
+      ad = {
+        ...ad,
+        media: adMediaList
+          .map((am: any) => ({ ...am, media: mediaById[am.mediaId] }))
+          .filter((am: any) => Boolean(am.media)),
+      };
     }
 
     // Format dates for the response and ensure all fields have correct types

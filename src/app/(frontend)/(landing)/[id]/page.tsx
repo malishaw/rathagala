@@ -60,17 +60,19 @@ export default function AdDetailPage() {
   }
 
   // Extract media and organize it for the image slider
-  // const images = ad.media && ad.media.length > 0
-  //   ? ad.media.map(item => item.url)
-  //   : ["/placeholder.svg?height=400&width=600&text=No+Image"];
+  const images: string[] = Array.isArray((ad as any).media) && (ad as any).media.length > 0
+    ? (ad as any).media
+        .map((item: any) => item?.media?.url)
+        .filter((u: any) => typeof u === "string" && u.length > 0)
+    : ["/placeholder.svg?height=400&width=600&text=No+Image"];
 
-  // const nextImage = () => {
-  //   setCurrentImageIndex((prev) => (prev + 1) % images.length);
-  // };
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  };
 
-  // const prevImage = () => {
-  //   setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
-  // };
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
 
   const formatPrice = (price: number | null | undefined) => {
     if (!price) return "Price upon request";
@@ -236,13 +238,33 @@ export default function AdDetailPage() {
             {/* Image Slider */}
             <Card className="overflow-hidden">
               <div className="relative">
-                {/* <div className="aspect-video bg-gray-200">
-                  <Image
+                <div className="aspect-video bg-gray-200">
+                  <img
                     src={images[currentImageIndex] || "/placeholder.svg"}
                     alt={`Vehicle image ${currentImageIndex + 1}`}
                     className="w-full h-full object-cover"
                   />
-                </div> */}
+                </div>
+
+                {/* Slider Controls */}
+                {images.length > 1 && (
+                  <>
+                    <button
+                      aria-label="Previous image"
+                      onClick={prevImage}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <button
+                      aria-label="Next image"
+                      onClick={nextImage}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </>
+                )}
 
                 {/* Status Badges */}
                 <div className="absolute top-4 left-4 flex space-x-2">
@@ -256,7 +278,7 @@ export default function AdDetailPage() {
               </div>
 
               {/* Thumbnail Reel */}
-              {/* {images.length > 1 && (
+              {images.length > 1 && (
                 <div className="p-4 bg-gray-50">
                   <div className="flex space-x-2 overflow-x-auto">
                     {images.map((image, index) => (
@@ -276,7 +298,7 @@ export default function AdDetailPage() {
                     ))}
                   </div>
                 </div>
-              )} */}
+              )}
             </Card>
 
             {/* Vehicle Details */}

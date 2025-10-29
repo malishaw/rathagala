@@ -617,7 +617,9 @@ export default function SearchPage() {
                         {/* Vehicle Image */}
                         <div className="w-32 h-20 flex-shrink-0">
                           <img
-                            src="/placeholder-image.jpg"
+                            src={(Array.isArray((vehicle as any).media) && (vehicle as any).media.length > 0
+                              ? (vehicle as any).media[0]?.media?.url
+                              : "/placeholder-image.jpg") as string}
                             alt={vehicle.title || 'Vehicle'}
                             className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
                           />
