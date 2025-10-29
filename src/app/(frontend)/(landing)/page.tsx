@@ -838,11 +838,19 @@ export default function VehicleMarketplace() {
                         <div className="flex">
                           {/* Vehicle Image */}
                           <div className="w-32 h-20 flex-shrink-0">
-                            <img
-                              src="/placeholder-image.jpg"
-                              alt={vehicle.title}
-                              className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
-                            />
+                            {vehicle?.media && vehicle.media.length > 0 && vehicle.media[0]?.media?.url ? (
+                              <img
+                                src={vehicle.media[0].media.url}
+                                alt={vehicle.title}
+                                className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                              />
+                            ) : (
+                              <img
+                                src="/placeholder-image.jpg"
+                                alt={vehicle.title}
+                                className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                              />
+                            )}
                           </div>
 
                           {/* Vehicle Details */}
