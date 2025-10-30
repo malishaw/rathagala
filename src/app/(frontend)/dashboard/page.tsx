@@ -4,14 +4,37 @@ import React from "react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
-import { Car, TrendingUp, Clock, Star, Bell, Lightbulb } from "lucide-react";
+import { useGetOrganizations } from "@/features/organizations/api/use-get-orgs";
+import { useGetUsers } from "@/features/users/api/use-get-users";
+import { Car, TrendingUp, Clock, Star, Bell, Lightbulb, Building2, Users, ArrowRight } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function DashboardPage() {
+  // Get user session
+  const { data: session } = authClient.useSession();
+  const isAdmin = (session?.user as any)?.role === "admin";
+
   // Request all ads for admin view
   const latestAdsQuery = useGetAds({ page: 1, limit: 5, search: "" });
   const { data, isLoading, error } = latestAdsQuery;
 
+  // Fetch organizations for admin
+  const { data: orgsData, isLoading: orgsLoading } = useGetOrganizations({ 
+    page: 1, 
+    limit: 5, 
+    search: "" 
+  });
+
+  // Fetch users for admin
+  const { data: usersData, isLoading: usersLoading } = useGetUsers({ 
+    page: 1, 
+    limit: 5, 
+    search: "" 
+  });
+
   const ads = data?.ads ?? [];
+  const organizations = orgsData?.organizations ?? [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
@@ -38,8 +61,54 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {/* Admin Stats Cards - Show for admin users */}
+            {isAdmin && (
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
+                <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 hover:shadow-xl transition-shadow duration-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-blue-100 rounded-xl">
+                      <TrendingUp className="w-6 h-6 text-blue-600" />
+                    </div>
+                  </div>
+                  <div className="text-sm font-medium text-slate-500 mb-1">Total Ads</div>
+                  <div className="text-3xl font-bold text-slate-800">{data?.pagination?.total ?? "—"}</div>
+                </div>
+
+                <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 hover:shadow-xl transition-shadow duration-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-green-100 rounded-xl">
+                      <Star className="w-6 h-6 text-green-600" />
+                    </div>
+                  </div>
+                  <div className="text-sm font-medium text-slate-500 mb-1">Active Ads</div>
+                  <div className="text-3xl font-bold text-slate-800">{ads.filter(a => a.status === "ACTIVE").length}</div>
+                </div>
+
+                <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 hover:shadow-xl transition-shadow duration-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-purple-100 rounded-xl">
+                      <Building2 className="w-6 h-6 text-purple-600" />
+                    </div>
+                  </div>
+                  <div className="text-sm font-medium text-slate-500 mb-1">Organizations</div>
+                  <div className="text-3xl font-bold text-slate-800">{orgsData?.pagination?.total ?? "—"}</div>
+                </div>
+
+                <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 hover:shadow-xl transition-shadow duration-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-orange-100 rounded-xl">
+                      <Users className="w-6 h-6 text-orange-600" />
+                    </div>
+                  </div>
+                  <div className="text-sm font-medium text-slate-500 mb-1">Users</div>
+                  <div className="text-3xl font-bold text-slate-800">{usersData?.pagination?.total ?? "—"}</div>
+                </div>
+              </div>
+            )}
+
+            {/* Regular Stats Cards - Show for non-admin users */}
+            {!isAdmin && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 hover:shadow-xl transition-shadow duration-200">
                 <div className="flex items-center justify-between mb-4">
                   <div className="p-3 bg-blue-100 rounded-xl">
@@ -60,16 +129,17 @@ export default function DashboardPage() {
                 <div className="text-3xl font-bold text-slate-800">{ads.filter(a => a.status === "ACTIVE").length}</div>
               </div>
 
-              <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 hover:shadow-xl transition-shadow duration-200">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-orange-100 rounded-xl">
-                    <Clock className="w-6 h-6 text-orange-600" />
+                <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 hover:shadow-xl transition-shadow duration-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-orange-100 rounded-xl">
+                      <Clock className="w-6 h-6 text-orange-600" />
+                    </div>
                   </div>
+                  <div className="text-sm font-medium text-slate-500 mb-1">Drafts</div>
+                  <div className="text-3xl font-bold text-slate-800">{ads.filter(a => a.isDraft).length}</div>
                 </div>
-                <div className="text-sm font-medium text-slate-500 mb-1">Drafts</div>
-                <div className="text-3xl font-bold text-slate-800">{ads.filter(a => a.isDraft).length}</div>
               </div>
-            </div>
+            )}
 
             {/* Latest Ads */}
             <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
@@ -139,8 +209,104 @@ export default function DashboardPage() {
               </div>
             </div>
 
+            {/* Organizations Section - Admin Only */}
+            {isAdmin && (
+              <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+                <div className="p-6 border-b border-slate-200">
+                  <h2 className="text-2xl font-bold text-slate-800 mb-2">Organizations</h2>
+                  <p className="text-slate-600">Recent organizations</p>
+                </div>
+
+                <div className="p-6">
+                  {orgsLoading ? (
+                    <div className="text-center py-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
+                      <p className="text-slate-500">Loading organizations…</p>
+                    </div>
+                  ) : organizations.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Building2 className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                      <p className="text-slate-500 font-medium">No organizations yet</p>
+                      <p className="text-slate-400 text-sm mt-1">Organizations will appear here</p>
+                    </div>
+                  ) : (
+                    <ul className="space-y-4">
+                      {organizations.map((org: any) => (
+                        <li key={org.id} className="flex items-center gap-4 p-4 rounded-xl hover:bg-slate-50 transition-colors duration-200 border border-slate-100">
+                          <Avatar className="h-12 w-12 rounded-lg">
+                            {org.logo ? (
+                              <AvatarImage src={org.logo} alt={org.name} />
+                            ) : (
+                              <AvatarFallback className="rounded-lg bg-purple-100 text-purple-600">
+                                <Building2 className="h-6 w-6" />
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
+
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <div className="font-semibold text-slate-800 text-lg">{org.name}</div>
+                                <div className="text-sm text-slate-500 mt-1">
+                                  {org.createdAt ? format(new Date(org.createdAt), "MMM d, yyyy") : "—"}
+                                </div>
+                              </div>
+                              <Link 
+                                href={`/dashboard/organizations/${org.id}`}
+                                className="text-teal-600 hover:text-teal-700 font-medium text-sm flex items-center gap-1"
+                              >
+                                View
+                                <ArrowRight className="h-4 w-4" />
+                              </Link>
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                <div className="p-6 border-t border-slate-200 text-right">
+                  <Link href="/dashboard/organizations" className="inline-flex items-center text-teal-700 hover:text-teal-800 font-medium hover:underline transition-colors duration-200">
+                    View all organizations
+                    <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {/* Users Section - Admin Only */}
+            {isAdmin && (
+              <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+                <div className="p-6 border-b border-slate-200">
+                  <h2 className="text-2xl font-bold text-slate-800 mb-2">Users</h2>
+                  <p className="text-slate-600">Recent user activity</p>
+                </div>
+
+                <div className="p-6">
+                  <div className="text-center py-12">
+                    <Users className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                    <p className="text-slate-500 font-medium">User management coming soon</p>
+                    <p className="text-slate-400 text-sm mt-1">View and manage all users from here</p>
+                  </div>
+                </div>
+
+                <div className="p-6 border-t border-slate-200 text-right">
+                  <Link href="/dashboard/users" className="inline-flex items-center text-teal-700 hover:text-teal-800 font-medium hover:underline transition-colors duration-200">
+                    View all users
+                    <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                </div>
+              </div>
+            )}
+
             {/* Static Content: Recent Activity */}
-            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+            {!isAdmin && (
+              <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
               <div className="p-6 border-b border-slate-200">
                 <h2 className="text-2xl font-bold text-slate-800 mb-2">Recent Activity</h2>
                 <p className="text-slate-600">Your latest interactions and updates</p>
@@ -178,6 +344,7 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
+            )}
           </div>
 
           {/* Sidebar */}

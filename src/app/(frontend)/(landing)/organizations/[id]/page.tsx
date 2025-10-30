@@ -1,16 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { betterFetch } from "@better-fetch/fetch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, MapPin, Phone, Mail, Globe, Calendar, Users, Building2, CheckCircle2, ShieldCheck } from "lucide-react";
+import { Loader2, MapPin, Phone, Mail, Globe, Calendar, Users, Building2, CheckCircle2, ShieldCheck, LayoutDashboard } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
 
 // Define Organization type
 interface Organization {
@@ -52,12 +53,15 @@ interface OrganizationAd {
 
 export default function OrganizationDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const organizationId = params.id as string;
+  const { data: session } = authClient.useSession();
   
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [listings, setListings] = useState<OrganizationAd[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("about");
+  const [isMember, setIsMember] = useState(false);
   
   useEffect(() => {
     const fetchOrganization = async () => {
@@ -89,6 +93,36 @@ export default function OrganizationDetailPage() {
       fetchOrganization();
     }
   }, [organizationId]);
+  
+  // Check membership when session changes
+  useEffect(() => {
+    checkMembership();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
+  
+  // Check if user is member/owner/admin of organization
+  const checkMembership = async () => {
+    if (!session?.user) {
+      setIsMember(false);
+      return;
+    }
+    
+    try {
+      // Check if user is admin
+      const isAdmin = (session.user as any)?.role === "admin";
+      if (isAdmin) {
+        setIsMember(true);
+        return;
+      }
+      
+      // TODO: Check if user is member of this specific organization
+      // For now, we'll just check if they're logged in
+      setIsMember(false);
+    } catch (error) {
+      console.error("Error checking membership:", error);
+      setIsMember(false);
+    }
+  };
   
   const fetchOrganizationListings = async (orgId: string) => {
     try {
@@ -196,6 +230,17 @@ export default function OrganizationDetailPage() {
           </div>
           
           <div className="flex flex-col sm:flex-row gap-3">
+            {/* Dashboard button for members/admins */}
+            {(isMember || (session?.user as any)?.role === "admin") && (
+              <Button 
+                onClick={() => router.push(`/dashboard/organizations/${organizationId}`)}
+                className="bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-2"
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                <span>Dashboard</span>
+              </Button>
+            )}
+            
             {organization.phone && (
               <Button variant="outline" className="flex items-center gap-2">
                 <Phone className="h-4 w-4" />

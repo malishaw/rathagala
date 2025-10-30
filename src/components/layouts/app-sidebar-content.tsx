@@ -10,7 +10,8 @@ import {
   LayoutDashboard,
   ShieldIcon,
   UsersRoundIcon,
-  NewspaperIcon
+  NewspaperIcon,
+  Users
 } from "lucide-react";
 
 import { type Session } from "@/lib/auth";
@@ -67,6 +68,11 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
         title: "Organizations",
         url: "/dashboard/organizations",
         icon: UsersRoundIcon
+      },
+      {
+        title: "Users",
+        url: "/dashboard/users",
+        icon: Users
       }
     ],
     agentManagement: [
