@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { EditIcon, FileEditIcon, ImageIcon, PlusIcon } from "lucide-react";
 
 import { createOrgSchema, CreateOrgSchema } from "../schemas/create-org.schema";
@@ -30,8 +31,13 @@ import { MediaGallery } from "@/modules/media/components/media-gallery";
 import { useCreateOrganization } from "../api/use-create-organization";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-export function AddNewOrganization() {
+type AddNewOrganizationProps = {
+  redirectToDashboard?: boolean;
+};
+
+export function AddNewOrganization({ redirectToDashboard = false }: AddNewOrganizationProps) {
   const [open, setOpen] = useState<boolean>(false);
+  const router = useRouter();
   const { isPending, mutate } = useCreateOrganization();
 
   const form = useForm<CreateOrgSchema>({
@@ -46,9 +52,14 @@ export function AddNewOrganization() {
   async function onSubmit(values: CreateOrgSchema) {
     console.log(values);
     mutate(values, {
-      onSuccess() {
+      onSuccess(data) {
         form.reset();
         setOpen(false);
+        
+        // Optionally redirect to the organization dashboard
+        if (redirectToDashboard && data?.organization?.id) {
+          router.push(`/dashboard/organizations/${data.organization.id}`);
+        }
       }
     });
   }

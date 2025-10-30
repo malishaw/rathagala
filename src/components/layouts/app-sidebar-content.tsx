@@ -33,6 +33,9 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
     if (activeOrganization) router.refresh();
   }, [activeOrganization]);
 
+  // Check if user is admin
+  const isAdmin = (session?.user as any)?.role === "admin";
+
   const data = {
     teams: [
       {
@@ -56,7 +59,10 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
         title: "Dashboard",
         url: "/dashboard",
         icon: LayoutDashboard
-      },
+      }
+    ],
+    // Admin-only navigation items
+    adminNavMain: [
       {
         title: "Organizations",
         url: "/dashboard/organizations",
@@ -96,15 +102,21 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
 
   return (
     <>
+      {/* Main navigation - available to all users */}
       <NavMain items={data.navMain} />
 
-      {activeOrganization.data && activeMember?.role !== "member" && (
+      {/* Admin-only navigation items */}
+      {isAdmin && <NavMain items={data.adminNavMain} />}
+
+      {/* Organization Management - only for admins */}
+      {isAdmin && activeOrganization.data && activeMember?.role !== "member" && (
         <NavOrgManagement
           cmLinks={data.agentManagement}
           activeMemberRole={activeMember?.role || null}
         />
       )}
 
+      {/* Content navigation - available to organization members */}
       <NavContent
         items={data.getContents(
           activeMember?.role === "owner" || activeMember?.role === "admin"

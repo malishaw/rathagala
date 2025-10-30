@@ -40,9 +40,14 @@ export default function SetupOrganizationPage() {
 
   async function onSubmit(values: CreateOrgSchema) {
     mutate(values, {
-      onSuccess() {
+      onSuccess(data) {
         form.reset();
-        router.push("/dashboard");
+        // Redirect to the organization's dashboard
+        if (data?.organization?.id) {
+          router.push(`/dashboard/organizations/${data.organization.id}`);
+        } else {
+          router.push("/dashboard");
+        }
       }
     });
   }

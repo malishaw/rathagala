@@ -53,6 +53,8 @@ export function SignupForm({ className }: Props) {
   async function handleFormSubmit(formData: SignupSchemaT) {
     setIsPending(true);
 
+    const wantsToCreateOrg = formData.registerAsOrganization;
+
     await authClient.signUp.email(
       {
         email: formData.email,
@@ -63,19 +65,43 @@ export function SignupForm({ className }: Props) {
         onRequest: () => {
           toast.loading("Signing up...", { id: toastId });
         },
-        onSuccess: () => {
-          toast.success("Successfully Signed Up!", {
-            id: toastId,
-            description:
-              "Your account has been created !, Check your email for verification link."
-          });
+        onSuccess: async () => {
+          // If user wants to create an organization, automatically sign them in
+          if (wantsToCreateOrg) {
+            toast.success("Successfully Signed Up!", {
+              id: toastId,
+              description: "Signing you in..."
+            });
 
-          form.reset();
-          
-          // If user wants to register as organization, redirect to setup page
-          if (formData.registerAsOrganization) {
-            redirect("/setup-organization");
+            // Automatically sign in the user
+            await authClient.signIn.email(
+              {
+                email: formData.email,
+                password: formData.password
+              },
+              {
+                onSuccess: () => {
+                  form.reset();
+                  toast.success("Redirecting to organization setup...", { id: toastId });
+                  redirect("/setup-organization");
+                },
+                onError: () => {
+                  toast.error("Signup successful, but auto sign-in failed. Please sign in manually.", {
+                    id: toastId
+                  });
+                  form.reset();
+                  redirect("/signin");
+                }
+              }
+            );
           } else {
+            toast.success("Successfully Signed Up!", {
+              id: toastId,
+              description:
+                "Your account has been created !, Check your email for verification link."
+            });
+
+            form.reset();
             redirect("/signin");
           }
         },
