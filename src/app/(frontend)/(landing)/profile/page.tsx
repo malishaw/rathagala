@@ -102,6 +102,14 @@ export default function ProfilePage() {
     fetchUserData();
   }, [router]);
   
+  // Handle hash navigation (e.g., #my-ads)
+  useEffect(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (hash === 'my-ads') {
+      setSidebarActive('ads');
+    }
+  }, []);
+  
   // Handle input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -506,7 +514,7 @@ export default function ProfilePage() {
           
           {/* My Ads - Updated to use the real data from API */}
           {sidebarActive === "ads" && (
-            <div>
+            <div id="my-ads">
               <div className="flex justify-between items-center mb-5">
                 <h2 className="text-2xl font-medium">My Ads</h2>
                 <Button 
@@ -572,7 +580,7 @@ export default function ProfilePage() {
                           variant="ghost" 
                           size="sm" 
                           className="text-slate-500 hover:text-blue-600"
-                          onClick={() => router.push(`/dashboard/ads/${ad.id}`)}
+                          onClick={() => router.push(`/edit-ad/${ad.id}`)}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
