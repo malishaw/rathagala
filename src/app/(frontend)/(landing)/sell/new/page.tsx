@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSetupAd } from "@/features/ads/api/use-setup-ad";
 import { useRouter } from "next/navigation";
 import { CreateAdSchema } from "@/server/routes/ad/ad.schemas";
+import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,7 @@ import { Loader2, Camera, ChevronRight, CheckCircle2 } from "lucide-react";
 export default function QuickAdCreatePage() {
   const router = useRouter();
   const { mutate: createAd, isPending } = useSetupAd();
+  const { data: session } = authClient.useSession();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     // Listing type
@@ -249,7 +251,15 @@ export default function QuickAdCreatePage() {
       { values: adData },
       {
         onSuccess: (data) => {
-          router.push(`/dashboard/ads/${data.id}`);
+          // Check if user is admin
+          const isAdmin = (session?.user as any)?.role === "admin";
+          
+          // Redirect based on user role
+          if (isAdmin) {
+            router.push(`/dashboard/ads/${data.id}`);
+          } else {
+            router.push('/profile#my-ads');
+          }
         }
       }
     );

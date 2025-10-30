@@ -2328,7 +2328,7 @@ const [formData, setFormData] = useState({
             type="button"
             variant="outline"
             disabled={isSubmitting}
-            onClick={() => router.push("/dashboard/ads")}
+            onClick={() => router.back()}
           >
             Cancel
           </Button>
