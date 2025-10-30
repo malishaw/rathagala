@@ -20,13 +20,15 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
+  FormDescription
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { GoogleAuthButton } from "./google-auth-button";
 import { GithubAuthButton } from "./github-auth-button";
 import { Separator } from "@/components/ui/separator";
 import { PasswordInput } from "@/components/ui/password-input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { authClient } from "@/lib/auth-client";
 
 type Props = {
@@ -43,7 +45,8 @@ export function SignupForm({ className }: Props) {
       name: "",
       email: "",
       password: "",
-      confirmPassword: ""
+      confirmPassword: "",
+      registerAsOrganization: false
     }
   });
 
@@ -68,7 +71,13 @@ export function SignupForm({ className }: Props) {
           });
 
           form.reset();
-          redirect("/signin");
+          
+          // If user wants to register as organization, redirect to setup page
+          if (formData.registerAsOrganization) {
+            redirect("/setup-organization");
+          } else {
+            redirect("/signin");
+          }
         },
         onError: (ctx) => {
           toast.error("Signup failed !", {
@@ -154,6 +163,29 @@ export function SignupForm({ className }: Props) {
                   />
                 </FormControl>
                 <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="registerAsOrganization"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    disabled={isPending}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>
+                    Register as an Organization
+                  </FormLabel>
+                  <FormDescription>
+                    You will be able to create an organization after signing up
+                  </FormDescription>
+                </div>
               </FormItem>
             )}
           />

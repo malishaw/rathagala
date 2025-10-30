@@ -14,6 +14,7 @@ export const signupSchema = z
     confirmPassword: z.string({
       required_error: "Confirm password is required !",
     }),
+    registerAsOrganization: z.boolean().optional().default(false),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match !",
