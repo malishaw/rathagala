@@ -21,7 +21,8 @@ export function GithubAuthButton({ mode = "login", className }: Props) {
     startSigninAction(async () => {
       await authClient.signIn.social(
         {
-          provider: "github"
+          provider: "github",
+          callbackURL: "/"
         },
         {
           onRequest: () => {
@@ -29,7 +30,7 @@ export function GithubAuthButton({ mode = "login", className }: Props) {
           },
           // onSuccess: () => {
           //   toast.success("Signed in successfully", { id: toastId });
-          //   router.push("/dashboard");
+          //   router.push("/");
           //   router.refresh();
           // },
           onError: (ctx) => {

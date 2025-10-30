@@ -35,9 +35,9 @@ export default async function authMiddleware(request: NextRequest) {
     );
 
     // If Auth route and Already authenticated,
-    // Redirect back to dashboard
+    // Redirect back to homepage
     if (authRoutes.includes(pathname) && session) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      return NextResponse.redirect(new URL("/", request.url));
     }
 
     // If Protected route and Not authenticated,

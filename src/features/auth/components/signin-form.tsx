@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import Link from "next/link";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -36,6 +37,7 @@ type Props = {
 export function SigninForm({ className }: Props) {
   const [isPending, setIsPending] = useState<boolean>(false);
   const toastId = useId();
+  const router = useRouter();
 
   const form = useForm<SigninSchemaT>({
     resolver: zodResolver(signinSchema),
@@ -52,14 +54,25 @@ export function SigninForm({ className }: Props) {
       {
         email: formData.email,
         password: formData.password,
-        callbackURL: "/dashboard"
+        callbackURL: "/",
       },
       {
         onRequest() {
           toast.loading("Signing in...", { id: toastId });
         },
-        onSuccess() {
+        async onSuccess() {
           toast.success("Successfully Signed in", { id: toastId });
+          try {
+            const res = await fetch("/api/auth/get-session");
+            const { user } = await res.json();
+            if (user?.role === "admin") {
+              router.replace("/dashboard");
+            } else {
+              router.replace("/");
+            }
+          } catch {
+            router.replace("/");
+          }
         },
         onError({ error }) {
           console.log(error);
