@@ -117,23 +117,23 @@ export function SignupForm({ className }: Props) {
   }
 
   return (
-    <div className={cn("grid gap-4", className)}>
+    <div className={cn("grid gap-3", className)}>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleFormSubmit)}
-          className="space-y-4 w-full"
+          className="space-y-2.5 w-full"
         >
           <FormField
             control={form.control}
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-teal-900 font-medium text-sm">Full Name</FormLabel>
+                <FormLabel className="text-teal-900 font-medium text-xs">Full Name</FormLabel>
                 <FormControl>
                   <Input
                     disabled={isPending}
                     placeholder="John R. Doe"
-                    className="bg-white border-teal-200 focus:border-teal-500 focus:ring-teal-500 h-10"
+                    className="bg-white border-teal-200 focus:border-teal-500 focus:ring-teal-500 h-9"
                     {...field}
                   />
                 </FormControl>
@@ -146,12 +146,12 @@ export function SignupForm({ className }: Props) {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-teal-900 font-medium text-sm">Email</FormLabel>
+                <FormLabel className="text-teal-900 font-medium text-xs">Email</FormLabel>
                 <FormControl>
                   <Input
                     disabled={isPending}
                     placeholder="john.doe@example.com"
-                    className="bg-white border-teal-200 focus:border-teal-500 focus:ring-teal-500 h-10"
+                    className="bg-white border-teal-200 focus:border-teal-500 focus:ring-teal-500 h-9"
                     {...field}
                   />
                 </FormControl>
@@ -164,12 +164,12 @@ export function SignupForm({ className }: Props) {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-teal-900 font-medium text-sm">Password</FormLabel>
+                <FormLabel className="text-teal-900 font-medium text-xs">Password</FormLabel>
                 <FormControl>
                   <PasswordInput
                     disabled={isPending}
                     placeholder="***********"
-                    className="bg-white border-teal-200 focus:border-teal-500 focus:ring-teal-500 h-10"
+                    className="bg-white border-teal-200 focus:border-teal-500 focus:ring-teal-500 h-9"
                     {...field}
                   />
                 </FormControl>
@@ -182,12 +182,12 @@ export function SignupForm({ className }: Props) {
             name="confirmPassword"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-teal-900 font-medium text-sm">Confirm Password</FormLabel>
+                <FormLabel className="text-teal-900 font-medium text-xs">Confirm Password</FormLabel>
                 <FormControl>
                   <PasswordInput
                     disabled={isPending}
                     placeholder="***********"
-                    className="bg-white border-teal-200 focus:border-teal-500 focus:ring-teal-500 h-10"
+                    className="bg-white border-teal-200 focus:border-teal-500 focus:ring-teal-500 h-9"
                     {...field}
                   />
                 </FormControl>
@@ -199,7 +199,7 @@ export function SignupForm({ className }: Props) {
             control={form.control}
             name="registerAsOrganization"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+              <FormItem className="flex flex-row items-start space-x-2.5 space-y-0 rounded-md border p-2.5">
                 <FormControl>
                   <Checkbox
                     checked={field.value}
@@ -207,11 +207,11 @@ export function SignupForm({ className }: Props) {
                     disabled={isPending}
                   />
                 </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel>
+                <div className="space-y-0.5 leading-none">
+                  <FormLabel className="text-xs">
                     Register as an Organization
                   </FormLabel>
-                  <FormDescription>
+                  <FormDescription className="text-xs">
                     You will be able to create an organization after signing up
                   </FormDescription>
                 </div>
@@ -220,7 +220,7 @@ export function SignupForm({ className }: Props) {
           />
           <Button 
             type="submit" 
-            className="w-full bg-teal-700 hover:bg-teal-800 text-white font-semibold h-11 shadow-lg transition-all duration-200" 
+            className="w-full bg-teal-700 hover:bg-teal-800 text-white font-semibold h-9 shadow-lg transition-all duration-200" 
             loading={isPending}
           >
             Create Account
@@ -229,13 +229,13 @@ export function SignupForm({ className }: Props) {
       </Form>
 
       {/* Option texts */}
-      <div className="flex items-center text-center justify-center text-sm -mt-2">
-        <Button asChild variant={"link"} className="p-0 h-auto text-teal-700 hover:text-teal-900">
+      <div className="flex items-center text-center justify-center text-xs -mt-1">
+        <Button asChild variant={"link"} className="p-0 h-auto text-teal-700 hover:text-teal-900 text-xs">
           <Link href={"/signin"}>Already have an account? <span className="font-semibold ml-1">Sign In</span></Link>
         </Button>
       </div>
 
-      <div className="relative -my-1">
+      <div className="relative -my-2">
         <div className="absolute inset-0 flex items-center">
           <Separator className="bg-teal-200" />
         </div>
@@ -245,7 +245,7 @@ export function SignupForm({ className }: Props) {
       </div>
 
       {/* Auth Provider Buttons */}
-      <div className="flex flex-col space-y-2.5 -mb-2">
+      <div className="flex flex-col space-y-2 -mb-1">
         <GoogleAuthButton mode="signup" />
       </div>
     </div>

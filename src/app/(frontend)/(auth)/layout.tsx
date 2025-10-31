@@ -18,7 +18,7 @@ export default async function AuthLayout({ children }: Props) {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_rgba(13,148,136,0.15),transparent_50%)]" />
         
         <ScrollArea className="w-full max-w-md relative z-10">
-          <div className="sm:py-12 py-6 sm:px-8 px-2 min-h-[500px] flex flex-col items-center justify-center w-full box-border">
+          <div className="sm:py-8 py-4 sm:px-8 px-2 flex flex-col items-center justify-center w-full box-border">
             {children}
           </div>
         </ScrollArea>
