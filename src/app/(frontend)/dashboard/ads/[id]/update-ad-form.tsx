@@ -6,6 +6,7 @@ import { useUpdateAd } from "@/features/ads/api/use-update-ad";
 import { AdForm } from "@/features/ads/components/ad-form";
 import { CreateAdSchema } from "@/server/routes/ad/ad.schemas";
 import { Loader2 } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
 
 export default function UpdateAdFormPage() {
   const router = useRouter();
@@ -14,13 +15,22 @@ export default function UpdateAdFormPage() {
   
   const { data: ad, isLoading, isError } = useGetAdById({ adId });
   const { mutate: updateAd, isPending } = useUpdateAd();
+  const { data: session } = authClient.useSession();
 
   const handleSubmit = (adData: CreateAdSchema) => {
     updateAd(
       { id: adId, values: adData },
       {
         onSuccess: () => {
-          router.push('/dashboard/ads');
+          // Check if user is admin
+          const isAdmin = (session?.user as any)?.role === "admin";
+          
+          // Redirect based on user role
+          if (isAdmin) {
+            router.push('/dashboard/ads');
+          } else {
+            router.push('/profile#my-ads');
+          }
         },
         onError: (error) => {
           console.error("Error updating ad:", error);

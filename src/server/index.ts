@@ -8,6 +8,7 @@ import { authController } from "@/server/routes/auth/auth.routes";
 import orgRoute from "@/server/routes/orgs/org.index";
 import adRoute from "@/server/routes/ad/ad.index";
 import mediaRoute from "@/server/routes/media/media.index";
+import usersRoute from "@/server/routes/users/users.index";
 
 const app = createApp();
 
@@ -23,7 +24,8 @@ const routes = app
   .route("/auth", authController)
   .route("/organizations", orgRoute)
   .route("/ad", adRoute)
-  .route("/media", mediaRoute);
+  .route("/media", mediaRoute)
+  .route("/users", usersRoute);
 
 export type AppType = typeof routes;
 

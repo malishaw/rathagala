@@ -101,6 +101,7 @@ export function SetupAdDialog() {
           form.reset();
           setOpen(false);
           // Navigate to edit page to complete the ad details
+          // This is just creating a draft, so go to edit page for all users
           router.push(`/dashboard/ads/${data.id}/edit`);
         },
         onError(error) {

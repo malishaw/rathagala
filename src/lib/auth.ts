@@ -31,8 +31,8 @@ export const auth = betterAuth({
       },
 
       allowUserToCreateOrganization(user) {
-        const isAdmin = (user as any)?.role === "admin";
-        return isAdmin;
+        // Allow all authenticated users to create organizations
+        return !!user;
       },
 
       async sendInvitationEmail(data) {
@@ -48,6 +48,15 @@ export const auth = betterAuth({
   ],
   emailAndPassword: {
     enabled: true
+  },
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        defaultValue: "user",
+        required: false
+      }
+    }
   }
 });
 
