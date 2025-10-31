@@ -147,6 +147,7 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
+            )}
 
             {/* Latest Ads */}
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 overflow-hidden hover:border-teal-200 transition-all duration-300">
