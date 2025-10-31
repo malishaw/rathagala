@@ -435,9 +435,9 @@ export default function AdDetailPage() {
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-1">
                       <Eye className="w-4 h-4" />
-                      <span>
+                      {/* <span>
                         {Math.floor(Math.random() * 2000) + 100} views
-                      </span>
+                      </span> */}
                     </div>
                     <div className="flex items-center space-x-1">
                       <Clock className="w-4 h-4" />

@@ -39,7 +39,10 @@ export function GoogleAuthButton({ mode = "login", className }: Props) {
   return (
     <Button
       onClick={handleSocialSignin}
-      className={cn("flex items-center gap-2", className)}
+      className={cn(
+        "flex items-center gap-2 !bg-white/95 border-teal-200 hover:!bg-teal-50 hover:!border-teal-400 hover:shadow-md !text-teal-900 hover:!text-teal-900 transition-all duration-200",
+        className
+      )}
       variant={"outline"}
       icon={<FcGoogle className="size-3" />}
       loading={isPending}

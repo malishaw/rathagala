@@ -1,16 +1,15 @@
-import React from "react";
-import Image from "next/image";
+import { Car } from "lucide-react";
 
-import LogoIpsum from "$/public/assets/logoipsum.svg";
 
 export function Logo() {
   return (
-    <Image
-      alt="logoipsum"
-      src={LogoIpsum}
-      width={200}
-      height={60}
-      className="h-6 w-48 object-contain"
-    />
+    <div className="flex items-center gap-2">
+      <div className="bg-white rounded-lg p-2 shadow-md">
+        <Car className="h-8 w-8 text-teal-700" strokeWidth={2.5} />
+      </div>
+      <span className="text-3xl font-bold text-white tracking-tight">
+        Rathagala<span className="text-teal-300">.lk</span>
+      </span>
+    </div>
   );
 }

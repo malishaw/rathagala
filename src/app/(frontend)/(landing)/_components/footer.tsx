@@ -1,5 +1,4 @@
-import { CarIcon } from "lucide-react";
-import React from "react";
+import { CarIcon, Facebook, Instagram, Twitter, Youtube } from "lucide-react";
 
 export function Footer() {
   return (
@@ -70,22 +69,26 @@ export function Footer() {
             <h4 className="font-semibold mb-6 text-lg">Connect</h4>
             <ul className="space-y-3 text-slate-300">
               <li>
-                <a href="https://www.facebook.com/rathagala" className="hover:text-white transition-colors">
+                <a href="https://www.facebook.com/rathagala" className="hover:text-white transition-colors flex items-center gap-2">
+                  <Facebook className="h-4 w-4" />
                   Facebook
                 </a>
               </li>
               <li>
-                <a href="Rathagala.lk" className="hover:text-white transition-colors">
+                <a href="Rathagala.lk" className="hover:text-white transition-colors flex items-center gap-2">
+                  <Instagram className="h-4 w-4" />
                   Instagram
                 </a>
               </li>
               <li>
-                <a href="https://www.twitter.com/rathagala" className="hover:text-white transition-colors">
+                <a href="https://www.twitter.com/rathagala" className="hover:text-white transition-colors flex items-center gap-2">
+                  <Twitter className="h-4 w-4" />
                   Twitter
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">
+                <a href="#" className="hover:text-white transition-colors flex items-center gap-2">
+                  <Youtube className="h-4 w-4" />
                   YouTube
                 </a>
               </li>
