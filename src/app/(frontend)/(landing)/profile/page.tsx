@@ -5,7 +5,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useGetUserAds } from "@/features/ads/api/use-get-user-ads";
-import { SignoutButton } from "@/features/auth/components/signout-button";
 import { betterFetch } from "@better-fetch/fetch";
 import { format } from "date-fns";
 import { Car, CheckCircle, ChevronRight, CreditCard, Edit, Loader2, Lock, Shield, Trash2 } from "lucide-react";
@@ -253,7 +252,7 @@ export default function ProfilePage() {
   const isAdsLoading = userAdsQuery.isLoading;
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50 py-20 px-4">
+    <div className="min-h-screen bg-slate-100 py-20 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={deleteDialog.open} onOpenChange={open => setDeleteDialog(d => ({ ...d, open }))}>
