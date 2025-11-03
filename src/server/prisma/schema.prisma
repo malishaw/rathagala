@@ -126,7 +126,7 @@ enum HeavyDutyVehicleType {
 }
 
 model User {
-  id               String       @id @map("_id")
+  id               String        @id @map("_id")
   name             String
   email            String
   emailVerified    Boolean
@@ -138,6 +138,8 @@ model User {
   banned           Boolean?
   banReason        String?
   banExpires       DateTime?
+  organizationId   String?
+  organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   sessions         Session[]
   accounts         Account[]
   members          Member[]
@@ -216,6 +218,7 @@ model Organization {
   metadata    String?
   members     Member[]
   invitations Invitation[]
+  users       User[]       // Users who signed up as this organization
 
   // Ad listing relations
   ads       Ad[]
