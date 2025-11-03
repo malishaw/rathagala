@@ -41,3 +41,5 @@ pnpm prisma:generate
 
 # 2. Push schema changes to database
 pnpm db:push
+
+npm run db:seed

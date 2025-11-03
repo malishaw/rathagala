@@ -11,6 +11,9 @@
     "prisma:generate": "prisma generate --schema src/server/prisma/schema.prisma",
     "prisma:studio": "prisma studio --schema src/server/prisma/schema.prisma",
     "db:push": "prisma db push --schema src/server/prisma/schema.prisma",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:clean": "tsx prisma/seed.ts --clean",
+    "db:reset": "tsx prisma/seed.ts --clean && tsx prisma/seed.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -96,6 +99,10 @@
     "eslint-config-next": "15.3.1",
     "prisma": "^6.6.0",
     "tailwindcss": "^4",
+    "tsx": "^4.19.2",
     "typescript": "^5"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }
