@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { betterFetch } from "@better-fetch/fetch";
-import { ArrowRight, CarIcon, LogOut, Menu, UserIcon, XIcon } from "lucide-react";
+import { ArrowRight, CarIcon, LogOut, Menu, UserIcon, XIcon, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -22,7 +22,21 @@ export function Header() {
         const { data, error } = await betterFetch("/api/auth/get-session");
         // Check if data exists, is an object, and has a user property
         if (!error && data && typeof data === 'object' && 'user' in data && data.user) {
-          setUser(data.user);
+          let userData = data.user;
+          
+          // If organizationId is not in session, fetch it from user endpoint
+          if (!userData.organizationId) {
+            try {
+              const userRes = await betterFetch("/api/users/me");
+              if (userRes.data && userRes.data.organizationId) {
+                userData = { ...userData, organizationId: userRes.data.organizationId };
+              }
+            } catch (error) {
+              console.error("Failed to fetch user organization:", error);
+            }
+          }
+          
+          setUser(userData);
         }
       } catch (error) {
         console.error("Error fetching user session:", error);
@@ -189,13 +203,14 @@ export function Header() {
               </Link>
             )}
 
-            {user && user.role === 'admin' && (
+            {user && (user.role === 'admin' || user.organizationId) && (
               <Link href="/dashboard">
               <Button 
                 variant="outline"
                 className="text-white border-white bg-teal-600/20 hover:bg-white hover:text-teal-900 transition-colors duration-200 cursor-pointer flex items-center gap-1"
               >
-                Admin Dashboard
+                <LayoutDashboard className="h-4 w-4" />
+                {user.role === 'admin' ? 'Admin Dashboard' : 'Dashboard'}
               </Button>
               </Link>
             )}
@@ -282,16 +297,30 @@ export function Header() {
                     {isLoading ? (
                       <div className="w-full h-10 bg-teal-700 rounded animate-pulse"></div>
                     ) : user ? (
-                      <Button
-                        asChild
-                        variant="outline"
-                        className="w-full text-white border-white bg-teal-600/20 hover:bg-white hover:text-teal-900 transition-colors duration-200 cursor-pointer flex items-center gap-1"
-                      >
-                        <Link href="/profile">
-                          <UserIcon className="h-4 w-4" />
-                          Account
-                        </Link>
-                      </Button>
+                      <>
+                        <Button
+                          asChild
+                          variant="outline"
+                          className="w-full text-white border-white bg-teal-600/20 hover:bg-white hover:text-teal-900 transition-colors duration-200 cursor-pointer flex items-center gap-1"
+                        >
+                          <Link href="/profile">
+                            <UserIcon className="h-4 w-4" />
+                            Account
+                          </Link>
+                        </Button>
+                        {(user.role === 'admin' || user.organizationId) && (
+                          <Button
+                            asChild
+                            variant="outline"
+                            className="w-full text-white border-white bg-teal-600/20 hover:bg-white hover:text-teal-900 transition-colors duration-200 cursor-pointer flex items-center gap-1"
+                          >
+                            <Link href="/dashboard">
+                              <LayoutDashboard className="h-4 w-4" />
+                              {user.role === 'admin' ? 'Admin Dashboard' : 'Dashboard'}
+                            </Link>
+                          </Button>
+                        )}
+                      </>
                     ) : (
                       <Button
                         asChild

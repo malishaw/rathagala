@@ -63,8 +63,31 @@ export function SigninForm({ className }: Props) {
           toast.success("Successfully Signed in", { id: toastId });
           try {
             const res = await fetch("/api/auth/get-session");
-            const { user } = await res.json();
+            const sessionData = await res.json();
+            const { user } = sessionData;
+            
+            // Check if user is admin
             if (user?.role === "admin") {
+              router.replace("/dashboard");
+              return;
+            }
+            
+            // If organizationId is not in session, fetch it from user endpoint
+            let organizationId = user?.organizationId;
+            if (!organizationId) {
+              try {
+                const userRes = await fetch("/api/users/me");
+                if (userRes.ok) {
+                  const userData = await userRes.json();
+                  organizationId = userData?.organizationId;
+                }
+              } catch (error) {
+                console.error("Failed to fetch user organization:", error);
+              }
+            }
+            
+            // Users with organizations should be redirected to dashboard
+            if (organizationId) {
               router.replace("/dashboard");
             } else {
               router.replace("/");
