@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useGetUserAds } from "@/features/ads/api/use-get-user-ads";
+import { SignoutButton } from "@/features/auth/components/signout-button";
 import { betterFetch } from "@better-fetch/fetch";
 import { format } from "date-fns";
 import { Car, CheckCircle, ChevronRight, CreditCard, Edit, Loader2, Lock, Shield, Trash2 } from "lucide-react";
