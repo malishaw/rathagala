@@ -4,7 +4,7 @@ import { z } from "zod";
 import { jsonContent } from "stoker/openapi/helpers";
 
 import { serverAuthMiddleware } from "@/server/middlewares/auth-middleware";
-import { querySchema, withPaginationSchema } from "./users.schemas";
+import { querySchema, withPaginationSchema, updateProfileSchema } from "./users.schemas";
 
 const tags = ["Users"];
 
@@ -101,4 +101,44 @@ export const getCurrentUser = createRoute({
 });
 
 export type GetCurrentUserRoute = typeof getCurrentUser;
+
+// ---------- Update User Profile ----------
+export const updateProfile = createRoute({
+  tags,
+  path: "/profile",
+  method: "patch",
+  middleware: [serverAuthMiddleware],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: updateProfileSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      z.object({
+        message: z.string(),
+        user: z.object({
+          id: z.string(),
+          name: z.string(),
+          email: z.string(),
+        }),
+      }),
+      "User profile updated successfully"
+    ),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      z.object({ message: z.string() }),
+      "Unauthenticated request"
+    ),
+    [HttpStatusCodes.BAD_REQUEST]: jsonContent(
+      z.object({ message: z.string() }),
+      "Bad request"
+    ),
+  },
+});
+
+export type UpdateProfileRoute = typeof updateProfile;
 

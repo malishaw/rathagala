@@ -16,3 +16,7 @@ export const withPaginationSchema = z.object({
   }),
 });
 
+export const updateProfileSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+});
+
