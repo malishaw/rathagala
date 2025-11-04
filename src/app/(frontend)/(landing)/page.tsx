@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import * as React from "react";
 import { Search, ChevronDown, Filter, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -124,17 +125,54 @@ export default function VehicleMarketplace() {
     (value) => value !== null
   );
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [allAds, setAllAds] = useState<any[]>([]);
+
   // Use the existing hook to fetch real vehicle data
   const { data, isLoading, error } = useGetAds({
-    page: 1,
+    page: currentPage,
     limit: 8 // Show 8 items initially for better grid layout
   });
 
-  // Apply filters to the data - modify to use activeFilters instead of filters
-  const filteredAds = useMemo(() => {
-    if (!data?.ads || data.ads.length === 0) return [];
+  // Accumulate ads when new data arrives
+  React.useEffect(() => {
+    if (data?.ads && data.ads.length > 0) {
+      if (currentPage === 1) {
+        // Reset to first page results
+        setAllAds(data.ads);
+      } else {
+        // Append new ads to existing ones (avoid duplicates)
+        setAllAds((prevAds) => {
+          const existingIds = new Set(prevAds.map((ad) => ad.id));
+          const newAds = data.ads.filter((ad) => !existingIds.has(ad.id));
+          return [...prevAds, ...newAds];
+        });
+      }
+    } else if (data?.ads && data.ads.length === 0 && currentPage === 1) {
+      // Clear ads if no data on first page
+      setAllAds([]);
+    }
+  }, [data?.ads, currentPage]);
 
-    return data.ads.filter((ad) => {
+  // Reset pagination when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+    setAllAds([]);
+  }, [activeFilters]);
+
+  // Handle load more
+  const handleLoadMore = () => {
+    if (data && data.pagination && currentPage < data.pagination.totalPages) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
+
+  // Apply filters to the accumulated data - modify to use activeFilters instead of filters
+  const filteredAds = useMemo(() => {
+    if (!allAds || allAds.length === 0) return [];
+
+    return allAds.filter((ad) => {
       // Make filter
       if (
         activeFilters.make &&
@@ -229,7 +267,7 @@ export default function VehicleMarketplace() {
 
       return true;
     });
-  }, [data?.ads, activeFilters]);
+  }, [allAds, activeFilters]);
 
   // Handle filter changes - only updates pending filters
   const handleFilterChange = (
@@ -887,12 +925,21 @@ export default function VehicleMarketplace() {
                     size="lg"
                     variant="outline"
                     className="px-8 py-5 border-teal-700 text-teal-700 hover:bg-teal-700 hover:text-white transition-all duration-300"
+                    onClick={handleLoadMore}
                     disabled={
+                      isLoading ||
                       !data ||
-                      data.pagination?.page === data.pagination?.totalPages
+                      currentPage >= (data.pagination?.totalPages || 1)
                     }
                   >
-                    Load More Vehicles
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      "Load More Vehicles"
+                    )}
                   </Button>
                 </div>
               )}
