@@ -1,29 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { useGetAdById } from "@/features/ads/api/use-get-ad-by-id";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import {
-  ChevronLeft,
-  ChevronRight,
-  MapPin,
-  Calendar,
-  Fuel,
-  Eye,
-  Heart,
-  Share2,
-  Phone,
-  MessageCircle,
-  Star,
-  Shield,
-  Clock,
-  Gauge
-} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +11,25 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { RevealPhoneButton } from "@/components/ui/reveal-phone-button";
+import { Separator } from "@/components/ui/separator";
+import { useGetAdById } from "@/features/ads/api/use-get-ad-by-id";
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Eye,
+  Fuel,
+  Gauge,
+  Heart,
+  MapPin,
+  MessageCircle,
+  Phone,
+  Share2,
+  Shield
+} from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function AdDetailPage() {
   const { id } = useParams();
@@ -536,7 +535,7 @@ export default function AdDetailPage() {
                 <div className="flex items-start space-x-3">
                   <div className="w-12 h-12 bg-[#024950] bg-opacity-10 rounded-full flex items-center justify-center">
                     <span className="text-[#024950] font-semibold text-lg">
-                      {(ad.name || "Seller").charAt(0)}
+                      {((ad as any).creator?.name || "Seller").charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <div className="flex-1">
@@ -544,7 +543,7 @@ export default function AdDetailPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          const sellerId = (ad as any).userId || (ad as any).user_id || (ad as any).sellerId || (ad as any).ownerId || (ad as any).user?.id || (ad as any).seller?.id || (ad as any).createdBy;
+                          const sellerId = (ad as any).createdBy || (ad as any).creator?.id || (ad as any).userId || (ad as any).user_id || (ad as any).sellerId || (ad as any).ownerId || (ad as any).user?.id || (ad as any).seller?.id;
                           if (sellerId) {
                             router.push(`/search?seller=${encodeURIComponent(String(sellerId))}`);
                           } else {
@@ -553,7 +552,7 @@ export default function AdDetailPage() {
                         }}
                         className="font-semibold text-left hover:underline cursor-pointer"
                       >
-                        {ad.name || "Seller"}
+                        {(ad as any).creator?.name || "Seller"}
                       </button>
                       <Shield className="w-4 h-4 text-green-500" />
                     </div>
@@ -573,7 +572,7 @@ export default function AdDetailPage() {
                       className="w-full"
                       onClick={() => {
                         // Try common seller id fields on the ad object
-                        const sellerId = (ad as any).userId || (ad as any).user_id || (ad as any).sellerId || (ad as any).ownerId || (ad as any).user?.id || (ad as any).seller?.id || (ad as any).createdBy;
+                        const sellerId = (ad as any).createdBy || (ad as any).creator?.id || (ad as any).userId || (ad as any).user_id || (ad as any).sellerId || (ad as any).ownerId || (ad as any).user?.id || (ad as any).seller?.id;
                         if (sellerId) {
                           router.push(`/search?seller=${encodeURIComponent(String(sellerId))}`);
                         } else {

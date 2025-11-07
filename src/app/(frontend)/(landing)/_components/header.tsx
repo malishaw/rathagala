@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { betterFetch } from "@better-fetch/fetch";
 import { ArrowRight, CarIcon, LogOut, Menu, UserIcon, XIcon, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
@@ -234,68 +234,82 @@ export function Header() {
               </SheetTrigger>
               <SheetContent
                 side="right"
-                className="w-[85%] sm:w-[350px] bg-gradient-to-r from-teal-900 to-teal-800 text-white border-teal-900"
+                hideCloseButton
+                className="w-[85%] sm:w-[360px] bg-gradient-to-r from-teal-900 to-teal-800 text-white border-teal-900 px-6 py-8 rounded-l-3xl"
               >
-                <div className="flex items-center justify-between mb-8">
-                  <div className="text-xl font-bold text-white flex items-center gap-2">
+                <div className="flex items-center justify-between mb-10">
+                  <div className="text-xl font-bold text-white flex items-center gap-2 tracking-wide">
                     <CarIcon className="h-5 w-5" />
                     Rathagala.lk
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setIsOpen(false)}
-                    className="hover:bg-teal-800"
-                  >
-                    <XIcon className="h-5 w-5" />
-                  </Button>
+                  <SheetClose asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="hover:bg-teal-800"
+                    >
+                      <XIcon className="h-5 w-5" />
+                    </Button>
+                  </SheetClose>
                 </div>
-                <nav className="flex flex-col space-y-5">
+                <nav className="flex flex-col gap-6">
                   <Link
                     href="/"
-                    className="text-lg hover:text-teal-200 transition-colors"
+                    className="text-lg font-medium hover:text-teal-200 transition-colors"
                     onClick={() => setIsOpen(false)}
                   >
                     Home
                   </Link>
                   <Link
                     href="/search?listingType=SELL"
-                    className="text-lg hover:text-teal-200 transition-colors"
+                    className="text-lg font-medium hover:text-teal-200 transition-colors"
                     onClick={() => setIsOpen(false)}
                   >
                     Sell
                   </Link>
                   <Link
                     href="/search?listingType=WANT"
-                    className="text-lg hover:text-teal-200 transition-colors"
+                    className="text-lg font-medium hover:text-teal-200 transition-colors"
                     onClick={() => setIsOpen(false)}
                   >
                     Want
                   </Link>
                   <Link
                     href="/search?listingType=RENT"
-                    className="text-lg hover:text-teal-200 transition-colors"
+                    className="text-lg font-medium hover:text-teal-200 transition-colors"
                     onClick={() => setIsOpen(false)}
                   >
                     Rent
                   </Link>
                   <Link
                     href="/search?listingType=HIRE"
-                    className="text-lg hover:text-teal-200 transition-colors"
+                    className="text-lg font-medium hover:text-teal-200 transition-colors"
                     onClick={() => setIsOpen(false)}
                   >
                     Hire
                   </Link>
                   <Link
                     href="/search"
-                    className="text-lg hover:text-teal-200 transition-colors"
+                    className="text-lg font-medium hover:text-teal-200 transition-colors"
                     onClick={() => setIsOpen(false)}
                   >
                     Search
                   </Link>
-                  <div className="pt-5 space-y-3">
+                  {user && (
+                    <button
+                      type="button"
+                      className="text-lg font-medium text-white hover:bg-teal-800 text-white transition-colors text-left"
+                      onClick={() => {
+                        setIsOpen(false);
+                        void handleSignOut();
+                      }}
+                    >
+                      Logout
+                    </button>
+                  )}
+                  <div className="pt-6 mt-2 border-t border-white/10 space-y-4">
                     {isLoading ? (
-                      <div className="w-full h-10 bg-teal-700 rounded animate-pulse"></div>
+                      <div className="w-full h-10 bg-teal-700/60 rounded-lg animate-pulse" />
                     ) : user ? (
                       <>
                         <Button
@@ -325,15 +339,15 @@ export function Header() {
                       <Button
                         asChild
                         variant="outline"
-                        className="w-full text-white border-white hover:bg-white hover:text-teal-900"
+                        className="w-full justify-center text-white border-white/60 hover:bg-white hover:text-teal-900 transition-colors duration-200 rounded-xl"
                       >
                         <Link href="/signin">Login</Link>
                       </Button>
                     )}
-                    
+
                     <Button
                       asChild
-                      className="w-full bg-white text-teal-900 hover:bg-teal-50"
+                      className="w-full justify-center bg-white text-teal-900 hover:bg-teal-50 rounded-xl shadow-sm"
                     >
                       <Link href="/sell/new">Post Free Ad</Link>
                     </Button>
