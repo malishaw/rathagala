@@ -97,6 +97,7 @@ export default function VehicleMarketplace() {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [cityQuery, setCityQuery] = useState("");
   const [showFilterSheet, setShowFilterSheet] = useState(false);
+  const [sortBy, setSortBy] = useState("newest");
 
   // Initialize filter state (pending filters)
   const [filters, setFilters] = useState<FilterState>({
@@ -239,6 +240,39 @@ export default function VehicleMarketplace() {
       return true;
     });
   }, [data?.ads, activeFilters]);
+
+  // Apply sorting to filtered ads
+  const sortedAds = useMemo(() => {
+    console.log("Sorting ads with sortBy:", sortBy, "Filtered ads count:", filteredAds?.length);
+    
+    if (!filteredAds || filteredAds.length === 0) return [];
+
+    const sorted = [...filteredAds];
+
+    switch (sortBy) {
+      case "newest":
+        sorted.sort((a, b) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        break;
+      case "price-low":
+        sorted.sort((a, b) => (a.price || 0) - (b.price || 0));
+        break;
+      case "price-high":
+        sorted.sort((a, b) => (b.price || 0) - (a.price || 0));
+        break;
+      case "year":
+        sorted.sort((a, b) => 
+          parseInt(b.manufacturedYear || "0") - parseInt(a.manufacturedYear || "0")
+        );
+        break;
+      default:
+        break;
+    }
+    
+    console.log("Sorted ads result:", sorted.length, "First item:", sorted[0]?.title);
+    return sorted;
+  }, [filteredAds, sortBy]);
 
   // Handle filter changes - only updates pending filters
   const handleFilterChange = (
@@ -890,11 +924,14 @@ export default function VehicleMarketplace() {
                       ? `Showing 1-${data.ads.length} of ${data.pagination.total} results`
                       : "Loading results..."}
                   </span>
-                  <Select>
+                  <Select value={sortBy} onValueChange={(value) => {
+                    console.log("Sort changed to:", value);
+                    setSortBy(value);
+                  }}>
                     <SelectTrigger className="w-full md:w-44 h-10 rounded-lg bg-white border-slate-200">
                       <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-50">
                       <SelectItem value="newest">Newest First</SelectItem>
                       <SelectItem value="price-low">
                         Price: Low to High
@@ -960,7 +997,7 @@ export default function VehicleMarketplace() {
               )}
 
               {/* No results */}
-              {filteredAds.length === 0 && !isLoading && data?.ads && (
+              {sortedAds.length === 0 && !isLoading && data?.ads && (
                 <div className="p-12 text-center border rounded-xl bg-white shadow-sm">
                   {hasActiveFilters ? (
                     <>
@@ -986,9 +1023,9 @@ export default function VehicleMarketplace() {
               )}
 
               {/* Vehicle Grid - Using Real Data */}
-              {filteredAds.length > 0 && !isLoading && (
+              {sortedAds.length > 0 && !isLoading && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {filteredAds.map((vehicle) => (
+                  {sortedAds.map((vehicle) => (
                     <div
                       key={vehicle.id}
                       className="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group"
@@ -1048,7 +1085,7 @@ export default function VehicleMarketplace() {
               )}
 
               {/* Load More */}
-              {!hasActiveFilters && filteredAds.length > 0 && (
+              {!hasActiveFilters && sortedAds.length > 0 && (
                 <div className="text-center mt-8">
                   <Button
                     size="lg"
