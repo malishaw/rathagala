@@ -20,7 +20,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { format } from "date-fns";
 import { ChevronDown, Filter, Loader2, Search, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 // Import the existing hook
 import {
@@ -31,7 +31,6 @@ import {
 } from "@/components/ui/dialog";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
 import { useGetOrganizations } from "@/features/organizations/api/use-get-orgs";
-import { useState as useDialogState } from "react";
 
 // Vehicle type labels
 const vehicleTypeLabels: Record<string, string> = {
@@ -58,7 +57,7 @@ const vehicleMakes = [
   "Daewoo", "Daihatsu", "Datsun", "DFSK", "Ducati", "Fiat", "Ford", "Hero",
   "Alfa-Romeo", "Hyundai", "Isuzu", "Jaguar", "Jeep", "Kawasaki", "Kia", "KTM",
   "Lexus", "Mahindra", "Mazda", "Micro", "Mini",
-  "Mitsubishi", , "Perodua", "Peugeot", "Porsche", "Proton", "Renault",
+  "Mitsubishi", "Perodua", "Peugeot", "Porsche", "Proton", "Renault",
   "Skoda", "Subaru", "Suzuki", "Tata", "Tesla", "Acura", "TVS", "Volkswagen",
   "Volvo", "Yamaha"
 ];
@@ -144,7 +143,7 @@ export default function VehicleMarketplace() {
   });
 
   // Accumulate ads when new data arrives
-  React.useEffect(() => {
+  useEffect(() => {
     if (data?.ads && data.ads.length > 0) {
       if (currentPage === 1) {
         // Reset to first page results
@@ -164,7 +163,7 @@ export default function VehicleMarketplace() {
   }, [data?.ads, currentPage]);
 
   // Reset pagination when filters change
-  React.useEffect(() => {
+  useEffect(() => {
     setCurrentPage(1);
     setAllAds([]);
   }, [activeFilters]);
@@ -347,7 +346,7 @@ export default function VehicleMarketplace() {
   }, [years, filters.minYear]);
 
   function FeaturedDealers() {
-    const [showAllDealers, setShowAllDealers] = useDialogState(false);
+    const [showAllDealers, setShowAllDealers] = useState(false);
     const { data, isLoading, error } = useGetOrganizations({
       limit: 3,
       // Add filter parameters for featured organizations if your API supports it
