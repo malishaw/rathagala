@@ -1,16 +1,15 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { MapPin, Calendar, Fuel, Settings, Eye, Heart, Share2, Phone, MessageCircle, Filter, Search, Car, User, Home, Briefcase, Loader2 } from "lucide-react";
-import { format } from "date-fns";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
+import { format } from "date-fns";
+import { Car, Filter, Loader2, Search } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 
 // Vehicle type labels
 const vehicleTypeLabels: Record<string, string> = {
@@ -175,7 +174,7 @@ export default function SearchPage() {
 
       // Seller filter (match common seller fields)
       if (filters.seller && filters.seller !== 'all') {
-        const sid = String((ad as any).userId || (ad as any).user_id || (ad as any).sellerId || (ad as any).ownerId || (ad as any).user?.id || (ad as any).seller?.id || (ad as any).createdBy || "");
+        const sid = String((ad as any).createdBy || (ad as any).creator?.id || (ad as any).userId || (ad as any).user_id || (ad as any).sellerId || (ad as any).ownerId || (ad as any).user?.id || (ad as any).seller?.id || "");
         if (!sid || sid !== filters.seller) {
           return false;
         }
@@ -231,6 +230,18 @@ export default function SearchPage() {
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 30 }, (_, i) => currentYear - i);
 
+  // Get seller name from the first ad if seller filter is active
+  const sellerName = useMemo(() => {
+    if (filters.seller && filters.seller !== 'all' && filteredAds.length > 0) {
+      // Use creator.name instead of ad.name (which is the ad title)
+      return (filteredAds[0] as any)?.creator?.name || "Seller";
+    }
+    return null;
+  }, [filters.seller, filteredAds]);
+
+  // Dynamic page title based on context
+  const pageTitle = sellerName ? `Ads by ${sellerName}` : "Search Vehicles";
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
@@ -245,7 +256,7 @@ export default function SearchPage() {
               ← Back
             </Button>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-slate-900">Search Vehicles</h1>
+              <h1 className="text-2xl font-bold text-slate-900">{pageTitle}</h1>
               <p className="text-slate-600">
                 {filteredAds.length} results found
                 {activeFilterCount > 0 && ` with ${activeFilterCount} filter${activeFilterCount > 1 ? 's' : ''} applied`}

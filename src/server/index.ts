@@ -9,6 +9,7 @@ import orgRoute from "@/server/routes/orgs/org.index";
 import adRoute from "@/server/routes/ad/ad.index";
 import mediaRoute from "@/server/routes/media/media.index";
 import usersRoute from "@/server/routes/users/users.index";
+import userRoute from "@/server/routes/user/user.index";
 
 const app = createApp();
 
@@ -25,7 +26,8 @@ const routes = app
   .route("/organizations", orgRoute)
   .route("/ad", adRoute)
   .route("/media", mediaRoute)
-  .route("/users", usersRoute);
+  .route("/users", usersRoute)
+  .route("/user", userRoute);
 
 export type AppType = typeof routes;
 

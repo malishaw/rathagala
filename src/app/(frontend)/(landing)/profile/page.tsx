@@ -253,7 +253,7 @@ export default function ProfilePage() {
   const isAdsLoading = userAdsQuery.isLoading;
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50 py-20 px-4">
+    <div className="min-h-screen bg-slate-100 py-20 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={deleteDialog.open} onOpenChange={open => setDeleteDialog(d => ({ ...d, open }))}>
@@ -292,10 +292,6 @@ export default function ProfilePage() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-[#0D5C63] via-teal-600 to-emerald-600 bg-clip-text text-transparent">Profile</h1>
-          <SignoutButton 
-            variant="outline"
-            className="bg-white/80 backdrop-blur-md text-red-600 hover:bg-red-50 border-2 border-white/30 hover:border-red-200 transition-all duration-300"
-          />
         </div>
         
         <div className="flex flex-col md:flex-row gap-6 mt-6">
@@ -354,6 +350,14 @@ export default function ProfilePage() {
                   <Car className="w-4 h-4" />
                   My Ads
                 </button>
+              </div>
+
+              {/* Signout Button */}
+              <div className="pt-4 border-t border-white/30">
+                <SignoutButton 
+                  variant="outline"
+                  className="w-full bg-white/80 backdrop-blur-md text-red-600 hover:bg-red-50 border-2 border-white/30 hover:border-red-200 transition-all duration-300"
+                />
               </div>
             </div>
           </div>

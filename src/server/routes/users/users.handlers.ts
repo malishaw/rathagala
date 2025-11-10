@@ -2,7 +2,7 @@
 import * as HttpStatusCodes from "stoker/http-status-codes";
 
 import { prisma } from "@/server/prisma/client";
-import type { ListRoute } from "./users.routes";
+import type { ListRoute, UpdateOrganizationIdRoute, GetCurrentUserRoute, UpdateProfileRoute } from "./users.routes";
 import { AppRouteHandler } from "@/types/server";
 
 export const list: AppRouteHandler<ListRoute> = async (c) => {
@@ -91,5 +91,163 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     },
     HttpStatusCodes.OK
   );
+};
+
+// ---------- Update User OrganizationId ----------
+export const updateOrganizationId: AppRouteHandler<UpdateOrganizationIdRoute> = async (c) => {
+  const user = c.get("user");
+
+  if (!user) {
+    return c.json(
+      { message: "Unauthenticated user" },
+      HttpStatusCodes.UNAUTHORIZED
+    );
+  }
+
+  const { organizationId } = c.req.valid("json");
+
+  // Verify the organization exists
+  const organization = await prisma.organization.findUnique({
+    where: { id: organizationId },
+  });
+
+  if (!organization) {
+    return c.json(
+      { message: "Organization not found" },
+      HttpStatusCodes.BAD_REQUEST
+    );
+  }
+
+  // Update user's organizationId
+  try {
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: { organizationId },
+      select: {
+        id: true,
+        organizationId: true,
+      },
+    });
+
+    console.log(`User ${user.id} organizationId updated to: ${organizationId}`);
+
+    return c.json(
+      {
+        message: "User organizationId updated successfully",
+        user: updatedUser,
+      },
+      HttpStatusCodes.OK
+    );
+  } catch (error) {
+    console.error("Error updating user organizationId:", error);
+    return c.json(
+      {
+        message: "Failed to update user organizationId",
+        error: error instanceof Error ? error.message : "Unknown error"
+      },
+      HttpStatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+};
+
+// ---------- Get Current User with OrganizationId ----------
+export const getCurrentUser: AppRouteHandler<GetCurrentUserRoute> = async (c) => {
+  const user = c.get("user");
+
+  if (!user) {
+    return c.json(
+      { message: "Unauthenticated user" },
+      HttpStatusCodes.UNAUTHORIZED
+    );
+  }
+
+  try {
+    const userWithOrg = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        organizationId: true,
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+      },
+    });
+
+    if (!userWithOrg) {
+      return c.json(
+        { message: "User not found" },
+        HttpStatusCodes.NOT_FOUND
+      );
+    }
+
+    return c.json(
+      {
+        id: userWithOrg.id,
+        name: userWithOrg.name,
+        email: userWithOrg.email,
+        organizationId: userWithOrg.organizationId,
+        organization: userWithOrg.organization,
+      },
+      HttpStatusCodes.OK
+    );
+  } catch (error) {
+    console.error("Error fetching current user:", error);
+    return c.json(
+      {
+        message: "Failed to fetch user",
+        error: error instanceof Error ? error.message : "Unknown error"
+      },
+      HttpStatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+};
+
+// ---------- Update User Profile ----------
+export const updateProfile: AppRouteHandler<UpdateProfileRoute> = async (c) => {
+  const user = c.get("user");
+
+  if (!user) {
+    return c.json(
+      { message: "Unauthenticated user" },
+      HttpStatusCodes.UNAUTHORIZED
+    );
+  }
+
+  const { name } = c.req.valid("json");
+
+  try {
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: { name },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+    });
+
+    return c.json(
+      {
+        message: "User profile updated successfully",
+        user: updatedUser,
+      },
+      HttpStatusCodes.OK
+    );
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    return c.json(
+      {
+        message: "Failed to update user profile",
+        error: error instanceof Error ? error.message : "Unknown error"
+      },
+      HttpStatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
 };
 
