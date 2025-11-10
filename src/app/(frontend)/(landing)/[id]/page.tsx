@@ -13,6 +13,7 @@ import {
 import { RevealPhoneButton } from "@/components/ui/reveal-phone-button";
 import { Separator } from "@/components/ui/separator";
 import { useGetAdById } from "@/features/ads/api/use-get-ad-by-id";
+import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
 import {
   Calendar,
   ChevronLeft,
@@ -21,7 +22,6 @@ import {
   Eye,
   Fuel,
   Gauge,
-  Heart,
   MapPin,
   MessageCircle,
   Phone,
@@ -36,7 +36,6 @@ export default function AdDetailPage() {
   const adId = Array.isArray(id) ? id[0] : id;
   const router = useRouter();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isFavorited, setIsFavorited] = useState(false);
 
   // Using the hook to fetch ad data
   const { data: ad, isLoading, isError } = useGetAdById({ adId: adId || "" });
@@ -156,18 +155,11 @@ export default function AdDetailPage() {
               </h1>
             </div>
               <div className="flex items-center space-x-2 mt-2 sm:mt-0">
-              <Button
-                variant="ghost"
-                size="sm"
+              <FavoriteButton 
+                adId={adId || ""} 
                 className="text-white hover:bg-white/10"
-                onClick={() => setIsFavorited(!isFavorited)}
-              >
-                <Heart
-                  className={`w-5 h-5 ${
-                    isFavorited ? "fill-red-500 text-red-500" : ""
-                  }`}
-                />
-              </Button>
+                iconClassName="w-5 h-5"
+              />
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
