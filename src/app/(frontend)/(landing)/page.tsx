@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
 import { useGetOrganizations } from "@/features/organizations/api/use-get-orgs";
+import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
 
 // Vehicle type labels
 const vehicleTypeLabels: Record<string, string> = {
@@ -1041,9 +1042,14 @@ export default function VehicleMarketplace() {
                   {filteredAds.map((vehicle) => (
                     <div
                       key={vehicle.id}
-                      className="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group"
+                      className="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative"
                       onClick={() => (window.location.href = `/${vehicle.id}`)}
                     >
+                      {/* Favorite Button */}
+                      <div className="absolute top-2 right-2 z-10">
+                        <FavoriteButton adId={vehicle.id} />
+                      </div>
+                      
                       <div className="p-3">
                         {/* Vehicle Title - Centered */}
                         <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">

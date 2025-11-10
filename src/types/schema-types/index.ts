@@ -86,7 +86,7 @@ export const MediaScalarFieldEnumSchema = z.enum(['id','uploaderId','url','type'
 
 export const PaymentScalarFieldEnumSchema = z.enum(['id','adId','userId','type','status','amount','sessionId','metadata','createdAt']);
 
-export const FavoriteScalarFieldEnumSchema = z.enum(['id','userId','adId']);
+export const FavoriteScalarFieldEnumSchema = z.enum(['id','userId','adId','createdAt']);
 
 export const SavedSearchScalarFieldEnumSchema = z.enum(['id','userId','name','filters','createdAt']);
 
@@ -467,6 +467,7 @@ export const FavoriteSchema = z.object({
   id: z.string(),
   userId: z.string(),
   adId: z.string(),
+  createdAt: z.coerce.date(),
 })
 
 export type Favorite = z.infer<typeof FavoriteSchema>
@@ -1095,6 +1096,7 @@ export const FavoriteSelectSchema: z.ZodType<Prisma.FavoriteSelect> = z.object({
   id: z.boolean().optional(),
   userId: z.boolean().optional(),
   adId: z.boolean().optional(),
+  createdAt: z.boolean().optional(),
   user: z.union([z.boolean(),z.lazy(() => UserArgsSchema)]).optional(),
   ad: z.union([z.boolean(),z.lazy(() => AdArgsSchema)]).optional(),
 }).strict()
@@ -2768,6 +2770,7 @@ export const FavoriteWhereInputSchema: z.ZodType<Prisma.FavoriteWhereInput> = z.
   id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   userId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   adId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
   user: z.union([ z.lazy(() => UserScalarRelationFilterSchema),z.lazy(() => UserWhereInputSchema) ]).optional(),
   ad: z.union([ z.lazy(() => AdScalarRelationFilterSchema),z.lazy(() => AdWhereInputSchema) ]).optional(),
 }).strict();
@@ -2776,20 +2779,32 @@ export const FavoriteOrderByWithRelationInputSchema: z.ZodType<Prisma.FavoriteOr
   id: z.lazy(() => SortOrderSchema).optional(),
   userId: z.lazy(() => SortOrderSchema).optional(),
   adId: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
   user: z.lazy(() => UserOrderByWithRelationInputSchema).optional(),
   ad: z.lazy(() => AdOrderByWithRelationInputSchema).optional()
 }).strict();
 
-export const FavoriteWhereUniqueInputSchema: z.ZodType<Prisma.FavoriteWhereUniqueInput> = z.object({
-  id: z.string()
-})
+export const FavoriteWhereUniqueInputSchema: z.ZodType<Prisma.FavoriteWhereUniqueInput> = z.union([
+  z.object({
+    id: z.string(),
+    userId_adId: z.lazy(() => FavoriteUserIdAdIdCompoundUniqueInputSchema)
+  }),
+  z.object({
+    id: z.string(),
+  }),
+  z.object({
+    userId_adId: z.lazy(() => FavoriteUserIdAdIdCompoundUniqueInputSchema),
+  }),
+])
 .and(z.object({
   id: z.string().optional(),
+  userId_adId: z.lazy(() => FavoriteUserIdAdIdCompoundUniqueInputSchema).optional(),
   AND: z.union([ z.lazy(() => FavoriteWhereInputSchema),z.lazy(() => FavoriteWhereInputSchema).array() ]).optional(),
   OR: z.lazy(() => FavoriteWhereInputSchema).array().optional(),
   NOT: z.union([ z.lazy(() => FavoriteWhereInputSchema),z.lazy(() => FavoriteWhereInputSchema).array() ]).optional(),
   userId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   adId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
   user: z.union([ z.lazy(() => UserScalarRelationFilterSchema),z.lazy(() => UserWhereInputSchema) ]).optional(),
   ad: z.union([ z.lazy(() => AdScalarRelationFilterSchema),z.lazy(() => AdWhereInputSchema) ]).optional(),
 }).strict());
@@ -2798,6 +2813,7 @@ export const FavoriteOrderByWithAggregationInputSchema: z.ZodType<Prisma.Favorit
   id: z.lazy(() => SortOrderSchema).optional(),
   userId: z.lazy(() => SortOrderSchema).optional(),
   adId: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
   _count: z.lazy(() => FavoriteCountOrderByAggregateInputSchema).optional(),
   _max: z.lazy(() => FavoriteMaxOrderByAggregateInputSchema).optional(),
   _min: z.lazy(() => FavoriteMinOrderByAggregateInputSchema).optional()
@@ -2810,6 +2826,7 @@ export const FavoriteScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.Favo
   id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
   userId: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
   adId: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema),z.coerce.date() ]).optional(),
 }).strict();
 
 export const SavedSearchWhereInputSchema: z.ZodType<Prisma.SavedSearchWhereInput> = z.object({
@@ -4812,6 +4829,7 @@ export const PaymentUncheckedUpdateManyInputSchema: z.ZodType<Prisma.PaymentUnch
 
 export const FavoriteCreateInputSchema: z.ZodType<Prisma.FavoriteCreateInput> = z.object({
   id: z.string().optional(),
+  createdAt: z.coerce.date().optional(),
   user: z.lazy(() => UserCreateNestedOneWithoutFavoritesInputSchema),
   ad: z.lazy(() => AdCreateNestedOneWithoutFavoritesInputSchema)
 }).strict();
@@ -4819,10 +4837,12 @@ export const FavoriteCreateInputSchema: z.ZodType<Prisma.FavoriteCreateInput> = 
 export const FavoriteUncheckedCreateInputSchema: z.ZodType<Prisma.FavoriteUncheckedCreateInput> = z.object({
   id: z.string().optional(),
   userId: z.string(),
-  adId: z.string()
+  adId: z.string(),
+  createdAt: z.coerce.date().optional()
 }).strict();
 
 export const FavoriteUpdateInputSchema: z.ZodType<Prisma.FavoriteUpdateInput> = z.object({
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   user: z.lazy(() => UserUpdateOneRequiredWithoutFavoritesNestedInputSchema).optional(),
   ad: z.lazy(() => AdUpdateOneRequiredWithoutFavoritesNestedInputSchema).optional()
 }).strict();
@@ -4830,20 +4850,24 @@ export const FavoriteUpdateInputSchema: z.ZodType<Prisma.FavoriteUpdateInput> = 
 export const FavoriteUncheckedUpdateInputSchema: z.ZodType<Prisma.FavoriteUncheckedUpdateInput> = z.object({
   userId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   adId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const FavoriteCreateManyInputSchema: z.ZodType<Prisma.FavoriteCreateManyInput> = z.object({
   id: z.string().optional(),
   userId: z.string(),
-  adId: z.string()
+  adId: z.string(),
+  createdAt: z.coerce.date().optional()
 }).strict();
 
 export const FavoriteUpdateManyMutationInputSchema: z.ZodType<Prisma.FavoriteUpdateManyMutationInput> = z.object({
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const FavoriteUncheckedUpdateManyInputSchema: z.ZodType<Prisma.FavoriteUncheckedUpdateManyInput> = z.object({
   userId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   adId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const SavedSearchCreateInputSchema: z.ZodType<Prisma.SavedSearchCreateInput> = z.object({
@@ -6705,22 +6729,30 @@ export const FloatWithAggregatesFilterSchema: z.ZodType<Prisma.FloatWithAggregat
   _max: z.lazy(() => NestedFloatFilterSchema).optional()
 }).strict();
 
+export const FavoriteUserIdAdIdCompoundUniqueInputSchema: z.ZodType<Prisma.FavoriteUserIdAdIdCompoundUniqueInput> = z.object({
+  userId: z.string(),
+  adId: z.string()
+}).strict();
+
 export const FavoriteCountOrderByAggregateInputSchema: z.ZodType<Prisma.FavoriteCountOrderByAggregateInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
   userId: z.lazy(() => SortOrderSchema).optional(),
-  adId: z.lazy(() => SortOrderSchema).optional()
+  adId: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
 export const FavoriteMaxOrderByAggregateInputSchema: z.ZodType<Prisma.FavoriteMaxOrderByAggregateInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
   userId: z.lazy(() => SortOrderSchema).optional(),
-  adId: z.lazy(() => SortOrderSchema).optional()
+  adId: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
 export const FavoriteMinOrderByAggregateInputSchema: z.ZodType<Prisma.FavoriteMinOrderByAggregateInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
   userId: z.lazy(() => SortOrderSchema).optional(),
-  adId: z.lazy(() => SortOrderSchema).optional()
+  adId: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
 export const SavedSearchCountOrderByAggregateInputSchema: z.ZodType<Prisma.SavedSearchCountOrderByAggregateInput> = z.object({
@@ -9689,12 +9721,14 @@ export const PaymentCreateManyUserInputEnvelopeSchema: z.ZodType<Prisma.PaymentC
 
 export const FavoriteCreateWithoutUserInputSchema: z.ZodType<Prisma.FavoriteCreateWithoutUserInput> = z.object({
   id: z.string().optional(),
+  createdAt: z.coerce.date().optional(),
   ad: z.lazy(() => AdCreateNestedOneWithoutFavoritesInputSchema)
 }).strict();
 
 export const FavoriteUncheckedCreateWithoutUserInputSchema: z.ZodType<Prisma.FavoriteUncheckedCreateWithoutUserInput> = z.object({
   id: z.string().optional(),
-  adId: z.string()
+  adId: z.string(),
+  createdAt: z.coerce.date().optional()
 }).strict();
 
 export const FavoriteCreateOrConnectWithoutUserInputSchema: z.ZodType<Prisma.FavoriteCreateOrConnectWithoutUserInput> = z.object({
@@ -10211,6 +10245,7 @@ export const FavoriteScalarWhereInputSchema: z.ZodType<Prisma.FavoriteScalarWher
   id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   userId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   adId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
 }).strict();
 
 export const SavedSearchUpsertWithWhereUniqueWithoutUserInputSchema: z.ZodType<Prisma.SavedSearchUpsertWithWhereUniqueWithoutUserInput> = z.object({
@@ -11727,12 +11762,14 @@ export const PaymentCreateManyAdInputEnvelopeSchema: z.ZodType<Prisma.PaymentCre
 
 export const FavoriteCreateWithoutAdInputSchema: z.ZodType<Prisma.FavoriteCreateWithoutAdInput> = z.object({
   id: z.string().optional(),
+  createdAt: z.coerce.date().optional(),
   user: z.lazy(() => UserCreateNestedOneWithoutFavoritesInputSchema)
 }).strict();
 
 export const FavoriteUncheckedCreateWithoutAdInputSchema: z.ZodType<Prisma.FavoriteUncheckedCreateWithoutAdInput> = z.object({
   id: z.string().optional(),
-  userId: z.string()
+  userId: z.string(),
+  createdAt: z.coerce.date().optional()
 }).strict();
 
 export const FavoriteCreateOrConnectWithoutAdInputSchema: z.ZodType<Prisma.FavoriteCreateOrConnectWithoutAdInput> = z.object({
@@ -15843,7 +15880,8 @@ export const PaymentCreateManyUserInputSchema: z.ZodType<Prisma.PaymentCreateMan
 
 export const FavoriteCreateManyUserInputSchema: z.ZodType<Prisma.FavoriteCreateManyUserInput> = z.object({
   id: z.string().optional(),
-  adId: z.string()
+  adId: z.string(),
+  createdAt: z.coerce.date().optional()
 }).strict();
 
 export const SavedSearchCreateManyUserInputSchema: z.ZodType<Prisma.SavedSearchCreateManyUserInput> = z.object({
@@ -16260,15 +16298,18 @@ export const PaymentUncheckedUpdateManyWithoutUserInputSchema: z.ZodType<Prisma.
 }).strict();
 
 export const FavoriteUpdateWithoutUserInputSchema: z.ZodType<Prisma.FavoriteUpdateWithoutUserInput> = z.object({
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   ad: z.lazy(() => AdUpdateOneRequiredWithoutFavoritesNestedInputSchema).optional()
 }).strict();
 
 export const FavoriteUncheckedUpdateWithoutUserInputSchema: z.ZodType<Prisma.FavoriteUncheckedUpdateWithoutUserInput> = z.object({
   adId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const FavoriteUncheckedUpdateManyWithoutUserInputSchema: z.ZodType<Prisma.FavoriteUncheckedUpdateManyWithoutUserInput> = z.object({
   adId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const SavedSearchUpdateWithoutUserInputSchema: z.ZodType<Prisma.SavedSearchUpdateWithoutUserInput> = z.object({
@@ -16845,7 +16886,8 @@ export const PaymentCreateManyAdInputSchema: z.ZodType<Prisma.PaymentCreateManyA
 
 export const FavoriteCreateManyAdInputSchema: z.ZodType<Prisma.FavoriteCreateManyAdInput> = z.object({
   id: z.string().optional(),
-  userId: z.string()
+  userId: z.string(),
+  createdAt: z.coerce.date().optional()
 }).strict();
 
 export const ReportCreateManyAdInputSchema: z.ZodType<Prisma.ReportCreateManyAdInput> = z.object({
@@ -16919,15 +16961,18 @@ export const PaymentUncheckedUpdateManyWithoutAdInputSchema: z.ZodType<Prisma.Pa
 }).strict();
 
 export const FavoriteUpdateWithoutAdInputSchema: z.ZodType<Prisma.FavoriteUpdateWithoutAdInput> = z.object({
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   user: z.lazy(() => UserUpdateOneRequiredWithoutFavoritesNestedInputSchema).optional()
 }).strict();
 
 export const FavoriteUncheckedUpdateWithoutAdInputSchema: z.ZodType<Prisma.FavoriteUncheckedUpdateWithoutAdInput> = z.object({
   userId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const FavoriteUncheckedUpdateManyWithoutAdInputSchema: z.ZodType<Prisma.FavoriteUncheckedUpdateManyWithoutAdInput> = z.object({
   userId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const ReportUpdateWithoutAdInputSchema: z.ZodType<Prisma.ReportUpdateWithoutAdInput> = z.object({

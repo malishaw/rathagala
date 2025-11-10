@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useGetUserAds } from "@/features/ads/api/use-get-user-ads";
 import { SignoutButton } from "@/features/auth/components/signout-button";
+import { useGetFavorites } from "@/features/saved-ads/api/use-get-favorites";
+import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
 import { betterFetch } from "@better-fetch/fetch";
 import { format } from "date-fns";
-import { Car, CheckCircle, ChevronRight, CreditCard, Edit, Loader2, Lock, Shield, Trash2 } from "lucide-react";
+import { Car, CheckCircle, ChevronRight, CreditCard, Edit, Heart, Loader2, Lock, Shield, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -54,6 +56,9 @@ export default function ProfilePage() {
   
   // Fetch user ads with the new hook
   const userAdsQuery = useGetUserAds();
+  
+  // Fetch favorites
+  const { data: favorites, isLoading: isFavoritesLoading, refetch: refetchFavorites } = useGetFavorites();
   
   // Form data for profile edit
   const [formData, setFormData] = useState({
@@ -349,6 +354,18 @@ export default function ProfilePage() {
                 >
                   <Car className="w-4 h-4" />
                   My Ads
+                </button>
+                
+                <button
+                  className={`w-full text-left py-3 px-4 rounded-xl transition-all duration-300 flex items-center gap-3 ${
+                    sidebarActive === "favorites" 
+                      ? "bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white font-semibold" 
+                      : "text-slate-700 hover:bg-white/60 hover:backdrop-blur-md"
+                  }`}
+                  onClick={() => setSidebarActive("favorites")}
+                >
+                  <Heart className="w-4 h-4" />
+                  Saved Ads
                 </button>
               </div>
 
@@ -660,6 +677,104 @@ export default function ProfilePage() {
                     ))
                   )}
                 </div>
+              </div>
+            )}
+            
+            {/* Saved Ads Section */}
+            {sidebarActive === "favorites" && (
+              <div className="bg-white/80 backdrop-blur-xl border-2 border-white/20 rounded-2xl p-8 space-y-6">
+                <div className="border-b border-white/30 pb-4">
+                  <h2 className="text-2xl font-bold bg-gradient-to-r from-[#0D5C63] to-teal-600 bg-clip-text text-transparent mb-2">
+                    Saved Ads
+                  </h2>
+                  <p className="text-sm text-slate-600">
+                    Your favorite advertisements
+                  </p>
+                </div>
+                
+                {isFavoritesLoading ? (
+                  <div className="p-12 flex justify-center">
+                    <Loader2 className="h-10 w-10 animate-spin text-[#0D5C63]" />
+                  </div>
+                ) : !favorites || favorites.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 mx-auto flex items-center justify-center mb-4">
+                      <Heart className="h-10 w-10 text-slate-400" />
+                    </div>
+                    <p className="text-slate-600 mb-5 text-lg font-medium">You haven't saved any ads yet</p>
+                    <Button 
+                      className="bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700 border-0 px-8"
+                      onClick={() => router.push("/")}
+                    >
+                      Browse Ads
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {favorites.map((favorite: any) => {
+                      const ad = favorite.ad;
+                      const adImage = ad.media?.[0]?.media?.url || "";
+                      
+                      return (
+                        <div
+                          key={favorite.id}
+                          className="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative"
+                          onClick={() => router.push(`/${ad.id}`)}
+                        >
+                          {/* Favorite Button */}
+                          <div className="absolute top-2 right-2 z-10">
+                            <FavoriteButton adId={ad.id} />
+                          </div>
+                          
+                          <div className="p-3">
+                            {/* Ad Title - Centered */}
+                            <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
+                              {ad.title}
+                            </h3>
+
+                            <div className="flex">
+                              {/* Ad Image */}
+                              <div className="w-32 h-20 flex-shrink-0">
+                                {adImage ? (
+                                  <img
+                                    src={adImage}
+                                    alt={ad.title}
+                                    className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 rounded-md flex items-center justify-center">
+                                    <Car className="h-8 w-8 text-slate-400" />
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Ad Details */}
+                              <div className="flex-1 pl-3 flex flex-col justify-between">
+                                <div>
+                                  <div className="text-xs text-slate-600 mb-1 line-clamp-1">
+                                    {ad.location || "No location"}
+                                  </div>
+
+                                  <div className="text-sm font-semibold text-teal-700 mb-1">
+                                    Rs. {ad.price ? ad.price.toLocaleString() : "N/A"}
+                                  </div>
+
+                                  <div className="text-xs text-slate-500">
+                                    {ad.type || "Car"}
+                                  </div>
+                                </div>
+
+                                <div className="text-xs text-slate-400 mt-1">
+                                  {format(new Date(ad.createdAt || favorite.createdAt), "MMM d, yyyy")}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>
