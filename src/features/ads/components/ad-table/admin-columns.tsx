@@ -31,21 +31,21 @@ const vehicleTypeLabels: Record<string, string> = {
   BICYCLE: "Bicycle"
 };
 
-// Status badge colors
+// Status badge colors - using teal gradient theme
 const getStatusBadge = (status: string) => {
   switch (status) {
     case "ACTIVE":
-      return <Badge className="bg-green-500">Active</Badge>;
+      return <Badge className="bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white border-0">Active</Badge>;
     case "PENDING_REVIEW":
-      return <Badge className="bg-yellow-500">Pending</Badge>;
+      return <Badge className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white border-0">Pending</Badge>;
     case "REJECTED":
-      return <Badge className="bg-red-500">Rejected</Badge>;
+      return <Badge className="bg-gradient-to-r from-red-500 to-red-600 text-white border-0">Rejected</Badge>;
     case "DRAFT":
-      return <Badge variant="outline">Draft</Badge>;
+      return <Badge className="bg-gradient-to-r from-slate-400 to-slate-500 text-white border-0">Draft</Badge>;
     case "EXPIRED":
-      return <Badge variant="outline">Expired</Badge>;
+      return <Badge className="bg-gradient-to-r from-slate-400 to-slate-500 text-white border-0">Expired</Badge>;
     default:
-      return <Badge variant="outline">{status}</Badge>;
+      return <Badge className="bg-gradient-to-r from-slate-400 to-slate-500 text-white border-0">{status}</Badge>;
   }
 };
 
@@ -137,10 +137,9 @@ function AdminActionsCell({ ad }: { ad: AdType }) {
       {canApprove && (
         <Button
           size="sm"
-          variant="default"
           onClick={() => approveMutation.mutate(ad.id)}
           disabled={approveMutation.isPending || rejectMutation.isPending}
-          className="bg-green-600 hover:bg-green-700"
+          className="bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700 border-0"
         >
           <Check className="w-4 h-4 mr-1" />
           Approve
@@ -149,9 +148,9 @@ function AdminActionsCell({ ad }: { ad: AdType }) {
       {canReject && (
         <Button
           size="sm"
-          variant="destructive"
           onClick={() => rejectMutation.mutate(ad.id)}
           disabled={approveMutation.isPending || rejectMutation.isPending}
+          className="bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 border-0"
         >
           <X className="w-4 h-4 mr-1" />
           Reject
