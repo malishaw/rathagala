@@ -9,6 +9,7 @@ import { CreateAdSchema } from "@/server/routes/ad/ad.schemas";
 import { Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { PendingAdModal } from "@/features/ads/components/pending-ad-modal";
+import { AdSubmissionSuccessModal } from "@/features/ads/components/ad-submission-success-modal";
 
 export default function UpdateAdFormPage() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function UpdateAdFormPage() {
   const { data: ad, isLoading, isError } = useGetAdById({ adId });
   const { mutate: updateAd, isPending } = useUpdateAd();
   const { data: session } = authClient.useSession();
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showPendingModal, setShowPendingModal] = useState(false);
 
   const handleSubmit = (adData: CreateAdSchema) => {
@@ -28,9 +30,9 @@ export default function UpdateAdFormPage() {
           const isAdmin = (session?.user as any)?.role === "admin";
           const isPublished = !adData.isDraft && adData.published;
           
-          // Show pending modal if ad is published (not admin)
+          // Show success modal first if ad is published (not admin)
           if (!isAdmin && isPublished) {
-            setShowPendingModal(true);
+            setShowSuccessModal(true);
           } else {
             // Admin or draft - redirect normally
             if (isAdmin) {
@@ -73,6 +75,14 @@ export default function UpdateAdFormPage() {
         title="Update Ad"
         description="Edit the details of your vehicle listing"
         submitButtonText="Update Ad"
+      />
+      <AdSubmissionSuccessModal
+        open={showSuccessModal}
+        onOpenChange={setShowSuccessModal}
+        onClose={() => {
+          // After closing success modal, show pending modal
+          setShowPendingModal(true);
+        }}
       />
       <PendingAdModal
         open={showPendingModal}

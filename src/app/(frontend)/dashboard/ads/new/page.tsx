@@ -7,11 +7,13 @@ import { CreateAdSchema } from "@/server/routes/ad/ad.schemas";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { PendingAdModal } from "@/features/ads/components/pending-ad-modal";
+import { AdSubmissionSuccessModal } from "@/features/ads/components/ad-submission-success-modal";
 
 export default function CreateAdFormPage() {
   const router = useRouter();
   const { mutate: createAd, isPending } = useSetupAd();
   const { data: session } = authClient.useSession();
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showPendingModal, setShowPendingModal] = useState(false);
   const [createdAdId, setCreatedAdId] = useState<string | null>(null);
 
@@ -30,10 +32,10 @@ export default function CreateAdFormPage() {
           const isAdmin = (session?.user as any)?.role === "admin";
           const isPublished = !finalAdData.isDraft && finalAdData.published;
           
-          // Show pending modal if ad is published (not admin)
+          // Show success modal first if ad is published (not admin)
           if (!isAdmin && isPublished) {
             setCreatedAdId(data.id);
-            setShowPendingModal(true);
+            setShowSuccessModal(true);
           } else {
             // Admin or draft - redirect normally
             if (isAdmin) {
@@ -59,6 +61,14 @@ export default function CreateAdFormPage() {
         title="Create New Ad"
         description="Fill in the details to create your vehicle listing"
         submitButtonText="Create Ad"
+      />
+      <AdSubmissionSuccessModal
+        open={showSuccessModal}
+        onOpenChange={setShowSuccessModal}
+        onClose={() => {
+          // After closing success modal, show pending modal
+          setShowPendingModal(true);
+        }}
       />
       <PendingAdModal
         open={showPendingModal}

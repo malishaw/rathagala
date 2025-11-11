@@ -20,12 +20,14 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Loader2, Camera, ChevronRight, CheckCircle2 } from "lucide-react";
 import { PendingAdModal } from "@/features/ads/components/pending-ad-modal";
+import { AdSubmissionSuccessModal } from "@/features/ads/components/ad-submission-success-modal";
 
 export default function QuickAdCreatePage() {
   const router = useRouter();
   const { mutate: createAd, isPending } = useSetupAd();
   const { data: session } = authClient.useSession();
   const [currentStep, setCurrentStep] = useState(1);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showPendingModal, setShowPendingModal] = useState(false);
   const [formData, setFormData] = useState({
     // Listing type
@@ -257,9 +259,9 @@ export default function QuickAdCreatePage() {
           const isAdmin = (session?.user as any)?.role === "admin";
           const isPublished = !adData.isDraft && adData.published;
           
-          // Show pending modal if ad is published (not admin)
+          // Show success modal first if ad is published (not admin)
           if (!isAdmin && isPublished) {
-            setShowPendingModal(true);
+            setShowSuccessModal(true);
           } else {
             // Admin or draft - redirect normally
             if (isAdmin) {
@@ -1633,6 +1635,14 @@ export default function QuickAdCreatePage() {
           )}
         </Card>
       </div>
+      <AdSubmissionSuccessModal
+        open={showSuccessModal}
+        onOpenChange={setShowSuccessModal}
+        onClose={() => {
+          // After closing success modal, show pending modal
+          setShowPendingModal(true);
+        }}
+      />
       <PendingAdModal
         open={showPendingModal}
         onOpenChange={setShowPendingModal}
