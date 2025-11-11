@@ -2,6 +2,7 @@
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useGetUserAds } from "@/features/ads/api/use-get-user-ads";
@@ -34,6 +35,7 @@ interface UserAd {
   price: number | null;
   location: string | null;
   createdAt: string;
+  status?: string;
   media?: Array<{
     media: {
       url: string;
@@ -238,6 +240,26 @@ export default function ProfilePage() {
       return ad.media[0].media.url;
     }
     return "";
+  };
+
+  // Get status badge
+  const getStatusBadge = (status?: string) => {
+    if (!status) return null;
+    
+    switch (status) {
+      case "ACTIVE":
+        return <Badge className="bg-green-500 text-white">Active</Badge>;
+      case "PENDING_REVIEW":
+        return <Badge className="bg-yellow-500 text-white">Pending Review</Badge>;
+      case "REJECTED":
+        return <Badge className="bg-red-500 text-white">Rejected</Badge>;
+      case "DRAFT":
+        return <Badge variant="outline">Draft</Badge>;
+      case "EXPIRED":
+        return <Badge variant="outline">Expired</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
   };
   
   // Loading state for the entire page
@@ -632,11 +654,14 @@ export default function ProfilePage() {
                         </div>
                         
                         <div className="flex-1">
-                          <div 
-                            className="font-semibold text-lg text-slate-800 hover:text-[#0D5C63] cursor-pointer transition-colors duration-300"
-                            onClick={() => router.push(`/${ad.id}`)}
-                          >
-                            {ad.title}
+                          <div className="flex items-center gap-2 mb-1">
+                            <div 
+                              className="font-semibold text-lg text-slate-800 hover:text-[#0D5C63] cursor-pointer transition-colors duration-300"
+                              onClick={() => router.push(`/${ad.id}`)}
+                            >
+                              {ad.title}
+                            </div>
+                            {getStatusBadge(ad.status)}
                           </div>
                           <div className="text-base font-bold text-[#0D5C63] mt-1">Rs {formatPrice(ad.price)}</div>
                           <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-500 mt-2">

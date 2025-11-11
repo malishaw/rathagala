@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useGetAdById } from "@/features/ads/api/use-get-ad-by-id";
 import { useUpdateAd } from "@/features/ads/api/use-update-ad";
@@ -7,6 +8,7 @@ import { AdForm } from "@/features/ads/components/ad-form";
 import { CreateAdSchema } from "@/server/routes/ad/ad.schemas";
 import { Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { PendingAdModal } from "@/features/ads/components/pending-ad-modal";
 
 export default function UpdateAdFormPage() {
   const router = useRouter();
@@ -16,20 +18,26 @@ export default function UpdateAdFormPage() {
   const { data: ad, isLoading, isError } = useGetAdById({ adId });
   const { mutate: updateAd, isPending } = useUpdateAd();
   const { data: session } = authClient.useSession();
+  const [showPendingModal, setShowPendingModal] = useState(false);
 
   const handleSubmit = (adData: CreateAdSchema) => {
     updateAd(
       { id: adId, values: adData },
       {
-        onSuccess: () => {
-          // Check if user is admin
+        onSuccess: (data) => {
           const isAdmin = (session?.user as any)?.role === "admin";
+          const isPublished = !adData.isDraft && adData.published;
           
-          // Redirect based on user role
-          if (isAdmin) {
-            router.push('/dashboard/ads');
+          // Show pending modal if ad is published (not admin)
+          if (!isAdmin && isPublished) {
+            setShowPendingModal(true);
           } else {
-            router.push('/profile#my-ads');
+            // Admin or draft - redirect normally
+            if (isAdmin) {
+              router.push('/dashboard/ads');
+            } else {
+              router.push('/profile#my-ads');
+            }
           }
         },
         onError: (error) => {
@@ -57,13 +65,21 @@ export default function UpdateAdFormPage() {
   }
 
   return (
-    <AdForm
-      initialData={ad}
-      onSubmit={handleSubmit}
-      isSubmitting={isPending}
-      title="Update Ad"
-      description="Edit the details of your vehicle listing"
-      submitButtonText="Update Ad"
-    />
+    <>
+      <AdForm
+        initialData={ad}
+        onSubmit={handleSubmit}
+        isSubmitting={isPending}
+        title="Update Ad"
+        description="Edit the details of your vehicle listing"
+        submitButtonText="Update Ad"
+      />
+      <PendingAdModal
+        open={showPendingModal}
+        onOpenChange={setShowPendingModal}
+        onGoBack={() => router.push('/dashboard/ads')}
+        onCreateAnother={() => router.push('/dashboard/ads/new')}
+      />
+    </>
   );
 }

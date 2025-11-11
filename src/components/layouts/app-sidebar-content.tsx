@@ -65,6 +65,11 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
     // Admin-only navigation items
     adminNavMain: [
       {
+        title: "Ads Manage",
+        url: "/dashboard/ads-manage",
+        icon: NewspaperIcon
+      },
+      {
         title: "Organizations",
         url: "/dashboard/organizations",
         icon: UsersRoundIcon
