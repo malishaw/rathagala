@@ -9,7 +9,8 @@ import { adminColumns } from "@/features/ads/components/ad-table/admin-columns";
 import { DataTable } from "@/components/table/data-table";
 import { DataTableSkeleton } from "@/components/table/data-table-skeleton";
 import DataTableError from "@/components/table/data-table-error";
-import { useState } from "react";
+import { DataTableSearch } from "@/components/table/data-table-search";
+import { useQueryState, parseAsString, parseAsInteger } from "nuqs";
 
 // Vehicle type labels for title generation
 const vehicleTypeLabels: Record<string, string> = {
@@ -29,10 +30,23 @@ const vehicleTypeLabels: Record<string, string> = {
 };
 
 export default function AdsManagePage() {
+  const [searchQuery, setSearchQuery] = useQueryState(
+    "q",
+    parseAsString.withDefault("")
+  );
+  const [page, setPage] = useQueryState(
+    "page",
+    parseAsInteger.withDefault(1)
+  );
+  const [limit] = useQueryState(
+    "limit",
+    parseAsInteger.withDefault(10)
+  );
+
   const { data, error, isPending } = useGetAds({
-    limit: 10,
-    page: 1,
-    search: "",
+    limit: limit || 10,
+    page: page || 1,
+    search: searchQuery || "",
   });
 
   if (isPending) {
@@ -91,6 +105,14 @@ export default function AdsManagePage() {
           description="Manage and approve/reject ads submitted by users"
         />
         <Separator />
+        <div className="flex items-center gap-4 mb-4">
+          <DataTableSearch
+            searchKey="Mobile number, User Name or Model"
+            searchQuery={searchQuery || ""}
+            setSearchQuery={setSearchQuery}
+            setPage={setPage}
+          />
+        </div>
         <DataTable
           columns={adminColumns}
           data={formattedAds}
