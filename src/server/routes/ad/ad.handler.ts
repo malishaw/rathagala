@@ -4,17 +4,16 @@ import * as HttpStatusCodes from "stoker/http-status-codes";
 import * as HttpStatusPhrases from "stoker/http-status-phrases";
 
 import type { AppRouteHandler } from "@/types/server";
-import {
-  ListRoute,
-  CreateRoute,
-  GetOneRoute,
-  UpdateRoute,
-  RemoveRoute,
-  ApproveRoute,
-  RejectRoute,
-} from "./ad.routes";
-import { QueryParams } from "./ad.schemas";
 import { AdStatus, AdType } from "@prisma/client";
+import {
+    ApproveRoute,
+    CreateRoute,
+    GetOneRoute,
+    ListRoute,
+    RejectRoute,
+    RemoveRoute,
+    UpdateRoute,
+} from "./ad.routes";
 
 
 export const list: AppRouteHandler<ListRoute> = async (c) => {
@@ -57,8 +56,12 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     // --- Refactored filter logic: always use top-level AND array ---
     const andFilters: any[] = [];
 
-    // Filter by current user if filterByUser is true
-    if (query.filterByUser === true) {
+    // Filter by specific user if createdBy is provided
+    if (query.createdBy && query.createdBy.trim() !== "") {
+      andFilters.push({ createdBy: query.createdBy });
+    }
+    // Otherwise, filter by current user if filterByUser is true
+    else if (query.filterByUser === true) {
       if (session?.userId === null) {
         return c.json(
           { message: "Authentication required to filter by user" },
@@ -105,7 +108,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
         console.log("Invalid listingType:", listingTypeValue);
         return c.json(
           { message: "Invalid listing type. Must be one of: SELL, WANT, RENT, HIRE" },
-          400
+          HttpStatusCodes.BAD_REQUEST
         );
       }
       if (listingTypeValue === "SELL") {
@@ -1138,6 +1141,7 @@ export const approve: AppRouteHandler<ApproveRoute> = async (c) => {
     // Format response
     const formattedAd = {
       ...updatedAd,
+      metadata: updatedAd.metadata as Record<string, any> | null,
       createdAt: updatedAd.createdAt.toISOString(),
       updatedAt: updatedAd.updatedAt.toISOString(),
       boostExpiry: updatedAd.boostExpiry?.toISOString() ?? null,
@@ -1201,6 +1205,7 @@ export const reject: AppRouteHandler<RejectRoute> = async (c) => {
     // Format response
     const formattedAd = {
       ...updatedAd,
+      metadata: updatedAd.metadata as Record<string, any> | null,
       createdAt: updatedAd.createdAt.toISOString(),
       updatedAt: updatedAd.updatedAt.toISOString(),
       boostExpiry: updatedAd.boostExpiry?.toISOString() ?? null,

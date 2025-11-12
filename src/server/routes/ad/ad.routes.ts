@@ -1,17 +1,17 @@
 import { createRoute, z } from "@hono/zod-openapi";
-import {
-  jsonContent,
-  jsonContentOneOf,
-  jsonContentRequired,
-} from "stoker/openapi/helpers";
 import * as HttpStatusCodes from "stoker/http-status-codes";
-
 import {
-  createErrorSchema,
-  createMessageObjectSchema,
-} from "stoker/openapi/schemas";
+    jsonContent,
+    jsonContentOneOf,
+    jsonContentRequired,
+} from "stoker/openapi/helpers";
+
 import { notFoundSchema } from "@/server/helpers/constants";
 import { serverAuthMiddleware } from "@/server/middlewares/auth-middleware";
+import {
+    createErrorSchema,
+    createMessageObjectSchema,
+} from "stoker/openapi/schemas";
 
 import * as schemas from "./ad.schemas";
 
@@ -39,6 +39,10 @@ export const list = createRoute({
     [HttpStatusCodes.OK]: jsonContent(
       schemas.withPaginationSchema,
       "The list of ads"
+    ),
+    [HttpStatusCodes.BAD_REQUEST]: jsonContent(
+      z.object({ message: z.string() }),
+      "Bad request"
     ),
     [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
       z.object({ message: z.string() }),
@@ -197,6 +201,10 @@ export const approve = createRoute({
       "Admin access required"
     ),
     [HttpStatusCodes.NOT_FOUND]: jsonContent(notFoundSchema, "Ad not found"),
+    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({ message: z.string() }),
+      "Failed to approve ad"
+    ),
   },
 });
 
@@ -224,6 +232,10 @@ export const reject = createRoute({
       "Admin access required"
     ),
     [HttpStatusCodes.NOT_FOUND]: jsonContent(notFoundSchema, "Ad not found"),
+    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({ message: z.string() }),
+      "Failed to reject ad"
+    ),
   },
 });
 

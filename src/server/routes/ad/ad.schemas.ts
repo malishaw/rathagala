@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { AdSchema, AdTypeSchema, AdStatusSchema } from "@/types/schema-types";
+import { AdSchema, AdStatusSchema, AdTypeSchema } from "@/types/schema-types";
 
 export const IdParamsSchema = z.object({ id: z.string() });
 
@@ -12,6 +12,7 @@ export const querySchema = z.object({
   minPrice: z.string().optional(),
   maxPrice: z.string().optional(),
   location: z.string().optional(),
+  createdBy: z.string().optional(), // Filter by user ID
 });
 
 export type QueryParams = z.infer<typeof querySchema>;

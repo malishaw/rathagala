@@ -1,16 +1,14 @@
 "use client";
 
-import React from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { CheckCircle2, Phone, MessageCircle } from "lucide-react";
+import { CheckCircle2, MessageCircle, Phone } from "lucide-react";
 
 interface AdSubmissionSuccessModalProps {
   open: boolean;
@@ -49,7 +47,7 @@ export function AdSubmissionSuccessModal({
           </div>
         </DialogHeader>
 
-        <DialogDescription className="space-y-4 pt-4">
+        <div className="space-y-4 pt-4">
           {/* English Instructions */}
           <div className="text-sm text-gray-700">
             <p>
@@ -70,7 +68,7 @@ export function AdSubmissionSuccessModal({
               (Ex: Nimesh Udayanga)
             </p>
           </div>
-        </DialogDescription>
+        </div>
 
         <DialogFooter className="flex-col sm:flex-row gap-2 pt-4">
           <Button
