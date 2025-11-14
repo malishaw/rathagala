@@ -229,12 +229,25 @@ export default function AdDetailPage() {
             {/* Image Slider */}
             <Card className="overflow-hidden">
               <div className="relative">
-                <div className="aspect-video bg-gray-200">
+                <div className="aspect-video bg-gray-200 relative">
                   <img
                     src={images[currentImageIndex] || "/placeholder.svg"}
                     alt={`Vehicle image ${currentImageIndex + 1}`}
                     className="w-full h-full object-cover"
                   />
+                  {/* Watermark Overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                    <img
+                      src="/watermark.png"
+                      alt="Watermark"
+                      className="max-w-[250px] max-h-[250px] w-auto h-auto opacity-80 object-contain"
+                      onError={(e) => {
+                        console.error('Watermark image failed to load:', e);
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                      onLoad={() => console.log('Watermark image loaded successfully')}
+                    />
+                  </div>
                 </div>
 
                 {/* Slider Controls */}
