@@ -29,7 +29,7 @@ import {
   Shield
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function AdDetailPage() {
   const { id } = useParams();
@@ -39,6 +39,93 @@ export default function AdDetailPage() {
 
   // Using the hook to fetch ad data
   const { data: ad, isLoading, isError } = useGetAdById({ adId: adId || "" });
+
+  // Prevent image downloads and protect against various methods
+  useEffect(() => {
+    // Prevent right-click context menu globally on images - AGGRESSIVE BLOCKING
+    const handleContextMenu = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      // Block if clicking on image or any element inside image container
+      if (
+        target.tagName === "IMG" || 
+        target.closest("img") ||
+        target.closest(".aspect-video") ||
+        target.closest('[class*="watermark"]')
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        return false;
+      }
+    };
+
+    // Prevent keyboard shortcuts for saving/downloading
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent Ctrl+S, Ctrl+Shift+S, Ctrl+U (view source)
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        (e.key === "s" || e.key === "S" || e.key === "u" || e.key === "U")
+      ) {
+        // Allow Ctrl+S only if not on an image
+        const target = e.target as HTMLElement;
+        if (target.tagName === "IMG" || target.closest("img")) {
+          e.preventDefault();
+          return false;
+        }
+      }
+      // Prevent F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C (dev tools)
+      if (
+        e.key === "F12" ||
+        ((e.ctrlKey || e.metaKey) &&
+          e.shiftKey &&
+          (e.key === "I" || e.key === "J" || e.key === "C" || e.key === "i" || e.key === "j" || e.key === "c"))
+      ) {
+        // Allow dev tools but warn - you might want to remove this if you want stricter protection
+        // For now, we'll allow it but the watermark is still applied
+      }
+    };
+
+    // Prevent drag and drop
+    const handleDragStart = (e: DragEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === "IMG" || target.closest("img")) {
+        e.preventDefault();
+        return false;
+      }
+    };
+
+    // Prevent image selection
+    const handleSelectStart = (e: Event) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === "IMG" || target.closest("img")) {
+        e.preventDefault();
+        return false;
+      }
+    };
+
+    // Add event listeners with capture phase to catch events early
+    document.addEventListener("contextmenu", handleContextMenu, true); // Use capture phase
+    document.addEventListener("keydown", handleKeyDown, true);
+    document.addEventListener("dragstart", handleDragStart, true);
+    document.addEventListener("selectstart", handleSelectStart, true);
+    // Additional mouse events
+    document.addEventListener("mousedown", (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (e.button === 2 && (target.tagName === "IMG" || target.closest("img") || target.closest(".aspect-video"))) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+    }, true);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener("contextmenu", handleContextMenu, true);
+      document.removeEventListener("keydown", handleKeyDown, true);
+      document.removeEventListener("dragstart", handleDragStart, true);
+      document.removeEventListener("selectstart", handleSelectStart, true);
+    };
+  }, []);
 
   if (isLoading) {
     return (
@@ -58,11 +145,24 @@ export default function AdDetailPage() {
   }
 
   // Extract media and organize it for the image slider
-  const images: string[] = Array.isArray((ad as any).media) && (ad as any).media.length > 0
+  const originalImages: string[] = Array.isArray((ad as any).media) && (ad as any).media.length > 0
     ? (ad as any).media
         .map((item: any) => item?.media?.url)
         .filter((u: any) => typeof u === "string" && u.length > 0)
     : ["/placeholder.svg?height=400&width=600&text=No+Image"];
+
+  // Helper function to get watermarked image URL
+  const getWatermarkedImageUrl = (imageUrl: string): string => {
+    // Skip watermarking for placeholder images
+    if (imageUrl.includes("placeholder") || imageUrl.startsWith("/")) {
+      return imageUrl;
+    }
+    // Return watermarked image URL via API
+    return `/api/watermark?url=${encodeURIComponent(imageUrl)}`;
+  };
+
+  // Create watermarked image URLs
+  const images: string[] = originalImages.map(getWatermarkedImageUrl);
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
@@ -233,21 +333,47 @@ export default function AdDetailPage() {
                   <img
                     src={images[currentImageIndex] || "/placeholder.svg"}
                     alt={`Vehicle image ${currentImageIndex + 1}`}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover select-none pointer-events-none"
+                    draggable={false}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      return false;
+                    }}
+                    onDragStart={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      return false;
+                    }}
                   />
-                  {/* Watermark Overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                    <img
-                      src="/watermark.png"
-                      alt="Watermark"
-                      className="max-w-[250px] max-h-[250px] w-auto h-auto opacity-80 object-contain"
-                      onError={(e) => {
-                        console.error('Watermark image failed to load:', e);
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                      onLoad={() => console.log('Watermark image loaded successfully')}
-                    />
-                  </div>
+                  {/* Transparent overlay to prevent direct image interaction - BLOCKS ALL RIGHT CLICKS */}
+                  <div 
+                    className="absolute inset-0 z-10 pointer-events-auto"
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      e.stopImmediatePropagation();
+                      return false;
+                    }}
+                    onDragStart={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      return false;
+                    }}
+                    onMouseDown={(e) => {
+                      if (e.button === 2) { // Right mouse button
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return false;
+                      }
+                    }}
+                    style={{ 
+                      userSelect: 'none', 
+                      WebkitUserSelect: 'none',
+                      MozUserSelect: 'none',
+                      msUserSelect: 'none'
+                    }}
+                  />
                 </div>
 
                 {/* Slider Controls */}
@@ -256,14 +382,14 @@ export default function AdDetailPage() {
                     <button
                       aria-label="Previous image"
                       onClick={prevImage}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full"
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full z-20"
                     >
                       <ChevronLeft className="w-5 h-5" />
                     </button>
                     <button
                       aria-label="Next image"
                       onClick={nextImage}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full z-20"
                     >
                       <ChevronRight className="w-5 h-5" />
                     </button>
@@ -271,7 +397,7 @@ export default function AdDetailPage() {
                 )}
 
                 {/* Status Badges */}
-                <div className="absolute top-4 left-4 flex space-x-2">
+                <div className="absolute top-4 left-4 flex space-x-2 z-20">
                   {ad.featured && (
                     <Badge className="bg-orange-500 text-white">Featured</Badge>
                   )}
@@ -296,7 +422,10 @@ export default function AdDetailPage() {
                         <img
                           src={image || "/placeholder.svg"}
                           alt={`Thumbnail ${index + 1}`}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover select-none"
+                          draggable={false}
+                          onContextMenu={(e) => e.preventDefault()}
+                          onDragStart={(e) => e.preventDefault()}
                         />
                       </button>
                     ))}
