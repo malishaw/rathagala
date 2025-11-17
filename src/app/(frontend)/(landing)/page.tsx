@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
 import { useGetOrganizations } from "@/features/organizations/api/use-get-orgs";
+import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
 
 // Vehicle type labels
 const vehicleTypeLabels: Record<string, string> = {
@@ -139,14 +140,15 @@ export default function VehicleMarketplace() {
   // Use the existing hook to fetch real vehicle data
   const { data, isLoading, error } = useGetAds({
     page: currentPage,
-    limit: 8 // Show 8 items initially for better grid layout
+    limit: 8, // Show 8 items initially for better grid layout
+    search: activeFilters.model || "", // Pass search query to backend (empty string if null)
   });
 
   // Accumulate ads when new data arrives
   useEffect(() => {
-    if (data?.ads && data.ads.length > 0) {
+    if (data?.ads) {
       if (currentPage === 1) {
-        // Reset to first page results
+        // Reset to first page results (even if empty)
         setAllAds(data.ads);
       } else {
         // Append new ads to existing ones (avoid duplicates)
@@ -156,16 +158,13 @@ export default function VehicleMarketplace() {
           return [...prevAds, ...newAds];
         });
       }
-    } else if (data?.ads && data.ads.length === 0 && currentPage === 1) {
-      // Clear ads if no data on first page
-      setAllAds([]);
     }
   }, [data?.ads, currentPage]);
 
   // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
-    setAllAds([]);
+    // Don't clear allAds here - let the data fetch update it
   }, [activeFilters]);
 
   // Handle load more
@@ -513,13 +512,29 @@ export default function VehicleMarketplace() {
                   placeholder="Search by make, model, or city..."
                   className="w-full h-14 pl-12 pr-14 rounded-xl border-slate-200 bg-white shadow-md text-base"
                   value={filters.model || ""}
-                  onChange={(e) => handleFilterChange("model", e.target.value || null)}
+                  onChange={(e) => {
+                    const value = e.target.value || null;
+                    handleFilterChange("model", value);
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       applyFilters();
                     }
                   }}
                 />
+                {/* Show clear button when there's text */}
+                {filters.model && (
+                  <button
+                    onClick={() => {
+                      handleFilterChange("model", null);
+                      // Clear active filter and apply immediately
+                      setActiveFilters(prev => ({ ...prev, model: null }));
+                    }}
+                    className="absolute right-14 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
                 <Button
                   onClick={applyFilters}
                   disabled={isLoading}
@@ -1027,9 +1042,14 @@ export default function VehicleMarketplace() {
                   {filteredAds.map((vehicle) => (
                     <div
                       key={vehicle.id}
-                      className="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group"
+                      className="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative"
                       onClick={() => (window.location.href = `/${vehicle.id}`)}
                     >
+                      {/* Favorite Button */}
+                      <div className="absolute top-2 right-2 z-10">
+                        <FavoriteButton adId={vehicle.id} />
+                      </div>
+                      
                       <div className="p-3">
                         {/* Vehicle Title - Centered */}
                         <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">

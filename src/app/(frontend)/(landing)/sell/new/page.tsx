@@ -19,12 +19,16 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Loader2, Camera, ChevronRight, CheckCircle2 } from "lucide-react";
+import { PendingAdModal } from "@/features/ads/components/pending-ad-modal";
+import { AdSubmissionSuccessModal } from "@/features/ads/components/ad-submission-success-modal";
 
 export default function QuickAdCreatePage() {
   const router = useRouter();
   const { mutate: createAd, isPending } = useSetupAd();
   const { data: session } = authClient.useSession();
   const [currentStep, setCurrentStep] = useState(1);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showPendingModal, setShowPendingModal] = useState(false);
   const [formData, setFormData] = useState({
     // Listing type
     listingType: "SELL",
@@ -253,12 +257,18 @@ export default function QuickAdCreatePage() {
         onSuccess: (data) => {
           // Check if user is admin
           const isAdmin = (session?.user as any)?.role === "admin";
+          const isPublished = !adData.isDraft && adData.published;
           
-          // Redirect based on user role
-          if (isAdmin) {
-            router.push(`/dashboard/ads/${data.id}`);
+          // Show success modal first if ad is published (not admin)
+          if (!isAdmin && isPublished) {
+            setShowSuccessModal(true);
           } else {
-            router.push('/profile#my-ads');
+            // Admin or draft - redirect normally
+            if (isAdmin) {
+              router.push(`/dashboard/ads/${data.id}`);
+            } else {
+              router.push('/profile#my-ads');
+            }
           }
         }
       }
@@ -1625,6 +1635,56 @@ export default function QuickAdCreatePage() {
           )}
         </Card>
       </div>
+      <AdSubmissionSuccessModal
+        open={showSuccessModal}
+        onOpenChange={setShowSuccessModal}
+        onClose={() => {
+          // After closing success modal, show pending modal
+          setShowPendingModal(true);
+        }}
+      />
+      <PendingAdModal
+        open={showPendingModal}
+        onOpenChange={setShowPendingModal}
+        onGoBack={() => router.push('/')}
+        onCreateAnother={() => {
+          setShowPendingModal(false);
+          // Reset form and go to step 1
+          setCurrentStep(1);
+          setFormData({
+            listingType: "SELL",
+            type: "CAR",
+            brand: "",
+            model: "",
+            manufacturedYear: "",
+            modelYear: "",
+            price: "",
+            condition: "",
+            description: "",
+            transmission: "",
+            fuelType: "",
+            mileage: "",
+            engineCapacity: "",
+            trimEdition: "",
+            bikeType: "",
+            bodyType: "",
+            serviceType: "",
+            partType: "",
+            maintenanceType: "",
+            vehicleType: "",
+            name: "",
+            phoneNumber: "",
+            whatsappNumber: "",
+            province: "",
+            district: "",
+            city: "",
+            location: "",
+            termsAndConditions: false,
+            published: true,
+            isDraft: false
+          });
+        }}
+      />
     </div>
   );
 }

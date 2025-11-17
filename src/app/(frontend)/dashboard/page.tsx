@@ -14,8 +14,8 @@ export default function DashboardPage() {
   const { data: session } = authClient.useSession();
   const isAdmin = (session?.user as any)?.role === "admin";
 
-  // Request all ads for admin view
-  const latestAdsQuery = useGetAds({ page: 1, limit: 5, search: "" });
+  // Request all ads for admin view - use high limit to get accurate counts
+  const latestAdsQuery = useGetAds({ page: 1, limit: 1000, search: "" });
   const { data, isLoading, error } = latestAdsQuery;
 
   // Fetch organizations for admin
@@ -62,7 +62,7 @@ export default function DashboardPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Admin Stats Cards - Show for admin users */}
             {isAdmin && (
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
                 <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 hover:shadow-xl transition-shadow duration-200">
                   <div className="flex items-center justify-between mb-4">
                     <div className="p-3 bg-blue-100 rounded-xl">
@@ -79,8 +79,18 @@ export default function DashboardPage() {
                       <Star className="w-6 h-6 text-green-600" />
                     </div>
                   </div>
-                  <div className="text-sm font-medium text-slate-500 mb-1">Active Ads</div>
+                  <div className="text-sm font-medium text-slate-500 mb-1">Approved Ads</div>
                   <div className="text-3xl font-bold text-slate-800">{ads.filter(a => a.status === "ACTIVE").length}</div>
+                </div>
+
+                <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 hover:shadow-xl transition-shadow duration-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-yellow-100 rounded-xl">
+                      <Clock className="w-6 h-6 text-yellow-600" />
+                    </div>
+                  </div>
+                  <div className="text-sm font-medium text-slate-500 mb-1">Pending Ads</div>
+                  <div className="text-3xl font-bold text-slate-800">{ads.filter(a => a.status === "PENDING_REVIEW").length}</div>
                 </div>
 
                 <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 hover:shadow-xl transition-shadow duration-200">

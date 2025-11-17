@@ -175,6 +175,60 @@ export const remove = createRoute({
 
 export type RemoveRoute = typeof remove;
 
+// --------- Approve Ad ----------
+export const approve = createRoute({
+  tags,
+  summary: "Approve an ad",
+  description: "Approve a pending ad (admin only)",
+  path: "/{id}/approve",
+  method: "post",
+  middleware: [serverAuthMiddleware],
+  request: {
+    params: schemas.IdParamsSchema,
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(schemas.selectAdSchema, "The approved ad"),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      createMessageObjectSchema("Unauthorized"),
+      "Unauthorized"
+    ),
+    [HttpStatusCodes.FORBIDDEN]: jsonContent(
+      createMessageObjectSchema("Forbidden"),
+      "Admin access required"
+    ),
+    [HttpStatusCodes.NOT_FOUND]: jsonContent(notFoundSchema, "Ad not found"),
+  },
+});
+
+export type ApproveRoute = typeof approve;
+
+// --------- Reject Ad ----------
+export const reject = createRoute({
+  tags,
+  summary: "Reject an ad",
+  description: "Reject a pending ad (admin only)",
+  path: "/{id}/reject",
+  method: "post",
+  middleware: [serverAuthMiddleware],
+  request: {
+    params: schemas.IdParamsSchema,
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(schemas.selectAdSchema, "The rejected ad"),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      createMessageObjectSchema("Unauthorized"),
+      "Unauthorized"
+    ),
+    [HttpStatusCodes.FORBIDDEN]: jsonContent(
+      createMessageObjectSchema("Forbidden"),
+      "Admin access required"
+    ),
+    [HttpStatusCodes.NOT_FOUND]: jsonContent(notFoundSchema, "Ad not found"),
+  },
+});
+
+export type RejectRoute = typeof reject;
+
 // --------- Get User's Ads ----------
 // export const getUserAds = createRoute({
 //   tags,

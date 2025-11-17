@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { betterFetch } from "@better-fetch/fetch";
-import { ArrowRight, CarIcon, LogOut, Menu, UserIcon, XIcon, LayoutDashboard } from "lucide-react";
+import { ArrowRight, CarIcon, LayoutDashboard, LogOut, Menu, UserIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -92,7 +92,17 @@ export function Header() {
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between py-4">
-          <Link href="/" className="flex items-center space-x-2 hover:opacity-90 transition-opacity">
+          <Link 
+            href="/" 
+            className="flex items-center space-x-2 hover:opacity-90 transition-opacity"
+            onClick={(e) => {
+              // If already on home page, force refresh
+              if (window.location.pathname === '/') {
+                e.preventDefault();
+                window.location.reload();
+              }
+            }}
+          >
             <CarIcon className="h-6 w-6" />
             <div className="text-xl md:text-2xl font-bold text-white font-heading">
               Rathagala<span className="text-teal-600">.lk</span>
@@ -104,6 +114,13 @@ export function Header() {
             <Link
               href="/"
               className="hover:text-teal-200 transition-colors font-medium"
+              onClick={(e) => {
+                // If already on home page, force refresh
+                if (window.location.pathname === '/') {
+                  e.preventDefault();
+                  window.location.reload();
+                }
+              }}
             >
               Home
             </Link>
@@ -256,7 +273,14 @@ export function Header() {
                   <Link
                     href="/"
                     className="text-lg font-medium hover:text-teal-200 transition-colors"
-                    onClick={() => setIsOpen(false)}
+                    onClick={(e) => {
+                      setIsOpen(false);
+                      // If already on home page, force refresh
+                      if (window.location.pathname === '/') {
+                        e.preventDefault();
+                        window.location.reload();
+                      }
+                    }}
                   >
                     Home
                   </Link>
