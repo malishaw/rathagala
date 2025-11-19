@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { RevealPhoneButton } from "@/components/ui/reveal-phone-button";
 import { Separator } from "@/components/ui/separator";
+import { PriceComparison } from "@/components/ui/price-comparison";
 import { useGetAdById } from "@/features/ads/api/use-get-ad-by-id";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
 import {
@@ -657,6 +658,14 @@ export default function AdDetailPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Market Price Comparison */}
+            {ad.price && (
+              <PriceComparison 
+                adId={adId || ""} 
+                currentPrice={(ad as any).discountPrice || ad.price}
+              />
+            )}
 
             {/* Seller Information */}
             <Card>
