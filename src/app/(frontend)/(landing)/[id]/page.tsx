@@ -13,6 +13,7 @@ import {
 import { RevealPhoneButton } from "@/components/ui/reveal-phone-button";
 import { Separator } from "@/components/ui/separator";
 import { PriceComparison } from "@/components/ui/price-comparison";
+import { SimilarVehicleComparison } from "@/components/ui/similar-vehicle-comparison";
 import { useGetAdById } from "@/features/ads/api/use-get-ad-by-id";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
 import {
@@ -664,6 +665,22 @@ export default function AdDetailPage() {
               <PriceComparison 
                 adId={adId || ""} 
                 currentPrice={(ad as any).discountPrice || ad.price}
+              />
+            )}
+
+            {/* Similar Vehicle Comparison */}
+            {ad.price && (
+              <SimilarVehicleComparison
+                adId={adId || ""}
+                currentPrice={(ad as any).discountPrice || ad.price}
+                currentVehicle={{
+                  brand: ad.brand,
+                  model: ad.model,
+                  year: ad.manufacturedYear,
+                  mileage: ad.mileage,
+                  fuelType: ad.fuelType,
+                  transmission: ad.transmission,
+                }}
               />
             )}
 
