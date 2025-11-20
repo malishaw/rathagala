@@ -566,7 +566,7 @@ export default function AdDetailPage() {
 
                 <Separator className="my-4" />
 
-                <div className="flex items-center justify-between text-sm text-gray-500">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm text-gray-500">
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-1">
                       <Eye className="w-4 h-4" />
