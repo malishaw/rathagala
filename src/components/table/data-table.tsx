@@ -26,24 +26,31 @@ import {
   getCoreRowModel,
   getPaginationRowModel,
   PaginationState,
+  RowSelectionState,
   useReactTable
 } from "@tanstack/react-table";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { parseAsInteger, useQueryState } from "nuqs";
+import React from "react";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   totalItems: number;
   pageSizeOptions?: number[];
+  enableRowSelection?: boolean;
+  onRowSelectionChange?: (selectedRows: TData[]) => void;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   totalItems,
-  pageSizeOptions = [10, 20, 30, 40, 50]
+  pageSizeOptions = [10, 20, 30, 40, 50],
+  enableRowSelection = false,
+  onRowSelectionChange
 }: DataTableProps<TData, TValue>) {
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [currentPage, setCurrentPage] = useQueryState(
     "page",
     parseAsInteger.withOptions({ shallow: false }).withDefault(1)
@@ -81,14 +88,25 @@ export function DataTable<TData, TValue>({
     columns,
     pageCount: pageCount,
     state: {
-      pagination: paginationState
+      pagination: paginationState,
+      ...(enableRowSelection && { rowSelection })
     },
     onPaginationChange: handlePaginationChange,
+    onRowSelectionChange: enableRowSelection ? setRowSelection : undefined,
+    enableRowSelection: enableRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     manualPagination: true,
     manualFiltering: true
   });
+
+  // Notify parent of selection changes
+  React.useEffect(() => {
+    if (enableRowSelection && onRowSelectionChange) {
+      const selectedRows = table.getFilteredSelectedRowModel().rows.map(row => row.original);
+      onRowSelectionChange(selectedRows);
+    }
+  }, [rowSelection, enableRowSelection, onRowSelectionChange, table]);
 
   return (
     <div className="flex flex-1 flex-col space-y-4">
