@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { RevealPhoneButton } from "@/components/ui/reveal-phone-button";
 import { Separator } from "@/components/ui/separator";
+import { PriceComparison } from "@/components/ui/price-comparison";
+import { SimilarVehicleComparison } from "@/components/ui/similar-vehicle-comparison";
 import { useGetAdById } from "@/features/ads/api/use-get-ad-by-id";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
 import {
@@ -564,7 +566,7 @@ export default function AdDetailPage() {
 
                 <Separator className="my-4" />
 
-                <div className="flex items-center justify-between text-sm text-gray-500">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm text-gray-500">
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-1">
                       <Eye className="w-4 h-4" />
@@ -657,6 +659,30 @@ export default function AdDetailPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Market Price Comparison */}
+            {ad.price && (
+              <PriceComparison 
+                adId={adId || ""} 
+                currentPrice={(ad as any).discountPrice || ad.price}
+              />
+            )}
+
+            {/* Similar Vehicle Comparison */}
+            {ad.price && (
+              <SimilarVehicleComparison
+                adId={adId || ""}
+                currentPrice={(ad as any).discountPrice || ad.price}
+                currentVehicle={{
+                  brand: ad.brand,
+                  model: ad.model,
+                  year: ad.manufacturedYear,
+                  mileage: ad.mileage,
+                  fuelType: ad.fuelType,
+                  transmission: ad.transmission,
+                }}
+              />
+            )}
 
             {/* Seller Information */}
             <Card>

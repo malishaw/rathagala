@@ -15,9 +15,9 @@ export function RevealPhoneButton({ phoneNumber, className = "" }: RevealPhoneBu
   const maskPhoneNumber = (phone: string) => {
     if (phone.length <= 4) return phone;
     const start = phone.slice(0, 3);
-    const end = phone.slice(-2);
-    const middle = "*".repeat(phone.length - 5);
-    return `${start}${middle}${end}`;
+    
+    const middle = "*".repeat(phone.length - 3);
+    return `${start}${middle}`;
   };
 
   const handleReveal = () => {

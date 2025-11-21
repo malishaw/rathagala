@@ -175,10 +175,15 @@ export default function VehicleMarketplace() {
   };
 
   // Apply filters to the accumulated data - modify to use activeFilters instead of filters
+  // Also ensure only ACTIVE ads are shown (safety filter in case backend doesn't filter correctly)
   const filteredAds = useMemo(() => {
     if (!allAds || allAds.length === 0) return [];
 
     return allAds.filter((ad) => {
+      // Only show ACTIVE ads on the landing page
+      if (ad.status !== "ACTIVE") {
+        return false;
+      }
       // Make filter
       if (
         activeFilters.make &&

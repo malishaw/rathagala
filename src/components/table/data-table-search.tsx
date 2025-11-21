@@ -1,9 +1,11 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Options } from "nuqs";
-import { useTransition } from "react";
+import { useTransition, useState } from "react";
+import { Search } from "lucide-react";
 
 interface DataTableSearchProps {
   searchKey: string;
@@ -48,18 +50,36 @@ export function DataTableSearch({
   setPage
 }: DataTableSearchProps) {
   const [isLoading, startTransition] = useTransition();
+  const [inputValue, setInputValue] = useState(searchQuery ?? "");
 
-  const handleSearch = (value: string) => {
-    setSearchQuery(value, { startTransition });
+  const handleSearch = () => {
+    setSearchQuery(inputValue, { startTransition });
     setPage(1); // Reset page to 1 when search changes
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
   return (
-    <Input
-      placeholder={`Search ${searchKey}...`}
-      value={searchQuery ?? ""}
-      onChange={(e) => handleSearch(e.target.value)}
-      className={cn("w-full md:max-w-sm", isLoading && "animate-pulse")}
-    />
+    <div className="flex w-full md:max-w-sm gap-2">
+      <Input
+        placeholder={`Search ${searchKey}...`}
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
+        onKeyDown={handleKeyDown}
+        className={cn("flex-1", isLoading && "animate-pulse")}
+      />
+      <Button
+        onClick={handleSearch}
+        disabled={isLoading}
+        size="icon"
+        className="bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700"
+      >
+        <Search className="h-4 w-4" />
+      </Button>
+    </div>
   );
 }

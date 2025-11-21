@@ -5,6 +5,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import type { Ad } from "@/types/schema-types/index";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useApproveAd } from "@/features/ads/api/use-approve-ad";
 import { useRejectAd } from "@/features/ads/api/use-reject-ad";
 import { Check, X } from "lucide-react";
@@ -57,6 +58,28 @@ const generateAdTitle = (ad: AdType): string => {
 };
 
 export const adminColumns: ColumnDef<AdType>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
   {
     accessorKey: "title",
     header: "Ad Title",

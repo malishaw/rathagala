@@ -115,10 +115,16 @@ export default function SearchPage() {
   });
 
   // Filter results based on local filters (client-side filtering for now)
+  // Also ensure only ACTIVE ads are shown (safety filter in case backend doesn't filter correctly)
   const filteredAds = useMemo(() => {
     if (!data?.ads) return [];
     
     return data.ads.filter((ad) => {
+      // Only show ACTIVE ads on the search page
+      if (ad.status !== "ACTIVE") {
+        return false;
+      }
+      
       // Note: Listing type filter is now handled on the backend
       
       // Vehicle type filter
