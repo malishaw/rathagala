@@ -1017,8 +1017,11 @@ export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
       );
     }
 
-    // Verify user is the owner of the ad
-    if (existingAd.createdBy !== user.id) {
+    // Verify user is the owner of the ad OR is an admin
+    const userRole = (user as any)?.role;
+    const isAdmin = userRole === "admin";
+    
+    if (existingAd.createdBy !== user.id && !isAdmin) {
       return c.json(
         { message: "You don't have permission to delete this ad" },
         HttpStatusCodes.FORBIDDEN
@@ -1192,12 +1195,16 @@ export const reject: AppRouteHandler<RejectRoute> = async (c) => {
       );
     }
 
-    // Update ad status to REJECTED
+    // Get rejection description from request body
+    const body = c.req.valid("json");
+    
+    // Update ad status to REJECTED with rejection description
     const updatedAd = await prisma.ad.update({
       where: { id: adId },
       data: {
         status: AdStatus.REJECTED,
         published: false,
+        rejectionDescription: body?.rejectionDescription || null,
       },
     });
 

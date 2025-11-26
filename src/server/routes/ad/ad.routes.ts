@@ -212,6 +212,12 @@ export const reject = createRoute({
   middleware: [serverAuthMiddleware],
   request: {
     params: schemas.IdParamsSchema,
+    body: jsonContent(
+      z.object({
+        rejectionDescription: z.string().optional(),
+      }),
+      "Rejection description"
+    ),
   },
   responses: {
     [HttpStatusCodes.OK]: jsonContent(schemas.selectAdSchema, "The rejected ad"),

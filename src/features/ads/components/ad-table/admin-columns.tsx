@@ -1,11 +1,22 @@
 "use client";
 import Link from "next/link";
+import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 
 import type { Ad } from "@/types/schema-types/index";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { useApproveAd } from "@/features/ads/api/use-approve-ad";
 import { useRejectAd } from "@/features/ads/api/use-reject-ad";
 import { Check, X } from "lucide-react";
@@ -119,6 +130,23 @@ export const adminColumns: ColumnDef<AdType>[] = [
     }
   },
   {
+    accessorKey: "rejectionDescription",
+    header: "Rejection Reason",
+    cell: ({ row }) => {
+      const rejectionDescription = (row.original as any).rejectionDescription;
+      if (!rejectionDescription) {
+        return <span className="text-muted-foreground text-sm">—</span>;
+      }
+      return (
+        <div className="max-w-xs">
+          <p className="text-sm text-red-600 line-clamp-2" title={rejectionDescription}>
+            {rejectionDescription}
+          </p>
+        </div>
+      );
+    }
+  },
+  {
     accessorKey: "createdBy",
     header: "Created By",
     cell: ({ row }) => {
@@ -142,6 +170,8 @@ export const adminColumns: ColumnDef<AdType>[] = [
 
 // Separate component to use hooks properly
 function AdminActionsCell({ ad }: { ad: AdType }) {
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [rejectionDescription, setRejectionDescription] = useState("");
   const approveMutation = useApproveAd();
   const rejectMutation = useRejectAd();
   
@@ -150,36 +180,94 @@ function AdminActionsCell({ ad }: { ad: AdType }) {
   // Show reject button for DRAFT, PENDING_REVIEW, and ACTIVE statuses
   const canReject = ad.status === "DRAFT" || ad.status === "PENDING_REVIEW" || ad.status === "ACTIVE";
 
+  const handleReject = () => {
+    rejectMutation.mutate(
+      { id: ad.id, rejectionDescription: rejectionDescription.trim() || undefined },
+      {
+        onSuccess: () => {
+          setShowRejectDialog(false);
+          setRejectionDescription("");
+        },
+      }
+    );
+  };
+
   // If no actions available, show a message
   if (!canApprove && !canReject) {
     return <span className="text-muted-foreground text-sm">No actions</span>;
   }
 
   return (
-    <div className="flex items-center gap-2">
-      {canApprove && (
-        <Button
-          size="sm"
-          onClick={() => approveMutation.mutate(ad.id)}
-          disabled={approveMutation.isPending || rejectMutation.isPending}
-          className="bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700 border-0"
-        >
-          <Check className="w-4 h-4 mr-1" />
-          Approve
-        </Button>
-      )}
-      {canReject && (
-        <Button
-          size="sm"
-          onClick={() => rejectMutation.mutate(ad.id)}
-          disabled={approveMutation.isPending || rejectMutation.isPending}
-          className="bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 border-0"
-        >
-          <X className="w-4 h-4 mr-1" />
-          Reject
-        </Button>
-      )}
-    </div>
+    <>
+      <div className="flex items-center gap-2">
+        {canApprove && (
+          <Button
+            size="sm"
+            onClick={() => approveMutation.mutate(ad.id)}
+            disabled={approveMutation.isPending || rejectMutation.isPending}
+            className="bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700 border-0"
+          >
+            <Check className="w-4 h-4 mr-1" />
+            Approve
+          </Button>
+        )}
+        {canReject && (
+          <Button
+            size="sm"
+            onClick={() => setShowRejectDialog(true)}
+            disabled={approveMutation.isPending || rejectMutation.isPending}
+            className="bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 border-0"
+          >
+            <X className="w-4 h-4 mr-1" />
+            Reject
+          </Button>
+        )}
+      </div>
+
+      {/* Reject Dialog */}
+      <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject Ad</DialogTitle>
+            <DialogDescription>
+              Please provide a reason for rejecting this ad. This will help the seller understand why their ad was rejected.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="rejection-description">Rejection Reason (Optional)</Label>
+              <Textarea
+                id="rejection-description"
+                placeholder="Enter the reason for rejection..."
+                value={rejectionDescription}
+                onChange={(e) => setRejectionDescription(e.target.value)}
+                rows={4}
+                className="resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowRejectDialog(false);
+                setRejectionDescription("");
+              }}
+              disabled={rejectMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleReject}
+              disabled={rejectMutation.isPending}
+              className="bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 border-0"
+            >
+              {rejectMutation.isPending ? "Rejecting..." : "Reject Ad"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
