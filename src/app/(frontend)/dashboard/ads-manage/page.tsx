@@ -13,8 +13,19 @@ import DataTableError from "@/components/table/data-table-error";
 import { DataTableSearch } from "@/components/table/data-table-search";
 import { useQueryState, parseAsString, parseAsInteger } from "nuqs";
 import { useBulkApproveAds } from "@/features/ads/api/use-bulk-approve-ads";
-import { Check } from "lucide-react";
+import { useBulkDeleteAds } from "@/features/ads/api/use-bulk-delete-ads";
+import { Check, Trash2 } from "lucide-react";
 import type { AdType } from "@/features/ads/components/ad-table/admin-columns";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Vehicle type labels for title generation
 const vehicleTypeLabels: Record<string, string> = {
@@ -54,7 +65,9 @@ export default function AdsManagePage() {
   });
 
   const [selectedRows, setSelectedRows] = useState<AdType[]>([]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const bulkApproveMutation = useBulkApproveAds();
+  const bulkDeleteMutation = useBulkDeleteAds();
 
   // Handle bulk approval
   const handleBulkApprove = () => {
@@ -74,6 +87,19 @@ export default function AdsManagePage() {
     bulkApproveMutation.mutate(ids, {
       onSuccess: () => {
         setSelectedRows([]); // Clear selection after successful approval
+      },
+    });
+  };
+
+  // Handle bulk delete
+  const handleBulkDelete = () => {
+    if (selectedRows.length === 0) return;
+    
+    const ids = selectedRows.map((ad) => ad.id);
+    bulkDeleteMutation.mutate(ids, {
+      onSuccess: () => {
+        setSelectedRows([]); // Clear selection after successful deletion
+        setShowDeleteDialog(false);
       },
     });
   };
@@ -151,11 +177,20 @@ export default function AdsManagePage() {
               </span>
               <Button
                 onClick={handleBulkApprove}
-                disabled={bulkApproveMutation.isPending}
+                disabled={bulkApproveMutation.isPending || bulkDeleteMutation.isPending}
                 className="bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700 border-0"
               >
                 <Check className="w-4 h-4 mr-2" />
                 Approve Selected ({selectedRows.filter(ad => ad.status === "DRAFT" || ad.status === "PENDING_REVIEW" || ad.status === "REJECTED").length})
+              </Button>
+              <Button
+                onClick={() => setShowDeleteDialog(true)}
+                disabled={bulkApproveMutation.isPending || bulkDeleteMutation.isPending}
+                variant="destructive"
+                className="bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 border-0"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete Selected
               </Button>
             </div>
           )}
@@ -168,6 +203,28 @@ export default function AdsManagePage() {
           onRowSelectionChange={setSelectedRows}
         />
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete {selectedRows.length} ad(s).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={bulkDeleteMutation.isPending}
+            >
+              {bulkDeleteMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageContainer>
   );
 }

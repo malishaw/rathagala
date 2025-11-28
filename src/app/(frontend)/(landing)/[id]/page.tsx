@@ -12,8 +12,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { RevealPhoneButton } from "@/components/ui/reveal-phone-button";
 import { Separator } from "@/components/ui/separator";
-import { PriceComparison } from "@/components/ui/price-comparison";
-import { SimilarVehicleComparison } from "@/components/ui/similar-vehicle-comparison";
 import { useGetAdById } from "@/features/ads/api/use-get-ad-by-id";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
 import {
@@ -28,7 +26,8 @@ import {
   MessageCircle,
   Phone,
   Share2,
-  Shield
+  Shield,
+  BarChart3
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -660,28 +659,33 @@ export default function AdDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Market Price Comparison */}
+            {/* Vehicle Analytics Button */}
             {ad.price && (
-              <PriceComparison 
-                adId={adId || ""} 
-                currentPrice={(ad as any).discountPrice || ad.price}
-              />
-            )}
-
-            {/* Similar Vehicle Comparison */}
-            {ad.price && (
-              <SimilarVehicleComparison
-                adId={adId || ""}
-                currentPrice={(ad as any).discountPrice || ad.price}
-                currentVehicle={{
-                  brand: ad.brand,
-                  model: ad.model,
-                  year: ad.manufacturedYear,
-                  mileage: ad.mileage,
-                  fuelType: ad.fuelType,
-                  transmission: ad.transmission,
-                }}
-              />
+              <Card className="border-2 border-dashed border-[#024950]/30 bg-gradient-to-br from-teal-50/50 to-white">
+                <CardContent className="p-8 text-center">
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="p-4 bg-gradient-to-br from-[#024950] to-teal-600 rounded-full">
+                      <BarChart3 className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-800 mb-2">
+                        View Vehicle Analytics
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-4 max-w-md">
+                        Get comprehensive market insights including price comparison and similar vehicle analysis
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => router.push(`/${adId}/analytics`)}
+                      className="bg-gradient-to-r from-[#024950] to-teal-600 text-white hover:from-[#036b75] hover:to-teal-700 border-0 px-8 py-6 text-lg"
+                      size="lg"
+                    >
+                      <BarChart3 className="w-5 h-5 mr-2" />
+                      View Analytics & Comparisons
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
             {/* Seller Information */}

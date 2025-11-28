@@ -36,6 +36,24 @@ const generateAdTitle = (ad: AdType): string => {
     .join(' ') || ad.title || "Untitled Ad";
 };
 
+// Status badge colors - using teal gradient theme
+const getStatusBadge = (status: string) => {
+  switch (status) {
+    case "ACTIVE":
+      return <Badge className="bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white border-0">Active</Badge>;
+    case "PENDING_REVIEW":
+      return <Badge className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white border-0">Pending</Badge>;
+    case "REJECTED":
+      return <Badge className="bg-gradient-to-r from-red-500 to-red-600 text-white border-0">Rejected</Badge>;
+    case "DRAFT":
+      return <Badge className="bg-gradient-to-r from-slate-400 to-slate-500 text-white border-0">Draft</Badge>;
+    case "EXPIRED":
+      return <Badge className="bg-gradient-to-r from-slate-400 to-slate-500 text-white border-0">Expired</Badge>;
+    default:
+      return <Badge className="bg-gradient-to-r from-slate-400 to-slate-500 text-white border-0">{status}</Badge>;
+  }
+};
+
 export const columns: ColumnDef<AdType>[] = [
   {
     accessorKey: "title",
@@ -66,6 +84,13 @@ export const columns: ColumnDef<AdType>[] = [
           {displayType}
         </Badge>
       );
+    }
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      return getStatusBadge(row.original.status);
     }
   },
   {

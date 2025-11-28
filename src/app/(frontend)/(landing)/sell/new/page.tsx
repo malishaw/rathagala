@@ -1511,7 +1511,7 @@ export default function QuickAdCreatePage() {
               <div>
                 <label className="block text-sm font-medium mb-1">Phone Number<span className="text-red-500">*</span></label>
                 <Input 
-                  placeholder="e.g., +94777123456" 
+                  placeholder="e.g., 0777123456" 
                   value={formData.phoneNumber}
                   onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
                 />
@@ -1520,7 +1520,7 @@ export default function QuickAdCreatePage() {
               <div>
                 <label className="block text-sm font-medium mb-1">WhatsApp Number (optional)</label>
                 <Input 
-                  placeholder="e.g., +94777123456" 
+                  placeholder="e.g., 0777123456" 
                   value={formData.whatsappNumber}
                   onChange={(e) => handleInputChange("whatsappNumber", e.target.value)}
                 />

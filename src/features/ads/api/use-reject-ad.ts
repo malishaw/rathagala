@@ -9,9 +9,12 @@ export function useRejectAd() {
   const toastId = useId();
 
   const mutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async ({ id, rejectionDescription }: { id: string; rejectionDescription?: string }) => {
       const res = await client.api.ad[":id"].reject.$post({
         param: { id },
+        json: {
+          rejectionDescription: rejectionDescription || undefined,
+        },
       });
 
       if (!res.ok) {
