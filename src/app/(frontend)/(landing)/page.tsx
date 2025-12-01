@@ -561,7 +561,7 @@ export default function VehicleMarketplace() {
                     )}
                   </button>
                 </SheetTrigger>
-                <SheetContent side="bottom" className="h-auto max-h-[65vh] rounded-t-3xl p-0">
+                <SheetContent side="bottom" className="h-auto max-h-[65vh] rounded-t-3xl p-0 sm:max-w-md sm:rounded-2xl sm:mb-4">
                   <div className="px-4 py-3">
                     <SheetHeader className="pb-3">
                       <div className="flex items-center justify-between">
@@ -988,8 +988,8 @@ export default function VehicleMarketplace() {
                 </div>
               )}
 
-              {/* Error state */}
-              {error && (
+              {/* Error state - only show if no data at all */}
+              {error && !data?.ads && allAds.length === 0 && !isLoading && (
                 <div className="p-8 text-center bg-white rounded-xl shadow-sm">
                   <p className="text-red-500 font-medium">
                     Failed to load vehicle listings
