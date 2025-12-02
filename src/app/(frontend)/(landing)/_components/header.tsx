@@ -148,6 +148,12 @@ export function Header() {
             >
               Hire
             </Link>
+            <Link
+              href="/comparison"
+              className="hover:text-teal-200 transition-colors font-medium"
+            >
+              Comparison
+            </Link>
             {/* <Link
               href="/search"
               className="hover:text-teal-200 transition-colors font-medium"
