@@ -4,18 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
 } from "@/components/ui/select";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
 } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { format } from "date-fns";
@@ -24,10 +24,10 @@ import { useEffect, useMemo, useState } from "react";
 
 // Import the existing hook
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
 import { useGetOrganizations } from "@/features/organizations/api/use-get-orgs";
@@ -566,7 +566,7 @@ export default function VehicleMarketplace() {
                     )}
                   </button>
                 </SheetTrigger>
-                <SheetContent side="bottom" className="h-auto max-h-[65vh] rounded-t-3xl p-0">
+                <SheetContent side="bottom" className="h-auto max-h-[65vh] rounded-t-3xl p-0 sm:max-w-md sm:rounded-2xl sm:mb-4">
                   <div className="px-4 py-3">
                     <SheetHeader className="pb-3">
                       <div className="flex items-center justify-between">
@@ -993,8 +993,8 @@ export default function VehicleMarketplace() {
                 </div>
               )}
 
-              {/* Error state */}
-              {error && (
+              {/* Error state - only show if no data at all */}
+              {error && !data?.ads && allAds.length === 0 && !isLoading && (
                 <div className="p-8 text-center bg-white rounded-xl shadow-sm">
                   <p className="text-red-500 font-medium">
                     Failed to load vehicle listings

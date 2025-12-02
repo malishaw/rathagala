@@ -68,7 +68,9 @@ function SheetContent({
           side === "top" &&
             "data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top inset-x-0 top-0 h-auto border-b",
           side === "bottom" &&
-            "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 bottom-0 h-auto border-t",
+            "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom bottom-0 h-auto border-t",
+          side === "bottom" && !className?.includes("max-w-") && "inset-x-0",
+          side === "bottom" && className?.includes("max-w-") && "left-1/2 -translate-x-1/2",
           className
         )}
         {...props}
@@ -132,7 +134,7 @@ function SheetDescription({
 }
 
 export {
-    Sheet, SheetClose,
-    SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger
+  Sheet, SheetClose,
+  SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger
 }
 
