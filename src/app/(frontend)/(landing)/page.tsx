@@ -197,20 +197,23 @@ export default function VehicleMarketplace() {
 
   // Accumulate ads when new data arrives
   useEffect(() => {
-    if (data?.ads) {
+    if (data?.ads && data.ads.length >= 0) {
       if (currentPage === 1) {
         // Reset to first page results (even if empty)
         setAllAds(data.ads);
-      } else {
+      } else if (currentPage > 1) {
         // Append new ads to existing ones (avoid duplicates)
         setAllAds((prevAds) => {
           const existingIds = new Set(prevAds.map((ad) => ad.id));
           const newAds = data.ads.filter((ad) => !existingIds.has(ad.id));
-          return [...prevAds, ...newAds];
+          if (newAds.length > 0) {
+            return [...prevAds, ...newAds];
+          }
+          return prevAds;
         });
       }
     }
-  }, [data?.ads, currentPage]);
+  }, [data, currentPage]);
 
   // Reset pagination when filters change
   useEffect(() => {
@@ -1189,28 +1192,28 @@ export default function VehicleMarketplace() {
               )}
 
               {/* Load More */}
-              {!hasActiveFilters && filteredAds.length > 0 && (
+              {filteredAds.length > 0 && (
                 <div className="text-center mt-8">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="px-8 py-5 border-teal-700 text-teal-700 hover:bg-teal-700 hover:text-white transition-all duration-300"
-                    onClick={handleLoadMore}
-                    disabled={
-                      isLoading ||
-                      !data ||
-                      currentPage >= (data.pagination?.totalPages || 1)
-                    }
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Loading...
-                      </>
-                    ) : (
-                      "Load More Vehicles"
-                    )}
-                  </Button>
+                  {data?.pagination && currentPage < data.pagination.totalPages ? (
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="px-8 py-5 border-teal-700 text-teal-700 hover:bg-teal-700 hover:text-white transition-all duration-300"
+                      onClick={handleLoadMore}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Loading...
+                        </>
+                      ) : (
+                        "Load More Vehicles"
+                      )}
+                    </Button>
+                  ) : (
+                    <p className="text-slate-500 text-sm">No more vehicles to load</p>
+                  )}
                 </div>
               )}
             </div>

@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { betterFetch } from "@better-fetch/fetch";
 import { ArrowRight, CarIcon, LayoutDashboard, LogOut, Menu, UserIcon, XIcon } from "lucide-react";
 import Link from "next/link";
@@ -254,6 +254,7 @@ export function Header() {
                 hideCloseButton
                 className="w-[85%] sm:w-[360px] bg-gradient-to-r from-teal-900 to-teal-800 text-white border-teal-900 px-6 py-8 rounded-l-3xl"
               >
+                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                 <div className="flex items-center justify-between mb-10">
                   <div className="text-xl font-bold text-white flex items-center gap-2 tracking-wide">
                     <CarIcon className="h-5 w-5" />
