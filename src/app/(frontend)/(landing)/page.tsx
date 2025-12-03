@@ -4,30 +4,30 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
 import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
 } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { format } from "date-fns";
-import { ChevronDown, Filter, Loader2, Search, X } from "lucide-react";
+import { Filter, Loader2, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 // Import the existing hook
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
 import { useGetOrganizations } from "@/features/organizations/api/use-get-orgs";
@@ -63,17 +63,66 @@ const vehicleMakes = [
   "Volvo", "Yamaha"
 ];
 
-// Sri Lankan cities for dropdown (expanded)
+// Sri Lankan cities for dropdown (comprehensive list)
 const sriLankanCities = [
-  "Colombo", "Dehiwala-Mount Lavinia", "Moratuwa", "Kandy", "Gampola", "Matale",
-  "Nuwara Eliya", "Galle", "Matara", "Hambantota", "Jaffna", "Vavuniya",
-  "Trincomalee", "Batticaloa", "Ampara", "Anuradhapura", "Polonnaruwa",
-  "Kurunegala", "Puttalam", "Negombo", "Kalutara", "Ratnapura", "Kottawa",
-  "Kotte", "Homagama", "Kesbewa", "Panadura", "Horana", "Badulla",
-  "Monaragala", "Kilinochchi", "Mannar", "Mullaitivu", "Nawalapitiya",
-  "Talawakele", "Hatton", "Talawakele-Nanuoya", "Ehetuwa", "Point Pedro",
-  "Kegalle", "Maskeliya", "Akkaraipattu", "Kalmunai", "Ambalangoda",
-  "Gampaha", "Wattala", "Beliatta", "Tangalle", "Wariyapola", "Kuliyapitiya"
+  // Western Province
+  "Colombo", "Dehiwala", "Dehiwala-Mount Lavinia", "Mount Lavinia", "Moratuwa", "Kotte", "Sri Jayawardenepura Kotte",
+  "Negombo", "Kelaniya", "Kolonnawa", "Kaduwela", "Maharagama", "Piliyandala", "Pannipitiya",
+  "Kottawa", "Homagama", "Kesbewa", "Battaramulla", "Rajagiriya", "Nugegoda", "Boralesgamuwa",
+  "Ratmalana", "Wellampitiya", "Wattala", "Ja-Ela", "Kandana", "Seeduwa", "Katunayake",
+  "Minuwangoda", "Divulapitiya", "Gampaha", "Veyangoda", "Nittambuwa", "Attanagalla",
+  "Kalutara", "Panadura", "Horana", "Bandaragama", "Beruwala", "Aluthgama", "Wadduwa", "Matugama",
+  
+  // Central Province
+  "Kandy", "Peradeniya", "Katugastota", "Gampola", "Nawalapitiya", "Kadugannawa", "Kundasale",
+  "Matale", "Dambulla", "Sigiriya", "Rattota", "Ukuwela",
+  "Nuwara Eliya", "Hatton", "Talawakele", "Maskeliya", "Nanu Oya", "Talawakele-Nanuoya",
+  
+  // Southern Province
+  "Galle", "Unawatuna", "Hikkaduwa", "Ambalangoda", "Balapitiya", "Bentota", "Elpitiya", "Karapitiya",
+  "Matara", "Weligama", "Mirissa", "Akuressa", "Dickwella", "Hakmana",
+  "Hambantota", "Tangalle", "Tissamaharama", "Beliatta", "Ambalantota", "Weeraketiya",
+  
+  // Northern Province
+  "Jaffna", "Chavakachcheri", "Point Pedro", "Nallur", "Kopay", "Karainagar",
+  "Kilinochchi", "Paranthan", "Poonakary",
+  "Mannar", "Talaimannar",
+  "Mullaitivu", "Oddusuddan",
+  "Vavuniya", "Nedunkeni",
+  
+  // Eastern Province
+  "Trincomalee", "Kinniya", "Kantale", "Muttur",
+  "Batticaloa", "Kattankudy", "Eravur", "Valaichchenai",
+  "Ampara", "Kalmunai", "Akkaraipattu", "Sammanthurai", "Pottuvil",
+  
+  // North Western Province
+  "Kurunegala", "Maho", "Wariyapola", "Kuliyapitiya", "Narammala", "Pannala", "Alawwa",
+  "Puttalam", "Chilaw", "Wennappuwa", "Marawila", "Nattandiya", "Anamaduwa",
+  
+  // North Central Province
+  "Anuradhapura", "Kekirawa", "Medawachchiya", "Tambuttegama", "Mihintale",
+  "Polonnaruwa", "Kaduruwela", "Hingurakgoda", "Medirigiriya",
+  
+  // Uva Province
+  "Badulla", "Bandarawela", "Haputale", "Ella", "Mahiyanganaya", "Passara", "Welimada",
+  "Monaragala", "Wellawaya", "Bibile", "Buttala",
+  
+  // Sabaragamuwa Province
+  "Ratnapura", "Balangoda", "Embilipitiya", "Pelmadulla", "Eheliyagoda", "Kuruwita",
+  "Kegalle", "Mawanella", "Rambukkana", "Warakapola", "Deraniyagala", "Ruwanwella",
+  
+  // Additional common areas
+  "Ehetuwa", "Athurugiriya", "Malabe", "Thalawathugoda", "Nawala", "Ethul Kotte",
+  "Kiribathgoda", "Kadawatha", "Ragama", "Peliyagoda", "Hendala", "Hunupitiya"
+].sort();
+
+// Sri Lankan districts
+const sriLankanDistricts = [
+  "Ampara", "Anuradhapura", "Badulla", "Batticaloa", "Colombo",
+  "Galle", "Gampaha", "Hambantota", "Jaffna", "Kalutara",
+  "Kandy", "Kegalle", "Kilinochchi", "Kurunegala", "Mannar",
+  "Matale", "Matara", "Monaragala", "Mullaitivu", "Nuwara Eliya",
+  "Polonnaruwa", "Puttalam", "Ratnapura", "Trincomalee", "Vavuniya"
 ];
 
 // Define filter state interface with updated fields
@@ -82,6 +131,7 @@ interface FilterState {
   model: string | null;
   vehicleType: string | null;
   city: string | null;
+  district: string | null;
   condition: string | null;
   
   // Advanced filters
@@ -94,7 +144,6 @@ interface FilterState {
 }
 
 export default function VehicleMarketplace() {
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [cityQuery, setCityQuery] = useState("");
   const [showFilterSheet, setShowFilterSheet] = useState(false);
 
@@ -104,6 +153,7 @@ export default function VehicleMarketplace() {
     model: null,
     vehicleType: null,
     city: null,
+    district: null,
     condition: null,
     minYear: null,
     maxYear: null,
@@ -119,6 +169,7 @@ export default function VehicleMarketplace() {
     model: null,
     vehicleType: null,
     city: null,
+    district: null,
     condition: null,
     minYear: null,
     maxYear: null,
@@ -561,7 +612,11 @@ export default function VehicleMarketplace() {
                     )}
                   </button>
                 </SheetTrigger>
-                <SheetContent side="bottom" className="h-auto max-h-[65vh] rounded-t-3xl p-0 sm:max-w-md sm:rounded-2xl sm:mb-4">
+                <SheetContent 
+                  side="bottom" 
+                  className="h-auto max-h-[90vh] rounded-t-3xl p-0 sm:max-h-[95vh] sm:rounded-2xl sm:mb-4 left-1/2 -translate-x-1/2"
+                  style={{ width: '900px', maxWidth: '95vw' }}
+                >
                   <div className="px-4 py-3">
                     <SheetHeader className="pb-3">
                       <div className="flex items-center justify-between">
@@ -580,8 +635,8 @@ export default function VehicleMarketplace() {
                     </SheetHeader>
                   </div>
                   
-                  <div className="px-4 pb-16 space-y-3 overflow-y-auto max-h-[calc(65vh-120px)]">
-                    {/* Make & City - Side by side on mobile */}
+                  <div className="px-4 pb-16 space-y-3 overflow-y-auto max-h-[calc(85vh-120px)] sm:max-h-[calc(90vh-120px)]">
+                    {/* Make & Vehicle Type */}
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="text-xs font-medium text-slate-600 mb-1 block">Make</label>
@@ -606,6 +661,29 @@ export default function VehicleMarketplace() {
                       </div>
 
                       <div>
+                        <label className="text-xs font-medium text-slate-600 mb-1 block">Vehicle Type</label>
+                        <Select
+                          value={filters.vehicleType || "any"}
+                          onValueChange={(value) => handleFilterChange("vehicleType", value)}
+                        >
+                          <SelectTrigger className="w-full h-9 bg-white text-xs">
+                            <SelectValue placeholder="Any Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="any">Any Type</SelectItem>
+                            {Object.entries(vehicleTypeLabels).map(([value, label]) => (
+                              <SelectItem key={value} value={value}>
+                                {label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* City & District - Related fields together */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
                         <label className="text-xs font-medium text-slate-600 mb-1 block">City</label>
                         <Select
                           value={filters.city || "any"}
@@ -613,17 +691,22 @@ export default function VehicleMarketplace() {
                             setCityQuery("");
                             handleFilterChange("city", value === "any" ? null : value);
                           }}
+                          onOpenChange={(open) => {
+                            if (!open) setCityQuery("");
+                          }}
                         >
                           <SelectTrigger className="w-full h-9 bg-white text-xs">
                             <SelectValue placeholder="Any" />
                           </SelectTrigger>
                           <SelectContent className="max-h-[280px]">
-                            <div className="px-2 pb-1.5 sticky top-0 bg-white">
+                            <div className="px-2 pb-1.5 sticky top-0 bg-white z-10">
                               <input
                                 aria-label="Search cities"
                                 placeholder="Search..."
                                 value={cityQuery}
                                 onChange={(e) => setCityQuery(e.target.value)}
+                                onKeyDown={(e) => e.stopPropagation()}
+                                onClick={(e) => e.stopPropagation()}
                                 className="w-full rounded-md py-1 px-2 bg-slate-50 border border-slate-200 text-xs"
                               />
                             </div>
@@ -642,27 +725,26 @@ export default function VehicleMarketplace() {
                           </SelectContent>
                         </Select>
                       </div>
-                    </div>
 
-                    {/* Vehicle Type */}
-                    <div>
-                      <label className="text-xs font-medium text-slate-600 mb-1 block">Vehicle Type</label>
-                      <Select
-                        value={filters.vehicleType || "any"}
-                        onValueChange={(value) => handleFilterChange("vehicleType", value)}
-                      >
-                        <SelectTrigger className="w-full h-9 bg-white text-xs">
-                          <SelectValue placeholder="Any Type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="any">Any Type</SelectItem>
-                          {Object.entries(vehicleTypeLabels).map(([value, label]) => (
-                            <SelectItem key={value} value={value}>
-                              {label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div>
+                        <label className="text-xs font-medium text-slate-600 mb-1 block">District</label>
+                        <Select
+                          value={filters.district || "any"}
+                          onValueChange={(value) => handleFilterChange("district", value)}
+                        >
+                          <SelectTrigger className="w-full h-9 bg-white text-xs">
+                            <SelectValue placeholder="Any" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-[200px]">
+                            <SelectItem value="any">Any</SelectItem>
+                            {sriLankanDistricts.map((district) => (
+                              <SelectItem key={district} value={district.toLowerCase()}>
+                                {district}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
 
                     {/* Price Range */}
@@ -736,103 +818,106 @@ export default function VehicleMarketplace() {
                       </div>
                     </div>
 
-                    {/* More Filters Toggle */}
-                    <button
-                      onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                      className="w-full flex items-center justify-between py-1.5 text-xs font-medium text-teal-700 hover:text-teal-800"
-                    >
-                      <span>More Filters</span>
-                      <ChevronDown
-                        className={`w-3.5 h-3.5 transition-transform ${
-                          showAdvancedFilters ? "rotate-180" : ""
-                        }`}
-                      />
-                    </button>
-
-                    {/* Advanced Filters - Collapsible */}
-                    {showAdvancedFilters && (
-                      <div className="space-y-3 pt-1 border-t">
-                        {/* Condition & Year in one row */}
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <label className="text-xs font-medium text-slate-600 mb-1 block">Condition</label>
-                            <Select
-                              value={filters.condition || "any"}
-                              onValueChange={(value) => handleFilterChange("condition", value)}
-                            >
-                              <SelectTrigger className="w-full h-9 bg-white text-xs">
-                                <SelectValue placeholder="Any" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="any">Any</SelectItem>
-                                <SelectItem value="new">New</SelectItem>
-                                <SelectItem value="used">Used</SelectItem>
-                                <SelectItem value="antique">Antique</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div>
-                            <label className="text-xs font-medium text-slate-600 mb-1 block">Min Year</label>
-                            <Select
-                              value={filters.minYear || "any"}
-                              onValueChange={(value) => handleFilterChange("minYear", value)}
-                            >
-                              <SelectTrigger className="w-full h-9 bg-white text-xs">
-                                <SelectValue placeholder="Any" />
-                              </SelectTrigger>
-                              <SelectContent className="max-h-[200px]">
-                                <SelectItem value="any">Any</SelectItem>
-                                {years.slice(0, 30).map(year => (
-                                  <SelectItem key={`min-${year}`} value={year.toString()}>
-                                    {year}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-
-                        {/* Fuel & Transmission */}
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <label className="text-xs font-medium text-slate-600 mb-1 block">Fuel Type</label>
-                            <Select
-                              value={filters.fuelType || "any"}
-                              onValueChange={(value) => handleFilterChange("fuelType", value)}
-                            >
-                              <SelectTrigger className="w-full h-9 bg-white text-xs">
-                                <SelectValue placeholder="Any" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="any">Any</SelectItem>
-                                <SelectItem value="Petrol">Petrol</SelectItem>
-                                <SelectItem value="Diesel">Diesel</SelectItem>
-                                <SelectItem value="Hybrid">Hybrid</SelectItem>
-                                <SelectItem value="Electric">Electric</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div>
-                            <label className="text-xs font-medium text-slate-600 mb-1 block">Transmission</label>
-                            <Select
-                              value={filters.transmission || "any"}
-                              onValueChange={(value) => handleFilterChange("transmission", value)}
-                            >
-                              <SelectTrigger className="w-full h-9 bg-white text-xs">
-                                <SelectValue placeholder="Any" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="any">Any</SelectItem>
-                                <SelectItem value="Automatic">Auto</SelectItem>
-                                <SelectItem value="Manual">Manual</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
+                    {/* Min Year & Max Year - Related fields together */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-xs font-medium text-slate-600 mb-1 block">Min Year</label>
+                        <Select
+                          value={filters.minYear || "any"}
+                          onValueChange={(value) => handleFilterChange("minYear", value)}
+                        >
+                          <SelectTrigger className="w-full h-9 bg-white text-xs">
+                            <SelectValue placeholder="Any" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-[200px]">
+                            <SelectItem value="any">Any</SelectItem>
+                            {years.slice(0, 30).map(year => (
+                              <SelectItem key={`min-${year}`} value={year.toString()}>
+                                {year}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                    )}
+
+                      <div>
+                        <label className="text-xs font-medium text-slate-600 mb-1 block">Max Year</label>
+                        <Select
+                          value={filters.maxYear || "any"}
+                          onValueChange={(value) => handleFilterChange("maxYear", value)}
+                        >
+                          <SelectTrigger className="w-full h-9 bg-white text-xs">
+                            <SelectValue placeholder="Any" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-[200px]">
+                            <SelectItem value="any">Any</SelectItem>
+                            {years.slice(0, 30).map(year => (
+                              <SelectItem key={`max-${year}`} value={year.toString()}>
+                                {year}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* Condition & Fuel Type */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-xs font-medium text-slate-600 mb-1 block">Condition</label>
+                        <Select
+                          value={filters.condition || "any"}
+                          onValueChange={(value) => handleFilterChange("condition", value)}
+                        >
+                          <SelectTrigger className="w-full h-9 bg-white text-xs">
+                            <SelectValue placeholder="Any" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="any">Any</SelectItem>
+                            <SelectItem value="new">New</SelectItem>
+                            <SelectItem value="used">Used</SelectItem>
+                            <SelectItem value="antique">Antique</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-medium text-slate-600 mb-1 block">Fuel Type</label>
+                        <Select
+                          value={filters.fuelType || "any"}
+                          onValueChange={(value) => handleFilterChange("fuelType", value)}
+                        >
+                          <SelectTrigger className="w-full h-9 bg-white text-xs">
+                            <SelectValue placeholder="Any" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="any">Any</SelectItem>
+                            <SelectItem value="Petrol">Petrol</SelectItem>
+                            <SelectItem value="Diesel">Diesel</SelectItem>
+                            <SelectItem value="Hybrid">Hybrid</SelectItem>
+                            <SelectItem value="Electric">Electric</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* Transmission */}
+                    <div>
+                      <label className="text-xs font-medium text-slate-600 mb-1 block">Transmission</label>
+                      <Select
+                        value={filters.transmission || "any"}
+                        onValueChange={(value) => handleFilterChange("transmission", value)}
+                      >
+                        <SelectTrigger className="w-full h-9 bg-white text-xs">
+                          <SelectValue placeholder="Any" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="any">Any</SelectItem>
+                          <SelectItem value="Automatic">Auto</SelectItem>
+                          <SelectItem value="Manual">Manual</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
                   {/* Bottom action button - Fixed */}
