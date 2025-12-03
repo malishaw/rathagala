@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { RevealPhoneButton } from "@/components/ui/reveal-phone-button";
 import { Separator } from "@/components/ui/separator";
+import { SimilarVehicleComparison } from "@/components/ui/similar-vehicle-comparison";
 import { useGetAdById } from "@/features/ads/api/use-get-ad-by-id";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
 import {
@@ -675,17 +676,44 @@ export default function AdDetailPage() {
                         Get comprehensive market insights including price comparison and similar vehicle analysis
                       </p>
                     </div>
-                    <Button
-                      onClick={() => router.push(`/${adId}/analytics`)}
-                      className="bg-gradient-to-r from-[#024950] to-teal-600 text-white hover:from-[#036b75] hover:to-teal-700 border-0 px-8 py-6 text-lg"
-                      size="lg"
-                    >
-                      <BarChart3 className="w-5 h-5 mr-2" />
-                      View Analytics & Comparisons
-                    </Button>
+                    <div className="flex flex-col gap-3 w-full max-w-md">
+                      <Button
+                        onClick={() => router.push(`/${adId}/analytics`)}
+                        className="bg-gradient-to-r from-[#024950] to-teal-600 text-white hover:from-[#036b75] hover:to-teal-700 border-0 px-6 py-6 text-lg w-full"
+                        size="lg"
+                      >
+                        <BarChart3 className="w-5 h-5 mr-2" />
+                        View Analytics
+                      </Button>
+                      <Button
+                        onClick={() => router.push(`/comparison?vehicle1=${adId}`)}
+                        variant="outline"
+                        className="border-2 border-[#024950] text-[#024950] hover:bg-[#024950] hover:text-white px-6 py-6 text-lg w-full"
+                        size="lg"
+                      >
+                        <BarChart3 className="w-5 h-5 mr-2" />
+                        Comparison
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
+            )}
+
+            {/* Similar Vehicle Comparison */}
+            {ad.price && (
+              <SimilarVehicleComparison
+                adId={adId || ""}
+                currentPrice={(ad as any).discountPrice || ad.price}
+                currentVehicle={{
+                  brand: ad.brand,
+                  model: ad.model,
+                  year: ad.manufacturedYear,
+                  mileage: ad.mileage,
+                  fuelType: ad.fuelType,
+                  transmission: ad.transmission,
+                }}
+              />
             )}
 
             {/* Seller Information */}

@@ -30,17 +30,26 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function ComparisonPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [vehicle1Id, setVehicle1Id] = useState<string | null>(null);
   const [vehicle2Id, setVehicle2Id] = useState<string | null>(null);
   const [search1, setSearch1] = useState("");
   const [search2, setSearch2] = useState("");
   const [open1, setOpen1] = useState(false);
   const [open2, setOpen2] = useState(false);
+
+  // Initialize vehicle1Id from URL parameter if present
+  useEffect(() => {
+    const vehicle1Param = searchParams.get("vehicle1");
+    if (vehicle1Param) {
+      setVehicle1Id(vehicle1Param);
+    }
+  }, [searchParams]);
 
   // Fetch vehicles for search
   const { data: searchData1 } = useGetAds({
