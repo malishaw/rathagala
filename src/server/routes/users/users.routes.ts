@@ -125,6 +125,12 @@ export const updateProfile = createRoute({
           id: z.string(),
           name: z.string(),
           email: z.string(),
+          phone: z.string().nullable().optional(),
+          whatsappNumber: z.string().nullable().optional(),
+          province: z.string().nullable().optional(),
+          district: z.string().nullable().optional(),
+          city: z.string().nullable().optional(),
+          location: z.string().nullable().optional(),
         }),
       }),
       "User profile updated successfully"

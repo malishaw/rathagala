@@ -140,6 +140,17 @@ model User {
   banExpires       DateTime?
   organizationId   String?
   organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  
+  // Contact information
+  phone            String?
+  whatsappNumber   String?
+  
+  // Location information
+  province         String?
+  district         String?
+  city             String?
+  location         String?
+  
   sessions         Session[]
   accounts         Account[]
   members          Member[]

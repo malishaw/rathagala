@@ -18,5 +18,11 @@ export const withPaginationSchema = z.object({
 
 export const updateProfileSchema = z.object({
   name: z.string().min(1, "Name is required"),
+  phone: z.string().optional(),
+  whatsappNumber: z.string().optional(),
+  province: z.string().optional(),
+  district: z.string().optional(),
+  city: z.string().optional(),
+  location: z.string().optional(),
 });
 

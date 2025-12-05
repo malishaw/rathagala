@@ -5,13 +5,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useGetUserAds } from "@/features/ads/api/use-get-user-ads";
 import { SignoutButton } from "@/features/auth/components/signout-button";
 import { useGetFavorites } from "@/features/saved-ads/api/use-get-favorites";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
 import { betterFetch } from "@better-fetch/fetch";
 import { format } from "date-fns";
-import { Car, CheckCircle, ChevronRight, CreditCard, Edit, Heart, Loader2, Lock, Shield, Trash2 } from "lucide-react";
+import { Car, CheckCircle, ChevronRight, CreditCard, Edit, Heart, Loader2, Lock, MapPin, MessageCircle, Phone, Shield, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -22,6 +23,12 @@ interface User {
   name: string;
   email: string;
   avatar?: string;
+  phone?: string;
+  whatsappNumber?: string;
+  province?: string;
+  district?: string;
+  city?: string;
+  location?: string;
 }
 
 interface Session {
@@ -66,6 +73,12 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone: "",
+    whatsappNumber: "",
+    province: "",
+    district: "",
+    city: "",
+    location: "",
     currentPassword: "",
     newPassword: "",
     confirmPassword: ""
@@ -94,6 +107,12 @@ export default function ProfilePage() {
         setFormData({
           name: session.user.name || "",
           email: session.user.email || "",
+          phone: session.user.phone || "",
+          whatsappNumber: session.user.whatsappNumber || "",
+          province: session.user.province || "",
+          district: session.user.district || "",
+          city: session.user.city || "",
+          location: session.user.location || "",
           currentPassword: "",
           newPassword: "",
           confirmPassword: ""
@@ -123,6 +142,11 @@ export default function ProfilePage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
   
+  // Handle select change for province
+  const handleFilterChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+  
   // Handle profile update
   const handleUpdateProfile = async () => {
     setIsSaving(true);
@@ -131,7 +155,15 @@ export default function ProfilePage() {
       // Update user profile via API
       const { data, error } = await betterFetch("/api/user/profile", {
         method: "PATCH",
-        body: { name: formData.name }
+        body: {
+          name: formData.name,
+          phone: formData.phone,
+          whatsappNumber: formData.whatsappNumber,
+          province: formData.province,
+          district: formData.district,
+          city: formData.city,
+          location: formData.location
+        }
       });
       
       if (error) {
@@ -142,7 +174,13 @@ export default function ProfilePage() {
       if (user) {
         setUser({
           ...user,
-          name: formData.name
+          name: formData.name,
+          phone: formData.phone,
+          whatsappNumber: formData.whatsappNumber,
+          province: formData.province,
+          district: formData.district,
+          city: formData.city,
+          location: formData.location
         });
       }
       
@@ -416,15 +454,10 @@ export default function ProfilePage() {
                 </div>
                 
                 <div className="space-y-5">
-                  {activeSection === "name" ? (
+                  {activeSection === "personal" ? (
                     <div className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-6 space-y-4">
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#0D5C63] to-teal-600 flex items-center justify-center">
-                            <Shield className="h-4 w-4 text-white" />
-                          </div>
-                          Name
-                        </label>
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">Name</label>
                         <Input
                           name="name"
                           value={formData.name}
@@ -433,7 +466,76 @@ export default function ProfilePage() {
                           placeholder="Your name"
                         />
                       </div>
-                      <div className="flex gap-3">
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">Phone Number</label>
+                        <Input
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handleChange}
+                          className="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 focus:border-[#0D5C63] focus:bg-white/80 transition-all duration-300 rounded-xl h-12 text-slate-800"
+                          placeholder="Your phone number"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">WhatsApp Number</label>
+                        <Input
+                          name="whatsappNumber"
+                          value={formData.whatsappNumber}
+                          onChange={handleChange}
+                          className="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 focus:border-[#0D5C63] focus:bg-white/80 transition-all duration-300 rounded-xl h-12 text-slate-800"
+                          placeholder="Your WhatsApp number"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">Province</label>
+                        <Select value={formData.province} onValueChange={(value) => handleFilterChange("province", value)}>
+                          <SelectTrigger className="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 focus:border-[#0D5C63] focus:bg-white/80 transition-all duration-300 rounded-xl h-12 text-slate-800">
+                            <SelectValue placeholder="Select province" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Western">Western</SelectItem>
+                            <SelectItem value="Central">Central</SelectItem>
+                            <SelectItem value="Southern">Southern</SelectItem>
+                            <SelectItem value="Northern">Northern</SelectItem>
+                            <SelectItem value="Eastern">Eastern</SelectItem>
+                            <SelectItem value="North Western">North Western</SelectItem>
+                            <SelectItem value="North Central">North Central</SelectItem>
+                            <SelectItem value="Uva">Uva</SelectItem>
+                            <SelectItem value="Sabaragamuwa">Sabaragamuwa</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">District</label>
+                        <Input
+                          name="district"
+                          value={formData.district}
+                          onChange={handleChange}
+                          className="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 focus:border-[#0D5C63] focus:bg-white/80 transition-all duration-300 rounded-xl h-12 text-slate-800"
+                          placeholder="Your district"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">City</label>
+                        <Input
+                          name="city"
+                          value={formData.city}
+                          onChange={handleChange}
+                          className="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 focus:border-[#0D5C63] focus:bg-white/80 transition-all duration-300 rounded-xl h-12 text-slate-800"
+                          placeholder="Your city"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">Location</label>
+                        <Input
+                          name="location"
+                          value={formData.location}
+                          onChange={handleChange}
+                          className="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 focus:border-[#0D5C63] focus:bg-white/80 transition-all duration-300 rounded-xl h-12 text-slate-800"
+                          placeholder="Your detailed location"
+                        />
+                      </div>
+                      <div className="flex gap-3 pt-2">
                         <Button
                           variant="outline"
                           className="flex-1 bg-white/50 hover:bg-white/70 backdrop-blur-md border-2 border-white/30"
@@ -450,28 +552,86 @@ export default function ProfilePage() {
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                               Saving...
                             </>
-                          ) : "Save"}
+                          ) : "Save Changes"}
                         </Button>
                       </div>
                     </div>
                   ) : (
-                    <div 
-                      className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-6 flex justify-between items-center cursor-pointer hover:bg-white/70 hover:border-[#0D5C63]/30 transition-all duration-300 group"
-                      onClick={() => setActiveSection("name")}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#0D5C63] to-teal-600 flex items-center justify-center">
-                          <Shield className="h-6 w-6 text-white" />
+                    <>
+                      <div 
+                        className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-6 flex justify-between items-center cursor-pointer hover:bg-white/70 hover:border-[#0D5C63]/30 transition-all duration-300 group"
+                        onClick={() => setActiveSection("personal")}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#0D5C63] to-teal-600 flex items-center justify-center">
+                            <Shield className="h-6 w-6 text-white" />
+                          </div>
+                          <div>
+                            <div className="text-sm text-slate-500 font-medium">Name</div>
+                            <div className="font-semibold text-slate-800 mt-1">{user.name}</div>
+                          </div>
                         </div>
-                        <div>
-                          <div className="text-sm text-slate-500 font-medium">Name</div>
-                          <div className="font-semibold text-slate-800 mt-1">{user.name}</div>
+                        <div className="h-10 w-10 rounded-lg bg-white/50 flex items-center justify-center group-hover:bg-gradient-to-r from-[#0D5C63] to-teal-600 transition-all duration-300">
+                          <ChevronRight className="h-5 w-5 text-slate-600 group-hover:text-white" />
                         </div>
                       </div>
-                      <div className="h-10 w-10 rounded-lg bg-white/50 flex items-center justify-center group-hover:bg-gradient-to-r from-[#0D5C63] to-teal-600 transition-all duration-300">
-                        <ChevronRight className="h-5 w-5 text-slate-600 group-hover:text-white" />
+
+                      <div 
+                        className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-6 flex justify-between items-center cursor-pointer hover:bg-white/70 hover:border-[#0D5C63]/30 transition-all duration-300 group"
+                        onClick={() => setActiveSection("personal")}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                            <Phone className="h-6 w-6 text-white" />
+                          </div>
+                          <div>
+                            <div className="text-sm text-slate-500 font-medium">Phone Number</div>
+                            <div className="font-semibold text-slate-800 mt-1">{user.phone || "Not set"}</div>
+                          </div>
+                        </div>
+                        <div className="h-10 w-10 rounded-lg bg-white/50 flex items-center justify-center group-hover:bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300">
+                          <ChevronRight className="h-5 w-5 text-slate-600 group-hover:text-white" />
+                        </div>
                       </div>
-                    </div>
+
+                      <div 
+                        className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-6 flex justify-between items-center cursor-pointer hover:bg-white/70 hover:border-[#0D5C63]/30 transition-all duration-300 group"
+                        onClick={() => setActiveSection("personal")}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
+                            <MessageCircle className="h-6 w-6 text-white" />
+                          </div>
+                          <div>
+                            <div className="text-sm text-slate-500 font-medium">WhatsApp Number</div>
+                            <div className="font-semibold text-slate-800 mt-1">{user.whatsappNumber || "Not set"}</div>
+                          </div>
+                        </div>
+                        <div className="h-10 w-10 rounded-lg bg-white/50 flex items-center justify-center group-hover:bg-gradient-to-r from-green-500 to-green-600 transition-all duration-300">
+                          <ChevronRight className="h-5 w-5 text-slate-600 group-hover:text-white" />
+                        </div>
+                      </div>
+
+                      <div 
+                        className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-6 flex justify-between items-center cursor-pointer hover:bg-white/70 hover:border-[#0D5C63]/30 transition-all duration-300 group"
+                        onClick={() => setActiveSection("personal")}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
+                            <MapPin className="h-6 w-6 text-white" />
+                          </div>
+                          <div>
+                            <div className="text-sm text-slate-500 font-medium">Location</div>
+                            <div className="font-semibold text-slate-800 mt-1">
+                              {user.city && user.province ? `${user.city}, ${user.province}` : user.city || user.province || "Not set"}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="h-10 w-10 rounded-lg bg-white/50 flex items-center justify-center group-hover:bg-gradient-to-r from-purple-500 to-purple-600 transition-all duration-300">
+                          <ChevronRight className="h-5 w-5 text-slate-600 group-hover:text-white" />
+                        </div>
+                      </div>
+                    </>
                   )}
                   
                   <div className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-6 flex justify-between items-center hover:bg-white/70 hover:border-teal-500/30 transition-all duration-300 group">
