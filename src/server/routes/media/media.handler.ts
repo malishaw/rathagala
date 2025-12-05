@@ -3,7 +3,7 @@ import * as HttpStatusCodes from "stoker/http-status-codes";
 import * as HttpStatusPhrases from "stoker/http-status-phrases";
 
 import type { AppRouteHandler } from "@/types/server";
-import { GetOneRoute, ListRoute, SaveRoute, RemoveRoute } from "./media.routes";
+import { GetOneRoute, ListRoute, RemoveRoute, SaveRoute } from "./media.routes";
 
 // ---- List Media Handler ----
 export const list: AppRouteHandler<ListRoute> = async (c) => {
