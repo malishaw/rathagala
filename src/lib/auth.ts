@@ -55,6 +55,30 @@ export const auth = betterAuth({
         type: "string",
         defaultValue: "user",
         required: false
+      },
+      phone: {
+        type: "string",
+        required: false
+      },
+      whatsappNumber: {
+        type: "string",
+        required: false
+      },
+      province: {
+        type: "string",
+        required: false
+      },
+      district: {
+        type: "string",
+        required: false
+      },
+      city: {
+        type: "string",
+        required: false
+      },
+      location: {
+        type: "string",
+        required: false
       }
     }
   }

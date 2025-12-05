@@ -219,16 +219,30 @@ export const updateProfile: AppRouteHandler<UpdateProfileRoute> = async (c) => {
     );
   }
 
-  const { name } = c.req.valid("json");
+  const { name, phone, whatsappNumber, province, district, city, location } = c.req.valid("json");
 
   try {
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
-      data: { name },
+      data: { 
+        name,
+        phone,
+        whatsappNumber,
+        province,
+        district,
+        city,
+        location
+      },
       select: {
         id: true,
         name: true,
         email: true,
+        phone: true,
+        whatsappNumber: true,
+        province: true,
+        district: true,
+        city: true,
+        location: true,
       },
     });
 
