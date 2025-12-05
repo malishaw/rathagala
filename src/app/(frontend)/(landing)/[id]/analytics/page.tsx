@@ -4,10 +4,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PriceComparison } from "@/components/ui/price-comparison";
-import { SimilarVehicleComparison } from "@/components/ui/similar-vehicle-comparison";
 import { useGetAdById } from "@/features/ads/api/use-get-ad-by-id";
+import { useGetMarketPrice } from "@/features/ads/api/use-get-market-price";
+import { useGetSimilarVehicles } from "@/features/ads/api/use-get-similar-vehicles";
 import { ArrowLeft, TrendingUp, BarChart3 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
+import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
+import { Line, LineChart, XAxis, YAxis, CartesianGrid, ReferenceLine } from "recharts";
 
 export default function VehicleAnalyticsPage() {
   const { id } = useParams();
@@ -15,6 +18,11 @@ export default function VehicleAnalyticsPage() {
   const router = useRouter();
 
   const { data: ad, isLoading, isError } = useGetAdById({ adId: adId || "" });
+  const { data: marketData } = useGetMarketPrice({ adId: adId || "" });
+  const { data: similarVehiclesData, isLoading: isLoadingSimilar } = useGetSimilarVehicles({ 
+    adId: adId || "", 
+    limit: 20 
+  });
 
   if (isLoading) {
     return (
@@ -52,6 +60,46 @@ export default function VehicleAnalyticsPage() {
       .format(price)
       .replace("LKR", "Rs.");
   };
+
+  // Prepare chart data: combine current vehicle with similar vehicles
+  const prepareChartData = () => {
+    if (!ad || !similarVehiclesData?.vehicles) return [];
+
+    const currentPrice = (ad as any).discountPrice || ad.price;
+    const currentYear = ad.manufacturedYear;
+
+    // Start with current vehicle
+    const chartData: Array<{ year: number; price: number; isCurrent: boolean; label: string }> = [];
+    
+    if (currentYear && currentPrice) {
+      chartData.push({
+        year: typeof currentYear === 'number' ? currentYear : parseInt(String(currentYear)),
+        price: currentPrice,
+        isCurrent: true,
+        label: `${ad.brand || ''} ${ad.model || ''}`.trim() || 'Current Vehicle'
+      });
+    }
+
+    // Add similar vehicles
+    similarVehiclesData.vehicles.forEach((vehicle) => {
+      if (vehicle.year && vehicle.price) {
+        const year = typeof vehicle.year === 'string' ? parseInt(vehicle.year) : vehicle.year;
+        if (!isNaN(year) && vehicle.price) {
+          chartData.push({
+            year: year,
+            price: vehicle.price,
+            isCurrent: false,
+            label: vehicle.title || `${vehicle.brand || ''} ${vehicle.model || ''}`.trim()
+          });
+        }
+      }
+    });
+
+    // Sort by year
+    return chartData.sort((a, b) => a.year - b.year);
+  };
+
+  const chartData = prepareChartData();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50">
@@ -146,47 +194,201 @@ export default function VehicleAnalyticsPage() {
           </Card>
         </div>
 
-        {/* Comparison Sections */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Market Price Comparison */}
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="p-2 bg-gradient-to-br from-[#024950] to-teal-600 rounded-lg">
-                <TrendingUp className="w-5 h-5 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-800">Market Price Analysis</h2>
+        {/* Market Price Analysis Section */}
+        <div className="space-y-8">
+          <div className="flex items-center space-x-2 mb-4">
+            <div className="p-2 bg-gradient-to-br from-[#024950] to-teal-600 rounded-lg">
+              <TrendingUp className="w-5 h-5 text-white" />
             </div>
-            {ad.price && (
-              <PriceComparison 
-                adId={adId || ""} 
-                currentPrice={(ad as any).discountPrice || ad.price}
-              />
-            )}
+            <h2 className="text-2xl font-bold text-gray-800">Market Price Analysis</h2>
           </div>
 
-          {/* Similar Vehicle Comparison */}
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
-                <BarChart3 className="w-5 h-5 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-800">Similar Vehicles Comparison</h2>
-            </div>
-            {ad.price && (
-              <SimilarVehicleComparison
-                adId={adId || ""}
-                currentPrice={(ad as any).discountPrice || ad.price}
-                currentVehicle={{
-                  brand: ad.brand,
-                  model: ad.model,
-                  year: ad.manufacturedYear,
-                  mileage: ad.mileage,
-                  fuelType: ad.fuelType,
-                  transmission: ad.transmission,
-                }}
-              />
-            )}
-          </div>
+          {/* Market Price Comparison Card */}
+          {ad.price && (
+            <PriceComparison 
+              adId={adId || ""} 
+              currentPrice={(ad as any).discountPrice || ad.price}
+            />
+          )}
+
+          {/* Price vs Year Chart for All Vehicles */}
+          {ad.price && chartData.length > 0 && (
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-teal-50/30">
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <CardTitle className="text-[#024950] flex items-center space-x-2">
+                    <TrendingUp className="w-5 h-5" />
+                    <span>Price vs Year Analysis</span>
+                  </CardTitle>
+                  <div className="flex items-center gap-4 text-sm flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-[#024950]"></div>
+                      <span className="text-gray-600">Current Vehicle</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                      <span className="text-gray-600">Similar Vehicles</span>
+                    </div>
+                    {marketData?.marketPrice && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-1 bg-teal-500"></div>
+                        <span className="text-gray-600">Average Price</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {isLoadingSimilar ? (
+                  <div className="flex items-center justify-center h-[450px]">
+                    <div className="text-center">
+                      <div className="animate-spin w-8 h-8 border-4 border-[#024950] border-t-transparent rounded-full mx-auto mb-2"></div>
+                      <p className="text-sm text-gray-600">Loading vehicle data...</p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <ChartContainer
+                      config={{
+                        price: {
+                          label: "Price",
+                          color: "#3b82f6",
+                        },
+                        currentPrice: {
+                          label: "Current Vehicle",
+                          color: "#024950",
+                        },
+                        averagePrice: {
+                          label: "Average Price",
+                          color: "#14b8a6",
+                        },
+                      }}
+                      className="h-[450px] w-full"
+                    >
+                      <LineChart
+                        data={chartData}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                      >
+                        <CartesianGrid 
+                          strokeDasharray="3 3" 
+                          stroke="#e5e7eb"
+                          vertical={false}
+                        />
+                        <XAxis 
+                          dataKey="year" 
+                          type="number"
+                          scale="linear"
+                          domain={['dataMin - 1', 'dataMax + 1']}
+                          tick={{ fill: "#6b7280", fontSize: 12 }}
+                          tickLine={{ stroke: "#9ca3af" }}
+                          axisLine={{ stroke: "#d1d5db" }}
+                          label={{ value: 'Year', position: 'insideBottom', offset: -5, style: { fill: '#6b7280' } }}
+                        />
+                        <YAxis 
+                          tick={{ fill: "#6b7280", fontSize: 12 }}
+                          tickLine={{ stroke: "#9ca3af" }}
+                          axisLine={{ stroke: "#d1d5db" }}
+                          tickFormatter={(value) => {
+                            return new Intl.NumberFormat("en-LK", {
+                              style: "currency",
+                              currency: "LKR",
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0,
+                            })
+                              .format(value)
+                              .replace("LKR", "Rs.");
+                          }}
+                          label={{ value: 'Price', angle: -90, position: 'insideLeft', style: { fill: '#6b7280' } }}
+                        />
+                        {marketData?.marketPrice && (
+                          <ReferenceLine 
+                            y={marketData.marketPrice} 
+                            stroke="#14b8a6" 
+                            strokeWidth={2}
+                            strokeDasharray="5 5"
+                            label={{ value: `Avg: ${formatPrice(marketData.marketPrice)}`, position: "right", fill: "#14b8a6", fontSize: 12 }}
+                          />
+                        )}
+                        <ChartTooltip
+                          content={({ active, payload, label }) => {
+                            if (active && payload && payload.length) {
+                              const data = payload[0].payload;
+                              return (
+                                <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-lg">
+                                  <div className="mb-2">
+                                    <p className="text-sm font-semibold text-gray-900">{data.label}</p>
+                                    <p className="text-xs text-gray-500">Year: {label}</p>
+                                  </div>
+                                  <div className="flex items-center justify-between gap-4">
+                                    <div className="flex items-center gap-2">
+                                      <div
+                                        className={`h-2.5 w-2.5 rounded-full ${data.isCurrent ? 'bg-[#024950]' : 'bg-blue-500'}`}
+                                      />
+                                      <span className="text-sm font-medium text-gray-700">Price</span>
+                                    </div>
+                                    <span className="font-mono text-sm font-semibold text-gray-900">
+                                      {formatPrice(data.price)}
+                                    </span>
+                                  </div>
+                                  {data.isCurrent && (
+                                    <div className="mt-2 pt-2 border-t border-gray-200">
+                                      <span className="text-xs text-[#024950] font-medium">Current Vehicle</span>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="price"
+                          stroke="#3b82f6"
+                          strokeWidth={2}
+                          dot={(props: any) => {
+                            const { cx, cy, payload } = props;
+                            return (
+                              <circle
+                                cx={cx}
+                                cy={cy}
+                                r={payload.isCurrent ? 8 : 5}
+                                fill={payload.isCurrent ? "#024950" : "#3b82f6"}
+                                stroke="#fff"
+                                strokeWidth={2}
+                              />
+                            );
+                          }}
+                          activeDot={{ r: 8, strokeWidth: 2, stroke: "#3b82f6" }}
+                          name="price"
+                        />
+                      </LineChart>
+                    </ChartContainer>
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-600">Total Vehicles:</span>
+                          <span className="ml-2 font-semibold text-gray-900">{chartData.length}</span>
+                        </div>
+                        {marketData?.marketPrice && (
+                          <div>
+                            <span className="text-gray-600">Average Price:</span>
+                            <span className="ml-2 font-semibold text-teal-600">{formatPrice(marketData.marketPrice)}</span>
+                          </div>
+                        )}
+                        <div>
+                          <span className="text-gray-600">Year Range:</span>
+                          <span className="ml-2 font-semibold text-gray-900">
+                            {chartData[0]?.year} - {chartData[chartData.length - 1]?.year}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Additional Info Section */}
@@ -198,21 +400,13 @@ export default function VehicleAnalyticsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="font-semibold text-gray-800 mb-2">Market Price Analysis</h3>
-                <p className="text-sm text-gray-600">
-                  Compare this vehicle's price against the market average based on similar vehicles. 
-                  This helps you understand if the price is competitive, above, or below market value.
-                </p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-800 mb-2">Similar Vehicles Comparison</h3>
-                <p className="text-sm text-gray-600">
-                  View and compare this vehicle with other similar listings in the market. 
-                  Compare prices, mileage, and specifications to make an informed decision.
-                </p>
-              </div>
+            <div>
+              <h3 className="font-semibold text-gray-800 mb-2">Market Price Analysis</h3>
+              <p className="text-sm text-gray-600">
+                Compare this vehicle's price against the market average based on similar vehicles. 
+                This helps you understand if the price is competitive, above, or below market value. 
+                The chart provides a visual representation of how your vehicle's price compares to the market average.
+              </p>
             </div>
           </CardContent>
         </Card>
