@@ -289,14 +289,8 @@ export default function VehicleAnalyticsPage() {
                           tickLine={{ stroke: "#9ca3af" }}
                           axisLine={{ stroke: "#d1d5db" }}
                           tickFormatter={(value) => {
-                            return new Intl.NumberFormat("en-LK", {
-                              style: "currency",
-                              currency: "LKR",
-                              minimumFractionDigits: 0,
-                              maximumFractionDigits: 0,
-                            })
-                              .format(value)
-                              .replace("LKR", "Rs.");
+                            const millions = value / 1000000;
+                            return `Rs. ${millions.toFixed(1)}M`;
                           }}
                           label={{ value: 'Price', angle: -90, position: 'insideLeft', style: { fill: '#6b7280' } }}
                         />

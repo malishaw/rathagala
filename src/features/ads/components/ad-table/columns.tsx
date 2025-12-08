@@ -94,6 +94,18 @@ export const columns: ColumnDef<AdType>[] = [
     }
   },
   {
+    accessorKey: "whatsappNumber",
+    header: "WhatsApp",
+    cell: ({ row }) => {
+      const whatsapp = row.original.whatsappNumber;
+      return whatsapp ? (
+        <span className="font-mono text-sm">{whatsapp}</span>
+      ) : (
+        <span className="text-slate-400">-</span>
+      );
+    }
+  },
+  {
     accessorKey: "createdAt",
     header: "Created At",
     cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString()

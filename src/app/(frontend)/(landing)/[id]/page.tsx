@@ -12,8 +12,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { RevealPhoneButton } from "@/components/ui/reveal-phone-button";
 import { Separator } from "@/components/ui/separator";
+import { PriceComparison } from "@/components/ui/price-comparison";
 import { SimilarVehicleComparison } from "@/components/ui/similar-vehicle-comparison";
 import { useGetAdById } from "@/features/ads/api/use-get-ad-by-id";
+import { useGetSimilarVehicles } from "@/features/ads/api/use-get-similar-vehicles";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
 import {
   Calendar,
@@ -27,8 +29,7 @@ import {
   MessageCircle,
   Phone,
   Share2,
-  Shield,
-  BarChart3
+  Shield
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -41,6 +42,12 @@ export default function AdDetailPage() {
 
   // Using the hook to fetch ad data
   const { data: ad, isLoading, isError } = useGetAdById({ adId: adId || "" });
+  
+  // Fetch similar vehicles
+  const { data: similarVehiclesData, isLoading: isLoadingSimilar } = useGetSimilarVehicles({ 
+    adId: adId || "", 
+    limit: 6 
+  });
 
   // Prevent image downloads and protect against various methods
   useEffect(() => {
@@ -583,6 +590,61 @@ export default function AdDetailPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Similar Vehicles */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-[#024950]">
+                  Similar Vehicles
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoadingSimilar ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin w-6 h-6 border-4 border-[#024950] border-t-transparent rounded-full"></div>
+                  </div>
+                ) : similarVehiclesData?.vehicles && similarVehiclesData.vehicles.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {similarVehiclesData.vehicles.map((vehicle) => (
+                      <div
+                        key={vehicle.id}
+                        className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => router.push(`/${vehicle.id}`)}
+                      >
+                        <div className="aspect-video bg-gray-200 relative">
+                          <img
+                            src={
+                              vehicle.media?.[0]?.media?.url || "/placeholder.svg"
+                            }
+                            alt={vehicle.title || "Vehicle"}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="p-3">
+                          <h3 className="font-semibold text-sm mb-1 line-clamp-1">
+                            {vehicle.title || `${vehicle.brand} ${vehicle.model} ${vehicle.year || ""}`}
+                          </h3>
+                          <div className="text-lg font-bold text-[#024950] mb-1">
+                            {formatPrice(vehicle.price)}
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            <div className="flex items-center">
+                              <MapPin className="w-3 h-3 mr-1" />
+                              {vehicle.city || "N/A"}
+                            </div>
+                            {vehicle.mileage && (
+                              <div>{vehicle.mileage.toLocaleString()} km</div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-4">No similar vehicles found</p>
+                )}
+              </CardContent>
+            </Card>
           </div>
 
           {/* Right Column - Price and Contact */}
@@ -660,44 +722,12 @@ export default function AdDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Vehicle Analytics Button */}
+            {/* Market Price Comparison */}
             {ad.price && (
-              <Card className="border-2 border-dashed border-[#024950]/30 bg-gradient-to-br from-teal-50/50 to-white">
-                <CardContent className="p-8 text-center">
-                  <div className="flex flex-col items-center space-y-4">
-                    <div className="p-4 bg-gradient-to-br from-[#024950] to-teal-600 rounded-full">
-                      <BarChart3 className="w-8 h-8 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-800 mb-2">
-                        View Vehicle Analytics
-                      </h3>
-                      <p className="text-sm text-gray-600 mb-4 max-w-md">
-                        Get comprehensive market insights including price comparison and similar vehicle analysis
-                      </p>
-                    </div>
-                    <div className="flex flex-col gap-3 w-full max-w-md">
-                      <Button
-                        onClick={() => router.push(`/${adId}/analytics`)}
-                        className="bg-gradient-to-r from-[#024950] to-teal-600 text-white hover:from-[#036b75] hover:to-teal-700 border-0 px-6 py-6 text-lg w-full"
-                        size="lg"
-                      >
-                        <BarChart3 className="w-5 h-5 mr-2" />
-                        View Analytics
-                      </Button>
-                      <Button
-                        onClick={() => router.push(`/comparison?vehicle1=${adId}`)}
-                        variant="outline"
-                        className="border-2 border-[#024950] text-[#024950] hover:bg-[#024950] hover:text-white px-6 py-6 text-lg w-full"
-                        size="lg"
-                      >
-                        <BarChart3 className="w-5 h-5 mr-2" />
-                        Comparison
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <PriceComparison 
+                adId={adId || ""} 
+                currentPrice={(ad as any).discountPrice || ad.price}
+              />
             )}
 
             {/* Similar Vehicle Comparison */}
