@@ -1,9 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
+import { betterFetch } from "@better-fetch/fetch";
+import { toast } from "sonner";
 import {
   Building2,
   FileText,
@@ -24,29 +26,64 @@ import PageContainer from "@/components/layouts/page-container";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
 
+interface Organization {
+  id: string;
+  name: string;
+  description?: string;
+  logo?: string;
+  coverImage?: string;
+  location?: string;
+  createdAt: string;
+}
+
 export default function OrganizationDashboardPage() {
   const params = useParams();
   const router = useRouter();
   const organizationId = params.id as string;
 
+  const [organization, setOrganization] = useState<Organization | null>(null);
+  const [isOrgLoading, setIsOrgLoading] = useState(true);
+
   // Fetch ads data
-  const { data: adsData, isLoading } = useGetAds({ page: 1, limit: 10, search: "" });
+  const { data: adsData, isLoading: isAdsLoading } = useGetAds({ page: 1, limit: 10, search: "" });
   const ads = adsData?.ads ?? [];
 
-  // Mock organization data - replace with actual API call
-  const organization = {
-    id: organizationId,
-    name: "My Organization",
-    logo: null,
-    description: "A great organization",
-    createdAt: new Date(),
-    stats: {
-      totalAds: adsData?.pagination?.total ?? 0,
-      activeAds: ads.filter(ad => ad.status === "ACTIVE").length,
-      draftAds: ads.filter(ad => ad.isDraft).length,
-      pendingAds: ads.filter(ad => ad.status === "PENDING").length
+  // Fetch organization data
+  useEffect(() => {
+    const fetchOrganization = async () => {
+      setIsOrgLoading(true);
+      
+      try {
+        const { data, error } = await betterFetch<Organization>(`/api/organizations/${organizationId}`);
+        
+        if (error) {
+          throw new Error(error.message || "Failed to fetch organization");
+        }
+        
+        if (data) {
+          setOrganization(data);
+        }
+      } catch (error) {
+        console.error("Error fetching organization:", error);
+        toast.error("Failed to load organization details");
+      } finally {
+        setIsOrgLoading(false);
+      }
+    };
+    
+    if (organizationId) {
+      fetchOrganization();
     }
+  }, [organizationId]);
+
+  const stats = {
+    totalAds: adsData?.pagination?.total ?? 0,
+    activeAds: ads.filter(ad => ad.status === "ACTIVE").length,
+    draftAds: ads.filter(ad => ad.isDraft).length,
+    pendingAds: ads.filter(ad => ad.status === "PENDING").length
   };
+
+  const isLoading = isOrgLoading || isAdsLoading;
 
   if (isLoading) {
     return (
@@ -58,6 +95,18 @@ export default function OrganizationDashboardPage() {
             <Skeleton className="h-32" />
             <Skeleton className="h-32" />
           </div>
+        </div>
+      </PageContainer>
+    );
+  }
+
+  if (!organization) {
+    return (
+      <PageContainer scrollable>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+          <h1 className="text-2xl font-semibold mb-2">Organization Not Found</h1>
+          <p className="text-muted-foreground mb-6">The organization you're looking for doesn't exist or has been removed.</p>
+          <Button onClick={() => router.push("/dashboard/organizations")}>Go Back</Button>
         </div>
       </PageContainer>
     );
@@ -116,7 +165,7 @@ export default function OrganizationDashboardPage() {
                 <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground pt-2">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
-                    <span>Created {format(organization.createdAt, "MMM d, yyyy")}</span>
+                    <span>Created {format(new Date(organization.createdAt), "MMM d, yyyy")}</span>
                   </div>
                 </div>
               </div>
@@ -132,7 +181,7 @@ export default function OrganizationDashboardPage() {
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{organization.stats.totalAds}</div>
+              <div className="text-2xl font-bold">{stats.totalAds}</div>
               <p className="text-xs text-muted-foreground mt-1">
                 All listings
               </p>
@@ -145,7 +194,7 @@ export default function OrganizationDashboardPage() {
               <TrendingUp className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{organization.stats.activeAds}</div>
+              <div className="text-2xl font-bold text-green-600">{stats.activeAds}</div>
               <p className="text-xs text-muted-foreground mt-1">
                 Published & live
               </p>
@@ -158,7 +207,7 @@ export default function OrganizationDashboardPage() {
               <LayoutDashboard className="h-4 w-4 text-orange-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{organization.stats.draftAds}</div>
+              <div className="text-2xl font-bold text-orange-600">{stats.draftAds}</div>
               <p className="text-xs text-muted-foreground mt-1">
                 Unpublished
               </p>
@@ -171,7 +220,7 @@ export default function OrganizationDashboardPage() {
               <Clock className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{organization.stats.pendingAds}</div>
+              <div className="text-2xl font-bold text-blue-600">{stats.pendingAds}</div>
               <p className="text-xs text-muted-foreground mt-1">
                 Under review
               </p>

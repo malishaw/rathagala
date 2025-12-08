@@ -18,7 +18,9 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Loader2, Camera, ChevronRight, CheckCircle2 } from "lucide-react";
+import { Loader2, Camera, ChevronRight, CheckCircle2, X, PlusCircle } from "lucide-react";
+import { MediaGallery } from "@/modules/media/components/media-gallery";
+import type { MediaFile } from "@/modules/media/types";
 import { PendingAdModal } from "@/features/ads/components/pending-ad-modal";
 import { AdSubmissionSuccessModal } from "@/features/ads/components/ad-submission-success-modal";
 
@@ -29,6 +31,8 @@ export default function QuickAdCreatePage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showPendingModal, setShowPendingModal] = useState(false);
+  const [selectedImages, setSelectedImages] = useState<MediaFile[]>([]);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [formData, setFormData] = useState({
     // Listing type
     listingType: "SELL",
@@ -179,6 +183,21 @@ export default function QuickAdCreatePage() {
       return newData;
     });
   };
+
+  // Handle media selection from gallery
+  const handleMediaSelect = (media: MediaFile[]) => {
+    // Check if we exceed the maximum allowed (6 images)
+    if (media.length > 6) {
+      setSelectedImages(media.slice(0, 6));
+    } else {
+      setSelectedImages(media);
+    }
+  };
+
+  // Handle removing a media item
+  const removeMedia = (idToRemove: string) => {
+    setSelectedImages(prev => prev.filter((media) => media.id !== idToRemove));
+  };
   
   // Handle form submission
   const handleSubmit = () => {
@@ -205,6 +224,9 @@ export default function QuickAdCreatePage() {
       type: formData.type as any,
       listingType: formData.listingType as any,
       price,
+
+      // Media IDs from uploaded images
+      mediaIds: selectedImages.map(img => img.id),
 
       // Common vehicle fields
       condition: formData.condition || undefined,
@@ -1599,15 +1621,89 @@ export default function QuickAdCreatePage() {
                 </Label>
               </div>
               
+              {/* Image Selection Section */}
               <div className="pt-2">
-                <div className="bg-slate-50 p-3 rounded-lg mb-4 text-center">
-                  <div className="flex justify-center mb-2">
-                    <Camera className="h-6 w-6 text-slate-400" />
+                <label className="block text-sm font-medium mb-2">Vehicle Images (Optional)</label>
+                <p className="text-xs text-slate-500 mb-3">
+                  Select up to 6 images from your media gallery. First image will be the main photo.
+                </p>
+                
+                {/* Media Gallery Button */}
+                <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center mb-3">
+                  <div className="flex flex-col items-center justify-center space-y-3">
+                    <Camera className="h-10 w-10 text-slate-400" />
+                    <div className="space-y-1 text-center">
+                      <p className="text-sm font-medium">
+                        {selectedImages.length === 0
+                          ? "No images selected yet"
+                          : selectedImages.length >= 6
+                          ? "Maximum images selected (6/6)"
+                          : `${selectedImages.length} image(s) selected, you can add ${
+                              6 - selectedImages.length
+                            } more`}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Select images from your media gallery
+                      </p>
+                    </div>
+                    
+                    <MediaGallery
+                      onMediaSelect={handleMediaSelect}
+                      multiSelect={true}
+                      open={isGalleryOpen}
+                      onOpenChange={setIsGalleryOpen}
+                      title="Select Vehicle Images"
+                    >
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsGalleryOpen(true)}
+                        className="flex items-center gap-2"
+                        disabled={selectedImages.length >= 6}
+                      >
+                        <PlusCircle className="h-4 w-4" />
+                        {selectedImages.length === 0 ? "Select Images" : "Select More"}
+                      </Button>
+                    </MediaGallery>
                   </div>
-                  <p className="text-sm text-slate-500">
-                    You can add photos after submitting the basic details
-                  </p>
                 </div>
+                
+                {/* Image Preview Grid */}
+                {selectedImages.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium">
+                        {selectedImages.length} of 6 images
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {selectedImages.length === 6 ? "Maximum reached" : "First image is main"}
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {selectedImages.map((image, index) => (
+                        <div key={image.id} className="relative group aspect-square">
+                          <img
+                            src={image.url}
+                            alt={`Upload ${index + 1}`}
+                            className="w-full h-full object-cover rounded-lg border-2 border-slate-200"
+                          />
+                          {index === 0 && (
+                            <div className="absolute top-1 left-1 bg-teal-700 text-white text-xs px-2 py-0.5 rounded">
+                              Main
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeMedia(image.id)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               
               <div className="flex space-x-3">

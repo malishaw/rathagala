@@ -3,7 +3,7 @@
 import * as HttpStatusCodes from "stoker/http-status-codes";
 
 import { prisma } from "@/server/prisma/client";
-import type { ListRoute } from "./org.routes";
+import type { ListRoute, GetByIdRoute } from "./org.routes";
 import { AppRouteHandler } from "@/types/server";
 
 export const list: AppRouteHandler<ListRoute> = async (c) => {
@@ -97,4 +97,22 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     },
     HttpStatusCodes.OK
   );
+};
+
+// ---------- Get Organization by ID ----------
+export const getById: AppRouteHandler<GetByIdRoute> = async (c) => {
+  const { id } = c.req.valid("param");
+
+  const organization = await prisma.organization.findUnique({
+    where: { id },
+  });
+
+  if (!organization) {
+    return c.json(
+      { message: "Organization not found" },
+      HttpStatusCodes.NOT_FOUND
+    );
+  }
+
+  return c.json(organization, HttpStatusCodes.OK);
 };
