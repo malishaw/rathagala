@@ -583,6 +583,43 @@ export default function AdDetailPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Similar Vehicles */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-[#024950]">Similar Vehicles</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {similarVehicles.map((vehicle) => (
+                    <Card
+                      key={vehicle.id}
+                      className="hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => router.push(`/${vehicle.id}`)}
+                    >
+                      <CardContent className="p-3">
+                        <img
+                          src={vehicle.image || "/placeholder.svg"}
+                          alt={vehicle.title}
+                          className="w-full h-24 object-cover rounded mb-2"
+                        />
+                        <h3 className="font-semibold text-xs mb-1 line-clamp-2">{vehicle.title}</h3>
+                        <div className="text-sm font-bold text-[#024950] mb-1">
+                          {formatPrice(vehicle.price)}
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          <div className="flex items-center">
+                            <MapPin className="w-3 h-3 mr-1" />
+                            <span className="truncate">{vehicle.location}</span>
+                          </div>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">{vehicle.mileage}</div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Right Column - Price and Contact */}
