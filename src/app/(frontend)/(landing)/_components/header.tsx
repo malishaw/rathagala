@@ -152,7 +152,7 @@ export function Header() {
               href="/comparison"
               className="hover:text-teal-200 transition-colors font-medium"
             >
-              Comparison
+              Compare
             </Link>
             {/* <Link
               href="/search"
