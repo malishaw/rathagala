@@ -10,11 +10,23 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RevealPhoneButton } from "@/components/ui/reveal-phone-button";
 import { Separator } from "@/components/ui/separator";
 import { SimilarVehicleComparison } from "@/components/ui/similar-vehicle-comparison";
 import { useGetAdById } from "@/features/ads/api/use-get-ad-by-id";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
+import { useCreateReport } from "@/features/report/api/use-create-report";
+import { ReportReasons } from "@/server/routes/report/report.schemas";
 import {
   Calendar,
   ChevronLeft,
@@ -28,7 +40,8 @@ import {
   Phone,
   Share2,
   Shield,
-  BarChart3
+  BarChart3,
+  Flag
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -38,9 +51,37 @@ export default function AdDetailPage() {
   const adId = Array.isArray(id) ? id[0] : id;
   const router = useRouter();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
 
   // Using the hook to fetch ad data
   const { data: ad, isLoading, isError } = useGetAdById({ adId: adId || "" });
+  const { mutate: createReport, isPending: isSubmittingReport } = useCreateReport();
+
+  // Handle report submission
+  const handleSubmitReport = () => {
+    if (!reportReason) {
+      return;
+    }
+
+    createReport(
+      {
+        values: {
+          adId: adId || "",
+          reason: reportReason,
+          details: reportDetails || undefined,
+        },
+      },
+      {
+        onSuccess: () => {
+          setIsReportDialogOpen(false);
+          setReportReason("");
+          setReportDetails("");
+        },
+      }
+    );
+  };
 
   // Prevent image downloads and protect against various methods
   useEffect(() => {
@@ -262,6 +303,16 @@ export default function AdDetailPage() {
                 className="text-white hover:bg-white/10"
                 iconClassName="w-5 h-5"
               />
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-red-500 hover:bg-white/10"
+                onClick={() => setIsReportDialogOpen(true)}
+                aria-label="Report Ad"
+              >
+                <Flag className="w-5 h-5" />
+              </Button>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -869,6 +920,65 @@ export default function AdDetailPage() {
           </div>
         </div> */}
       </div>
+
+      {/* Report Dialog */}
+      <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Report Ad</DialogTitle>
+            <DialogDescription>
+              Help us maintain quality by reporting inappropriate or fraudulent ads.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="reason">Reason *</Label>
+              <Select value={reportReason} onValueChange={setReportReason}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a reason" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(ReportReasons).map(([key, value]) => (
+                    <SelectItem key={key} value={value}>
+                      {value}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="details">Additional Details (Optional)</Label>
+              <Textarea
+                id="details"
+                placeholder="Provide more information about your report..."
+                value={reportDetails}
+                onChange={(e) => setReportDetails(e.target.value)}
+                rows={4}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsReportDialogOpen(false);
+                setReportReason("");
+                setReportDetails("");
+              }}
+              disabled={isSubmittingReport}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmitReport}
+              disabled={!reportReason || isSubmittingReport}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isSubmittingReport ? "Submitting..." : "Submit Report"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1225,12 +1225,12 @@ export default function VehicleMarketplace() {
               <Card className="p-4 bg-white border border-slate-100 rounded-xl overflow-hidden">
                 <div className="text-center text-slate-500">
                   <div className="text-sm mb-2 font-medium">Advertisement</div>
-                  <div className="bg-slate-100 h-64 flex items-center justify-center rounded-lg">
-                    <span className="text-slate-400">
-                      Google Ad Space
-                      <br />
-                      300x250
-                    </span>
+                  <div className="bg-slate-100 h-64 flex items-center justify-center rounded-lg overflow-hidden">
+                    <img
+                      src="/assets/Sidebar 01 new.jpg"
+                      alt="Advertisement"
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 </div>
               </Card>
@@ -1242,12 +1242,12 @@ export default function VehicleMarketplace() {
               <Card className="p-4 bg-white border border-slate-100 rounded-xl overflow-hidden">
                 <div className="text-center text-slate-500">
                   <div className="text-sm mb-2 font-medium">Advertisement</div>
-                  <div className="bg-slate-100 h-48 flex items-center justify-center rounded-lg">
-                    <span className="text-slate-400">
-                      Google Ad Space
-                      <br />
-                      300x200
-                    </span>
+                  <div className="bg-slate-100 h-48 flex items-center justify-center rounded-lg overflow-hidden">
+                    <img
+                      src="/assets/Sidebar 02.jpg"
+                      alt="Advertisement"
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 </div>
               </Card>
@@ -1262,10 +1262,12 @@ export default function VehicleMarketplace() {
           <Card className="p-4 bg-white border border-slate-100 rounded-xl overflow-hidden">
             <div className="text-center text-slate-500">
               <div className="text-sm mb-2 font-medium">Advertisement</div>
-              <div className="bg-slate-100 h-24 flex items-center justify-center rounded-lg">
-                <span className="text-slate-400">
-                  Google Ad Banner Space - 728x90
-                </span>
+              <div className="bg-slate-100 h-24 flex items-center justify-center rounded-lg overflow-hidden">
+                <img
+                  src="/assets/Bottom Banner.jpg"
+                  alt="Advertisement"
+                  className="w-full h-full object-cover"
+                />
               </div>
             </div>
           </Card>

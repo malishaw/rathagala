@@ -11,6 +11,7 @@ import savedAdRoute from "@/server/routes/saved-ad/index";
 import tasksRoute from "@/server/routes/tasks/tasks.index";
 import userRoute from "@/server/routes/user/user.index";
 import usersRoute from "@/server/routes/users/users.index";
+import reportRoute from "@/server/routes/report/report.index";
 
 const app = createApp();
 
@@ -29,6 +30,7 @@ const routes = app
   .route("/media", mediaRoute)
   .route("/users", usersRoute)
   .route("/user", userRoute)
+  .route("/report", reportRoute)
   .route("/saved-ad", savedAdRoute);
 
 export type AppType = typeof routes;
