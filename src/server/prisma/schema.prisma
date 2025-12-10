@@ -573,3 +573,14 @@ model AdMedia {
   @@unique([adId, mediaId])
   @@map("adMedia")
 }
+
+model VerificationCode {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email, code])
+  @@map("verificationCode")
+}

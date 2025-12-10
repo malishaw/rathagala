@@ -4,6 +4,7 @@ import { createApp } from "@/server/helpers/create-app";
 // Routes
 import adRoute from "@/server/routes/ad/ad.index";
 import { authController } from "@/server/routes/auth/auth.routes";
+import verificationRoute from "@/server/routes/auth/auth.index";
 import mediaRoute from "@/server/routes/media/media.index";
 import orgRoute from "@/server/routes/orgs/org.index";
 import rootRoute from "@/server/routes/root/index.route";
@@ -24,6 +25,7 @@ const routes = app
   .route("/tasks", tasksRoute)
 
   // Project Routes
+  .route("/verification", verificationRoute)
   .route("/auth", authController)
   .route("/organizations", orgRoute)
   .route("/ad", adRoute)

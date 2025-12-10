@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -37,6 +37,7 @@ type Props = {
 export function SignupForm({ className }: Props) {
   const [isPending, setIsPending] = useState<boolean>(false);
   const toastId = useId();
+  const router = useRouter();
 
   const form = useForm<SignupSchemaT>({
     resolver: zodResolver(signupSchema),
@@ -52,8 +53,6 @@ export function SignupForm({ className }: Props) {
   async function handleFormSubmit(formData: SignupSchemaT) {
     setIsPending(true);
 
-    const wantsToCreateOrg = formData.registerAsOrganization;
-
     await authClient.signUp.email(
       {
         email: formData.email,
@@ -65,50 +64,59 @@ export function SignupForm({ className }: Props) {
           toast.loading("Signing up...", { id: toastId });
         },
         onSuccess: async () => {
-          // If user wants to create an organization, automatically sign them in
-          if (wantsToCreateOrg) {
-            toast.success("Successfully Signed Up!", {
-              id: toastId,
-              description: "Signing you in..."
-            });
+          toast.loading("Sending verification code...", { id: toastId });
 
-            // Automatically sign in the user
-            await authClient.signIn.email(
-              {
+          // Send verification code
+          try {
+            const response = await fetch("/api/verification/send-verification-code", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
                 email: formData.email,
-                password: formData.password
-              },
-              {
-                onSuccess: () => {
-                  form.reset();
-                  toast.success("Redirecting to organization setup...", { id: toastId });
-                  redirect("/setup-organization");
-                },
-                onError: () => {
-                  toast.error("Signup successful, but auto sign-in failed. Please sign in manually.", {
-                    id: toastId
-                  });
-                  form.reset();
-                  redirect("/signin");
-                }
-              }
-            );
-          } else {
-            toast.success("Successfully Signed Up!", {
-              id: toastId,
-              description:
-                "Your account has been created !, Check your email for verification link."
+                name: formData.name,
+              }),
             });
 
-            form.reset();
-            redirect("/signin");
+            if (response.ok) {
+              toast.success("Verification code sent to your email!", {
+                id: toastId,
+                description: "Please check your inbox"
+              });
+              form.reset();
+              // Store email, name, and organization intent in sessionStorage
+              sessionStorage.setItem("verifyEmail", formData.email);
+              sessionStorage.setItem("verifyName", formData.name);
+              if (formData.registerAsOrganization) {
+                sessionStorage.setItem("setupOrganization", "true");
+              }
+              router.push("/verify-email");
+            } else {
+              toast.error("Failed to send verification code. Please contact support.", {
+                id: toastId,
+              });
+              // Don't redirect to signin if verification failed
+            }
+          } catch (error) {
+            console.error("Error sending verification code:", error);
+            toast.error("Failed to send verification code. Please contact support.", {
+              id: toastId,
+            });
           }
         },
         onError: (ctx) => {
-          toast.error("Signup failed !", {
-            id: toastId,
-            description: ctx.error.message || "Something went wrong"
-          });
+          // Check if error is about existing email
+          if (ctx.error.message?.toLowerCase().includes("existing email") || 
+              ctx.error.message?.toLowerCase().includes("already exists")) {
+            toast.error("Email already registered!", {
+              id: toastId,
+              description: "Please sign in or use a different email"
+            });
+          } else {
+            toast.error("Signup failed!", {
+              id: toastId,
+              description: ctx.error.message || "Something went wrong"
+            });
+          }
         }
       }
     );

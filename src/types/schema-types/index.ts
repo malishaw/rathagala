@@ -104,6 +104,8 @@ export const AuditLogScalarFieldEnumSchema = z.enum(['id','userId','orgId','acti
 
 export const AdMediaScalarFieldEnumSchema = z.enum(['id','adId','mediaId','order']);
 
+export const VerificationCodeScalarFieldEnumSchema = z.enum(['id','email','code','expiresAt','createdAt']);
+
 export const SortOrderSchema = z.enum(['asc','desc']);
 
 export const QueryModeSchema = z.enum(['default','insensitive']);
@@ -605,6 +607,20 @@ export const AdMediaSchema = z.object({
 })
 
 export type AdMedia = z.infer<typeof AdMediaSchema>
+
+/////////////////////////////////////////
+// VERIFICATION CODE SCHEMA
+/////////////////////////////////////////
+
+export const VerificationCodeSchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  code: z.string(),
+  expiresAt: z.coerce.date(),
+  createdAt: z.coerce.date(),
+})
+
+export type VerificationCode = z.infer<typeof VerificationCodeSchema>
 
 /////////////////////////////////////////
 // SELECT & INCLUDE
@@ -1292,6 +1308,21 @@ export const AdMediaSelectSchema: z.ZodType<Prisma.AdMediaSelect> = z.object({
   order: z.boolean().optional(),
   ad: z.union([z.boolean(),z.lazy(() => AdArgsSchema)]).optional(),
   media: z.union([z.boolean(),z.lazy(() => MediaArgsSchema)]).optional(),
+}).strict()
+
+// VERIFICATION CODE
+//------------------------------------------------------
+
+export const VerificationCodeArgsSchema: z.ZodType<Prisma.VerificationCodeDefaultArgs> = z.object({
+  select: z.lazy(() => VerificationCodeSelectSchema).optional(),
+}).strict();
+
+export const VerificationCodeSelectSchema: z.ZodType<Prisma.VerificationCodeSelect> = z.object({
+  id: z.boolean().optional(),
+  email: z.boolean().optional(),
+  code: z.boolean().optional(),
+  expiresAt: z.boolean().optional(),
+  createdAt: z.boolean().optional(),
 }).strict()
 
 
@@ -3443,6 +3474,61 @@ export const AdMediaScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.AdMed
   order: z.union([ z.lazy(() => IntWithAggregatesFilterSchema),z.number() ]).optional(),
 }).strict();
 
+export const VerificationCodeWhereInputSchema: z.ZodType<Prisma.VerificationCodeWhereInput> = z.object({
+  AND: z.union([ z.lazy(() => VerificationCodeWhereInputSchema),z.lazy(() => VerificationCodeWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => VerificationCodeWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => VerificationCodeWhereInputSchema),z.lazy(() => VerificationCodeWhereInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  email: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  code: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  expiresAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
+}).strict();
+
+export const VerificationCodeOrderByWithRelationInputSchema: z.ZodType<Prisma.VerificationCodeOrderByWithRelationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  email: z.lazy(() => SortOrderSchema).optional(),
+  code: z.lazy(() => SortOrderSchema).optional(),
+  expiresAt: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional()
+}).strict();
+
+export const VerificationCodeWhereUniqueInputSchema: z.ZodType<Prisma.VerificationCodeWhereUniqueInput> = z.object({
+  id: z.string()
+})
+.and(z.object({
+  id: z.string().optional(),
+  AND: z.union([ z.lazy(() => VerificationCodeWhereInputSchema),z.lazy(() => VerificationCodeWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => VerificationCodeWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => VerificationCodeWhereInputSchema),z.lazy(() => VerificationCodeWhereInputSchema).array() ]).optional(),
+  email: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  code: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  expiresAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
+}).strict());
+
+export const VerificationCodeOrderByWithAggregationInputSchema: z.ZodType<Prisma.VerificationCodeOrderByWithAggregationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  email: z.lazy(() => SortOrderSchema).optional(),
+  code: z.lazy(() => SortOrderSchema).optional(),
+  expiresAt: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  _count: z.lazy(() => VerificationCodeCountOrderByAggregateInputSchema).optional(),
+  _max: z.lazy(() => VerificationCodeMaxOrderByAggregateInputSchema).optional(),
+  _min: z.lazy(() => VerificationCodeMinOrderByAggregateInputSchema).optional()
+}).strict();
+
+export const VerificationCodeScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.VerificationCodeScalarWhereWithAggregatesInput> = z.object({
+  AND: z.union([ z.lazy(() => VerificationCodeScalarWhereWithAggregatesInputSchema),z.lazy(() => VerificationCodeScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  OR: z.lazy(() => VerificationCodeScalarWhereWithAggregatesInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => VerificationCodeScalarWhereWithAggregatesInputSchema),z.lazy(() => VerificationCodeScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
+  email: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
+  code: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
+  expiresAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema),z.coerce.date() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema),z.coerce.date() ]).optional(),
+}).strict();
+
 export const UserCreateInputSchema: z.ZodType<Prisma.UserCreateInput> = z.object({
   id: z.string(),
   name: z.string(),
@@ -5477,6 +5563,58 @@ export const AdMediaUncheckedUpdateManyInputSchema: z.ZodType<Prisma.AdMediaUnch
   order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
+export const VerificationCodeCreateInputSchema: z.ZodType<Prisma.VerificationCodeCreateInput> = z.object({
+  id: z.string().optional(),
+  email: z.string(),
+  code: z.string(),
+  expiresAt: z.coerce.date(),
+  createdAt: z.coerce.date().optional()
+}).strict();
+
+export const VerificationCodeUncheckedCreateInputSchema: z.ZodType<Prisma.VerificationCodeUncheckedCreateInput> = z.object({
+  id: z.string().optional(),
+  email: z.string(),
+  code: z.string(),
+  expiresAt: z.coerce.date(),
+  createdAt: z.coerce.date().optional()
+}).strict();
+
+export const VerificationCodeUpdateInputSchema: z.ZodType<Prisma.VerificationCodeUpdateInput> = z.object({
+  email: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  code: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  expiresAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const VerificationCodeUncheckedUpdateInputSchema: z.ZodType<Prisma.VerificationCodeUncheckedUpdateInput> = z.object({
+  email: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  code: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  expiresAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const VerificationCodeCreateManyInputSchema: z.ZodType<Prisma.VerificationCodeCreateManyInput> = z.object({
+  id: z.string().optional(),
+  email: z.string(),
+  code: z.string(),
+  expiresAt: z.coerce.date(),
+  createdAt: z.coerce.date().optional()
+}).strict();
+
+export const VerificationCodeUpdateManyMutationInputSchema: z.ZodType<Prisma.VerificationCodeUpdateManyMutationInput> = z.object({
+  email: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  code: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  expiresAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const VerificationCodeUncheckedUpdateManyInputSchema: z.ZodType<Prisma.VerificationCodeUncheckedUpdateManyInput> = z.object({
+  email: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  code: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  expiresAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
 export const StringFilterSchema: z.ZodType<Prisma.StringFilter> = z.object({
   equals: z.string().optional(),
   in: z.string().array().optional(),
@@ -7170,6 +7308,30 @@ export const AdMediaMinOrderByAggregateInputSchema: z.ZodType<Prisma.AdMediaMinO
 
 export const AdMediaSumOrderByAggregateInputSchema: z.ZodType<Prisma.AdMediaSumOrderByAggregateInput> = z.object({
   order: z.lazy(() => SortOrderSchema).optional()
+}).strict();
+
+export const VerificationCodeCountOrderByAggregateInputSchema: z.ZodType<Prisma.VerificationCodeCountOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  email: z.lazy(() => SortOrderSchema).optional(),
+  code: z.lazy(() => SortOrderSchema).optional(),
+  expiresAt: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional()
+}).strict();
+
+export const VerificationCodeMaxOrderByAggregateInputSchema: z.ZodType<Prisma.VerificationCodeMaxOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  email: z.lazy(() => SortOrderSchema).optional(),
+  code: z.lazy(() => SortOrderSchema).optional(),
+  expiresAt: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional()
+}).strict();
+
+export const VerificationCodeMinOrderByAggregateInputSchema: z.ZodType<Prisma.VerificationCodeMinOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  email: z.lazy(() => SortOrderSchema).optional(),
+  code: z.lazy(() => SortOrderSchema).optional(),
+  expiresAt: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
 export const OrganizationCreateNestedOneWithoutUsersInputSchema: z.ZodType<Prisma.OrganizationCreateNestedOneWithoutUsersInput> = z.object({
@@ -19433,6 +19595,63 @@ export const AdMediaFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.AdMediaFindUni
   where: AdMediaWhereUniqueInputSchema,
 }).strict() ;
 
+export const VerificationCodeFindFirstArgsSchema: z.ZodType<Prisma.VerificationCodeFindFirstArgs> = z.object({
+  select: VerificationCodeSelectSchema.optional(),
+  where: VerificationCodeWhereInputSchema.optional(),
+  orderBy: z.union([ VerificationCodeOrderByWithRelationInputSchema.array(),VerificationCodeOrderByWithRelationInputSchema ]).optional(),
+  cursor: VerificationCodeWhereUniqueInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ VerificationCodeScalarFieldEnumSchema,VerificationCodeScalarFieldEnumSchema.array() ]).optional(),
+}).strict() ;
+
+export const VerificationCodeFindFirstOrThrowArgsSchema: z.ZodType<Prisma.VerificationCodeFindFirstOrThrowArgs> = z.object({
+  select: VerificationCodeSelectSchema.optional(),
+  where: VerificationCodeWhereInputSchema.optional(),
+  orderBy: z.union([ VerificationCodeOrderByWithRelationInputSchema.array(),VerificationCodeOrderByWithRelationInputSchema ]).optional(),
+  cursor: VerificationCodeWhereUniqueInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ VerificationCodeScalarFieldEnumSchema,VerificationCodeScalarFieldEnumSchema.array() ]).optional(),
+}).strict() ;
+
+export const VerificationCodeFindManyArgsSchema: z.ZodType<Prisma.VerificationCodeFindManyArgs> = z.object({
+  select: VerificationCodeSelectSchema.optional(),
+  where: VerificationCodeWhereInputSchema.optional(),
+  orderBy: z.union([ VerificationCodeOrderByWithRelationInputSchema.array(),VerificationCodeOrderByWithRelationInputSchema ]).optional(),
+  cursor: VerificationCodeWhereUniqueInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ VerificationCodeScalarFieldEnumSchema,VerificationCodeScalarFieldEnumSchema.array() ]).optional(),
+}).strict() ;
+
+export const VerificationCodeAggregateArgsSchema: z.ZodType<Prisma.VerificationCodeAggregateArgs> = z.object({
+  where: VerificationCodeWhereInputSchema.optional(),
+  orderBy: z.union([ VerificationCodeOrderByWithRelationInputSchema.array(),VerificationCodeOrderByWithRelationInputSchema ]).optional(),
+  cursor: VerificationCodeWhereUniqueInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict() ;
+
+export const VerificationCodeGroupByArgsSchema: z.ZodType<Prisma.VerificationCodeGroupByArgs> = z.object({
+  where: VerificationCodeWhereInputSchema.optional(),
+  orderBy: z.union([ VerificationCodeOrderByWithAggregationInputSchema.array(),VerificationCodeOrderByWithAggregationInputSchema ]).optional(),
+  by: VerificationCodeScalarFieldEnumSchema.array(),
+  having: VerificationCodeScalarWhereWithAggregatesInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict() ;
+
+export const VerificationCodeFindUniqueArgsSchema: z.ZodType<Prisma.VerificationCodeFindUniqueArgs> = z.object({
+  select: VerificationCodeSelectSchema.optional(),
+  where: VerificationCodeWhereUniqueInputSchema,
+}).strict() ;
+
+export const VerificationCodeFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.VerificationCodeFindUniqueOrThrowArgs> = z.object({
+  select: VerificationCodeSelectSchema.optional(),
+  where: VerificationCodeWhereUniqueInputSchema,
+}).strict() ;
+
 export const UserCreateArgsSchema: z.ZodType<Prisma.UserCreateArgs> = z.object({
   select: UserSelectSchema.optional(),
   include: UserIncludeSchema.optional(),
@@ -20468,5 +20687,43 @@ export const AdMediaUpdateManyArgsSchema: z.ZodType<Prisma.AdMediaUpdateManyArgs
 
 export const AdMediaDeleteManyArgsSchema: z.ZodType<Prisma.AdMediaDeleteManyArgs> = z.object({
   where: AdMediaWhereInputSchema.optional(),
+  limit: z.number().optional(),
+}).strict() ;
+
+export const VerificationCodeCreateArgsSchema: z.ZodType<Prisma.VerificationCodeCreateArgs> = z.object({
+  select: VerificationCodeSelectSchema.optional(),
+  data: z.union([ VerificationCodeCreateInputSchema,VerificationCodeUncheckedCreateInputSchema ]),
+}).strict() ;
+
+export const VerificationCodeUpsertArgsSchema: z.ZodType<Prisma.VerificationCodeUpsertArgs> = z.object({
+  select: VerificationCodeSelectSchema.optional(),
+  where: VerificationCodeWhereUniqueInputSchema,
+  create: z.union([ VerificationCodeCreateInputSchema,VerificationCodeUncheckedCreateInputSchema ]),
+  update: z.union([ VerificationCodeUpdateInputSchema,VerificationCodeUncheckedUpdateInputSchema ]),
+}).strict() ;
+
+export const VerificationCodeCreateManyArgsSchema: z.ZodType<Prisma.VerificationCodeCreateManyArgs> = z.object({
+  data: z.union([ VerificationCodeCreateManyInputSchema,VerificationCodeCreateManyInputSchema.array() ]),
+}).strict() ;
+
+export const VerificationCodeDeleteArgsSchema: z.ZodType<Prisma.VerificationCodeDeleteArgs> = z.object({
+  select: VerificationCodeSelectSchema.optional(),
+  where: VerificationCodeWhereUniqueInputSchema,
+}).strict() ;
+
+export const VerificationCodeUpdateArgsSchema: z.ZodType<Prisma.VerificationCodeUpdateArgs> = z.object({
+  select: VerificationCodeSelectSchema.optional(),
+  data: z.union([ VerificationCodeUpdateInputSchema,VerificationCodeUncheckedUpdateInputSchema ]),
+  where: VerificationCodeWhereUniqueInputSchema,
+}).strict() ;
+
+export const VerificationCodeUpdateManyArgsSchema: z.ZodType<Prisma.VerificationCodeUpdateManyArgs> = z.object({
+  data: z.union([ VerificationCodeUpdateManyMutationInputSchema,VerificationCodeUncheckedUpdateManyInputSchema ]),
+  where: VerificationCodeWhereInputSchema.optional(),
+  limit: z.number().optional(),
+}).strict() ;
+
+export const VerificationCodeDeleteManyArgsSchema: z.ZodType<Prisma.VerificationCodeDeleteManyArgs> = z.object({
+  where: VerificationCodeWhereInputSchema.optional(),
   limit: z.number().optional(),
 }).strict() ;

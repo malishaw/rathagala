@@ -31,6 +31,13 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true,
+    sendVerificationEmail: async ({ user, url }) => {
+      // We handle verification via our custom code system
+      // This function is required by Better Auth but we don't use the link-based verification
+      console.log("Email verification required for:", user.email);
+      // The actual verification code is sent from our custom endpoint
+    },
     async sendResetPassword({ user, url }) {
       try {
         await transporter.sendMail({
