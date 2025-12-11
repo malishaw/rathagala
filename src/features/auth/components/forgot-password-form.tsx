@@ -68,18 +68,19 @@ export function ForgotPasswordForm({ className }: Props) {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleFormSubmit)}
-          className="space-y-6 w-full"
+          className="space-y-5 w-full"
         >
           <FormField
             control={form.control}
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel className="text-teal-900 font-medium">Email</FormLabel>
                 <FormControl>
                   <Input
                     disabled={isPending}
                     placeholder="john.doe@example.com"
+                    className="bg-white border-teal-200 focus:border-teal-500 focus:ring-teal-500"
                     {...field}
                   />
                 </FormControl>
@@ -87,25 +88,31 @@ export function ForgotPasswordForm({ className }: Props) {
               </FormItem>
             )}
           />
-          <Button type="submit" className="w-full" loading={isPending}>
+          <Button 
+            type="submit" 
+            className="w-full bg-teal-700 hover:bg-teal-800 text-white font-semibold py-6 shadow-lg transition-all duration-200" 
+            loading={isPending}
+          >
             Send Reset Link
-            {!isPending && <ArrowRight className="size-4" />}
+            {!isPending && <ArrowRight className="size-4 ml-2" />}
           </Button>
         </form>
       </Form>
 
       {/* Option texts */}
-      <div className="flex items-center text-center justify-between">
+      <div className="flex items-center text-center justify-between text-sm">
         <Button
           asChild
           variant={"link"}
-          className="p-0 underline"
-          icon={<ArrowLeft className="size-4" />}
+          className="p-0 h-auto text-teal-700 hover:text-teal-900"
         >
-          <Link href={"/signin"}>Go back</Link>
+          <Link href={"/signin"}>
+            <ArrowLeft className="size-4 mr-1" />
+            Go back
+          </Link>
         </Button>
-        <Button asChild variant={"link"} className="p-0">
-          <Link href={"/signup"}>Need an account ? Sign Up</Link>
+        <Button asChild variant={"link"} className="p-0 h-auto text-teal-700 hover:text-teal-900">
+          <Link href={"/signup"}>Need an account? <span className="font-semibold ml-1">Sign Up</span></Link>
         </Button>
       </div>
     </div>

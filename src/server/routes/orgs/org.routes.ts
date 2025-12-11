@@ -4,7 +4,8 @@ import { z } from "zod";
 import { jsonContent } from "stoker/openapi/helpers";
 
 import { serverAuthMiddleware } from "@/server/middlewares/auth-middleware";
-import { querySchema, withPaginationSchema } from "./org.schemas";
+import { querySchema, withPaginationSchema, IdParamsSchema } from "./org.schemas";
+import { OrganizationSchema } from "@/types/schema-types";
 
 const tags = ["Organizations"];
 
@@ -30,3 +31,25 @@ export const list = createRoute({
 });
 
 export type ListRoute = typeof list;
+
+// ---------- Get Organization by ID ----------
+export const getById = createRoute({
+  tags,
+  path: "/{id}",
+  method: "get",
+  request: {
+    params: IdParamsSchema,
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      OrganizationSchema,
+      "Organization details"
+    ),
+    [HttpStatusCodes.NOT_FOUND]: jsonContent(
+      z.object({ message: z.string() }),
+      "Organization not found"
+    ),
+  },
+});
+
+export type GetByIdRoute = typeof getById;

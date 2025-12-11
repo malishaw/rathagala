@@ -644,8 +644,28 @@ export default function VehicleMarketplace() {
                   </div>
                   
                   <div className="px-4 pb-16 space-y-3 overflow-y-auto max-h-[calc(85vh-120px)] sm:max-h-[calc(90vh-120px)]">
-                    {/* Make & Vehicle Type */}
-                    <div className="grid grid-cols-2 gap-2">
+                    {/* Vehicle Type, Make & Condition */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="text-xs font-medium text-slate-600 mb-1 block">Vehicle Type</label>
+                        <Select
+                          value={filters.vehicleType || "any"}
+                          onValueChange={(value) => handleFilterChange("vehicleType", value)}
+                        >
+                          <SelectTrigger className="w-full h-9 bg-white text-xs">
+                            <SelectValue placeholder="Any Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="any">Any Type</SelectItem>
+                            {Object.entries(vehicleTypeLabels).map(([value, label]) => (
+                              <SelectItem key={value} value={value}>
+                                {label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
                       <div>
                         <label className="text-xs font-medium text-slate-600 mb-1 block">Make</label>
                         <Select
@@ -669,28 +689,46 @@ export default function VehicleMarketplace() {
                       </div>
 
                       <div>
-                        <label className="text-xs font-medium text-slate-600 mb-1 block">Vehicle Type</label>
+                        <label className="text-xs font-medium text-slate-600 mb-1 block">Condition</label>
                         <Select
-                          value={filters.vehicleType || "any"}
-                          onValueChange={(value) => handleFilterChange("vehicleType", value)}
+                          value={filters.condition || "any"}
+                          onValueChange={(value) => handleFilterChange("condition", value)}
                         >
                           <SelectTrigger className="w-full h-9 bg-white text-xs">
-                            <SelectValue placeholder="Any Type" />
+                            <SelectValue placeholder="Any" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="any">Any Type</SelectItem>
-                            {Object.entries(vehicleTypeLabels).map(([value, label]) => (
-                              <SelectItem key={value} value={value}>
-                                {label}
-                              </SelectItem>
-                            ))}
+                            <SelectItem value="any">Any</SelectItem>
+                            <SelectItem value="new">New</SelectItem>
+                            <SelectItem value="used">Used</SelectItem>
+                            <SelectItem value="antique">Antique</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
 
-                    {/* City & District - Related fields together */}
-                    <div className="grid grid-cols-2 gap-2">
+                    {/* District, City & Fuel Type */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="text-xs font-medium text-slate-600 mb-1 block">District</label>
+                        <Select
+                          value={filters.district || "any"}
+                          onValueChange={(value) => handleFilterChange("district", value)}
+                        >
+                          <SelectTrigger className="w-full h-9 bg-white text-xs">
+                            <SelectValue placeholder="Any" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-[200px]">
+                            <SelectItem value="any">Any</SelectItem>
+                            {sriLankanDistricts.map((district) => (
+                              <SelectItem key={district} value={district.toLowerCase()}>
+                                {district}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
                       <div>
                         <label className="text-xs font-medium text-slate-600 mb-1 block">City</label>
                         <Select
@@ -735,21 +773,20 @@ export default function VehicleMarketplace() {
                       </div>
 
                       <div>
-                        <label className="text-xs font-medium text-slate-600 mb-1 block">District</label>
+                        <label className="text-xs font-medium text-slate-600 mb-1 block">Fuel Type</label>
                         <Select
-                          value={filters.district || "any"}
-                          onValueChange={(value) => handleFilterChange("district", value)}
+                          value={filters.fuelType || "any"}
+                          onValueChange={(value) => handleFilterChange("fuelType", value)}
                         >
                           <SelectTrigger className="w-full h-9 bg-white text-xs">
                             <SelectValue placeholder="Any" />
                           </SelectTrigger>
-                          <SelectContent className="max-h-[200px]">
+                          <SelectContent>
                             <SelectItem value="any">Any</SelectItem>
-                            {sriLankanDistricts.map((district) => (
-                              <SelectItem key={district} value={district.toLowerCase()}>
-                                {district}
-                              </SelectItem>
-                            ))}
+                            <SelectItem value="Petrol">Petrol</SelectItem>
+                            <SelectItem value="Diesel">Diesel</SelectItem>
+                            <SelectItem value="Hybrid">Hybrid</SelectItem>
+                            <SelectItem value="Electric">Electric</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -826,8 +863,8 @@ export default function VehicleMarketplace() {
                       </div>
                     </div>
 
-                    {/* Min Year & Max Year - Related fields together */}
-                    <div className="grid grid-cols-2 gap-2">
+                    {/* Min Year, Max Year & Transmission */}
+                    <div className="grid grid-cols-3 gap-2">
                       <div>
                         <label className="text-xs font-medium text-slate-600 mb-1 block">Min Year</label>
                         <Select
@@ -859,7 +896,7 @@ export default function VehicleMarketplace() {
                           </SelectTrigger>
                           <SelectContent className="max-h-[200px]">
                             <SelectItem value="any">Any</SelectItem>
-                            {years.slice(0, 30).map(year => (
+                            {maxYearOptions.map(year => (
                               <SelectItem key={`max-${year}`} value={year.toString()}>
                                 {year}
                               </SelectItem>
@@ -867,64 +904,23 @@ export default function VehicleMarketplace() {
                           </SelectContent>
                         </Select>
                       </div>
-                    </div>
 
-                    {/* Condition & Fuel Type */}
-                    <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-xs font-medium text-slate-600 mb-1 block">Condition</label>
+                        <label className="text-xs font-medium text-slate-600 mb-1 block">Transmission</label>
                         <Select
-                          value={filters.condition || "any"}
-                          onValueChange={(value) => handleFilterChange("condition", value)}
+                          value={filters.transmission || "any"}
+                          onValueChange={(value) => handleFilterChange("transmission", value)}
                         >
                           <SelectTrigger className="w-full h-9 bg-white text-xs">
                             <SelectValue placeholder="Any" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="any">Any</SelectItem>
-                            <SelectItem value="new">New</SelectItem>
-                            <SelectItem value="used">Used</SelectItem>
-                            <SelectItem value="antique">Antique</SelectItem>
+                            <SelectItem value="Automatic">Auto</SelectItem>
+                            <SelectItem value="Manual">Manual</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
-
-                      <div>
-                        <label className="text-xs font-medium text-slate-600 mb-1 block">Fuel Type</label>
-                        <Select
-                          value={filters.fuelType || "any"}
-                          onValueChange={(value) => handleFilterChange("fuelType", value)}
-                        >
-                          <SelectTrigger className="w-full h-9 bg-white text-xs">
-                            <SelectValue placeholder="Any" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="any">Any</SelectItem>
-                            <SelectItem value="Petrol">Petrol</SelectItem>
-                            <SelectItem value="Diesel">Diesel</SelectItem>
-                            <SelectItem value="Hybrid">Hybrid</SelectItem>
-                            <SelectItem value="Electric">Electric</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    {/* Transmission */}
-                    <div>
-                      <label className="text-xs font-medium text-slate-600 mb-1 block">Transmission</label>
-                      <Select
-                        value={filters.transmission || "any"}
-                        onValueChange={(value) => handleFilterChange("transmission", value)}
-                      >
-                        <SelectTrigger className="w-full h-9 bg-white text-xs">
-                          <SelectValue placeholder="Any" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="any">Any</SelectItem>
-                          <SelectItem value="Automatic">Auto</SelectItem>
-                          <SelectItem value="Manual">Manual</SelectItem>
-                        </SelectContent>
-                      </Select>
                     </div>
                   </div>
 
@@ -1229,12 +1225,12 @@ export default function VehicleMarketplace() {
               <Card className="p-4 bg-white border border-slate-100 rounded-xl overflow-hidden">
                 <div className="text-center text-slate-500">
                   <div className="text-sm mb-2 font-medium">Advertisement</div>
-                  <div className="bg-slate-100 h-64 flex items-center justify-center rounded-lg">
-                    <span className="text-slate-400">
-                      Google Ad Space
-                      <br />
-                      300x250
-                    </span>
+                  <div className="bg-slate-100 h-64 flex items-center justify-center rounded-lg overflow-hidden">
+                    <img
+                      src="/assets/Sidebar 01 new.jpg"
+                      alt="Advertisement"
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 </div>
               </Card>
@@ -1246,12 +1242,12 @@ export default function VehicleMarketplace() {
               <Card className="p-4 bg-white border border-slate-100 rounded-xl overflow-hidden">
                 <div className="text-center text-slate-500">
                   <div className="text-sm mb-2 font-medium">Advertisement</div>
-                  <div className="bg-slate-100 h-48 flex items-center justify-center rounded-lg">
-                    <span className="text-slate-400">
-                      Google Ad Space
-                      <br />
-                      300x200
-                    </span>
+                  <div className="bg-slate-100 h-48 flex items-center justify-center rounded-lg overflow-hidden">
+                    <img
+                      src="/assets/Sidebar 02.jpg"
+                      alt="Advertisement"
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 </div>
               </Card>
@@ -1266,10 +1262,12 @@ export default function VehicleMarketplace() {
           <Card className="p-4 bg-white border border-slate-100 rounded-xl overflow-hidden">
             <div className="text-center text-slate-500">
               <div className="text-sm mb-2 font-medium">Advertisement</div>
-              <div className="bg-slate-100 h-24 flex items-center justify-center rounded-lg">
-                <span className="text-slate-400">
-                  Google Ad Banner Space - 728x90
-                </span>
+              <div className="bg-slate-100 h-24 flex items-center justify-center rounded-lg overflow-hidden">
+                <img
+                  src="/assets/Bottom Banner.jpg"
+                  alt="Advertisement"
+                  className="w-full h-full object-cover"
+                />
               </div>
             </div>
           </Card>

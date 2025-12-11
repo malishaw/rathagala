@@ -98,10 +98,21 @@ export function SigninForm({ className }: Props) {
         },
         onError({ error }) {
           console.log(error);
-          toast.error("Sign in Failed !", {
-            id: toastId,
-            description: error.message
-          });
+          
+          // Check if error is due to unverified email
+          if (error.message?.toLowerCase().includes("email") && 
+              (error.message?.toLowerCase().includes("verify") || 
+               error.message?.toLowerCase().includes("verified"))) {
+            toast.error("Email not verified!", {
+              id: toastId,
+              description: "Please check your email for the verification code"
+            });
+          } else {
+            toast.error("Sign in Failed !", {
+              id: toastId,
+              description: error.message
+            });
+          }
         }
       }
     );

@@ -4,6 +4,8 @@ import * as handlers from "./org.handlers";
 import * as routes from "./org.routes";
 
 // Now use the withAuth wrapper for the routes that need authentication
-const router = createRouter().openapi(routes.list, handlers.list);
+const router = createRouter()
+  .openapi(routes.list, handlers.list)
+  .openapi(routes.getById, handlers.getById);
 
 export default router;
