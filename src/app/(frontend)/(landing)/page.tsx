@@ -896,7 +896,7 @@ export default function VehicleMarketplace() {
                           </SelectTrigger>
                           <SelectContent className="max-h-[200px]">
                             <SelectItem value="any">Any</SelectItem>
-                            {years.slice(0, 30).map(year => (
+                            {maxYearOptions.map(year => (
                               <SelectItem key={`max-${year}`} value={year.toString()}>
                                 {year}
                               </SelectItem>
