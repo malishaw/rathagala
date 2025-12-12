@@ -76,6 +76,11 @@ interface User {
   createdAt: string;
   emailVerified: boolean;
   banned: boolean;
+  organizationId: string | null;
+  organization?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 interface BanUserData {
@@ -257,8 +262,57 @@ export default function UsersPage() {
 
   const handleAssignOrgClick = (user: User) => {
     setSelectedUser(user);
-    setSelectedOrgId("");
+    setSelectedOrgId(user.organizationId || "");
     setOrgDialogOpen(true);
+  };
+
+  const handleRemoveOrganization = async () => {
+    if (!selectedUser) return;
+
+    setIsLoading(selectedUser.id);
+    try {
+      const response = await fetch(`/api/users/${selectedUser.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ 
+          organizationId: null
+        }),
+      });
+
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage =
+            errorData.error?.message || errorData.message || errorMessage;
+        } catch {
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      toast.success("Organization removed successfully", {
+        description: `${selectedUser.name || selectedUser.email} is no longer assigned to any organization.`,
+      });
+
+      setOrgDialogOpen(false);
+      setSelectedUser(null);
+      setSelectedOrgId("");
+      refetch();
+    } catch (error) {
+      console.error("Error removing organization:", error);
+      toast.error("Failed to remove organization", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
+      });
+    } finally {
+      setIsLoading(null);
+    }
   };
 
   const handleAssignOrganization = async () => {
@@ -944,9 +998,41 @@ export default function UsersPage() {
                 </div>
               </div>
 
+              {/* Current Organization */}
+              {selectedUser.organization && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-green-900">
+                        Currently Assigned Organization
+                      </p>
+                      <p className="text-sm text-green-700 mt-1">
+                        <Building2 className="inline h-4 w-4 mr-1" />
+                        {selectedUser.organization.name}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRemoveOrganization}
+                      disabled={isLoading === selectedUser.id}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      {isLoading === selectedUser.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        "Remove"
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {/* Organization Selection */}
               <div className="space-y-2">
-                <Label htmlFor="organization">Select Organization *</Label>
+                <Label htmlFor="organization">
+                  {selectedUser.organization ? "Change Organization" : "Select Organization *"}
+                </Label>
                 <Select
                   value={selectedOrgId}
                   onValueChange={(value) => setSelectedOrgId(value)}
@@ -973,9 +1059,9 @@ export default function UsersPage() {
               {/* Info Note */}
               <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
                 <p className="text-sm text-blue-800">
-                  <strong>Note:</strong> This will update the user's organization
-                  association. Users can be members of multiple organizations through
-                  the member system.
+                  <strong>Note:</strong> {selectedUser.organization 
+                    ? "You can change the assigned organization or remove it using the Remove button above." 
+                    : "This will set the user's primary organization association. Users can be members of multiple organizations through the member system."}
                 </p>
               </div>
             </div>
@@ -995,17 +1081,21 @@ export default function UsersPage() {
             </Button>
             <Button
               onClick={handleAssignOrganization}
-              disabled={!selectedOrgId || isLoading === selectedUser?.id}
+              disabled={
+                !selectedOrgId || 
+                selectedOrgId === selectedUser?.organizationId ||
+                isLoading === selectedUser?.id
+              }
             >
               {isLoading === selectedUser?.id ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Assigning...
+                  {selectedUser?.organization ? "Updating..." : "Assigning..."}
                 </>
               ) : (
                 <>
                   <Building2 className="mr-2 h-4 w-4" />
-                  Assign Organization
+                  {selectedUser?.organization ? "Update Organization" : "Assign Organization"}
                 </>
               )}
             </Button>

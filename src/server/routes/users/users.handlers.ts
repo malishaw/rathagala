@@ -76,6 +76,13 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       createdAt: true,
       emailVerified: true,
       banned: true,
+      organizationId: true,
+      organization: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
   });
 
@@ -374,7 +381,7 @@ export const updateUserByAdmin: AppRouteHandler<UpdateUserByAdminRoute> = async 
   }
 
   const { userId } = c.req.valid("param");
-  const { name, email, role, phone, whatsappNumber, province, district, city, location } = c.req.valid("json");
+  const { name, email, role, organizationId, phone, whatsappNumber, province, district, city, location } = c.req.valid("json");
 
   try {
     // Check if user exists
@@ -408,6 +415,7 @@ export const updateUserByAdmin: AppRouteHandler<UpdateUserByAdminRoute> = async 
     if (name !== undefined) updateData.name = name;
     if (email !== undefined) updateData.email = email;
     if (role !== undefined) updateData.role = role;
+    if (organizationId !== undefined) updateData.organizationId = organizationId;
     if (phone !== undefined) updateData.phone = phone;
     if (whatsappNumber !== undefined) updateData.whatsappNumber = whatsappNumber;
     if (province !== undefined) updateData.province = province;
@@ -423,6 +431,13 @@ export const updateUserByAdmin: AppRouteHandler<UpdateUserByAdminRoute> = async 
         name: true,
         email: true,
         role: true,
+        organizationId: true,
+        organization: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         phone: true,
         whatsappNumber: true,
         province: true,

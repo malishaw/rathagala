@@ -30,6 +30,7 @@ export const updateUserByAdminSchema = z.object({
   name: z.string().min(1, "Name is required").optional(),
   email: z.string().email("Invalid email").optional(),
   role: z.enum(["user", "admin"]).optional(),
+  organizationId: z.string().nullable().optional(),
   phone: z.string().optional(),
   whatsappNumber: z.string().optional(),
   province: z.string().optional(),
