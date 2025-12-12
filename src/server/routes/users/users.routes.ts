@@ -4,7 +4,7 @@ import { z } from "zod";
 import { jsonContent } from "stoker/openapi/helpers";
 
 import { serverAuthMiddleware } from "@/server/middlewares/auth-middleware";
-import { querySchema, withPaginationSchema, updateProfileSchema } from "./users.schemas";
+import { querySchema, withPaginationSchema, updateProfileSchema, updateUserByAdminSchema } from "./users.schemas";
 
 const tags = ["Users"];
 
@@ -147,4 +147,65 @@ export const updateProfile = createRoute({
 });
 
 export type UpdateProfileRoute = typeof updateProfile;
+
+// ---------- Update User By Admin ----------
+export const updateUserByAdmin = createRoute({
+  tags,
+  path: "/{userId}",
+  method: "patch",
+  middleware: [serverAuthMiddleware],
+  request: {
+    params: z.object({
+      userId: z.string(),
+    }),
+    body: {
+      content: {
+        "application/json": {
+          schema: updateUserByAdminSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      z.object({
+        message: z.string(),
+        user: z.object({
+          id: z.string(),
+          name: z.string(),
+          email: z.string(),
+          role: z.string().nullable(),
+          phone: z.string().nullable().optional(),
+          whatsappNumber: z.string().nullable().optional(),
+          province: z.string().nullable().optional(),
+          district: z.string().nullable().optional(),
+          city: z.string().nullable().optional(),
+          location: z.string().nullable().optional(),
+          emailVerified: z.boolean(),
+          banned: z.boolean(),
+          createdAt: z.string(),
+        }),
+      }),
+      "User updated successfully"
+    ),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      z.object({ message: z.string() }),
+      "Unauthenticated request"
+    ),
+    [HttpStatusCodes.FORBIDDEN]: jsonContent(
+      z.object({ message: z.string() }),
+      "Forbidden: Admin access required"
+    ),
+    [HttpStatusCodes.NOT_FOUND]: jsonContent(
+      z.object({ message: z.string() }),
+      "User not found"
+    ),
+    [HttpStatusCodes.BAD_REQUEST]: jsonContent(
+      z.object({ message: z.string() }),
+      "Bad request"
+    ),
+  },
+});
+
+export type UpdateUserByAdminRoute = typeof updateUserByAdmin;
 

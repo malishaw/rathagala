@@ -265,3 +265,106 @@ export const updateProfile: AppRouteHandler<UpdateProfileRoute> = async (c) => {
   }
 };
 
+// ---------- Update User By Admin ----------
+import type { UpdateUserByAdminRoute } from "./users.routes";
+
+export const updateUserByAdmin: AppRouteHandler<UpdateUserByAdminRoute> = async (c) => {
+  const user = c.get("user");
+
+  if (!user) {
+    return c.json(
+      { message: "Unauthenticated user" },
+      HttpStatusCodes.UNAUTHORIZED
+    );
+  }
+
+  const isAdmin = user?.role === "admin";
+
+  if (!isAdmin) {
+    return c.json(
+      { message: "Unauthorized: Admin access required" },
+      HttpStatusCodes.FORBIDDEN
+    );
+  }
+
+  const { userId } = c.req.valid("param");
+  const { name, email, role, phone, whatsappNumber, province, district, city, location } = c.req.valid("json");
+
+  try {
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!existingUser) {
+      return c.json(
+        { message: "User not found" },
+        HttpStatusCodes.NOT_FOUND
+      );
+    }
+
+    // If email is being changed, check if it's already in use
+    if (email && email !== existingUser.email) {
+      const emailExists = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (emailExists) {
+        return c.json(
+          { message: "Email already in use" },
+          HttpStatusCodes.BAD_REQUEST
+        );
+      }
+    }
+
+    // Build update data object with only provided fields
+    const updateData: any = {};
+    if (name !== undefined) updateData.name = name;
+    if (email !== undefined) updateData.email = email;
+    if (role !== undefined) updateData.role = role;
+    if (phone !== undefined) updateData.phone = phone;
+    if (whatsappNumber !== undefined) updateData.whatsappNumber = whatsappNumber;
+    if (province !== undefined) updateData.province = province;
+    if (district !== undefined) updateData.district = district;
+    if (city !== undefined) updateData.city = city;
+    if (location !== undefined) updateData.location = location;
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        phone: true,
+        whatsappNumber: true,
+        province: true,
+        district: true,
+        city: true,
+        location: true,
+        emailVerified: true,
+        banned: true,
+        createdAt: true,
+      },
+    });
+
+    return c.json(
+      {
+        message: "User updated successfully",
+        user: updatedUser,
+      },
+      HttpStatusCodes.OK
+    );
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return c.json(
+      {
+        message: "Failed to update user",
+        error: error instanceof Error ? error.message : "Unknown error"
+      },
+      HttpStatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+};
+

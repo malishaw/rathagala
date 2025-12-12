@@ -7,7 +7,8 @@ const router = createRouter()
   .openapi(routes.list, handlers.list)
   .openapi(routes.updateOrganizationId, handlers.updateOrganizationId)
   .openapi(routes.getCurrentUser, handlers.getCurrentUser)
-  .openapi(routes.updateProfile, handlers.updateProfile);
+  .openapi(routes.updateProfile, handlers.updateProfile)
+  .openapi(routes.updateUserByAdmin, handlers.updateUserByAdmin);
 
 export default router;
 

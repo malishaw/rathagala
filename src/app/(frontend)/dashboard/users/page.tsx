@@ -61,6 +61,7 @@ import {
   Check,
   Trash2,
   Loader2,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -87,10 +88,22 @@ export default function UsersPage() {
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [banDialogOpen, setBanDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [banData, setBanData] = useState<BanUserData>({
     banReason: "",
     banDuration: "7d",
+  });
+  const [editData, setEditData] = useState({
+    name: "",
+    email: "",
+    role: "user",
+    phone: "",
+    whatsappNumber: "",
+    province: "",
+    district: "",
+    city: "",
+    location: "",
   });
 
   const router = useRouter();
@@ -233,9 +246,86 @@ export default function UsersPage() {
     }
   };
 
+  const handleEditClick = (user: User) => {
+    setSelectedUser(user);
+    setEditData({
+      name: user.name || "",
+      email: user.email || "",
+      role: user.role || "user",
+      phone: "",
+      whatsappNumber: "",
+      province: "",
+      district: "",
+      city: "",
+      location: "",
+    });
+    setEditDialogOpen(true);
+  };
+
   const handleDeleteClick = (user: User) => {
     setSelectedUser(user);
     setDeleteDialogOpen(true);
+  };
+
+  const handleUpdateUser = async () => {
+    if (!selectedUser) return;
+
+    if (!editData.name.trim() || !editData.email.trim()) {
+      toast.error("Name and email are required");
+      return;
+    }
+
+    setIsLoading(selectedUser.id);
+    try {
+      const response = await fetch(`/api/users/${selectedUser.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          name: editData.name.trim(),
+          email: editData.email.trim(),
+          role: editData.role,
+          phone: editData.phone || undefined,
+          whatsappNumber: editData.whatsappNumber || undefined,
+          province: editData.province || undefined,
+          district: editData.district || undefined,
+          city: editData.city || undefined,
+          location: editData.location || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage =
+            errorData.error?.message || errorData.message || errorMessage;
+        } catch {
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      toast.success("User updated successfully", {
+        description: `${editData.name} has been updated.`,
+      });
+
+      setEditDialogOpen(false);
+      setSelectedUser(null);
+      refetch();
+    } catch (error) {
+      console.error("Error updating user:", error);
+      toast.error("Failed to update user", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
+      });
+    } finally {
+      setIsLoading(null);
+    }
   };
 
   const handleDeleteUser = async () => {
@@ -499,6 +589,14 @@ export default function UsersPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => handleEditClick(user)}
+                                disabled={isLoading === user.id}
+                              >
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Edit Details
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
                               {user.banned ? (
                                 <DropdownMenuItem
                                   onClick={() => handleUnban(user)}
@@ -725,6 +823,212 @@ export default function UsersPage() {
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete Permanently
                 </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-5 w-5 text-blue-600" />
+              Edit User Details
+            </DialogTitle>
+            <DialogDescription>
+              Update the details for {selectedUser?.name || selectedUser?.email}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedUser && (
+            <div className="space-y-6">
+              {/* User Info Summary */}
+              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+                <Avatar className="h-12 w-12">
+                  <AvatarImage
+                    src={selectedUser.image || undefined}
+                    alt={selectedUser.name || selectedUser.email}
+                  />
+                  <AvatarFallback className="bg-[#024950] text-white">
+                    {selectedUser.name?.[0]?.toUpperCase() ||
+                      selectedUser.email?.[0]?.toUpperCase() ||
+                      "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900">
+                    {selectedUser.name || "Unknown User"}
+                  </p>
+                  <p className="text-sm text-gray-500">ID: {selectedUser.id}</p>
+                  <div className="flex gap-2 mt-1">
+                    {getStatusBadge(selectedUser.emailVerified, selectedUser.banned)}
+                    {getRoleBadge(selectedUser.role)}
+                  </div>
+                </div>
+                <div className="text-right text-sm text-gray-500">
+                  <p>Joined</p>
+                  <p className="font-medium">{formatDate(selectedUser.createdAt)}</p>
+                </div>
+              </div>
+
+              {/* Edit Form */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="editName">Name *</Label>
+                    <Input
+                      id="editName"
+                      value={editData.name}
+                      onChange={(e) =>
+                        setEditData((prev) => ({ ...prev, name: e.target.value }))
+                      }
+                      placeholder="Enter user name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="editEmail">Email *</Label>
+                    <Input
+                      id="editEmail"
+                      type="email"
+                      value={editData.email}
+                      onChange={(e) =>
+                        setEditData((prev) => ({ ...prev, email: e.target.value }))
+                      }
+                      placeholder="Enter email address"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="editRole">Role</Label>
+                  <Select
+                    value={editData.role}
+                    onValueChange={(value) =>
+                      setEditData((prev) => ({ ...prev, role: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="user">User</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="editPhone">Phone</Label>
+                    <Input
+                      id="editPhone"
+                      value={editData.phone}
+                      onChange={(e) =>
+                        setEditData((prev) => ({ ...prev, phone: e.target.value }))
+                      }
+                      placeholder="Enter phone number"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="editWhatsapp">WhatsApp Number</Label>
+                    <Input
+                      id="editWhatsapp"
+                      value={editData.whatsappNumber}
+                      onChange={(e) =>
+                        setEditData((prev) => ({ ...prev, whatsappNumber: e.target.value }))
+                      }
+                      placeholder="Enter WhatsApp number"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="editProvince">Province</Label>
+                    <Input
+                      id="editProvince"
+                      value={editData.province}
+                      onChange={(e) =>
+                        setEditData((prev) => ({ ...prev, province: e.target.value }))
+                      }
+                      placeholder="Province"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="editDistrict">District</Label>
+                    <Input
+                      id="editDistrict"
+                      value={editData.district}
+                      onChange={(e) =>
+                        setEditData((prev) => ({ ...prev, district: e.target.value }))
+                      }
+                      placeholder="District"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="editCity">City</Label>
+                    <Input
+                      id="editCity"
+                      value={editData.city}
+                      onChange={(e) =>
+                        setEditData((prev) => ({ ...prev, city: e.target.value }))
+                      }
+                      placeholder="City"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="editLocation">Location</Label>
+                  <Input
+                    id="editLocation"
+                    value={editData.location}
+                    onChange={(e) =>
+                      setEditData((prev) => ({ ...prev, location: e.target.value }))
+                    }
+                    placeholder="Enter detailed location"
+                  />
+                </div>
+              </div>
+
+              {/* Info Note */}
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                <p className="text-sm text-blue-800">
+                  <strong>Note:</strong> Email verification status and ban status
+                  are managed through their respective actions in the dropdown menu.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setEditDialogOpen(false);
+                setSelectedUser(null);
+              }}
+              disabled={isLoading === selectedUser?.id}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdateUser}
+              disabled={
+                !editData.name.trim() ||
+                !editData.email.trim() ||
+                isLoading === selectedUser?.id
+              }
+            >
+              {isLoading === selectedUser?.id ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
               )}
             </Button>
           </DialogFooter>
