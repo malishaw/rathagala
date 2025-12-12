@@ -223,7 +223,7 @@ export default function ComparisonPage() {
             </div>
             <Button
               variant="outline"
-              className="text-white border-white/30 hover:bg-white/10"
+              className="text-white bg-white/10 border-white/30 hover:bg-white/20"
               onClick={() => router.back()}
             >
               <X className="w-4 h-4 mr-2" />
@@ -470,7 +470,7 @@ export default function ComparisonPage() {
                       <Link href={`/${vehicle1Id}`}>
                         <Button
                           variant="outline"
-                          className="w-full mt-4 border-white/30 text-white hover:bg-white/10"
+                          className="w-full mt-4 bg-white/10 border-white/30 text-white hover:bg-white/20"
                         >
                           View Details
                         </Button>
@@ -507,7 +507,7 @@ export default function ComparisonPage() {
                       <Link href={`/${vehicle2Id}`}>
                         <Button
                           variant="outline"
-                          className="w-full mt-4 border-white/30 text-white hover:bg-white/10"
+                          className="w-full mt-4 bg-white/10 border-white/30 text-white hover:bg-white/20"
                         >
                           View Details
                         </Button>

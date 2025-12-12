@@ -275,14 +275,24 @@ export default function ReportsManagementPage() {
                           {formatDate(report.createdAt)}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleViewDetails(report)}
-                          >
-                            <Eye className="w-4 h-4 mr-1" />
-                            View
-                          </Button>
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(`/${report.adId}`, '_blank')}
+                              disabled={!report.ad}
+                            >
+                              View
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewDetails(report)}
+                            >
+                              <Eye className="w-4 h-4 mr-1" />
+                              Actions
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}

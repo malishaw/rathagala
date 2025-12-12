@@ -76,6 +76,13 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       createdAt: true,
       emailVerified: true,
       banned: true,
+      organizationId: true,
+      organization: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
   });
 
@@ -258,6 +265,203 @@ export const updateProfile: AppRouteHandler<UpdateProfileRoute> = async (c) => {
     return c.json(
       {
         message: "Failed to update user profile",
+        error: error instanceof Error ? error.message : "Unknown error"
+      },
+      HttpStatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+};
+
+// ---------- Assign Organization To User (Admin) ----------
+import type { UpdateUserByAdminRoute, AssignOrganizationToUserRoute } from "./users.routes";
+
+export const assignOrganizationToUser: AppRouteHandler<AssignOrganizationToUserRoute> = async (c) => {
+  const user = c.get("user");
+
+  if (!user) {
+    return c.json(
+      { message: "Unauthenticated user" },
+      HttpStatusCodes.UNAUTHORIZED
+    );
+  }
+
+  const isAdmin = user?.role === "admin";
+
+  if (!isAdmin) {
+    return c.json(
+      { message: "Unauthorized: Admin access required" },
+      HttpStatusCodes.FORBIDDEN
+    );
+  }
+
+  const { userId, organizationId } = c.req.valid("json");
+
+  try {
+    // Check if user exists
+    const targetUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!targetUser) {
+      return c.json(
+        { message: "User not found" },
+        HttpStatusCodes.NOT_FOUND
+      );
+    }
+
+    // Verify the organization exists
+    const organization = await prisma.organization.findUnique({
+      where: { id: organizationId },
+    });
+
+    if (!organization) {
+      return c.json(
+        { message: "Organization not found" },
+        HttpStatusCodes.BAD_REQUEST
+      );
+    }
+
+    // Update user's organizationId
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { organizationId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        organizationId: true,
+        organization: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    console.log(`User ${userId} organizationId updated to: ${organizationId} by admin ${user.id}`);
+
+    return c.json(
+      {
+        message: "Organization assigned successfully",
+        user: updatedUser,
+      },
+      HttpStatusCodes.OK
+    );
+  } catch (error) {
+    console.error("Error assigning organization to user:", error);
+    return c.json(
+      {
+        message: "Failed to assign organization",
+        error: error instanceof Error ? error.message : "Unknown error"
+      },
+      HttpStatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+};
+
+// ---------- Update User By Admin ----------
+export const updateUserByAdmin: AppRouteHandler<UpdateUserByAdminRoute> = async (c) => {
+  const user = c.get("user");
+
+  if (!user) {
+    return c.json(
+      { message: "Unauthenticated user" },
+      HttpStatusCodes.UNAUTHORIZED
+    );
+  }
+
+  const isAdmin = user?.role === "admin";
+
+  if (!isAdmin) {
+    return c.json(
+      { message: "Unauthorized: Admin access required" },
+      HttpStatusCodes.FORBIDDEN
+    );
+  }
+
+  const { userId } = c.req.valid("param");
+  const { name, email, role, organizationId, phone, whatsappNumber, province, district, city, location } = c.req.valid("json");
+
+  try {
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!existingUser) {
+      return c.json(
+        { message: "User not found" },
+        HttpStatusCodes.NOT_FOUND
+      );
+    }
+
+    // If email is being changed, check if it's already in use
+    if (email && email !== existingUser.email) {
+      const emailExists = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (emailExists) {
+        return c.json(
+          { message: "Email already in use" },
+          HttpStatusCodes.BAD_REQUEST
+        );
+      }
+    }
+
+    // Build update data object with only provided fields
+    const updateData: any = {};
+    if (name !== undefined) updateData.name = name;
+    if (email !== undefined) updateData.email = email;
+    if (role !== undefined) updateData.role = role;
+    if (organizationId !== undefined) updateData.organizationId = organizationId;
+    if (phone !== undefined) updateData.phone = phone;
+    if (whatsappNumber !== undefined) updateData.whatsappNumber = whatsappNumber;
+    if (province !== undefined) updateData.province = province;
+    if (district !== undefined) updateData.district = district;
+    if (city !== undefined) updateData.city = city;
+    if (location !== undefined) updateData.location = location;
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        organizationId: true,
+        organization: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        phone: true,
+        whatsappNumber: true,
+        province: true,
+        district: true,
+        city: true,
+        location: true,
+        emailVerified: true,
+        banned: true,
+        createdAt: true,
+      },
+    });
+
+    return c.json(
+      {
+        message: "User updated successfully",
+        user: updatedUser,
+      },
+      HttpStatusCodes.OK
+    );
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return c.json(
+      {
+        message: "Failed to update user",
         error: error instanceof Error ? error.message : "Unknown error"
       },
       HttpStatusCodes.INTERNAL_SERVER_ERROR

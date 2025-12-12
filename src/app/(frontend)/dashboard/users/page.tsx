@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useGetUsers } from "@/features/users/api/use-get-users";
+import { useGetOrganizations } from "@/features/organizations/api/use-get-orgs";
 import {
   Card,
   CardContent,
@@ -61,6 +62,8 @@ import {
   Check,
   Trash2,
   Loader2,
+  Pencil,
+  Building2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -73,6 +76,11 @@ interface User {
   createdAt: string;
   emailVerified: boolean;
   banned: boolean;
+  organizationId: string | null;
+  organization?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 interface BanUserData {
@@ -87,10 +95,24 @@ export default function UsersPage() {
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [banDialogOpen, setBanDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [orgDialogOpen, setOrgDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedOrgId, setSelectedOrgId] = useState<string>("");
   const [banData, setBanData] = useState<BanUserData>({
     banReason: "",
     banDuration: "7d",
+  });
+  const [editData, setEditData] = useState({
+    name: "",
+    email: "",
+    role: "user",
+    phone: "",
+    whatsappNumber: "",
+    province: "",
+    district: "",
+    city: "",
+    location: "",
   });
 
   const router = useRouter();
@@ -98,6 +120,11 @@ export default function UsersPage() {
     page,
     limit: 10,
     search,
+  });
+  const { data: orgsData } = useGetOrganizations({
+    page: 1,
+    limit: 1000,
+    search: null,
   });
 
   const handleSearch = () => {
@@ -233,9 +260,198 @@ export default function UsersPage() {
     }
   };
 
+  const handleAssignOrgClick = (user: User) => {
+    setSelectedUser(user);
+    setSelectedOrgId(user.organizationId || "");
+    setOrgDialogOpen(true);
+  };
+
+  const handleRemoveOrganization = async () => {
+    if (!selectedUser) return;
+
+    setIsLoading(selectedUser.id);
+    try {
+      const response = await fetch(`/api/users/${selectedUser.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ 
+          organizationId: null
+        }),
+      });
+
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage =
+            errorData.error?.message || errorData.message || errorMessage;
+        } catch {
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      toast.success("Organization removed successfully", {
+        description: `${selectedUser.name || selectedUser.email} is no longer assigned to any organization.`,
+      });
+
+      setOrgDialogOpen(false);
+      setSelectedUser(null);
+      setSelectedOrgId("");
+      refetch();
+    } catch (error) {
+      console.error("Error removing organization:", error);
+      toast.error("Failed to remove organization", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
+      });
+    } finally {
+      setIsLoading(null);
+    }
+  };
+
+  const handleAssignOrganization = async () => {
+    if (!selectedUser || !selectedOrgId) {
+      toast.error("Please select an organization");
+      return;
+    }
+
+    setIsLoading(selectedUser.id);
+    try {
+      const response = await fetch("/api/users/assign-organization", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ 
+          userId: selectedUser.id,
+          organizationId: selectedOrgId 
+        }),
+      });
+
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage =
+            errorData.error?.message || errorData.message || errorMessage;
+        } catch {
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const orgName = orgsData?.organizations.find(
+        (org: any) => org.id === selectedOrgId
+      )?.name;
+
+      toast.success("Organization assigned successfully", {
+        description: `${selectedUser.name || selectedUser.email} has been assigned to ${orgName || "the organization"}.`,
+      });
+
+      setOrgDialogOpen(false);
+      setSelectedUser(null);
+      setSelectedOrgId("");
+      refetch();
+    } catch (error) {
+      console.error("Error assigning organization:", error);
+      toast.error("Failed to assign organization", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
+      });
+    } finally {
+      setIsLoading(null);
+    }
+  };
+
+  const handleEditClick = (user: User) => {
+    setSelectedUser(user);
+    setEditData({
+      name: user.name || "",
+      email: user.email || "",
+      role: user.role || "user",
+      phone: "",
+      whatsappNumber: "",
+      province: "",
+      district: "",
+      city: "",
+      location: "",
+    });
+    setEditDialogOpen(true);
+  };
+
   const handleDeleteClick = (user: User) => {
     setSelectedUser(user);
     setDeleteDialogOpen(true);
+  };
+
+  const handleUpdateUser = async () => {
+    if (!selectedUser) return;
+
+    if (!editData.name.trim() || !editData.email.trim()) {
+      toast.error("Name and email are required");
+      return;
+    }
+
+    setIsLoading(selectedUser.id);
+    try {
+      const response = await fetch(`/api/users/${selectedUser.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          name: editData.name.trim(),
+          email: editData.email.trim(),
+          role: editData.role,
+          phone: editData.phone || undefined,
+          whatsappNumber: editData.whatsappNumber || undefined,
+          province: editData.province || undefined,
+          district: editData.district || undefined,
+          city: editData.city || undefined,
+          location: editData.location || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage =
+            errorData.error?.message || errorData.message || errorMessage;
+        } catch {
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      toast.success("User updated successfully", {
+        description: `${editData.name} has been updated.`,
+      });
+
+      setEditDialogOpen(false);
+      setSelectedUser(null);
+      refetch();
+    } catch (error) {
+      console.error("Error updating user:", error);
+      toast.error("Failed to update user", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
+      });
+    } finally {
+      setIsLoading(null);
+    }
   };
 
   const handleDeleteUser = async () => {
@@ -499,6 +715,21 @@ export default function UsersPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => handleEditClick(user)}
+                                disabled={isLoading === user.id}
+                              >
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Edit Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleAssignOrgClick(user)}
+                                disabled={isLoading === user.id}
+                              >
+                                <Building2 className="h-4 w-4 mr-2" />
+                                Assign Organization
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
                               {user.banned ? (
                                 <DropdownMenuItem
                                   onClick={() => handleUnban(user)}
@@ -725,6 +956,353 @@ export default function UsersPage() {
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete Permanently
                 </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Organization Dialog */}
+      <Dialog open={orgDialogOpen} onOpenChange={setOrgDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-blue-600" />
+              Assign Organization
+            </DialogTitle>
+            <DialogDescription>
+              Assign {selectedUser?.name || selectedUser?.email} to an organization
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedUser && (
+            <div className="space-y-4">
+              {/* User Info */}
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage
+                    src={selectedUser.image || undefined}
+                    alt={selectedUser.name || selectedUser.email}
+                  />
+                  <AvatarFallback className="bg-[#024950] text-white">
+                    {selectedUser.name?.[0]?.toUpperCase() ||
+                      selectedUser.email?.[0]?.toUpperCase() ||
+                      "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-medium text-gray-900">
+                    {selectedUser.name || "Unknown User"}
+                  </p>
+                  <p className="text-sm text-gray-500">{selectedUser.email}</p>
+                </div>
+              </div>
+
+              {/* Current Organization */}
+              {selectedUser.organization && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-green-900">
+                        Currently Assigned Organization
+                      </p>
+                      <p className="text-sm text-green-700 mt-1">
+                        <Building2 className="inline h-4 w-4 mr-1" />
+                        {selectedUser.organization.name}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRemoveOrganization}
+                      disabled={isLoading === selectedUser.id}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      {isLoading === selectedUser.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        "Remove"
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Organization Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="organization">
+                  {selectedUser.organization ? "Change Organization" : "Select Organization *"}
+                </Label>
+                <Select
+                  value={selectedOrgId}
+                  onValueChange={(value) => setSelectedOrgId(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose an organization" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {orgsData?.organizations && orgsData.organizations.length > 0 ? (
+                      orgsData.organizations.map((org: any) => (
+                        <SelectItem key={org.id} value={org.id}>
+                          {org.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="none" disabled>
+                        No organizations available
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Info Note */}
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                <p className="text-sm text-blue-800">
+                  <strong>Note:</strong> {selectedUser.organization 
+                    ? "You can change the assigned organization or remove it using the Remove button above." 
+                    : "This will set the user's primary organization association. Users can be members of multiple organizations through the member system."}
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setOrgDialogOpen(false);
+                setSelectedUser(null);
+                setSelectedOrgId("");
+              }}
+              disabled={isLoading === selectedUser?.id}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAssignOrganization}
+              disabled={
+                !selectedOrgId || 
+                selectedOrgId === selectedUser?.organizationId ||
+                isLoading === selectedUser?.id
+              }
+            >
+              {isLoading === selectedUser?.id ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {selectedUser?.organization ? "Updating..." : "Assigning..."}
+                </>
+              ) : (
+                <>
+                  <Building2 className="mr-2 h-4 w-4" />
+                  {selectedUser?.organization ? "Update Organization" : "Assign Organization"}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-5 w-5 text-blue-600" />
+              Edit User Details
+            </DialogTitle>
+            <DialogDescription>
+              Update the details for {selectedUser?.name || selectedUser?.email}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedUser && (
+            <div className="space-y-6">
+              {/* User Info Summary */}
+              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+                <Avatar className="h-12 w-12">
+                  <AvatarImage
+                    src={selectedUser.image || undefined}
+                    alt={selectedUser.name || selectedUser.email}
+                  />
+                  <AvatarFallback className="bg-[#024950] text-white">
+                    {selectedUser.name?.[0]?.toUpperCase() ||
+                      selectedUser.email?.[0]?.toUpperCase() ||
+                      "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900">
+                    {selectedUser.name || "Unknown User"}
+                  </p>
+                  <p className="text-sm text-gray-500">ID: {selectedUser.id}</p>
+                  <div className="flex gap-2 mt-1">
+                    {getStatusBadge(selectedUser.emailVerified, selectedUser.banned)}
+                    {getRoleBadge(selectedUser.role)}
+                  </div>
+                </div>
+                <div className="text-right text-sm text-gray-500">
+                  <p>Joined</p>
+                  <p className="font-medium">{formatDate(selectedUser.createdAt)}</p>
+                </div>
+              </div>
+
+              {/* Edit Form */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="editName">Name *</Label>
+                    <Input
+                      id="editName"
+                      value={editData.name}
+                      onChange={(e) =>
+                        setEditData((prev) => ({ ...prev, name: e.target.value }))
+                      }
+                      placeholder="Enter user name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="editEmail">Email *</Label>
+                    <Input
+                      id="editEmail"
+                      type="email"
+                      value={editData.email}
+                      onChange={(e) =>
+                        setEditData((prev) => ({ ...prev, email: e.target.value }))
+                      }
+                      placeholder="Enter email address"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="editRole">Role</Label>
+                  <Select
+                    value={editData.role}
+                    onValueChange={(value) =>
+                      setEditData((prev) => ({ ...prev, role: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="user">User</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="editPhone">Phone</Label>
+                    <Input
+                      id="editPhone"
+                      value={editData.phone}
+                      onChange={(e) =>
+                        setEditData((prev) => ({ ...prev, phone: e.target.value }))
+                      }
+                      placeholder="Enter phone number"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="editWhatsapp">WhatsApp Number</Label>
+                    <Input
+                      id="editWhatsapp"
+                      value={editData.whatsappNumber}
+                      onChange={(e) =>
+                        setEditData((prev) => ({ ...prev, whatsappNumber: e.target.value }))
+                      }
+                      placeholder="Enter WhatsApp number"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="editProvince">Province</Label>
+                    <Input
+                      id="editProvince"
+                      value={editData.province}
+                      onChange={(e) =>
+                        setEditData((prev) => ({ ...prev, province: e.target.value }))
+                      }
+                      placeholder="Province"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="editDistrict">District</Label>
+                    <Input
+                      id="editDistrict"
+                      value={editData.district}
+                      onChange={(e) =>
+                        setEditData((prev) => ({ ...prev, district: e.target.value }))
+                      }
+                      placeholder="District"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="editCity">City</Label>
+                    <Input
+                      id="editCity"
+                      value={editData.city}
+                      onChange={(e) =>
+                        setEditData((prev) => ({ ...prev, city: e.target.value }))
+                      }
+                      placeholder="City"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="editLocation">Location</Label>
+                  <Input
+                    id="editLocation"
+                    value={editData.location}
+                    onChange={(e) =>
+                      setEditData((prev) => ({ ...prev, location: e.target.value }))
+                    }
+                    placeholder="Enter detailed location"
+                  />
+                </div>
+              </div>
+
+              {/* Info Note */}
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                <p className="text-sm text-blue-800">
+                  <strong>Note:</strong> Email verification status and ban status
+                  are managed through their respective actions in the dropdown menu.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setEditDialogOpen(false);
+                setSelectedUser(null);
+              }}
+              disabled={isLoading === selectedUser?.id}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdateUser}
+              disabled={
+                !editData.name.trim() ||
+                !editData.email.trim() ||
+                isLoading === selectedUser?.id
+              }
+            >
+              {isLoading === selectedUser?.id ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
               )}
             </Button>
           </DialogFooter>

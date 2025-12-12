@@ -81,7 +81,7 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
         icon: Users
       },
       {
-        title: "Reports",
+        title: "Reported Ads",
         url: "/dashboard/reports",
         icon: Flag
       }
