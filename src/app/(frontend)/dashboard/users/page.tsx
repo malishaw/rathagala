@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useGetUsers } from "@/features/users/api/use-get-users";
+import { useGetOrganizations } from "@/features/organizations/api/use-get-orgs";
 import {
   Card,
   CardContent,
@@ -62,6 +63,7 @@ import {
   Trash2,
   Loader2,
   Pencil,
+  Building2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -89,7 +91,9 @@ export default function UsersPage() {
   const [banDialogOpen, setBanDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [orgDialogOpen, setOrgDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedOrgId, setSelectedOrgId] = useState<string>("");
   const [banData, setBanData] = useState<BanUserData>({
     banReason: "",
     banDuration: "7d",
@@ -111,6 +115,11 @@ export default function UsersPage() {
     page,
     limit: 10,
     search,
+  });
+  const { data: orgsData } = useGetOrganizations({
+    page: 1,
+    limit: 1000,
+    search: null,
   });
 
   const handleSearch = () => {
@@ -236,6 +245,69 @@ export default function UsersPage() {
     } catch (error) {
       console.error("Error unbanning user:", error);
       toast.error("Failed to unban user", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
+      });
+    } finally {
+      setIsLoading(null);
+    }
+  };
+
+  const handleAssignOrgClick = (user: User) => {
+    setSelectedUser(user);
+    setSelectedOrgId("");
+    setOrgDialogOpen(true);
+  };
+
+  const handleAssignOrganization = async () => {
+    if (!selectedUser || !selectedOrgId) {
+      toast.error("Please select an organization");
+      return;
+    }
+
+    setIsLoading(selectedUser.id);
+    try {
+      const response = await fetch("/api/users/assign-organization", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ 
+          userId: selectedUser.id,
+          organizationId: selectedOrgId 
+        }),
+      });
+
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage =
+            errorData.error?.message || errorData.message || errorMessage;
+        } catch {
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const orgName = orgsData?.organizations.find(
+        (org: any) => org.id === selectedOrgId
+      )?.name;
+
+      toast.success("Organization assigned successfully", {
+        description: `${selectedUser.name || selectedUser.email} has been assigned to ${orgName || "the organization"}.`,
+      });
+
+      setOrgDialogOpen(false);
+      setSelectedUser(null);
+      setSelectedOrgId("");
+      refetch();
+    } catch (error) {
+      console.error("Error assigning organization:", error);
+      toast.error("Failed to assign organization", {
         description:
           error instanceof Error
             ? error.message
@@ -596,6 +668,13 @@ export default function UsersPage() {
                                 <Pencil className="h-4 w-4 mr-2" />
                                 Edit Details
                               </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleAssignOrgClick(user)}
+                                disabled={isLoading === user.id}
+                              >
+                                <Building2 className="h-4 w-4 mr-2" />
+                                Assign Organization
+                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               {user.banned ? (
                                 <DropdownMenuItem
@@ -822,6 +901,111 @@ export default function UsersPage() {
                 <>
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete Permanently
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Organization Dialog */}
+      <Dialog open={orgDialogOpen} onOpenChange={setOrgDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-blue-600" />
+              Assign Organization
+            </DialogTitle>
+            <DialogDescription>
+              Assign {selectedUser?.name || selectedUser?.email} to an organization
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedUser && (
+            <div className="space-y-4">
+              {/* User Info */}
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage
+                    src={selectedUser.image || undefined}
+                    alt={selectedUser.name || selectedUser.email}
+                  />
+                  <AvatarFallback className="bg-[#024950] text-white">
+                    {selectedUser.name?.[0]?.toUpperCase() ||
+                      selectedUser.email?.[0]?.toUpperCase() ||
+                      "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-medium text-gray-900">
+                    {selectedUser.name || "Unknown User"}
+                  </p>
+                  <p className="text-sm text-gray-500">{selectedUser.email}</p>
+                </div>
+              </div>
+
+              {/* Organization Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="organization">Select Organization *</Label>
+                <Select
+                  value={selectedOrgId}
+                  onValueChange={(value) => setSelectedOrgId(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose an organization" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {orgsData?.organizations && orgsData.organizations.length > 0 ? (
+                      orgsData.organizations.map((org: any) => (
+                        <SelectItem key={org.id} value={org.id}>
+                          {org.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="none" disabled>
+                        No organizations available
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Info Note */}
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                <p className="text-sm text-blue-800">
+                  <strong>Note:</strong> This will update the user's organization
+                  association. Users can be members of multiple organizations through
+                  the member system.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setOrgDialogOpen(false);
+                setSelectedUser(null);
+                setSelectedOrgId("");
+              }}
+              disabled={isLoading === selectedUser?.id}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAssignOrganization}
+              disabled={!selectedOrgId || isLoading === selectedUser?.id}
+            >
+              {isLoading === selectedUser?.id ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Assigning...
+                </>
+              ) : (
+                <>
+                  <Building2 className="mr-2 h-4 w-4" />
+                  Assign Organization
                 </>
               )}
             </Button>

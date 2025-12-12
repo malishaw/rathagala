@@ -4,7 +4,7 @@ import { z } from "zod";
 import { jsonContent } from "stoker/openapi/helpers";
 
 import { serverAuthMiddleware } from "@/server/middlewares/auth-middleware";
-import { querySchema, withPaginationSchema, updateProfileSchema, updateUserByAdminSchema } from "./users.schemas";
+import { querySchema, withPaginationSchema, updateProfileSchema, updateUserByAdminSchema, assignOrganizationSchema } from "./users.schemas";
 
 const tags = ["Users"];
 
@@ -147,6 +147,59 @@ export const updateProfile = createRoute({
 });
 
 export type UpdateProfileRoute = typeof updateProfile;
+
+// ---------- Assign Organization To User (Admin) ----------
+export const assignOrganizationToUser = createRoute({
+  tags,
+  path: "/assign-organization",
+  method: "patch",
+  middleware: [serverAuthMiddleware],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: assignOrganizationSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      z.object({
+        message: z.string(),
+        user: z.object({
+          id: z.string(),
+          name: z.string(),
+          email: z.string(),
+          organizationId: z.string().nullable(),
+          organization: z.object({
+            id: z.string(),
+            name: z.string(),
+          }).nullable().optional(),
+        }),
+      }),
+      "Organization assigned successfully"
+    ),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      z.object({ message: z.string() }),
+      "Unauthenticated request"
+    ),
+    [HttpStatusCodes.FORBIDDEN]: jsonContent(
+      z.object({ message: z.string() }),
+      "Forbidden: Admin access required"
+    ),
+    [HttpStatusCodes.NOT_FOUND]: jsonContent(
+      z.object({ message: z.string() }),
+      "User not found"
+    ),
+    [HttpStatusCodes.BAD_REQUEST]: jsonContent(
+      z.object({ message: z.string() }),
+      "Bad request"
+    ),
+  },
+});
+
+export type AssignOrganizationToUserRoute = typeof assignOrganizationToUser;
 
 // ---------- Update User By Admin ----------
 export const updateUserByAdmin = createRoute({

@@ -38,3 +38,8 @@ export const updateUserByAdminSchema = z.object({
   location: z.string().optional(),
 });
 
+export const assignOrganizationSchema = z.object({
+  userId: z.string(),
+  organizationId: z.string(),
+});
+

@@ -265,9 +265,95 @@ export const updateProfile: AppRouteHandler<UpdateProfileRoute> = async (c) => {
   }
 };
 
-// ---------- Update User By Admin ----------
-import type { UpdateUserByAdminRoute } from "./users.routes";
+// ---------- Assign Organization To User (Admin) ----------
+import type { UpdateUserByAdminRoute, AssignOrganizationToUserRoute } from "./users.routes";
 
+export const assignOrganizationToUser: AppRouteHandler<AssignOrganizationToUserRoute> = async (c) => {
+  const user = c.get("user");
+
+  if (!user) {
+    return c.json(
+      { message: "Unauthenticated user" },
+      HttpStatusCodes.UNAUTHORIZED
+    );
+  }
+
+  const isAdmin = user?.role === "admin";
+
+  if (!isAdmin) {
+    return c.json(
+      { message: "Unauthorized: Admin access required" },
+      HttpStatusCodes.FORBIDDEN
+    );
+  }
+
+  const { userId, organizationId } = c.req.valid("json");
+
+  try {
+    // Check if user exists
+    const targetUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!targetUser) {
+      return c.json(
+        { message: "User not found" },
+        HttpStatusCodes.NOT_FOUND
+      );
+    }
+
+    // Verify the organization exists
+    const organization = await prisma.organization.findUnique({
+      where: { id: organizationId },
+    });
+
+    if (!organization) {
+      return c.json(
+        { message: "Organization not found" },
+        HttpStatusCodes.BAD_REQUEST
+      );
+    }
+
+    // Update user's organizationId
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { organizationId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        organizationId: true,
+        organization: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    console.log(`User ${userId} organizationId updated to: ${organizationId} by admin ${user.id}`);
+
+    return c.json(
+      {
+        message: "Organization assigned successfully",
+        user: updatedUser,
+      },
+      HttpStatusCodes.OK
+    );
+  } catch (error) {
+    console.error("Error assigning organization to user:", error);
+    return c.json(
+      {
+        message: "Failed to assign organization",
+        error: error instanceof Error ? error.message : "Unknown error"
+      },
+      HttpStatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+};
+
+// ---------- Update User By Admin ----------
 export const updateUserByAdmin: AppRouteHandler<UpdateUserByAdminRoute> = async (c) => {
   const user = c.get("user");
 
