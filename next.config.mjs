@@ -22,10 +22,8 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
 
-  // (optional) Skip ESLint errors during build
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // Empty turbopack config to silence webpack warning
+  turbopack: {},
 };
 
 export default withPlaiceholder(nextConfig);
