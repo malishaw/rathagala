@@ -28,16 +28,7 @@ export function Footer() {
                   Sell Your Car
                 </a>
               </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Car Loans
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Insurance
-                </a>
-              </li>
+           
             </ul>
           </div>
           <div>
@@ -48,11 +39,7 @@ export function Footer() {
                   About Us
                 </a>
               </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Help Center
-                </a>
-              </li>
+           
               <li>
                 <a href="/contact" className="hover:text-white transition-colors">
                   Contact Us
@@ -101,7 +88,7 @@ export function Footer() {
           </div>
         </div>
         <div className="border-t border-slate-800 mt-10 pt-8 text-center text-slate-400">
-          <p>&copy; 2025 Rathagala.lk. All rights reserved.</p>
+          <p>&copy; 2026 Rathagala.lk. All rights reserved.</p>
         </div>
       </div>
     </footer>

@@ -108,13 +108,8 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
           400
         );
       }
-      if (listingTypeValue === "SELL") {
-        // Include documents where listingType is explicitly SELL or where listingType is not one of the known values
-        // This captures legacy documents where the field may be missing or invalid.
-        andFilters.push({ OR: [ { listingType: "SELL" }, { listingType: { notIn: validListingTypes } } ] });
-      } else {
-        andFilters.push({ listingType: listingTypeValue });
-      }
+      // Simply filter by the listing type without creating nested OR
+      andFilters.push({ listingType: listingTypeValue });
     }
 
     // Filter by status: only show ACTIVE ads for public listings (unless admin is viewing or filtering by user)
