@@ -24,6 +24,7 @@ import { RevealPhoneButton } from "@/components/ui/reveal-phone-button";
 import { Separator } from "@/components/ui/separator";
 import { SimilarVehicleComparison } from "@/components/ui/similar-vehicle-comparison";
 import { useGetAdById } from "@/features/ads/api/use-get-ad-by-id";
+import { useGetSimilarVehicles } from "@/features/ads/api/use-get-similar-vehicles";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
 import { useCreateReport } from "@/features/report/api/use-create-report";
 import { ReportReasons } from "@/server/routes/report/report.schemas";
@@ -57,6 +58,11 @@ export default function AdDetailPage() {
 
   // Using the hook to fetch ad data
   const { data: ad, isLoading, isError } = useGetAdById({ adId: adId || "" });
+  const { data: similarVehiclesData, isLoading: isLoadingSimilar } = useGetSimilarVehicles({ 
+    adId: adId || "",
+    limit: 3,
+    enabled: !!adId
+  });
   const { mutate: createReport, isPending: isSubmittingReport } = useCreateReport();
 
   // Handle report submission
@@ -79,6 +85,21 @@ export default function AdDetailPage() {
           setReportReason("");
           setReportDetails("");
         },
+        onError: () => {
+          // Error is already handled by the mutation, but ensure dialog stays open
+          // so user can try again or see the error
+        },
+        onSettled: () => {
+          // Always close dialog after mutation completes (success or error)
+          // This ensures the dialog closes even if there's an issue
+          setTimeout(() => {
+            if (!isSubmittingReport) {
+              setIsReportDialogOpen(false);
+              setReportReason("");
+              setReportDetails("");
+            }
+          }, 100);
+        },
       }
     );
   };
@@ -91,9 +112,9 @@ export default function AdDetailPage() {
       // Block if clicking on image or any element inside image container
       if (
         target.tagName === "IMG" || 
-        target.closest("img") ||
-        target.closest(".aspect-video") ||
-        target.closest('[class*="watermark"]')
+        (target.closest && target.closest("img")) ||
+        (target.closest && target.closest(".aspect-video")) ||
+        (target.closest && target.closest('[class*="watermark"]'))
       ) {
         e.preventDefault();
         e.stopPropagation();
@@ -111,7 +132,7 @@ export default function AdDetailPage() {
       ) {
         // Allow Ctrl+S only if not on an image
         const target = e.target as HTMLElement;
-        if (target.tagName === "IMG" || target.closest("img")) {
+        if (target.tagName === "IMG" || (target.closest && target.closest("img"))) {
           e.preventDefault();
           return false;
         }
@@ -131,7 +152,7 @@ export default function AdDetailPage() {
     // Prevent drag and drop
     const handleDragStart = (e: DragEvent) => {
       const target = e.target as HTMLElement;
-      if (target.tagName === "IMG" || target.closest("img")) {
+      if (target.tagName === "IMG" || (target.closest && target.closest("img"))) {
         e.preventDefault();
         return false;
       }
@@ -140,7 +161,7 @@ export default function AdDetailPage() {
     // Prevent image selection
     const handleSelectStart = (e: Event) => {
       const target = e.target as HTMLElement;
-      if (target.tagName === "IMG" || target.closest("img")) {
+      if (target.tagName === "IMG" || (target.closest && target.closest("img"))) {
         e.preventDefault();
         return false;
       }
@@ -154,7 +175,7 @@ export default function AdDetailPage() {
     // Additional mouse events
     document.addEventListener("mousedown", (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (e.button === 2 && (target.tagName === "IMG" || target.closest("img") || target.closest(".aspect-video"))) {
+      if (e.button === 2 && (target.tagName === "IMG" || (target.closest && target.closest("img")) || (target.closest && target.closest(".aspect-video")))) {
         e.preventDefault();
         e.stopPropagation();
         return false;
@@ -235,43 +256,8 @@ export default function AdDetailPage() {
     });
   };
 
-  // Generate similar vehicles (placeholder)
-  const similarVehicles = [
-    {
-      id: "similar_1",
-      title: `${ad.brand || "Similar"} ${ad.model || "Vehicle"} ${
-        ad.manufacturedYear || ""
-      }`,
-      price: ad.price ? ad.price * 0.9 : 0,
-      location: ad.city || "Unknown",
-      image: "/placeholder.svg?height=150&width=200",
-      mileage: ad.mileage ? `${ad.mileage.toLocaleString()} km` : "Unknown"
-    },
-    {
-      id: "similar_2",
-      title: `${ad.brand || "Similar"} ${ad.model || "Vehicle"} ${
-        typeof ad.manufacturedYear === "number" ? ad.manufacturedYear - 1 : ""
-      }`,
-      price: ad.price ? ad.price * 0.85 : 0,
-      location: "Kandy",
-      image: "/placeholder.svg?height=150&width=200",
-      mileage: ad.mileage
-        ? `${(ad.mileage * 1.2).toFixed(0).toLocaleString()} km`
-        : "Unknown"
-    },
-    {
-      id: "similar_3",
-      title: `${ad.brand || "Similar"} ${ad.model || "Vehicle"} ${
-        typeof ad.manufacturedYear === "number" ? ad.manufacturedYear - 2 : ""
-      }`,
-      price: ad.price ? ad.price * 0.8 : 0,
-      location: "Galle",
-      image: "/placeholder.svg?height=150&width=200",
-      mileage: ad.mileage
-        ? `${(ad.mileage * 1.5).toFixed(0).toLocaleString()} km`
-        : "Unknown"
-    }
-  ];
+  // Get similar vehicles from database
+  const similarVehicles = similarVehiclesData?.vehicles || [];
 
   // Organize features/options for display
   const features = ad.tags || [];
@@ -636,41 +622,56 @@ export default function AdDetailPage() {
             </Card>
 
             {/* Similar Vehicles */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-[#024950]">Similar Vehicles</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {similarVehicles.map((vehicle) => (
-                    <Card
-                      key={vehicle.id}
-                      className="hover:shadow-md transition-shadow cursor-pointer"
-                      onClick={() => router.push(`/${vehicle.id}`)}
-                    >
-                      <CardContent className="p-3">
-                        <img
-                          src={vehicle.image || "/placeholder.svg"}
-                          alt={vehicle.title}
-                          className="w-full h-24 object-cover rounded mb-2"
-                        />
-                        <h3 className="font-semibold text-xs mb-1 line-clamp-2">{vehicle.title}</h3>
-                        <div className="text-sm font-bold text-[#024950] mb-1">
-                          {formatPrice(vehicle.price)}
-                        </div>
-                        <div className="flex items-center justify-between text-xs text-gray-500">
-                          <div className="flex items-center">
-                            <MapPin className="w-3 h-3 mr-1" />
-                            <span className="truncate">{vehicle.location}</span>
-                          </div>
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1">{vehicle.mileage}</div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            {(similarVehicles.length > 0 || isLoadingSimilar) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#024950]">Similar Vehicles</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingSimilar ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin w-6 h-6 border-4 border-[#024950] border-t-transparent rounded-full"></div>
+                      <span className="ml-2 text-sm text-gray-500">Loading similar vehicles...</span>
+                    </div>
+                  ) : similarVehicles.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {similarVehicles.map((vehicle) => (
+                        <Card
+                          key={vehicle.id}
+                          className="hover:shadow-md transition-shadow cursor-pointer"
+                          onClick={() => router.push(`/${vehicle.id}`)}
+                        >
+                          <CardContent className="p-3">
+                            <img
+                              src={vehicle.image || "/placeholder.svg"}
+                              alt={vehicle.title}
+                              className="w-full h-24 object-cover rounded mb-2"
+                            />
+                            <h3 className="font-semibold text-xs mb-1 line-clamp-2">{vehicle.title}</h3>
+                            <div className="text-sm font-bold text-[#024950] mb-1">
+                              {formatPrice(vehicle.price || 0)}
+                            </div>
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                              <div className="flex items-center">
+                                <MapPin className="w-3 h-3 mr-1" />
+                                <span className="truncate">{vehicle.location}</span>
+                              </div>
+                            </div>
+                            {vehicle.mileage && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                {vehicle.mileage.toLocaleString()} km
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-center text-gray-500 py-4">No similar vehicles found</p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Right Column - Price and Contact */}

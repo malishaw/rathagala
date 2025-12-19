@@ -229,6 +229,44 @@ export const updateProfile: AppRouteHandler<UpdateProfileRoute> = async (c) => {
   const { name, phone, whatsappNumber, province, district, city, location } = c.req.valid("json");
 
   try {
+    // Check if phone number is being updated and if it already exists for another user
+    if (phone) {
+      const existingUserWithPhone = await prisma.user.findFirst({
+        where: {
+          phone: phone,
+          NOT: {
+            id: user.id, // Exclude current user
+          },
+        },
+      });
+
+      if (existingUserWithPhone) {
+        return c.json(
+          { message: "This phone number is already registered with another account" },
+          HttpStatusCodes.BAD_REQUEST
+        );
+      }
+    }
+
+    // Check if WhatsApp number is being updated and if it already exists for another user
+    if (whatsappNumber) {
+      const existingUserWithWhatsApp = await prisma.user.findFirst({
+        where: {
+          whatsappNumber: whatsappNumber,
+          NOT: {
+            id: user.id, // Exclude current user
+          },
+        },
+      });
+
+      if (existingUserWithWhatsApp) {
+        return c.json(
+          { message: "This WhatsApp number is already registered with another account" },
+          HttpStatusCodes.BAD_REQUEST
+        );
+      }
+    }
+
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: { 

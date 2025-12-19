@@ -28,6 +28,7 @@ interface MediaUploaderProps {
   path?: string;
   maxSize?: number;
   className?: string;
+  multiple?: boolean;
 }
 
 export const MediaUploader: React.FC<MediaUploaderProps> = ({
@@ -36,19 +37,20 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
   acceptedTypes = ["IMAGE", "VIDEO", "PDF"],
   path = "",
   maxSize = 4 * 1024 * 1024,
-  className
+  className,
+  multiple = true
 }) => {
   const mediaService = MediaService.getInstance();
   const [acceptedFiles, setAcceptedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState<boolean>();
-  const [uploadResult, setUploadResult] = useState<MediaFile | null>(null);
+  const [uploadResults, setUploadResults] = useState<MediaFile[]>([]);
 
   const uploadFileToastId = useId();
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
       setAcceptedFiles(acceptedFiles);
-      setUploadResult(null);
+      setUploadResults([]);
     },
     [onUpload, onError, acceptedTypes, path]
   );
@@ -56,7 +58,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     maxSize,
-    multiple: false
+    multiple
   });
 
   const handleFileUpload = async (e: React.MouseEvent) => {
@@ -64,27 +66,52 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
 
     try {
       setUploading(true);
-      toast.loading("Uploading media...", { id: uploadFileToastId });
+      const totalFiles = acceptedFiles.length;
+      toast.loading(`Uploading ${totalFiles} file${totalFiles > 1 ? 's' : ''}...`, { id: uploadFileToastId });
 
-      const file = acceptedFiles[0];
-      const type = getMediaType(file.type);
+      const results: MediaFile[] = [];
+      let successCount = 0;
+      let failCount = 0;
 
-      if (!acceptedTypes.includes(type)) {
-        throw new Error("File type not supported");
+      for (const file of acceptedFiles) {
+        try {
+          const type = getMediaType(file.type);
+
+          if (!acceptedTypes.includes(type)) {
+            throw new Error(`File type not supported: ${file.name}`);
+          }
+
+          const result = await mediaService.uploadFile({
+            file,
+            type,
+            path
+          });
+
+          results.push(result);
+          successCount++;
+          onUpload(result);
+        } catch (fileError) {
+          failCount++;
+          console.error(`Failed to upload ${file.name}:`, fileError);
+        }
       }
 
-      const result = await mediaService.uploadFile({
-        file,
-        type,
-        path
-      });
+      if (successCount > 0) {
+        toast.success(`${successCount} file${successCount > 1 ? 's' : ''} uploaded successfully!`, {
+          id: uploadFileToastId,
+          description: failCount > 0 ? `${failCount} file${failCount > 1 ? 's' : ''} failed` : undefined
+        });
+      } else {
+        toast.error("Failed to upload files", {
+          id: uploadFileToastId
+        });
+      }
 
-      toast.success("Media uploaded successfully !", {
-        id: uploadFileToastId
-      });
-
-      setUploadResult(result);
-      onUpload(result);
+      setUploadResults(results);
+      
+      if (results.length > 0) {
+        setAcceptedFiles([]);
+      }
     } catch (error) {
       const err = error as Error;
       toast.error("Failed to upload media", {
@@ -129,7 +156,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
             ) : isDragActive ? (
               <p className="text-sm animate-pulse">Drop the file here</p>
             ) : (
-              <p className="text-sm">Drag & drop a file, or click to select</p>
+              <p className="text-sm">Drag & drop {multiple ? 'files' : 'a file'}, or click to select</p>
             )}
 
             <p className="text-xs text-foreground/60">
@@ -147,53 +174,69 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
               onMouseDown={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
             >
-              Upload File
+              Upload {acceptedFiles.length} File{acceptedFiles.length > 1 ? 's' : ''}
             </Button>
           ) : (
             <Button type="button" size="sm" variant={"outline"}>
-              Select File
+              Select File{multiple ? 's' : ''}
             </Button>
           )}
         </div>
       </Card>
 
-      {acceptedFiles.length > 0 && !uploadResult && (
-        <div className="flex items-center justify-between gap-2">
-          <Image
-            src={URL.createObjectURL(acceptedFiles[0])}
-            alt="file"
-            width={40}
-            height={40}
-            className="rounded-md size-14 object-cover"
-          />
-
-          <Button
-            type="button"
-            variant={"ghost"}
-            size="sm"
-            className="underline"
-            onClick={() => setAcceptedFiles([])}
-          >
-            Clear Selection
-          </Button>
+      {acceptedFiles.length > 0 && uploadResults.length === 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium">{acceptedFiles.length} file{acceptedFiles.length > 1 ? 's' : ''} selected</p>
+            <Button
+              type="button"
+              variant={"ghost"}
+              size="sm"
+              className="underline"
+              onClick={() => setAcceptedFiles([])}
+            >
+              Clear All
+            </Button>
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            {acceptedFiles.map((file, index) => (
+              <div key={index} className="relative">
+                <Image
+                  src={URL.createObjectURL(file)}
+                  alt={file.name}
+                  width={80}
+                  height={80}
+                  className="rounded-md w-full h-20 object-cover"
+                />
+                <p className="text-xs truncate mt-1">{file.name}</p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
-      {uploadResult && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Badge variant={"secondary"} className="cursor-pointer">
-                <Link href={uploadResult.url} passHref target="_blank">
-                  Preview Uploaded Media
-                </Link>
-              </Badge>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>This is Uploaded Media Link</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+      {uploadResults.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-sm font-medium">{uploadResults.length} file{uploadResults.length > 1 ? 's' : ''} uploaded successfully</p>
+          <div className="flex flex-wrap gap-2">
+            {uploadResults.map((result, index) => (
+              <TooltipProvider key={index}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant={"secondary"} className="cursor-pointer">
+                      <Link href={result.url} passHref target="_blank">
+                        Preview {index + 1}
+                      </Link>
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{result.filename}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );
