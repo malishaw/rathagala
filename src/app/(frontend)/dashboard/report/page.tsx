@@ -56,8 +56,11 @@ export default function ReportPage() {
     period,
   });
   const { data: adByEntity, isLoading: loadingEntity } = useGetAdCreationByEntity();
-  const { data: advancedSummary, isLoading: loadingAdvanced } = useGetAdAdvancedSummary();
+  const { data: advancedSummary, isLoading: loadingAdvanced, error: advancedError } = useGetAdAdvancedSummary();
   const { data: userSummary, isLoading: loadingUsers } = useGetUserSummary();
+
+  // Debug logging
+  console.log("Advanced Summary - Loading:", loadingAdvanced, "Data:", advancedSummary, "Error:", advancedError);
 
   return (
     <div className="container mx-auto py-6 space-y-6 p-10">
@@ -75,7 +78,7 @@ export default function ReportPage() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="ads">Ad Analytics</TabsTrigger>
           <TabsTrigger value="users">User Analytics</TabsTrigger>
-          <TabsTrigger value="advanced">Advanced Reports</TabsTrigger>
+          {/* <TabsTrigger value="advanced">Advanced Reports</TabsTrigger> */}
         </TabsList>
 
         {/* Overview Tab */}
@@ -352,9 +355,13 @@ export default function ReportPage() {
               <CardContent>
                 {loadingUsers ? (
                   <p className="text-muted-foreground">Loading...</p>
+                ) : !userSummary?.top10Users?.length ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">No users found with ad creation data</p>
+                  </div>
                 ) : (
                   <div className="space-y-3">
-                    {userSummary?.top10Users.map((user, index) => (
+                    {userSummary.top10Users.map((user, index) => (
                       <div key={user.id} className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <Badge variant="outline" className="w-8 h-8 flex items-center justify-center">
@@ -382,9 +389,13 @@ export default function ReportPage() {
               <CardContent>
                 {loadingUsers ? (
                   <p className="text-muted-foreground">Loading...</p>
+                ) : !userSummary?.top10Organizations?.length ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">No organizations found with ad creation data</p>
+                  </div>
                 ) : (
                   <div className="space-y-3">
-                    {userSummary?.top10Organizations.map((org, index) => (
+                    {userSummary.top10Organizations.map((org, index) => (
                       <div key={org.id} className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <Badge variant="outline" className="w-8 h-8 flex items-center justify-center">
@@ -415,6 +426,22 @@ export default function ReportPage() {
                 <p className="text-center text-muted-foreground">Loading advanced reports...</p>
               </CardContent>
             </Card>
+          ) : advancedError ? (
+            <Card>
+              <CardContent className="p-8">
+                <div className="text-center space-y-2">
+                  <p className="text-muted-foreground">Failed to load advanced reports data.</p>
+                  <p className="text-sm text-red-500">{advancedError instanceof Error ? advancedError.message : String(advancedError)}</p>
+                  <p className="text-xs text-muted-foreground">Check the browser console for more details</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : !advancedSummary ? (
+            <Card>
+              <CardContent className="p-8">
+                <p className="text-center text-muted-foreground">No data available</p>
+              </CardContent>
+            </Card>
           ) : (
             <>
               {/* Ad Types & Listing Types */}
@@ -423,29 +450,35 @@ export default function ReportPage() {
                   <CardHeader>
                     <CardTitle>Top 10 Ad Types</CardTitle>
                     <CardDescription>
-                      Most common ad types (Total: {advancedSummary?.adTypes.total.length})
+                      Most common ad types (Total: {advancedSummary?.adTypes?.total?.length || 0})
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <PieChart>
-                        <Pie
-                          data={advancedSummary?.adTypes.top10 || []}
-                          dataKey="count"
-                          nameKey="value"
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={100}
-                          label
-                        >
-                          {(advancedSummary?.adTypes.top10 || []).map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
+                    {!advancedSummary?.adTypes?.top10?.length ? (
+                      <div className="h-[300px] flex items-center justify-center">
+                        <p className="text-muted-foreground">No ad type data available</p>
+                      </div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie
+                            data={advancedSummary.adTypes.top10}
+                            dataKey="count"
+                            nameKey="value"
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={100}
+                            label
+                          >
+                            {advancedSummary.adTypes.top10.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -453,19 +486,25 @@ export default function ReportPage() {
                   <CardHeader>
                     <CardTitle>Top 10 Listing Types</CardTitle>
                     <CardDescription>
-                      Buy, Sell, Rent distribution (Total: {advancedSummary?.listingTypes.total.length})
+                      Buy, Sell, Rent distribution (Total: {advancedSummary?.listingTypes?.total?.length || 0})
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={advancedSummary?.listingTypes.top10 || []}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="value" />
-                        <YAxis />
-                        <Tooltip />
-                        <Bar dataKey="count" fill="#00C49F" />
-                      </BarChart>
-                    </ResponsiveContainer>
+                    {!advancedSummary?.listingTypes?.top10?.length ? (
+                      <div className="h-[300px] flex items-center justify-center">
+                        <p className="text-muted-foreground">No listing type data available</p>
+                      </div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={advancedSummary.listingTypes.top10}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="value" />
+                          <YAxis />
+                          <Tooltip />
+                          <Bar dataKey="count" fill="#00C49F" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    )}
                   </CardContent>
                 </Card>
               </div>

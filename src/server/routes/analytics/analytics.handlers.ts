@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as HttpStatusCodes from "stoker/http-status-codes";
-import type { AppRouteHandler } from "@/types/server";
 import { prisma } from "@/server/prisma/client";
 
 // Helper function to parse dates
@@ -33,7 +32,7 @@ const getDateRangeFilter = (startDate?: string, endDate?: string) => {
   return Object.keys(filter).length > 0 ? filter : undefined;
 };
 
-export const getAdSummary: AppRouteHandler = async (c) => {
+export const getAdSummary = async (c: any) => {
   try {
     const [totalAds, approvedAds, pendingAds, draftAds] = await Promise.all([
       prisma.ad.count(),
@@ -60,7 +59,7 @@ export const getAdSummary: AppRouteHandler = async (c) => {
   }
 };
 
-export const getAdCreationReport: AppRouteHandler = async (c) => {
+export const getAdCreationReport = async (c: any) => {
   try {
     const { startDate, endDate, period } = c.req.query();
     
@@ -99,18 +98,18 @@ export const getAdCreationReport: AppRouteHandler = async (c) => {
   }
 };
 
-export const getAdDeletionReport: AppRouteHandler = async (c) => {
+export const getAdDeletionReport = async (c: any) => {
   try {
     const { startDate, endDate, period } = c.req.query();
     
     const dateFilter = getDateRangeFilter(startDate, endDate);
     
-    // Get deleted ads (status DELETED or EXPIRED)
+    // Get expired or rejected ads
     const ads = await prisma.ad.findMany({
       where: {
         OR: [
-          { status: "DELETED" },
           { status: "EXPIRED" },
+          { status: "REJECTED" },
         ],
         updatedAt: dateFilter,
       },
@@ -143,7 +142,7 @@ export const getAdDeletionReport: AppRouteHandler = async (c) => {
   }
 };
 
-export const getAdCreationByEntity: AppRouteHandler = async (c) => {
+export const getAdCreationByEntity = async (c: any) => {
   try {
     // Get ad counts by users
     const userAds = await prisma.ad.groupBy({
@@ -208,13 +207,15 @@ export const getAdCreationByEntity: AppRouteHandler = async (c) => {
   }
 };
 
-export const getAdAdvancedSummary: AppRouteHandler = async (c) => {
+export const getAdAdvancedSummary = async (c: any) => {
   try {
     // Helper function to get counts and top 10
     const getAttributeCounts = async (field: string) => {
       const groupBy: any = await prisma.ad.groupBy({
         by: [field as any],
-        _count: true,
+        _count: {
+          id: true,
+        },
         where: {
           [field]: {
             not: null,
@@ -222,14 +223,14 @@ export const getAdAdvancedSummary: AppRouteHandler = async (c) => {
         },
         orderBy: {
           _count: {
-            [field]: "desc",
+            id: "desc",
           },
         },
       });
 
       const total = groupBy.map((item: any) => ({
         value: item[field] || "Unknown",
-        count: item._count,
+        count: item._count.id,
       }));
 
       const top10 = total.slice(0, 10);
@@ -288,7 +289,7 @@ export const getAdAdvancedSummary: AppRouteHandler = async (c) => {
   }
 };
 
-export const getUserSummary: AppRouteHandler = async (c) => {
+export const getUserSummary = async (c: any) => {
   try {
     // Get total counts
     const [totalUsers, totalOrganizations] = await Promise.all([
@@ -306,60 +307,94 @@ export const getUserSummary: AppRouteHandler = async (c) => {
       },
     });
 
-    // Get top 10 users by ad count (excluding organization users)
-    const usersWithAdCounts = await prisma.user.findMany({
+    // Get top 10 users by ad count (showing all users regardless of organization membership)
+    // First get ad counts grouped by creator
+    const userAdCounts = await prisma.ad.groupBy({
+      by: ["createdBy"],
+      _count: {
+        id: true,
+      },
+      orderBy: {
+        _count: {
+          id: "desc",
+        },
+      },
+      take: 50,
+    });
+
+    // Get user details for these users
+    const userIds = userAdCounts.map((ua) => ua.createdBy).filter((id) => id != null);
+    const users = await prisma.user.findMany({
       where: {
-        organizationId: null, // Single users only
+        id: { in: userIds },
       },
       select: {
         id: true,
         name: true,
         email: true,
-        _count: {
-          select: { adsCreated: true },
-        },
+      },
+    });
+
+    // Create a map of user ad counts
+    const userAdCountMap = new Map(
+      userAdCounts.map((ua) => [ua.createdBy, ua._count.id])
+    );
+
+    // Combine user data with ad counts and sort
+    const top10Users = users
+      .map((user) => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        adsCount: userAdCountMap.get(user.id) || 0,
+      }))
+      .sort((a, b) => b.adsCount - a.adsCount)
+      .slice(0, 10);
+
+    // Get top 10 organizations by ad count
+    const orgAdCounts = await prisma.ad.groupBy({
+      by: ["orgId"],
+      _count: {
+        id: true,
       },
       orderBy: {
-        adsCreated: {
-          _count: "desc",
+        _count: {
+          id: "desc",
         },
       },
       take: 10,
     });
 
-    const top10Users = usersWithAdCounts.map((user) => ({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      adsCount: user._count.adsCreated,
-    }));
-
-    // Get top 10 organizations by ad count
-    const orgsWithCounts = await prisma.organization.findMany({
+    // Get organization details
+    const orgIds = orgAdCounts.map((oa) => oa.orgId);
+    const orgs = await prisma.organization.findMany({
+      where: {
+        id: { in: orgIds },
+      },
       select: {
         id: true,
         name: true,
         _count: {
-          select: { 
-            ads: true,
+          select: {
             members: true,
           },
         },
       },
-      orderBy: {
-        ads: {
-          _count: "desc",
-        },
-      },
-      take: 10,
     });
 
-    const top10Organizations = orgsWithCounts.map((org) => ({
-      id: org.id,
-      name: org.name,
-      adsCount: org._count.ads,
-      membersCount: org._count.members,
-    }));
+    // Create map of org ad counts
+    const orgAdCountMap = new Map(
+      orgAdCounts.map((oa) => [oa.orgId, oa._count.id])
+    );
+
+    const top10Organizations = orgs
+      .map((org) => ({
+        id: org.id,
+        name: org.name,
+        adsCount: orgAdCountMap.get(org.id) || 0,
+        membersCount: org._count.members,
+      }))
+      .sort((a, b) => b.adsCount - a.adsCount);
 
     return c.json(
       {
