@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useGetReports } from "@/features/report/api/use-get-reports";
 import { useUpdateReport } from "@/features/report/api/use-update-report";
+import { usePublishAd } from "@/features/ads/api/use-publish-ad";
+import { useUnpublishAd } from "@/features/ads/api/use-unpublish-ad";
+import { useDeleteAd } from "@/features/ads/api/use-delete-ad";
 import {
   Card,
   CardContent,
@@ -45,6 +48,9 @@ import {
   Eye,
   Filter,
   RefreshCw,
+  Trash2,
+  CheckCheck,
+  XCircle,
 } from "lucide-react";
 
 interface Report {
@@ -74,6 +80,8 @@ export default function ReportsManagementPage() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<string>("");
   const [updateDetails, setUpdateDetails] = useState<string>("");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [unpublishReason, setUnpublishReason] = useState<string>("");
 
   const { data, isLoading, refetch } = useGetReports({
     page,
@@ -82,6 +90,9 @@ export default function ReportsManagementPage() {
   });
 
   const { mutate: updateReport, isPending } = useUpdateReport();
+  const { mutate: publishAd, isPending: isPublishing } = usePublishAd();
+  const { mutate: unpublishAd, isPending: isUnpublishing } = useUnpublishAd();
+  const { mutate: deleteAd, isPending: isDeleting } = useDeleteAd();
 
   const handleViewDetails = (report: Report) => {
     setSelectedReport(report);
@@ -108,6 +119,42 @@ export default function ReportsManagementPage() {
         },
       }
     );
+  };
+
+  const handlePublishAd = () => {
+    if (!selectedReport?.adId) return;
+
+    publishAd(selectedReport.adId, {
+      onSuccess: () => {
+        refetch();
+      },
+    });
+  };
+
+  const handleUnpublishAd = () => {
+    if (!selectedReport?.adId) return;
+
+    unpublishAd(
+      { id: selectedReport.adId, reason: unpublishReason },
+      {
+        onSuccess: () => {
+          setUnpublishReason("");
+          refetch();
+        },
+      }
+    );
+  };
+
+  const handleDeleteAd = () => {
+    if (!selectedReport?.adId) return;
+
+    deleteAd(selectedReport.adId, {
+      onSuccess: () => {
+        setIsDeleteDialogOpen(false);
+        setIsDetailsOpen(false);
+        refetch();
+      },
+    });
   };
 
   const getStatusBadge = (status: string) => {
@@ -333,7 +380,7 @@ export default function ReportsManagementPage() {
 
       {/* Report Details Dialog */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Report Details</DialogTitle>
             <DialogDescription>
@@ -341,7 +388,7 @@ export default function ReportsManagementPage() {
             </DialogDescription>
           </DialogHeader>
           {selectedReport && (
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-y-auto pr-2">
               {/* Reporter Info */}
               <div className="border-b pb-4">
                 <h3 className="font-semibold mb-2">Reporter Information</h3>
@@ -397,10 +444,60 @@ export default function ReportsManagementPage() {
                 </div>
               </div>
 
+              {/* Ad Actions */}
+              {selectedReport.ad && (
+                <div className="border-b pb-4">
+                  <h3 className="font-semibold mb-3">Ad Actions</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedReport.ad.status !== "ACTIVE" && (
+                      <Button
+                        onClick={handlePublishAd}
+                        disabled={isPublishing || !selectedReport.adId}
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <CheckCheck className="w-4 h-4 mr-2" />
+                        {isPublishing ? "Publishing..." : "Publish Ad"}
+                      </Button>
+                    )}
+                    {selectedReport.ad.status === "ACTIVE" && (
+                      <div className="w-full space-y-2">
+                        <Button
+                          onClick={handleUnpublishAd}
+                          disabled={isUnpublishing || !selectedReport.adId}
+                          size="sm"
+                          variant="outline"
+                          className="border-orange-500 text-orange-700 hover:bg-orange-50"
+                        >
+                          <XCircle className="w-4 h-4 mr-2" />
+                          {isUnpublishing ? "Unpublishing..." : "Unpublish Ad"}
+                        </Button>
+                        <Textarea
+                          placeholder="Reason for unpublishing (optional)..."
+                          value={unpublishReason}
+                          onChange={(e) => setUnpublishReason(e.target.value)}
+                          rows={2}
+                          className="text-sm"
+                        />
+                      </div>
+                    )}
+                    <Button
+                      onClick={() => setIsDeleteDialogOpen(true)}
+                      disabled={!selectedReport.adId}
+                      size="sm"
+                      variant="destructive"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Ad
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {/* Update Form */}
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="status">Update Status</Label>
+                  <Label htmlFor="status">Update Report Status</Label>
                   <Select value={updateStatus} onValueChange={setUpdateStatus}>
                     <SelectTrigger id="status">
                       <SelectValue />
@@ -443,6 +540,35 @@ export default function ReportsManagementPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Delete Ad</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to permanently delete this ad? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAd}
+              disabled={isDeleting}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              {isDeleting ? "Deleting..." : "Delete Ad"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

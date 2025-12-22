@@ -2,7 +2,7 @@ import * as HttpStatusCodes from "stoker/http-status-codes";
 import { prisma } from "@/server/prisma/client";
 import { AppRouteHandler } from "@/types/server";
 import type { SendVerificationCodeRoute, VerifyCodeRoute } from "./verification.routes";
-import { sendVerificationCode as sendCode, generateVerificationCode } from "@/lib/email";
+import { sendVerificationCode as sendCode, generateVerificationCode, sendWelcomeEmail } from "@/lib/email";
 
 // Send verification code
 export const sendVerificationCode: AppRouteHandler<SendVerificationCodeRoute> = async (c) => {
@@ -102,10 +102,18 @@ export const verifyCode: AppRouteHandler<VerifyCodeRoute> = async (c) => {
     });
 
     // Update user's emailVerified status
-    await prisma.user.update({
+    const user = await prisma.user.update({
       where: { email },
       data: { emailVerified: true },
     });
+
+    // Send welcome email after successful verification
+    try {
+      await sendWelcomeEmail({ email, name: user.name });
+    } catch (emailError) {
+      console.error("Failed to send welcome email, but verification succeeded:", emailError);
+      // Don't fail the verification if welcome email fails
+    }
 
     return c.json(
       {
