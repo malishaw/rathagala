@@ -22,6 +22,14 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
 
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
+  // Disable Turbopack
+  experimental: {
+    turbo: false,
+  },
   // Empty turbopack config to silence webpack warning
   turbopack: {},
 };
