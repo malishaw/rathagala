@@ -51,6 +51,53 @@ interface UserAd {
   views?: number;
 }
 
+// Sri Lanka location data
+const locationData: Record<string, Record<string, string[]>> = {
+  "Western": {
+    "Colombo": ["Colombo 1", "Colombo 2", "Colombo 3", "Colombo 4", "Colombo 5", "Colombo 6", "Colombo 7", "Colombo 8", "Colombo 9", "Colombo 10", "Colombo 11", "Colombo 12", "Colombo 13", "Colombo 14", "Colombo 15"],
+    "Gampaha": ["Gampaha", "Negombo", "Katunayake", "Wattala", "Kelaniya", "Ja-Ela", "Minuwangoda", "Kadawatha", "Ragama", "Divulapitiya"],
+    "Kalutara": ["Kalutara", "Panadura", "Horana", "Beruwala", "Aluthgama", "Matugama", "Wadduwa", "Bandaragama"]
+  },
+  "Central": {
+    "Kandy": ["Kandy", "Katugastota", "Gampola", "Nawalapitiya", "Peradeniya", "Akurana", "Kadugannawa"],
+    "Matale": ["Matale", "Dambulla", "Sigiriya", "Galewela", "Ukuwela", "Rattota"],
+    "Nuwara Eliya": ["Nuwara Eliya", "Hatton", "Nandikadal", "Talawakelle", "Bandarawela", "Haputale"]
+  },
+  "Southern": {
+    "Galle": ["Galle", "Hikkaduwa", "Ambalangoda", "Bentota", "Elpitiya", "Baddegama"],
+    "Matara": ["Matara", "Weligama", "Mirissa", "Dikwella", "Akuressa", "Hakmana"],
+    "Hambantota": ["Hambantota", "Tangalle", "Tissamaharama", "Ambalantota", "Beliatta"]
+  },
+  "Northern": {
+    "Jaffna": ["Jaffna", "Nallur", "Chavakachcheri", "Point Pedro", "Karainagar"],
+    "Kilinochchi": ["Kilinochchi", "Pallai", "Paranthan"],
+    "Mannar": ["Mannar", "Nanattan", "Madhu"],
+    "Vavuniya": ["Vavuniya", "Nedunkeni", "Omanthai"],
+    "Mullaitivu": ["Mullaitivu", "Pudukudiyiruppu", "Oddusuddan"]
+  },
+  "Eastern": {
+    "Trincomalee": ["Trincomalee", "Kinniya", "Mutur", "Kantale"],
+    "Batticaloa": ["Batticaloa", "Kattankudy", "Eravur", "Valachchenai"],
+    "Ampara": ["Ampara", "Kalmunai", "Sainthamaruthu", "Akkaraipattu", "Pottuvil"]
+  },
+  "North Western": {
+    "Kurunegala": ["Kurunegala", "Kuliyapitiya", "Narammala", "Wariyapola", "Pannala", "Mawathagama"],
+    "Puttalam": ["Puttalam", "Chilaw", "Wennappuwa", "Nattandiya", "Dankotuwa", "Anamaduwa"]
+  },
+  "North Central": {
+    "Anuradhapura": ["Anuradhapura", "Kekirawa", "Tambuttegama", "Eppawala", "Medawachchiya"],
+    "Polonnaruwa": ["Polonnaruwa", "Kaduruwela", "Medirigiriya", "Hingurakgoda"]
+  },
+  "Uva": {
+    "Badulla": ["Badulla", "Bandarawela", "Haputale", "Welimada", "Mahiyanganaya", "Hali Ela"],
+    "Monaragala": ["Monaragala", "Bibile", "Wellawaya", "Buttala"]
+  },
+  "Sabaragamuwa": {
+    "Ratnapura": ["Ratnapura", "Embilipitiya", "Balangoda", "Pelmadulla", "Eheliyagoda", "Kuruwita"],
+    "Kegalle": ["Kegalle", "Mawanella", "Warakapola", "Rambukkana", "Galigamuwa"]
+  }
+};
+
 export default function ProfilePage() {
   // State for delete dialog
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; ad: UserAd | null }>({ open: false, ad: null });
@@ -142,9 +189,29 @@ export default function ProfilePage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
   
-  // Handle select change for province
+  // Handle select change for location fields
   const handleFilterChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    if (field === "province") {
+      // Reset district and city when province changes
+      setFormData(prev => ({ ...prev, province: value, district: "", city: "" }));
+    } else if (field === "district") {
+      // Reset city when district changes
+      setFormData(prev => ({ ...prev, district: value, city: "" }));
+    } else {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    }
+  };
+
+  // Get districts for selected province
+  const getDistrictsForProvince = (province: string): string[] => {
+    if (!province || !locationData[province]) return [];
+    return Object.keys(locationData[province]);
+  };
+
+  // Get cities for selected district
+  const getCitiesForDistrict = (province: string, district: string): string[] => {
+    if (!province || !district || !locationData[province] || !locationData[province][district]) return [];
+    return locationData[province][district];
   };
   
   // Handle profile update
@@ -167,7 +234,9 @@ export default function ProfilePage() {
       });
       
       if (error) {
-        throw new Error(error.message || "Failed to update profile");
+        const errorMessage = error.message || "Failed to update profile";
+        toast.error(errorMessage);
+        throw new Error(errorMessage);
       }
       
       // Update local state
@@ -188,12 +257,12 @@ export default function ProfilePage() {
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2000);
       toast.success("Profile updated successfully");
+      setActiveSection(null);
       
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast.error("Failed to update profile");
+      // Error toast already shown above
     } finally {
-      setActiveSection(null);
       setIsSaving(false);
     }
   };
@@ -507,23 +576,37 @@ export default function ProfilePage() {
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-2">District</label>
-                        <Input
-                          name="district"
-                          value={formData.district}
-                          onChange={handleChange}
-                          className="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 focus:border-[#0D5C63] focus:bg-white/80 transition-all duration-300 rounded-xl h-12 text-slate-800"
-                          placeholder="Your district"
-                        />
+                        <Select 
+                          value={formData.district} 
+                          onValueChange={(value) => handleFilterChange("district", value)}
+                          disabled={!formData.province}
+                        >
+                          <SelectTrigger className="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 focus:border-[#0D5C63] focus:bg-white/80 transition-all duration-300 rounded-xl h-12 text-slate-800">
+                            <SelectValue placeholder={formData.province ? "Select district" : "Select province first"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {getDistrictsForProvince(formData.province).map((district) => (
+                              <SelectItem key={district} value={district}>{district}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-2">City</label>
-                        <Input
-                          name="city"
-                          value={formData.city}
-                          onChange={handleChange}
-                          className="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 focus:border-[#0D5C63] focus:bg-white/80 transition-all duration-300 rounded-xl h-12 text-slate-800"
-                          placeholder="Your city"
-                        />
+                        <Select 
+                          value={formData.city} 
+                          onValueChange={(value) => handleFilterChange("city", value)}
+                          disabled={!formData.district}
+                        >
+                          <SelectTrigger className="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 focus:border-[#0D5C63] focus:bg-white/80 transition-all duration-300 rounded-xl h-12 text-slate-800">
+                            <SelectValue placeholder={formData.district ? "Select city" : "Select district first"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {getCitiesForDistrict(formData.province, formData.district).map((city) => (
+                              <SelectItem key={city} value={city}>{city}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-2">Location</label>

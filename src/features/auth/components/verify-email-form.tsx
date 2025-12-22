@@ -90,7 +90,7 @@ export function VerifyEmailForm({ className, email, name }: Props) {
         if (setupOrg === "true") {
           router.push("/signin?setup=org");
         } else {
-          router.push("/signin");
+          router.push("/");
         }
       } else {
         const data = await response.json();

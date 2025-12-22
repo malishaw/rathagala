@@ -38,6 +38,11 @@ interface SendOrganizationInviteParams {
   inviteLink: string;
 }
 
+interface SendWelcomeEmailParams {
+  email: string;
+  name: string;
+}
+
 export async function sendVerificationCode({ email, name, code }: SendVerificationCodeParams) {
   try {
     await transporter.sendMail({
@@ -238,6 +243,110 @@ If you have any questions, contact us at support@rathagala.lk
     return { success: true };
   } catch (error) {
     console.error("Failed to send organization invitation email:", error);
+    throw error;
+  }
+}
+
+export async function sendWelcomeEmail({ email, name }: SendWelcomeEmailParams) {
+  try {
+    await transporter.sendMail({
+      from: `"Rathagala Support" <${process.env.EMAIL_FROM || "support@rathagala.lk"}>`,
+      to: email,
+      subject: "Welcome to Rathagala - Start Posting Ads!",
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background-color: #024950; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+              .content { background-color: #f9f9f9; padding: 30px; border-radius: 0 0 5px 5px; }
+              .feature-box { background-color: white; padding: 15px; margin: 15px 0; border-left: 4px solid #024950; border-radius: 3px; }
+              .button { display: inline-block; padding: 12px 30px; background-color: #024950; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+              .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+              .emoji { font-size: 24px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>🎉 Welcome to Rathagala!</h1>
+              </div>
+              <div class="content">
+                <p>Hello ${name},</p>
+                <p><strong>Congratulations!</strong> Your email has been verified successfully. You're all set to start using Rathagala!</p>
+                
+                <h3 style="color: #024950; margin-top: 30px;">What you can do now:</h3>
+                
+                <div class="feature-box">
+                  <span class="emoji">📝</span>
+                  <strong>Post Ads:</strong> Start listing your vehicles and reach thousands of potential buyers.
+                </div>
+                
+                <div class="feature-box">
+                  <span class="emoji">🔍</span>
+                  <strong>Browse Listings:</strong> Explore a wide range of vehicles available for sale.
+                </div>
+                
+                <div class="feature-box">
+                  <span class="emoji">💾</span>
+                  <strong>Save Your Favorites:</strong> Keep track of ads you're interested in.
+                </div>
+                
+                <div class="feature-box">
+                  <span class="emoji">📊</span>
+                  <strong>Manage Your Dashboard:</strong> Track your ads and monitor their performance.
+                </div>
+                
+                <div style="text-align: center; margin-top: 30px;">
+                  <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://rathagala.lk"}" class="button">Start Exploring</a>
+                </div>
+                
+                <p style="margin-top: 30px;">If you have any questions or need assistance, our support team is here to help!</p>
+                
+                <p>Happy selling and buying!<br><strong>The Rathagala Team</strong></p>
+              </div>
+              <div class="footer">
+                <p>© ${new Date().getFullYear()} Rathagala. All rights reserved.</p>
+                <p>Need help? Contact us at support@rathagala.lk</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+      text: `
+Welcome to Rathagala!
+
+Hello ${name},
+
+Congratulations! Your email has been verified successfully. You're all set to start using Rathagala!
+
+What you can do now:
+
+📝 Post Ads: Start listing your vehicles and reach thousands of potential buyers.
+
+🔍 Browse Listings: Explore a wide range of vehicles available for sale.
+
+💾 Save Your Favorites: Keep track of ads you're interested in.
+
+📊 Manage Your Dashboard: Track your ads and monitor their performance.
+
+Visit: ${process.env.NEXT_PUBLIC_APP_URL || "https://rathagala.lk"}
+
+If you have any questions or need assistance, our support team is here to help!
+
+Happy selling and buying!
+The Rathagala Team
+
+© ${new Date().getFullYear()} Rathagala. All rights reserved.
+Need help? Contact us at support@rathagala.lk
+      `,
+    });
+    console.log("Welcome email sent successfully to:", email);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send welcome email:", error);
     throw error;
   }
 }
