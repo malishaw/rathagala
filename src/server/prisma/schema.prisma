@@ -140,6 +140,7 @@ model User {
   banExpires       DateTime?
   organizationId   String?
   organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  isOrganization   Boolean?      @default(false)
   
   // Contact information
   phone            String?

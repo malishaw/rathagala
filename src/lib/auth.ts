@@ -210,6 +210,11 @@ If you have any questions, contact us at support@rathagala.lk
       location: {
         type: "string",
         required: false
+      },
+      isOrganization: {
+        type: "boolean",
+        defaultValue: false,
+        required: false
       }
     }
   }
