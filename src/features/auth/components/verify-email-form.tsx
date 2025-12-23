@@ -19,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { client } from "@/lib/rpc";
+import { authClient } from "@/lib/auth-client";
 
 const verifyEmailSchema = z.object({
   code: z.string().length(6, "Code must be 6 digits"),
@@ -81,16 +82,82 @@ export function VerifyEmailForm({ className, email, name }: Props) {
       if (response.ok) {
         toast.success("Email verified successfully!", { id: toastId });
         
-        // Check if user wanted to create organization
-        const setupOrg = sessionStorage.getItem("setupOrganization");
-        sessionStorage.removeItem("verifyEmail");
-        sessionStorage.removeItem("verifyName");
-        sessionStorage.removeItem("setupOrganization");
-
-        if (setupOrg === "true") {
-          router.push("/");
+        // Auto sign-in the user
+        const password = sessionStorage.getItem("verifyPassword");
+        
+        if (password) {
+          // Sign in the user
+          await authClient.signIn.email(
+            {
+              email,
+              password,
+              callbackURL: "/",
+            },
+            {
+              onRequest() {
+                toast.loading("Signing you in...", { id: toastId });
+              },
+              async onSuccess() {
+                toast.success("Successfully signed in!", { id: toastId });
+                
+                // Clean up session storage
+                sessionStorage.removeItem("verifyEmail");
+                sessionStorage.removeItem("verifyName");
+                sessionStorage.removeItem("verifyPassword");
+                sessionStorage.removeItem("setupOrganization");
+                
+                // Redirect based on user role/organization
+                try {
+                  const res = await fetch("/api/auth/get-session");
+                  const sessionData = await res.json();
+                  const { user } = sessionData;
+                  
+                  // Check if user is admin
+                  if (user?.role === "admin") {
+                    router.push("/dashboard");
+                    return;
+                  }
+                  
+                  // If organizationId is not in session, fetch it from user endpoint
+                  let organizationId = user?.organizationId;
+                  if (!organizationId) {
+                    try {
+                      const userRes = await fetch("/api/users/me");
+                      if (userRes.ok) {
+                        const userData = await userRes.json();
+                        organizationId = userData?.organizationId;
+                      }
+                    } catch (error) {
+                      console.error("Failed to fetch user organization:", error);
+                    }
+                  }
+                  
+                  // Users with organizations should be redirected to dashboard
+                  if (organizationId) {
+                    router.push("/dashboard");
+                  } else {
+                    router.push("/");
+                  }
+                } catch {
+                  router.push("/");
+                }
+              },
+              onError({ error }) {
+                toast.error("Auto sign-in failed", {
+                  id: toastId,
+                  description: "Please sign in manually"
+                });
+                sessionStorage.removeItem("verifyPassword");
+                router.push("/signin");
+              }
+            }
+          );
         } else {
-          router.push("/signin?setup=org");
+          // No password stored, redirect to signin
+          sessionStorage.removeItem("verifyEmail");
+          sessionStorage.removeItem("verifyName");
+          sessionStorage.removeItem("setupOrganization");
+          router.push("/signin");
         }
       } else {
         const data = await response.json();
