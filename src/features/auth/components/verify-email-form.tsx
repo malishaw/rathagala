@@ -88,9 +88,9 @@ export function VerifyEmailForm({ className, email, name }: Props) {
         sessionStorage.removeItem("setupOrganization");
 
         if (setupOrg === "true") {
-          router.push("/signin?setup=org");
-        } else {
           router.push("/");
+        } else {
+          router.push("/signin?setup=org");
         }
       } else {
         const data = await response.json();
