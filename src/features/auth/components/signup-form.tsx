@@ -83,9 +83,10 @@ export function SignupForm({ className }: Props) {
                 description: "Please check your inbox"
               });
               form.reset();
-              // Store email, name, and organization intent in sessionStorage
+              // Store email, name, password, and organization intent in sessionStorage
               sessionStorage.setItem("verifyEmail", formData.email);
               sessionStorage.setItem("verifyName", formData.name);
+              sessionStorage.setItem("verifyPassword", formData.password);
               if (formData.registerAsOrganization) {
                 sessionStorage.setItem("setupOrganization", "true");
               }
