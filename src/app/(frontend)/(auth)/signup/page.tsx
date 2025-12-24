@@ -6,6 +6,7 @@ import { SignupForm } from "@/features/auth/components/signup-form";
 export default function SignupPage() {
   return (
     <div className="space-y-2 flex flex-col items-center w-full">
+      
       {/* Card container for the form */}
       <Card className="w-full max-w-md border-teal-700/20 bg-white/95 backdrop-blur-sm shadow-2xl">
         <CardHeader className="space-y-0 text-center pb-1.5 pt-3">
