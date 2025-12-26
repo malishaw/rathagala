@@ -57,7 +57,8 @@ export function SignupForm({ className }: Props) {
       {
         email: formData.email,
         name: formData.name,
-        password: formData.password
+        password: formData.password,
+        isOrganization: formData.registerAsOrganization
       },
       {
         onRequest: () => {

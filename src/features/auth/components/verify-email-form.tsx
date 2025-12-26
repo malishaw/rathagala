@@ -17,6 +17,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 import { cn } from "@/lib/utils";
 import { client } from "@/lib/rpc";
 import { authClient } from "@/lib/auth-client";
@@ -171,10 +176,10 @@ export function VerifyEmailForm({ className, email, name }: Props) {
   }
 
   return (
-    <div className={cn("grid gap-6", className)}>
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-teal-900">Verify Your Email</h2>
-        <p className="text-sm text-gray-600">
+    <div className={cn("grid gap-3", className)}>
+      <div className="text-center space-y-1">
+        <h2 className="text-xl font-bold text-teal-900">Verify Your Email</h2>
+        <p className="text-xs text-gray-600">
           We've sent a 6-digit verification code to <strong>{email}</strong>
         </p>
       </div>
@@ -182,24 +187,33 @@ export function VerifyEmailForm({ className, email, name }: Props) {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleFormSubmit)}
-          className="space-y-5 w-full"
+          className="space-y-2.5 w-full"
         >
           <FormField
             control={form.control}
             name="code"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-teal-900 font-medium">
+                <FormLabel className="text-teal-900 font-medium text-xs">
                   Verification Code
                 </FormLabel>
                 <FormControl>
-                  <Input
-                    disabled={isPending}
-                    placeholder="Enter 6-digit code"
-                    maxLength={6}
-                    className="bg-white border-teal-200 focus:border-teal-500 focus:ring-teal-500 text-center text-2xl tracking-widest"
-                    {...field}
-                  />
+                  <div className="flex justify-center">
+                    <InputOTP
+                      maxLength={6}
+                      disabled={isPending}
+                      {...field}
+                    >
+                      <InputOTPGroup className="gap-2">
+                        <InputOTPSlot index={0} className="h-10 w-10 text-lg border-teal-200 bg-white" />
+                        <InputOTPSlot index={1} className="h-10 w-10 text-lg border-teal-200 bg-white" />
+                        <InputOTPSlot index={2} className="h-10 w-10 text-lg border-teal-200 bg-white" />
+                        <InputOTPSlot index={3} className="h-10 w-10 text-lg border-teal-200 bg-white" />
+                        <InputOTPSlot index={4} className="h-10 w-10 text-lg border-teal-200 bg-white" />
+                        <InputOTPSlot index={5} className="h-10 w-10 text-lg border-teal-200 bg-white" />
+                      </InputOTPGroup>
+                    </InputOTP>
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -208,7 +222,7 @@ export function VerifyEmailForm({ className, email, name }: Props) {
 
           <Button
             type="submit"
-            className="w-full bg-teal-700 hover:bg-teal-800 text-white font-semibold py-6 shadow-lg transition-all duration-200"
+            className="w-full bg-teal-700 hover:bg-teal-800 text-white font-semibold h-9 shadow-lg transition-all duration-200"
             loading={isPending}
           >
             Verify Email
@@ -216,12 +230,12 @@ export function VerifyEmailForm({ className, email, name }: Props) {
         </form>
       </Form>
 
-      <div className="text-center text-sm">
+      <div className="text-center text-xs -mt-1">
         <p className="text-gray-600">
           Didn't receive the code?{" "}
           <Button
             variant="link"
-            className="p-0 h-auto text-teal-700 hover:text-teal-900"
+            className="p-0 h-auto text-teal-700 hover:text-teal-900 text-xs"
             onClick={handleResendCode}
             disabled={isResending}
           >
