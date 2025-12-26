@@ -1,6 +1,7 @@
 import { createRouter } from "@/server/helpers/create-app";
 import * as handlers from "./analytics.handlers";
 import * as schemas from "./analytics.schemas";
+import { z } from "zod";
 
 const analyticsRoutes = createRouter()
   .openapi(
@@ -128,6 +129,38 @@ const analyticsRoutes = createRouter()
       },
     },
     handlers.getUserSummary
+  )
+  .openapi(
+    {
+      method: "get",
+      path: "/daily-active-users",
+      summary: "Get daily active users",
+      description: "Get real-time active users data for sellers and buyers",
+      tags: ["Analytics"],
+      responses: {
+        200: {
+          description: "Daily active users data",
+          content: {
+            "application/json": {
+              schema: z.object({
+                total: z.number(),
+                sellers: z.number(),
+                buyers: z.number(),
+                trend: z.number(),
+                peakHour: z.string(),
+                hourlyData: z.array(z.object({
+                  hour: z.number(),
+                  sellers: z.number(),
+                  buyers: z.number(),
+                })),
+                lastUpdated: z.string(),
+              }),
+            },
+          },
+        },
+      },
+    },
+    handlers.getDailyActiveUsers
   );
 
 export default analyticsRoutes;

@@ -62,9 +62,9 @@ export const getAdSummary = async (c: any) => {
 export const getAdCreationReport = async (c: any) => {
   try {
     const { startDate, endDate, period } = c.req.query();
-    
+
     const dateFilter = getDateRangeFilter(startDate, endDate);
-    
+
     const ads = await prisma.ad.findMany({
       where: {
         createdAt: dateFilter,
@@ -101,9 +101,9 @@ export const getAdCreationReport = async (c: any) => {
 export const getAdDeletionReport = async (c: any) => {
   try {
     const { startDate, endDate, period } = c.req.query();
-    
+
     const dateFilter = getDateRangeFilter(startDate, endDate);
-    
+
     // Get expired or rejected ads
     const ads = await prisma.ad.findMany({
       where: {
@@ -410,6 +410,144 @@ export const getUserSummary = async (c: any) => {
     console.error("Error fetching user summary:", error);
     return c.json(
       { message: "Failed to fetch user summary" },
+      HttpStatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+};
+
+export const getDailyActiveUsers = async (c: any) => {
+  try {
+    const now = new Date();
+    const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const yesterday = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+
+    // Get unique user IDs from sessions in last 24 hours
+    const activeSessions = await prisma.session.findMany({
+      where: {
+        updatedAt: { gte: last24Hours }
+      },
+      select: {
+        userId: true
+      },
+      distinct: ['userId']
+    });
+
+    const activeUserIds = activeSessions.map(s => s.userId);
+
+    // Get user details for active users
+    const activeUsers = await prisma.user.findMany({
+      where: {
+        id: { in: activeUserIds }
+      },
+      select: {
+        id: true,
+        organizationId: true,
+        _count: {
+          select: {
+            adsCreated: true
+          }
+        }
+      }
+    });
+
+    // Get yesterday's session count for trend
+    const yesterdaySessionCount = await prisma.session.count({
+      where: {
+        updatedAt: {
+          gte: yesterday,
+          lt: last24Hours
+        }
+      }
+    });
+
+    // Classify users as sellers or buyers
+    const sellers = activeUsers.filter(user =>
+      user.organizationId || user._count.adsCreated > 0
+    );
+    const buyers = activeUsers.filter(user =>
+      !user.organizationId && user._count.adsCreated === 0
+    );
+
+    const total = activeUsers.length;
+    const sellersCount = sellers.length;
+    const buyersCount = buyers.length;
+
+    // Calculate trend
+    const trend = yesterdaySessionCount > 0
+      ? Math.round(((total - yesterdaySessionCount) / yesterdaySessionCount) * 100)
+      : 0;
+
+    // Generate hourly data for the last 24 hours
+    const hourlyData = [];
+    for (let i = 23; i >= 0; i--) {
+      const hourStart = new Date(now.getTime() - i * 60 * 60 * 1000);
+      const hourEnd = new Date(hourStart.getTime() + 60 * 60 * 1000);
+
+      const hourSessions = await prisma.session.findMany({
+        where: {
+          updatedAt: {
+            gte: hourStart,
+            lt: hourEnd
+          }
+        },
+        select: {
+          userId: true
+        },
+        distinct: ['userId']
+      });
+
+      const hourUserIds = hourSessions.map(s => s.userId);
+
+      const hourUsers = await prisma.user.findMany({
+        where: {
+          id: { in: hourUserIds }
+        },
+        select: {
+          organizationId: true,
+          _count: {
+            select: {
+              adsCreated: true
+            }
+          }
+        }
+      });
+
+      const hourSellers = hourUsers.filter(u =>
+        u.organizationId || u._count.adsCreated > 0
+      ).length;
+      const hourBuyers = hourUsers.filter(u =>
+        !u.organizationId && u._count.adsCreated === 0
+      ).length;
+
+      hourlyData.push({
+        hour: 23 - i,
+        sellers: hourSellers,
+        buyers: hourBuyers
+      });
+    }
+
+    // Find peak hour
+    const peakHourData = hourlyData.reduce((max, curr) =>
+      (curr.sellers + curr.buyers) > (max.sellers + max.buyers) ? curr : max
+    );
+    const peakHour = `${peakHourData.hour}:00-${peakHourData.hour + 1}:00`;
+
+    return c.json(
+      {
+        total,
+        sellers: sellersCount,
+        buyers: buyersCount,
+        trend,
+        peakHour,
+        hourlyData,
+        lastUpdated: now.toISOString()
+      },
+      HttpStatusCodes.OK
+    );
+  } catch (error) {
+    console.error("Error fetching daily active users:", error);
+    return c.json(
+      { message: "Failed to fetch daily active users" },
       HttpStatusCodes.INTERNAL_SERVER_ERROR
     );
   }

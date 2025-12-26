@@ -12,14 +12,14 @@ export default function ForgotPasswordPage() {
       <div className="mb-4">
         <Logo />
       </div>
-      
+
       {/* Card container for the form */}
       <Card className="w-full max-w-md border-teal-700/20 bg-white/95 backdrop-blur-sm shadow-2xl">
         <CardHeader className="space-y-0.5 text-center pb-4">
-          <CardTitle className="text-3xl font-bold tracking-tight font-heading text-teal-900 leading-tight">
+          <CardTitle className="text-2xl font-bold tracking-tight font-heading text-teal-900 leading-tight">
             Forgot your password?
           </CardTitle>
-          <CardDescription className="text-base text-teal-700 pt-0.5 leading-tight">
+          <CardDescription className="text-sm text-teal-700 pt-0.5 leading-tight">
             Enter your email to get reset password link
           </CardDescription>
         </CardHeader>
@@ -27,7 +27,7 @@ export default function ForgotPasswordPage() {
           <ForgotPasswordForm />
         </CardContent>
       </Card>
-      
+
       {/* Footer text */}
       <p className="text-sm text-white/70 text-center">
         Secure authentication powered by Rathagala

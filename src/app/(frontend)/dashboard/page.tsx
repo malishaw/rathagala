@@ -8,6 +8,7 @@ import { Bell, Car, Clock, Lightbulb, Building2, Users, ArrowRight, Star, Trendi
 import { authClient } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
+import { DailyActiveUsers } from "@/components/dashboard/daily-active-users";
 
 export default function DashboardPage() {
   // Get user session
@@ -19,17 +20,17 @@ export default function DashboardPage() {
   const { data, isLoading, error } = latestAdsQuery;
 
   // Fetch organizations for admin
-  const { data: orgsData, isLoading: orgsLoading } = useGetOrganizations({ 
-    page: 1, 
-    limit: 5, 
-    search: "" 
+  const { data: orgsData, isLoading: orgsLoading } = useGetOrganizations({
+    page: 1,
+    limit: 5,
+    search: ""
   });
 
   // Fetch users for admin
-  const { data: usersData, isLoading: usersLoading } = useGetUsers({ 
-    page: 1, 
-    limit: 5, 
-    search: "" 
+  const { data: usersData, isLoading: usersLoading } = useGetUsers({
+    page: 1,
+    limit: 5,
+    search: ""
   });
 
   const ads = data?.ads ?? [];
@@ -118,45 +119,45 @@ export default function DashboardPage() {
             {/* Regular Stats Cards - Show for non-admin users */}
             {!isAdmin && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="group relative bg-gradient-to-br from-teal-500 to-teal-600 p-6 rounded-2xl overflow-hidden hover:scale-[1.02] transition-all duration-300">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl group-hover:scale-110 transition-transform">
-                      <TrendingUp className="w-6 h-6 text-white" />
+                <div className="group relative bg-gradient-to-br from-teal-500 to-teal-600 p-6 rounded-2xl overflow-hidden hover:scale-[1.02] transition-all duration-300">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+                  <div className="relative">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl group-hover:scale-110 transition-transform">
+                        <TrendingUp className="w-6 h-6 text-white" />
+                      </div>
                     </div>
+                    <div className="text-xs font-semibold text-teal-100 uppercase tracking-wider mb-2">Total Ads</div>
+                    <div className="text-3xl font-bold text-white">{data?.pagination?.total ?? "—"}</div>
                   </div>
-                  <div className="text-xs font-semibold text-teal-100 uppercase tracking-wider mb-2">Total Ads</div>
-                  <div className="text-3xl font-bold text-white">{data?.pagination?.total ?? "—"}</div>
                 </div>
-              </div>
 
-              <div className="group relative bg-gradient-to-br from-emerald-500 to-green-600 p-6 rounded-2xl overflow-hidden hover:scale-[1.02] transition-all duration-300">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl group-hover:scale-110 transition-transform">
-                      <Star className="w-6 h-6 text-white" />
+                <div className="group relative bg-gradient-to-br from-emerald-500 to-green-600 p-6 rounded-2xl overflow-hidden hover:scale-[1.02] transition-all duration-300">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+                  <div className="relative">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl group-hover:scale-110 transition-transform">
+                        <Star className="w-6 h-6 text-white" />
+                      </div>
                     </div>
+                    <div className="text-xs font-semibold text-emerald-100 uppercase tracking-wider mb-2">Active Ads</div>
+                    <div className="text-3xl font-bold text-white">{ads.filter(a => a.status === "ACTIVE").length}</div>
                   </div>
-                  <div className="text-xs font-semibold text-emerald-100 uppercase tracking-wider mb-2">Active Ads</div>
-                  <div className="text-3xl font-bold text-white">{ads.filter(a => a.status === "ACTIVE").length}</div>
                 </div>
-              </div>
 
-              <div className="group relative bg-gradient-to-br from-orange-500 to-amber-600 p-6 rounded-2xl overflow-hidden hover:scale-[1.02] transition-all duration-300">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl group-hover:scale-110 transition-transform">
-                      <Clock className="w-6 h-6 text-white" />
+                <div className="group relative bg-gradient-to-br from-orange-500 to-amber-600 p-6 rounded-2xl overflow-hidden hover:scale-[1.02] transition-all duration-300">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+                  <div className="relative">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl group-hover:scale-110 transition-transform">
+                        <Clock className="w-6 h-6 text-white" />
+                      </div>
                     </div>
+                    <div className="text-xs font-semibold text-orange-100 uppercase tracking-wider mb-2">Drafts</div>
+                    <div className="text-3xl font-bold text-white">{ads.filter(a => a.isDraft).length}</div>
                   </div>
-                  <div className="text-xs font-semibold text-orange-100 uppercase tracking-wider mb-2">Drafts</div>
-                  <div className="text-3xl font-bold text-white">{ads.filter(a => a.isDraft).length}</div>
                 </div>
               </div>
-            </div>
             )}
 
             {/* Latest Ads */}
@@ -271,7 +272,7 @@ export default function DashboardPage() {
                                   {org.createdAt ? format(new Date(org.createdAt), "MMM d, yyyy") : "—"}
                                 </div>
                               </div>
-                              <Link 
+                              <Link
                                 href={`/dashboard/organizations/${org.id}`}
                                 className="text-teal-600 hover:text-teal-700 font-medium text-sm flex items-center gap-1"
                               >
@@ -327,48 +328,51 @@ export default function DashboardPage() {
             {/* Static Content: Recent Activity */}
             {!isAdmin && (
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 overflow-hidden hover:border-teal-200 transition-all duration-300">
-              <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-teal-50 to-emerald-50">
-                <h2 className="text-2xl font-bold text-slate-800">Recent Activity</h2>
-                <p className="text-sm text-slate-600 mt-1">Your latest interactions and updates</p>
+                <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-teal-50 to-emerald-50">
+                  <h2 className="text-2xl font-bold text-slate-800">Recent Activity</h2>
+                  <p className="text-sm text-slate-600 mt-1">Your latest interactions and updates</p>
+                </div>
+                <div className="p-6 space-y-3">
+                  <div className="group flex items-start gap-4 p-4 bg-gradient-to-r from-teal-50 to-teal-50/50 rounded-xl hover:from-teal-100 hover:to-teal-50 transition-all duration-300 border border-teal-100">
+                    <div className="p-2.5 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl group-hover:scale-110 transition-transform">
+                      <Bell className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-800 text-sm">New inquiry received</p>
+                      <p className="text-xs text-slate-600 mt-1">Someone is interested in your Toyota Camry listing</p>
+                      <p className="text-xs text-teal-600 font-medium mt-1">2 hours ago</p>
+                    </div>
+                  </div>
+                  <div className="group flex items-start gap-4 p-4 bg-gradient-to-r from-emerald-50 to-emerald-50/50 rounded-xl hover:from-emerald-100 hover:to-emerald-50 transition-all duration-300 border border-emerald-100">
+                    <div className="p-2.5 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl group-hover:scale-110 transition-transform">
+                      <Star className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-800 text-sm">Ad featured</p>
+                      <p className="text-xs text-slate-600 mt-1">Your Honda Civic is now featured on the homepage</p>
+                      <p className="text-xs text-emerald-600 font-medium mt-1">1 day ago</p>
+                    </div>
+                  </div>
+                  <div className="group flex items-start gap-4 p-4 bg-gradient-to-r from-orange-50 to-orange-50/50 rounded-xl hover:from-orange-100 hover:to-orange-50 transition-all duration-300 border border-orange-100">
+                    <div className="p-2.5 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl group-hover:scale-110 transition-transform">
+                      <Clock className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-800 text-sm">Ad expires soon</p>
+                      <p className="text-xs text-slate-600 mt-1">Your Nissan Altima listing expires in 3 days</p>
+                      <p className="text-xs text-orange-600 font-medium mt-1">2 days ago</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="p-6 space-y-3">
-                <div className="group flex items-start gap-4 p-4 bg-gradient-to-r from-teal-50 to-teal-50/50 rounded-xl hover:from-teal-100 hover:to-teal-50 transition-all duration-300 border border-teal-100">
-                  <div className="p-2.5 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl group-hover:scale-110 transition-transform">
-                    <Bell className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-slate-800 text-sm">New inquiry received</p>
-                    <p className="text-xs text-slate-600 mt-1">Someone is interested in your Toyota Camry listing</p>
-                    <p className="text-xs text-teal-600 font-medium mt-1">2 hours ago</p>
-                  </div>
-                </div>
-                <div className="group flex items-start gap-4 p-4 bg-gradient-to-r from-emerald-50 to-emerald-50/50 rounded-xl hover:from-emerald-100 hover:to-emerald-50 transition-all duration-300 border border-emerald-100">
-                  <div className="p-2.5 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl group-hover:scale-110 transition-transform">
-                    <Star className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-slate-800 text-sm">Ad featured</p>
-                    <p className="text-xs text-slate-600 mt-1">Your Honda Civic is now featured on the homepage</p>
-                    <p className="text-xs text-emerald-600 font-medium mt-1">1 day ago</p>
-                  </div>
-                </div>
-                <div className="group flex items-start gap-4 p-4 bg-gradient-to-r from-orange-50 to-orange-50/50 rounded-xl hover:from-orange-100 hover:to-orange-50 transition-all duration-300 border border-orange-100">
-                  <div className="p-2.5 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl group-hover:scale-110 transition-transform">
-                    <Clock className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-slate-800 text-sm">Ad expires soon</p>
-                    <p className="text-xs text-slate-600 mt-1">Your Nissan Altima listing expires in 3 days</p>
-                    <p className="text-xs text-orange-600 font-medium mt-1">2 days ago</p>
-                  </div>
-                </div>
-              </div>
-            </div>
             )}
           </div>
 
           {/* Sidebar */}
           <aside className="space-y-6">
+            {/* Daily Active Users - Admin Only */}
+            {isAdmin && <DailyActiveUsers />}
+
             {/* Quick Actions */}
             <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl border border-white/20 hover:border-teal-200 transition-all duration-300">
               <h3 className="text-lg font-bold text-slate-800 mb-4">Quick Actions</h3>
