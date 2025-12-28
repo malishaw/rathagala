@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { format } from "date-fns";
-import { Filter, Loader2, Search, X } from "lucide-react";
+import { Filter, Loader2, Search, X, Car, Truck, Bus, Bike } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 // Import the existing hook
@@ -1036,6 +1036,24 @@ export default function VehicleMarketplace() {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Car Animation "Perehara" - Moving from left to right */}
+        <div className="absolute bottom-1 left-0 w-full overflow-hidden pointer-events-none opacity-40 z-0">
+          <div className="flex items-end gap-12 md:gap-24 animate-drive whitespace-nowrap pb-1">
+            <Car className="w-6 h-6 md:w-9 md:h-9 text-white" />
+            <Truck className="w-8 h-8 md:w-11 md:h-11 text-white" />
+            <Car className="w-6 h-6 md:w-9 md:h-9 text-white" />
+            <Bike className="w-5 h-5 md:w-8 md:h-8 text-white" />
+            <Bus className="w-8 h-8 md:w-11 md:h-11 text-white" />
+            <Car className="w-6 h-6 md:w-9 md:h-9 text-white" />
+            <Truck className="w-8 h-8 md:w-11 md:h-11 text-white" />
+            <Bike className="w-5 h-5 md:w-8 md:h-8 text-white" />
+            <Bus className="w-8 h-8 md:w-11 md:h-11 text-white" />
+            <Car className="w-6 h-6 md:w-9 md:h-9 text-white" />
+            <Car className="w-6 h-6 md:w-9 md:h-9 text-white" />
+
           </div>
         </div>
       </section>

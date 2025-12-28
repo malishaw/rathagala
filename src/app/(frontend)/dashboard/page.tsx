@@ -64,7 +64,7 @@ export default function DashboardPage() {
             {/* Admin Stats Cards - Show for admin users */}
             {isAdmin && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-                <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 hover:shadow-xl transition-shadow duration-200">
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 transition-all duration-200">
                   <div className="flex items-center justify-between mb-4">
                     <div className="p-3 bg-blue-100 rounded-xl">
                       <TrendingUp className="w-6 h-6 text-blue-600" />
@@ -74,7 +74,7 @@ export default function DashboardPage() {
                   <div className="text-3xl font-bold text-slate-800">{data?.pagination?.total ?? "—"}</div>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 hover:shadow-xl transition-shadow duration-200">
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 transition-all duration-200">
                   <div className="flex items-center justify-between mb-4">
                     <div className="p-3 bg-green-100 rounded-xl">
                       <Star className="w-6 h-6 text-green-600" />
@@ -84,7 +84,7 @@ export default function DashboardPage() {
                   <div className="text-3xl font-bold text-slate-800">{ads.filter(a => a.status === "ACTIVE").length}</div>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 hover:shadow-xl transition-shadow duration-200">
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 transition-all duration-200">
                   <div className="flex items-center justify-between mb-4">
                     <div className="p-3 bg-yellow-100 rounded-xl">
                       <Clock className="w-6 h-6 text-yellow-600" />
@@ -94,7 +94,7 @@ export default function DashboardPage() {
                   <div className="text-3xl font-bold text-slate-800">{ads.filter(a => a.status === "PENDING_REVIEW").length}</div>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 hover:shadow-xl transition-shadow duration-200">
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 transition-all duration-200">
                   <div className="flex items-center justify-between mb-4">
                     <div className="p-3 bg-purple-100 rounded-xl">
                       <Building2 className="w-6 h-6 text-purple-600" />
@@ -104,7 +104,7 @@ export default function DashboardPage() {
                   <div className="text-3xl font-bold text-slate-800">{orgsData?.pagination?.total ?? "—"}</div>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 hover:shadow-xl transition-shadow duration-200">
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 transition-all duration-200">
                   <div className="flex items-center justify-between mb-4">
                     <div className="p-3 bg-orange-100 rounded-xl">
                       <Users className="w-6 h-6 text-orange-600" />
@@ -232,7 +232,7 @@ export default function DashboardPage() {
 
             {/* Organizations Section - Admin Only */}
             {isAdmin && (
-              <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                 <div className="p-6 border-b border-slate-200">
                   <h2 className="text-2xl font-bold text-slate-800 mb-2">Organizations</h2>
                   <p className="text-slate-600">Recent organizations</p>
@@ -300,7 +300,7 @@ export default function DashboardPage() {
 
             {/* Users Section - Admin Only */}
             {isAdmin && (
-              <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                 <div className="p-6 border-b border-slate-200">
                   <h2 className="text-2xl font-bold text-slate-800 mb-2">Users</h2>
                   <p className="text-slate-600">Recent user activity</p>
