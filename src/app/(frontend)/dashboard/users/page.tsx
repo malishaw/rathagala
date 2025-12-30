@@ -277,7 +277,7 @@ export default function UsersPage() {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           organizationId: null
         }),
       });
@@ -329,9 +329,9 @@ export default function UsersPage() {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           userId: selectedUser.id,
-          organizationId: selectedOrgId 
+          organizationId: selectedOrgId
         }),
       });
 
@@ -642,6 +642,7 @@ export default function UsersPage() {
                     <TableRow>
                       <TableHead className="w-[300px]">User</TableHead>
                       <TableHead>Role</TableHead>
+                      <TableHead>Organization</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Email Verified</TableHead>
                       <TableHead>Joined</TableHead>
@@ -678,6 +679,18 @@ export default function UsersPage() {
 
                         {/* Role */}
                         <TableCell>{getRoleBadge(user.role)}</TableCell>
+
+                        {/* Organization */}
+                        <TableCell>
+                          {user.organization ? (
+                            <Badge variant="secondary" className="font-normal bg-blue-50 text-blue-700 hover:bg-blue-50 border-blue-100 flex items-center gap-1 w-fit">
+                              <Building2 className="w-3 h-3" />
+                              {user.organization.name}
+                            </Badge>
+                          ) : (
+                            <span className="text-sm text-gray-400 italic">No Organization</span>
+                          )}
+                        </TableCell>
 
                         {/* Status */}
                         <TableCell>
@@ -1059,8 +1072,8 @@ export default function UsersPage() {
               {/* Info Note */}
               <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
                 <p className="text-sm text-blue-800">
-                  <strong>Note:</strong> {selectedUser.organization 
-                    ? "You can change the assigned organization or remove it using the Remove button above." 
+                  <strong>Note:</strong> {selectedUser.organization
+                    ? "You can change the assigned organization or remove it using the Remove button above."
                     : "This will set the user's primary organization association. Users can be members of multiple organizations through the member system."}
                 </p>
               </div>
@@ -1082,7 +1095,7 @@ export default function UsersPage() {
             <Button
               onClick={handleAssignOrganization}
               disabled={
-                !selectedOrgId || 
+                !selectedOrgId ||
                 selectedOrgId === selectedUser?.organizationId ||
                 isLoading === selectedUser?.id
               }
