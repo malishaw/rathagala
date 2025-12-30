@@ -91,13 +91,7 @@ export function VerifyEmailForm({ className, email, name }: Props) {
         //const password = sessionStorage.getItem("verifyPassword");
         
         router.push("/signin");
-        } else {
-          // No password stored, redirect to signin
-          sessionStorage.removeItem("verifyEmail");
-          sessionStorage.removeItem("verifyName");
-          sessionStorage.removeItem("setupOrganization");
-          router.push("/signin");
-        }
+        
       } else {
         const data = await response.json();
         toast.error(data.message || "Invalid verification code", { id: toastId });
