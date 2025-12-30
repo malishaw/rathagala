@@ -89,7 +89,7 @@ export function VerifyEmailForm({ className, email, name }: Props) {
         
         // Auto sign-in the user
         //const password = sessionStorage.getItem("verifyPassword");
-        
+        sessionStorage.setItem("emailJustVerified", "true");
         router.push("/signin");
         
       } else {
