@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useGetUsers } from "@/features/users/api/use-get-users";
 import { useGetOrganizations } from "@/features/organizations/api/use-get-orgs";
+import { locationData } from "@/lib/location-data";
 import {
   Card,
   CardContent,
@@ -277,7 +279,7 @@ export default function UsersPage() {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           organizationId: null
         }),
       });
@@ -329,9 +331,9 @@ export default function UsersPage() {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           userId: selectedUser.id,
-          organizationId: selectedOrgId 
+          organizationId: selectedOrgId
         }),
       });
 
@@ -1059,8 +1061,8 @@ export default function UsersPage() {
               {/* Info Note */}
               <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
                 <p className="text-sm text-blue-800">
-                  <strong>Note:</strong> {selectedUser.organization 
-                    ? "You can change the assigned organization or remove it using the Remove button above." 
+                  <strong>Note:</strong> {selectedUser.organization
+                    ? "You can change the assigned organization or remove it using the Remove button above."
                     : "This will set the user's primary organization association. Users can be members of multiple organizations through the member system."}
                 </p>
               </div>
@@ -1082,7 +1084,7 @@ export default function UsersPage() {
             <Button
               onClick={handleAssignOrganization}
               disabled={
-                !selectedOrgId || 
+                !selectedOrgId ||
                 selectedOrgId === selectedUser?.organizationId ||
                 isLoading === selectedUser?.id
               }
@@ -1221,36 +1223,87 @@ export default function UsersPage() {
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="editProvince">Province</Label>
-                    <Input
-                      id="editProvince"
+                    <Select
                       value={editData.province}
-                      onChange={(e) =>
-                        setEditData((prev) => ({ ...prev, province: e.target.value }))
+                      onValueChange={(value) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          province: value,
+                          district: "",
+                          city: "",
+                        }))
                       }
-                      placeholder="Province"
-                    />
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Province" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.keys(locationData).map((province) => (
+                          <SelectItem key={province} value={province}>
+                            {province}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="editDistrict">District</Label>
-                    <Input
-                      id="editDistrict"
+                    <Select
                       value={editData.district}
-                      onChange={(e) =>
-                        setEditData((prev) => ({ ...prev, district: e.target.value }))
+                      onValueChange={(value) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          district: value,
+                          city: "",
+                        }))
                       }
-                      placeholder="District"
-                    />
+                      disabled={!editData.province}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select District" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {editData.province && locationData[editData.province]
+                          ? Object.keys(locationData[editData.province]).map(
+                            (district) => (
+                              <SelectItem key={district} value={district}>
+                                {district}
+                              </SelectItem>
+                            )
+                          )
+                          : null}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="editCity">City</Label>
-                    <Input
-                      id="editCity"
+                    <Select
                       value={editData.city}
-                      onChange={(e) =>
-                        setEditData((prev) => ({ ...prev, city: e.target.value }))
+                      onValueChange={(value) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          city: value,
+                        }))
                       }
-                      placeholder="City"
-                    />
+                      disabled={!editData.district}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select City" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {editData.province &&
+                          editData.district &&
+                          locationData[editData.province]?.[editData.district]
+                          ? locationData[editData.province][editData.district].map(
+                            (city) => (
+                              <SelectItem key={city} value={city}>
+                                {city}
+                              </SelectItem>
+                            )
+                          )
+                          : null}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
