@@ -351,6 +351,64 @@ Need help? Contact us at support@rathagala.lk
   }
 }
 
+export async function sendAdPostedEmail({ email, name, adTitle }: { email: string; name: string; adTitle: string }) {
+  try {
+    await transporter.sendMail({
+      from: `"Rathagala Support" <${process.env.EMAIL_FROM || "support@rathagala.lk"}>`,
+      to: email,
+      subject: "Ad Posted Successfully - Pending Approval",
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background-color: #024950; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+              .content { background-color: #f9f9f9; padding: 30px; border-radius: 0 0 5px 5px; }
+              .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>Ad Posted Successfully!</h1>
+              </div>
+              <div class="content">
+                <p>Hello ${name},</p>
+                <p>Your ad "<strong>${adTitle}</strong>" has been posted successfully.</p>
+                <p>Please wait for admin approval. Once approved, your ad will be visible to everyone.</p>
+                <p>Best regards,<br>The Rathagala Team</p>
+              </div>
+              <div class="footer">
+                <p>© ${new Date().getFullYear()} Rathagala. All rights reserved.</p>
+                <p>If you have any questions, contact us at support@rathagala.lk</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+      text: `
+Hello ${name},
+
+Your ad "${adTitle}" has been posted successfully.
+Please wait for admin approval. Once approved, your ad will be visible to everyone.
+
+Best regards,
+The Rathagala Team
+
+© ${new Date().getFullYear()} Rathagala. All rights reserved.
+If you have any questions, contact us at support@rathagala.lk
+      `,
+    });
+    console.log("Ad posted email sent successfully to:", email);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send ad posted email:", error);
+    throw error;
+  }
+}
+
 // Generate a 6-digit verification code
 export function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();

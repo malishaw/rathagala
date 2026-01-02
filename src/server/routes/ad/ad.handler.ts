@@ -117,7 +117,7 @@
 //     // When filterByUser is true, show all user's ads regardless of status
 //     const userRole = (user as any)?.role;
 //     const isAdmin = userRole === "admin";
-    
+
 //     // If not admin and not filtering by user, only show ACTIVE ads
 //     // This applies to:
 //     // - Unauthenticated users (user is null/undefined, so isAdmin is false)
@@ -818,13 +818,13 @@
 //     if (adUpdates.published !== undefined)
 //       updateData.published = adUpdates.published;
 //     if (adUpdates.isDraft !== undefined) updateData.isDraft = adUpdates.isDraft;
-    
+
 //     // Update status based on published and isDraft flags
 //     // If ad is being published (isDraft=false and published=true), set to PENDING_REVIEW
 //     const willBePublished = (adUpdates.published !== undefined ? adUpdates.published : existingAd.published) && 
 //                            (adUpdates.isDraft !== undefined ? !adUpdates.isDraft : !existingAd.isDraft);
 //     const willBeDraft = adUpdates.isDraft !== undefined ? adUpdates.isDraft : existingAd.isDraft;
-    
+
 //     if (willBePublished && !willBeDraft) {
 //       // Ad is being published, set status to PENDING_REVIEW
 //       updateData.status = AdStatus.PENDING_REVIEW;
@@ -1015,7 +1015,7 @@
 //     // Verify user is the owner of the ad OR is an admin
 //     const userRole = (user as any)?.role;
 //     const isAdmin = userRole === "admin";
-    
+
 //     if (existingAd.createdBy !== user.id && !isAdmin) {
 //       return c.json(
 //         { message: "You don't have permission to delete this ad" },
@@ -1192,7 +1192,7 @@
 
 //     // Get rejection description from request body
 //     const body = c.req.valid("json");
-    
+
 //     // Update ad status to REJECTED with rejection description
 //     const updatedAd = await prisma.ad.update({
 //       where: { id: adId },
@@ -1242,6 +1242,7 @@ import {
 } from "./ad.routes";
 import { QueryParams } from "./ad.schemas";
 import { AdStatus, AdType } from "@prisma/client";
+import { sendAdPostedEmail } from "@/lib/email";
 
 
 export const list: AppRouteHandler<ListRoute> = async (c) => {
@@ -1344,7 +1345,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     // When filterByUser is true, show all user's ads regardless of status
     const userRole = (user as any)?.role;
     const isAdmin = userRole === "admin";
-    
+
     // If not admin and not filtering by user, only show ACTIVE ads
     // This applies to:
     // - Unauthenticated users (user is null/undefined, so isAdmin is false)
@@ -1420,7 +1421,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
         },
       });
       console.log("Ads query successful, found:", ads.length, "ads");
-      
+
       // Manually fetch creators for ads that have valid createdBy
       const creatorIds = Array.from(new Set(ads.map((ad: any) => ad.createdBy).filter(Boolean)));
       let creatorsById: Record<string, any> = {};
@@ -1439,7 +1440,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
           return acc;
         }, {} as Record<string, any>);
       }
-      
+
       // Attach creator to each ad
       ads = ads.map((ad: any) => ({
         ...ad,
@@ -1448,7 +1449,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     } catch (queryError) {
       console.error("Error in main query:", queryError);
       return c.json(
-        { message: "Database error while fetching ads " +queryError},
+        { message: "Database error while fetching ads " + queryError },
         HttpStatusCodes.INTERNAL_SERVER_ERROR
       );
     }
@@ -1462,7 +1463,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       mediaById = medias.reduce((acc: any, m: any) => {
         acc[m.id] = m;
         return acc;
-        }, {} as Record<string, any>);
+      }, {} as Record<string, any>);
     }
     ads = ads.map((ad: any) => ({
       ...ad,
@@ -1496,7 +1497,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
         | "AUTO_PARTS"
         | "MAINTENANCE"
         | "BOAT",
-  listingType: ((ad as any).listingType as "SELL" | "WANT" | "RENT" | "HIRE") ?? "SELL",
+      listingType: ((ad as any).listingType as "SELL" | "WANT" | "RENT" | "HIRE") ?? "SELL",
       status: ad.status as
         | "ACTIVE"
         | "EXPIRED"
@@ -1653,7 +1654,7 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
 
     const createdAd = await prisma.ad.create({
       data: {
-        orgId: session?.activeOrganizationId ||"",
+        orgId: session?.activeOrganizationId || "",
         createdBy: user.id,
         title: adDetails.title || "",
         description: adDetails.description || "",
@@ -1759,6 +1760,20 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
       metadata:
         typeof createdAd.metadata === "object" ? createdAd.metadata : null,
     };
+
+    // Send email to the user if the ad is posted (not a draft)
+    if (adStatus === AdStatus.PENDING_REVIEW && user.email) {
+      try {
+        await sendAdPostedEmail({
+          email: user.email,
+          name: user.name || "User",
+          adTitle: createdAd.title
+        });
+      } catch (emailError) {
+        console.error("Failed to send ad posted email:", emailError);
+        // We don't want to fail the ad creation if email fails
+      }
+    }
 
     return c.json(formattedAd, HttpStatusCodes.CREATED);
   } catch (error: any) {
@@ -2062,13 +2077,13 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
     if (adUpdates.published !== undefined)
       updateData.published = adUpdates.published;
     if (adUpdates.isDraft !== undefined) updateData.isDraft = adUpdates.isDraft;
-    
+
     // Update status based on published and isDraft flags
     // If ad is being published (isDraft=false and published=true), set to PENDING_REVIEW
-    const willBePublished = (adUpdates.published !== undefined ? adUpdates.published : existingAd.published) && 
-                           (adUpdates.isDraft !== undefined ? !adUpdates.isDraft : !existingAd.isDraft);
+    const willBePublished = (adUpdates.published !== undefined ? adUpdates.published : existingAd.published) &&
+      (adUpdates.isDraft !== undefined ? !adUpdates.isDraft : !existingAd.isDraft);
     const willBeDraft = adUpdates.isDraft !== undefined ? adUpdates.isDraft : existingAd.isDraft;
-    
+
     if (willBePublished && !willBeDraft) {
       // Ad is being published, set status to PENDING_REVIEW
       updateData.status = AdStatus.PENDING_REVIEW;
@@ -2259,7 +2274,7 @@ export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
     // Verify user is the owner of the ad OR is an admin
     const userRole = (user as any)?.role;
     const isAdmin = userRole === "admin";
-    
+
     if (existingAd.createdBy !== user.id && !isAdmin) {
       return c.json(
         { message: "You don't have permission to delete this ad" },
@@ -2436,7 +2451,7 @@ export const reject: AppRouteHandler<RejectRoute> = async (c) => {
 
     // Get rejection description from request body
     const body = c.req.valid("json");
-    
+
     // Update ad status to REJECTED with rejection description
     const updatedAd = await prisma.ad.update({
       where: { id: adId },

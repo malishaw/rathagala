@@ -6,47 +6,42 @@ import { ArrowRight, CarIcon, LayoutDashboard, LogOut, Menu, UserIcon, XIcon } f
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { authClient } from "@/lib/auth-client";
 
 export function Header() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [scrolled, setScrolled] = useState<boolean>(false);
+  const { data: session, isPending: isLoading } = authClient.useSession();
   const [user, setUser] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const router = useRouter();
 
   // Fetch user data
   useEffect(() => {
     const fetchUserData = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await betterFetch("/api/auth/get-session");
-        // Check if data exists, is an object, and has a user property
-        if (!error && data && typeof data === 'object' && 'user' in data && data.user) {
-          let userData = data.user;
-          
-          // If organizationId is not in session, fetch it from user endpoint
-          if (!userData.organizationId) {
-            try {
-              const userRes = await betterFetch("/api/users/me");
-              if (userRes.data && userRes.data.organizationId) {
-                userData = { ...userData, organizationId: userRes.data.organizationId };
-              }
-            } catch (error) {
-              console.error("Failed to fetch user organization:", error);
+      if (session?.user) {
+        let userData = { ...session.user };
+
+        // If organizationId is not in session, fetch it from user endpoint
+        // session.user usually has role and other added fields
+        if (!userData.organizationId) {
+          try {
+            const userRes = await betterFetch<any>("/api/users/me");
+            if (userRes.data && userRes.data.organizationId) {
+              userData = { ...userData, organizationId: userRes.data.organizationId };
             }
+          } catch (error) {
+            console.error("Failed to fetch user organization:", error);
           }
-          
-          setUser(userData);
         }
-      } catch (error) {
-        console.error("Error fetching user session:", error);
-      } finally {
-        setIsLoading(false);
+
+        setUser(userData);
+      } else {
+        setUser(null);
       }
     };
-    
+
     fetchUserData();
-  }, []);
+  }, [session]);
 
   // Add scroll event listener
   useEffect(() => {
@@ -71,12 +66,14 @@ export function Header() {
   // Handle sign out
   const handleSignOut = async () => {
     try {
-      await betterFetch("/api/auth/sign-out", {
-        method: "POST",
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            router.push("/");
+            router.refresh();
+          }
+        }
       });
-      setUser(null);
-      router.push("/");
-      router.refresh();
     } catch (error) {
       console.error("Error signing out:", error);
     }
@@ -84,16 +81,15 @@ export function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "bg-gradient-to-r from-teal-900 to-teal-800 text-white shadow-md"
-          : "bg-gradient-to-r from-teal-900 via-teal-800 to-teal-700 text-white"
-      }`}
+      className={`sticky top-0 z-50 transition-all duration-300 ${scrolled
+        ? "bg-gradient-to-r from-teal-900 to-teal-800 text-white shadow-md"
+        : "bg-gradient-to-r from-teal-900 via-teal-800 to-teal-700 text-white"
+        }`}
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between py-4">
-          <Link 
-            href="/" 
+          <Link
+            href="/"
             className="flex items-center space-x-2 hover:opacity-90 transition-opacity"
             onClick={(e) => {
               // If already on home page, force refresh
@@ -187,7 +183,7 @@ export function Header() {
             ) : user ? (
               <div className="group relative">
                 <Link href="/profile">
-                  <Button 
+                  <Button
                     variant="outline"
                     className="text-white border-white bg-teal-600/20 hover:bg-white hover:text-teal-900 transition-all duration-200 cursor-pointer flex items-center gap-1"
                   >
@@ -198,8 +194,8 @@ export function Header() {
                 {/* Dropdown appears on hover */}
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 ease-in-out transform group-hover:translate-y-0 -translate-y-2 z-50">
                   <div className="py-1">
-                    <Link 
-                      href="/profile" 
+                    <Link
+                      href="/profile"
                       className="flex items-center gap-3 px-4 py-2.5 hover:bg-teal-50 transition-colors cursor-pointer"
                     >
                       <UserIcon className="h-4 w-4 text-teal-700" />
@@ -217,8 +213,8 @@ export function Header() {
               </div>
             ) : (
               <Link href="/signin">
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   className="text-white hover:bg-teal-600/20 hover:text-white transition-colors duration-200 cursor-pointer"
                 >
                   Login
@@ -228,18 +224,18 @@ export function Header() {
 
             {user && (user.role === 'admin' || user.organizationId) && (
               <Link href="/dashboard">
-              <Button 
-                variant="outline"
-                className="text-white border-white bg-teal-600/20 hover:bg-white hover:text-teal-900 transition-colors duration-200 cursor-pointer flex items-center gap-1"
-              >
-                <LayoutDashboard className="h-4 w-4" />
-                {user.role === 'admin' ? 'Admin Dashboard' : 'Dashboard'}
-              </Button>
+                <Button
+                  variant="outline"
+                  className="text-white border-white bg-teal-600/20 hover:bg-white hover:text-teal-900 transition-colors duration-200 cursor-pointer flex items-center gap-1"
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  {user.role === 'admin' ? 'Admin Dashboard' : 'Dashboard'}
+                </Button>
               </Link>
             )}
 
             <Link href="/sell/new">
-              <Button 
+              <Button
                 className="bg-white text-teal-900 hover:bg-teal-50 hover:shadow-md font-medium transition-all duration-200 cursor-pointer"
               >
                 Post Free Ad <ArrowRight className="ml-1 h-4 w-4" />
