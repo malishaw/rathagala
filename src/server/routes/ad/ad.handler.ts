@@ -1242,7 +1242,7 @@ import {
 } from "./ad.routes";
 import { QueryParams } from "./ad.schemas";
 import { AdStatus, AdType } from "@prisma/client";
-import { sendAdPostedEmail } from "@/lib/email";
+import { sendAdPostedEmail, sendAdApprovalEmail } from "@/lib/email";
 
 
 export const list: AppRouteHandler<ListRoute> = async (c) => {
@@ -2373,9 +2373,18 @@ export const approve: AppRouteHandler<ApproveRoute> = async (c) => {
       );
     }
 
-    // Check if ad exists
+    // Check if ad exists and fetch creator data
     const existingAd = await prisma.ad.findUnique({
       where: { id: adId },
+      include: {
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
 
     if (!existingAd) {
@@ -2394,6 +2403,21 @@ export const approve: AppRouteHandler<ApproveRoute> = async (c) => {
         isDraft: false,
       },
     });
+
+    // Send approval email to the ad creator
+    try {
+      if (existingAd.creator?.email && existingAd.creator?.name) {
+        await sendAdApprovalEmail({
+          email: existingAd.creator.email,
+          name: existingAd.creator.name,
+          adTitle: existingAd.title,
+          adId: adId,
+        });
+      }
+    } catch (emailError) {
+      // Log email error but don't fail the approval
+      console.error("[APPROVE AD] Failed to send approval email:", emailError);
+    }
 
     // Format response
     const formattedAd = {

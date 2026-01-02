@@ -43,6 +43,13 @@ interface SendWelcomeEmailParams {
   name: string;
 }
 
+interface SendAdApprovalEmailParams {
+  email: string;
+  name: string;
+  adTitle: string;
+  adId: string;
+}
+
 export async function sendVerificationCode({ email, name, code }: SendVerificationCodeParams) {
   try {
     await transporter.sendMail({
@@ -405,6 +412,99 @@ If you have any questions, contact us at support@rathagala.lk
     return { success: true };
   } catch (error) {
     console.error("Failed to send ad posted email:", error);
+    throw error;
+  }
+}
+
+// Send ad approval notification
+interface SendAdApprovalEmailParams {
+  email: string;
+  name: string;
+  adTitle: string;
+  adId: string;
+}
+
+export async function sendAdApprovalEmail({ email, name, adTitle, adId }: SendAdApprovalEmailParams) {
+  try {
+    await transporter.sendMail({
+      from: `"Rathagala Support" <${process.env.EMAIL_FROM || "support@rathagala.lk"}>`,
+      to: email,
+      subject: "Your Ad has been Approved! - Rathagala",
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background-color: #024950; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+              .content { background-color: #f9f9f9; padding: 30px; border-radius: 0 0 5px 5px; }
+              .success-badge { background-color: #10b981; color: white; font-size: 16px; font-weight: bold; text-align: center; padding: 15px; border-radius: 5px; margin: 20px 0; }
+              .ad-title { background-color: #e0f2f1; padding: 15px; border-left: 4px solid #024950; margin: 20px 0; font-size: 18px; font-weight: bold; color: #024950; }
+              .cta-button { display: inline-block; background-color: #024950; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }
+              .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>🎉 Congratulations!</h1>
+              </div>
+              <div class="content">
+                <p>Hello ${name},</p>
+                <div class="success-badge">✓ Your Ad Has Been Approved</div>
+                <p>Great news! Your ad has been reviewed and approved by our admin team.</p>
+                <div class="ad-title">${adTitle}</div>
+                <p>Your ad is now live and visible to all users on Rathagala. Potential buyers can now view and contact you about your listing.</p>
+                <p style="text-align: center;">
+                  <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://rathagala.lk"}/dashboard/ads" class="cta-button">View My Ads</a>
+                </p>
+                <p><strong>What's Next?</strong></p>
+                <ul>
+                  <li>Respond promptly to inquiries from potential buyers</li>
+                  <li>Keep your ad information up to date</li>
+                  <li>Consider boosting your ad for more visibility</li>
+                </ul>
+                <p>Thank you for using Rathagala!</p>
+                <p>Best regards,<br>The Rathagala Team</p>
+              </div>
+              <div class="footer">
+                <p>© ${new Date().getFullYear()} Rathagala. All rights reserved.</p>
+                <p>If you have any questions, contact us at support@rathagala.lk</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+      text: `
+Hello ${name},
+
+🎉 Congratulations! Your Ad Has Been Approved
+
+Great news! Your ad has been reviewed and approved by our admin team.
+
+Ad Title: ${adTitle}
+
+Your ad is now live and visible to all users on Rathagala. Potential buyers can now view and contact you about your listing.
+
+What's Next?
+- Respond promptly to inquiries from potential buyers
+- Keep your ad information up to date
+- Consider boosting your ad for more visibility
+
+Thank you for using Rathagala!
+
+Best regards,
+The Rathagala Team
+
+© ${new Date().getFullYear()} Rathagala. All rights reserved.
+If you have any questions, contact us at support@rathagala.lk
+      `,
+    });
+    console.log("Ad approval email sent successfully to:", email);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send ad approval email:", error);
     throw error;
   }
 }
