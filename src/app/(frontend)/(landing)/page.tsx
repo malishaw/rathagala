@@ -64,58 +64,22 @@ const vehicleMakes = [
   "Volvo", "Yamaha"
 ];
 
-// Sri Lankan cities for dropdown (comprehensive list)
-const sriLankanCities = [
-  // Western Province
-  "Colombo", "Dehiwala", "Dehiwala-Mount Lavinia", "Mount Lavinia", "Moratuwa", "Kotte", "Sri Jayawardenepura Kotte",
-  "Negombo", "Kelaniya", "Kolonnawa", "Kaduwela", "Maharagama", "Piliyandala", "Pannipitiya",
-  "Kottawa", "Homagama", "Kesbewa", "Battaramulla", "Rajagiriya", "Nugegoda", "Boralesgamuwa",
-  "Ratmalana", "Wellampitiya", "Wattala", "Ja-Ela", "Kandana", "Seeduwa", "Katunayake",
-  "Minuwangoda", "Divulapitiya", "Gampaha", "Veyangoda", "Nittambuwa", "Attanagalla",
-  "Kalutara", "Panadura", "Horana", "Bandaragama", "Beruwala", "Aluthgama", "Wadduwa", "Matugama",
+// Sri Lankan provinces, districts, and cities data (Copied from sell page for consistency)
+// Sri Lankan provinces, districts, and cities data (Imported from shared location)
+import { locationData } from "@/lib/location-data";
 
-  // Central Province
-  "Kandy", "Peradeniya", "Katugastota", "Gampola", "Nawalapitiya", "Kadugannawa", "Kundasale",
-  "Matale", "Dambulla", "Sigiriya", "Rattota", "Ukuwela",
-  "Nuwara Eliya", "Hatton", "Talawakele", "Maskeliya", "Nanu Oya", "Talawakele-Nanuoya",
+// Flatten cities for default view and create district map
+const getAllCities = () => {
+  const cities = new Set<string>();
+  Object.values(locationData).forEach(province => {
+    Object.values(province).forEach(districtCities => {
+      districtCities.forEach(city => cities.add(city));
+    });
+  });
+  return Array.from(cities).sort();
+};
 
-  // Southern Province
-  "Galle", "Unawatuna", "Hikkaduwa", "Ambalangoda", "Balapitiya", "Bentota", "Elpitiya", "Karapitiya",
-  "Matara", "Weligama", "Mirissa", "Akuressa", "Dickwella", "Hakmana",
-  "Hambantota", "Tangalle", "Tissamaharama", "Beliatta", "Ambalantota", "Weeraketiya",
-
-  // Northern Province
-  "Jaffna", "Chavakachcheri", "Point Pedro", "Nallur", "Kopay", "Karainagar",
-  "Kilinochchi", "Paranthan", "Poonakary",
-  "Mannar", "Talaimannar",
-  "Mullaitivu", "Oddusuddan",
-  "Vavuniya", "Nedunkeni",
-
-  // Eastern Province
-  "Trincomalee", "Kinniya", "Kantale", "Muttur",
-  "Batticaloa", "Kattankudy", "Eravur", "Valaichchenai",
-  "Ampara", "Kalmunai", "Akkaraipattu", "Sammanthurai", "Pottuvil",
-
-  // North Western Province
-  "Kurunegala", "Maho", "Wariyapola", "Kuliyapitiya", "Narammala", "Pannala", "Alawwa",
-  "Puttalam", "Chilaw", "Wennappuwa", "Marawila", "Nattandiya", "Anamaduwa",
-
-  // North Central Province
-  "Anuradhapura", "Kekirawa", "Medawachchiya", "Tambuttegama", "Mihintale",
-  "Polonnaruwa", "Kaduruwela", "Hingurakgoda", "Medirigiriya",
-
-  // Uva Province
-  "Badulla", "Bandarawela", "Haputale", "Ella", "Mahiyanganaya", "Passara", "Welimada",
-  "Monaragala", "Wellawaya", "Bibile", "Buttala",
-
-  // Sabaragamuwa Province
-  "Ratnapura", "Balangoda", "Embilipitiya", "Pelmadulla", "Eheliyagoda", "Kuruwita",
-  "Kegalle", "Mawanella", "Rambukkana", "Warakapola", "Deraniyagala", "Ruwanwella",
-
-  // Additional common areas
-  "Ehetuwa", "Athurugiriya", "Malabe", "Thalawathugoda", "Nawala", "Ethul Kotte",
-  "Kiribathgoda", "Kadawatha", "Ragama", "Peliyagoda", "Hendala", "Hunupitiya"
-].sort();
+const sriLankanCities = getAllCities();
 
 // Sri Lankan districts
 const sriLankanDistricts = [
@@ -404,6 +368,23 @@ export default function VehicleMarketplace() {
     return years.filter(year => year >= minYearValue);
   }, [years, filters.minYear]);
 
+  // Derive districts and cities logic
+  const availableCities = useMemo(() => {
+    if (!filters.district || filters.district === "any") return sriLankanCities;
+
+    // Find province for district
+    let districtCities: string[] = [];
+    Object.values(locationData).forEach(province => {
+      Object.entries(province).forEach(([district, cities]) => {
+        if (district.toLowerCase() === filters.district?.toLowerCase()) {
+          districtCities = cities;
+        }
+      });
+    });
+
+    return districtCities.length > 0 ? districtCities.sort() : sriLankanCities;
+  }, [filters.district]);
+
   function FeaturedDealers() {
     const [showAllDealers, setShowAllDealers] = useState(false);
     const { data, isLoading, error } = useGetOrganizations({
@@ -626,8 +607,8 @@ export default function VehicleMarketplace() {
                   className="h-auto max-h-[90vh] rounded-t-3xl p-0 sm:max-h-[95vh] sm:rounded-2xl sm:mb-4 left-1/2 -translate-x-1/2"
                   style={{ width: '900px', maxWidth: '95vw' }}
                 >
-                  <div className="px-4 py-3">
-                    <SheetHeader className="pb-3">
+                  <div className="px-4 pt-4 pb-0">
+                    <SheetHeader className="pb-0" style={{ marginBottom: 0 }}>
                       <div className="flex items-center justify-between">
                         <SheetTitle className="text-base font-semibold">Filters</SheetTitle>
                         {hasActiveFilters && (
@@ -644,7 +625,7 @@ export default function VehicleMarketplace() {
                     </SheetHeader>
                   </div>
 
-                  <div className="px-4 pb-16 space-y-3 overflow-y-auto max-h-[calc(85vh-120px)] sm:max-h-[calc(90vh-120px)]">
+                  <div className="px-4 pb-24 space-y-2 overflow-y-auto max-h-[calc(85vh-120px)] sm:max-h-[calc(90vh-120px)]">
                     {/* Vehicle Type, Make & Condition */}
                     <div className="grid grid-cols-3 gap-2">
                       <div>
@@ -758,7 +739,7 @@ export default function VehicleMarketplace() {
                               />
                             </div>
                             <SelectItem value="any">Any</SelectItem>
-                            {sriLankanCities
+                            {availableCities
                               .filter((c) =>
                                 cityQuery.trim()
                                   ? c.toLowerCase().includes(cityQuery.toLowerCase())
@@ -934,7 +915,7 @@ export default function VehicleMarketplace() {
                         setShowFilterSheet(false);
                       }}
                     >
-                      Show Results
+                      Search
                     </Button>
                   </div>
                 </SheetContent>
@@ -989,12 +970,57 @@ export default function VehicleMarketplace() {
                 {(activeFilters.minPrice || activeFilters.maxPrice) && (
                   <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/90 backdrop-blur-sm rounded-full border border-white/50 text-sm shadow-sm">
                     <span className="text-slate-700">
-                      Rs. {activeFilters.minPrice || '0'} - {activeFilters.maxPrice || '∞'}
+                      Rs. {activeFilters.minPrice ? parseInt(activeFilters.minPrice).toLocaleString() : '0'} - {activeFilters.maxPrice ? parseInt(activeFilters.maxPrice).toLocaleString() : '50M+'}
                     </span>
                     <button
                       onClick={() => {
                         handleFilterChange("minPrice", null);
                         handleFilterChange("maxPrice", null);
+                        applyFilters();
+                      }}
+                      className="text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+                {activeFilters.fuelType && activeFilters.fuelType !== 'any' && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/90 backdrop-blur-sm rounded-full border border-white/50 text-sm shadow-sm">
+                    <span className="text-slate-700 capitalize">{activeFilters.fuelType}</span>
+                    <button
+                      onClick={() => {
+                        handleFilterChange("fuelType", null);
+                        applyFilters();
+                      }}
+                      className="text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+                {activeFilters.transmission && activeFilters.transmission !== 'any' && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/90 backdrop-blur-sm rounded-full border border-white/50 text-sm shadow-sm">
+                    <span className="text-slate-700 capitalize">{activeFilters.transmission}</span>
+                    <button
+                      onClick={() => {
+                        handleFilterChange("transmission", null);
+                        applyFilters();
+                      }}
+                      className="text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+                {(activeFilters.minYear || activeFilters.maxYear) && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/90 backdrop-blur-sm rounded-full border border-white/50 text-sm shadow-sm">
+                    <span className="text-slate-700">
+                      Year: {activeFilters.minYear || 'Any'} - {activeFilters.maxYear || 'Any'}
+                    </span>
+                    <button
+                      onClick={() => {
+                        handleFilterChange("minYear", null);
+                        handleFilterChange("maxYear", null);
                         applyFilters();
                       }}
                       className="text-slate-400 hover:text-slate-600"
@@ -1225,6 +1251,7 @@ export default function VehicleMarketplace() {
               {/* Google Ad Space 1 */}
               <Card className="p-4 bg-white border border-slate-100 rounded-xl overflow-hidden shadow-none">
                 <div className="text-center text-slate-500">
+
                   <div className="bg-slate-100 h-64 flex items-center justify-center rounded-lg overflow-hidden">
                     <img
                       src="/assets/Sidebar 01 new.jpg"
@@ -1241,15 +1268,14 @@ export default function VehicleMarketplace() {
               {/* Google Ad Space 2 */}
               <Card className="p-4 bg-white border border-slate-100 rounded-xl overflow-hidden shadow-none">
                 <div className="text-center text-slate-500">
-                  <Link href="/comparison" className="block">
-                    <div className="bg-slate-100 h-48 flex items-center justify-center rounded-lg overflow-hidden">
-                      <img
-                        src="/assets/Sidebar 02.jpg"
-                        alt="Compare Vehicles"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </Link>
+
+                  <div className="bg-slate-100 h-48 flex items-center justify-center rounded-lg overflow-hidden">
+                    <img
+                      src="/assets/Sidebar 02.jpg"
+                      alt="Advertisement"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                 </div>
               </Card>
             </div>

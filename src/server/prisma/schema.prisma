@@ -289,7 +289,7 @@ model Ad {
   orgId          String
   org            Organization @relation(fields: [orgId], references: [id])
   createdBy      String
-  creator        User         @relation("AdCreatedBy", fields: [createdBy], references: [id])
+  creator        User?        @relation("AdCreatedBy", fields: [createdBy], references: [id])
 
   // Basic Info - Common to all types
   title          String

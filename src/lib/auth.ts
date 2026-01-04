@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { prismaAdapter } from "better-auth/adapters/prisma";
-import { PrismaClient } from "@prisma/client";
+import { mongodbAdapter } from "better-auth/adapters/mongodb";
+import { MongoClient } from "mongodb";
 import { betterAuth } from "better-auth";
 import {
   organization,
@@ -12,7 +12,8 @@ import {
 import { ac, admin, member, owner } from "./permissions";
 import nodemailer from "nodemailer";
 
-const prisma = new PrismaClient();
+const client = new MongoClient(process.env.DATABASE_URL!);
+const db = client.db();
 
 // Create email transporter
 const transporter = nodemailer.createTransport({
@@ -26,13 +27,12 @@ const transporter = nodemailer.createTransport({
 });
 
 export const auth = betterAuth({
-  database: prismaAdapter(prisma, {
-    provider: "mongodb"
-  }),
+  database: mongodbAdapter(db),
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
-    sendVerificationEmail: async ({ user, url }) => {
+    sendVerificationEmail: async (data: any) => {
+      const { user, url } = data;
       // We handle verification via our custom code system
       // This function is required by Better Auth but we don't use the link-based verification
       console.log("Email verification required for:", user.email);
