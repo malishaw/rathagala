@@ -408,7 +408,7 @@ export default function SearchPage() {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left Sidebar - Search Filters */}
           <div className="w-full lg:w-80 space-y-6">
-            <Card className="p-6">
+            <Card className="p-4 lg:p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
                   <Filter className="h-5 w-5" />
@@ -426,7 +426,7 @@ export default function SearchPage() {
                 )}
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {/* Search Query */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -441,6 +441,48 @@ export default function SearchPage() {
                       className="pl-10"
                     />
                   </div>
+                </div>
+
+                {/* District */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    District
+                  </label>
+                  <Select
+                    value={filters.district}
+                    onValueChange={(value) => handleFilterChange('district', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="All districts" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All districts</SelectItem>
+                      {sriLankanDistricts.map((district) => (
+                        <SelectItem key={district} value={district}>{district}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* City (Dependent) */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    City
+                  </label>
+                  <Select
+                    value={filters.city}
+                    onValueChange={(value) => handleFilterChange('city', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="All cities" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      <SelectItem value="all">All cities</SelectItem>
+                      {availableCities.map((city) => (
+                        <SelectItem key={city} value={city}>{city}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Listing Type */}
@@ -489,7 +531,7 @@ export default function SearchPage() {
                 {/* Brand */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Brand
+                    Manufacture
                   </label>
                   <Select
                     value={filters.brand}
@@ -510,7 +552,7 @@ export default function SearchPage() {
                 {/* Model */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Model
+                    Vehicle Model
                   </label>
                   <Input
                     placeholder="Enter model"
@@ -643,48 +685,6 @@ export default function SearchPage() {
                       <SelectItem value="MANUAL">Manual</SelectItem>
                       <SelectItem value="AUTOMATIC">Automatic</SelectItem>
                       <SelectItem value="CVT">CVT</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* District */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    District
-                  </label>
-                  <Select
-                    value={filters.district}
-                    onValueChange={(value) => handleFilterChange('district', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="All districts" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All districts</SelectItem>
-                      {sriLankanDistricts.map((district) => (
-                        <SelectItem key={district} value={district}>{district}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* City (Dependent) */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    City
-                  </label>
-                  <Select
-                    value={filters.city}
-                    onValueChange={(value) => handleFilterChange('city', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="All cities" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[300px]">
-                      <SelectItem value="all">All cities</SelectItem>
-                      {availableCities.map((city) => (
-                        <SelectItem key={city} value={city}>{city}</SelectItem>
-                      ))}
                     </SelectContent>
                   </Select>
                 </div>
