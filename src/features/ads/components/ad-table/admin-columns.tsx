@@ -155,6 +155,19 @@ export const adminColumns: ColumnDef<AdType>[] = [
     }
   },
   {
+    accessorKey: "phoneNumber",
+    header: "Phone Number",
+    cell: ({ row }) => {
+      const phone = (row.original as any).phoneNumber;
+      if (!phone) return <span className="text-muted-foreground text-sm">—</span>;
+      return (
+        <a href={`tel:${phone}`} className="text-sm text-teal-700 hover:underline">
+          {phone}
+        </a>
+      );
+    }
+  },
+  {
     accessorKey: "createdAt",
     header: "Created At",
     cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString()
