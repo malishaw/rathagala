@@ -146,6 +146,7 @@ interface FilterState {
 export default function VehicleMarketplace() {
   const [cityQuery, setCityQuery] = useState("");
   const [showFilterSheet, setShowFilterSheet] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Initialize filter state (pending filters)
   const [filters, setFilters] = useState<FilterState>({
@@ -192,7 +193,7 @@ export default function VehicleMarketplace() {
   const { data, isLoading, error } = useGetAds({
     page: currentPage,
     limit: 8, // Show 8 items initially for better grid layout
-    search: activeFilters.model || "", // Pass search query to backend (empty string if null)
+    search: searchQuery || "", // Pass general search query to backend
   });
 
   // Accumulate ads when new data arrives
@@ -215,11 +216,11 @@ export default function VehicleMarketplace() {
     }
   }, [data, currentPage]);
 
-  // Reset pagination when filters change
+  // Reset pagination when filters or search change
   useEffect(() => {
     setCurrentPage(1);
     // Don't clear allAds here - let the data fetch update it
-  }, [activeFilters]);
+  }, [activeFilters, searchQuery]);
 
   // Handle load more
   const handleLoadMore = () => {
@@ -247,8 +248,10 @@ export default function VehicleMarketplace() {
       }
 
       // Model filter (case insensitive partial match)
+      // Only apply if using specific model filter, not general search
       if (
         activeFilters.model &&
+        !searchQuery && // Don't apply model filter when using general search
         !ad.model?.toLowerCase().includes(activeFilters.model.toLowerCase())
       ) {
         return false;
@@ -380,6 +383,7 @@ export default function VehicleMarketplace() {
 
     setFilters(emptyFilters);
     setActiveFilters(emptyFilters);
+    setSearchQuery(""); // Also clear search query
   };
 
   // Format price for display
@@ -570,24 +574,21 @@ export default function VehicleMarketplace() {
                 <Input
                   placeholder="Search by make, model, or city..."
                   className="w-full h-14 pl-12 pr-14 rounded-xl border-slate-200 bg-white shadow-md text-base"
-                  value={filters.model || ""}
+                  value={searchQuery}
                   onChange={(e) => {
-                    const value = e.target.value || null;
-                    handleFilterChange("model", value);
+                    setSearchQuery(e.target.value);
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
-                      applyFilters();
+                      // Search happens automatically via useEffect
                     }
                   }}
                 />
                 {/* Show clear button when there's text */}
-                {filters.model && (
+                {searchQuery && (
                   <button
                     onClick={() => {
-                      handleFilterChange("model", null);
-                      // Clear active filter and apply immediately
-                      setActiveFilters(prev => ({ ...prev, model: null }));
+                      setSearchQuery("");
                     }}
                     className="absolute right-14 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                   >
@@ -595,7 +596,6 @@ export default function VehicleMarketplace() {
                   </button>
                 )}
                 <Button
-                  onClick={applyFilters}
                   disabled={isLoading}
                   className="absolute right-1 top-1/2 -translate-y-1/2 h-11 w-11 p-0 bg-teal-700 hover:bg-teal-600 rounded-lg"
                 >
