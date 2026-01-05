@@ -10,9 +10,15 @@ interface FilterParams {
   minPrice?: number;
   maxPrice?: number;
   location?: string;
+  brand?: string | null;
+  model?: string | null;
 }
 
-export const useGetAds = (params: FilterParams) => {
+interface QueryOptions {
+  enabled?: boolean;
+}
+
+export const useGetAds = (params: FilterParams, options?: QueryOptions) => {
   const {
     page = 1,
     limit = 10,
@@ -21,10 +27,12 @@ export const useGetAds = (params: FilterParams) => {
     minPrice,
     maxPrice,
     location,
+    brand,
+    model,
   } = params;
 
   const query = useQuery({
-    queryKey: ["ads", { page, limit, search, listingType, minPrice, maxPrice, location }],
+    queryKey: ["ads", { page, limit, search, listingType, minPrice, maxPrice, location, brand, model }],
     queryFn: async () => {
       const queryParams = {
         page: page.toString(),
@@ -34,6 +42,8 @@ export const useGetAds = (params: FilterParams) => {
         ...(minPrice !== undefined && { minPrice: minPrice.toString() }),
         ...(maxPrice !== undefined && { maxPrice: maxPrice.toString() }),
         ...(location && { location }),
+        ...(brand && { brand }),
+        ...(model && { model }),
       };
 
       const response = await client.api.ad.$get({
@@ -50,6 +60,7 @@ export const useGetAds = (params: FilterParams) => {
 
       return data;
     },
+    enabled: options?.enabled ?? true,
   });
 
   return query;

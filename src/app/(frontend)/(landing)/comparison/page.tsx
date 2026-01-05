@@ -26,12 +26,23 @@ import {
   Gauge,
   MapPin,
   Sparkles,
+  TrendingUp,
   X,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 export default function ComparisonPage() {
   const router = useRouter();
@@ -42,6 +53,8 @@ export default function ComparisonPage() {
   const [search2, setSearch2] = useState("");
   const [open1, setOpen1] = useState(false);
   const [open2, setOpen2] = useState(false);
+  const [startYear, setStartYear] = useState<string>("");
+  const [endYear, setEndYear] = useState<string>("");
 
   // Initialize vehicle1Id from URL parameter if present
   useEffect(() => {
@@ -76,6 +89,32 @@ export default function ComparisonPage() {
   // Get vehicles list from search results
   const vehicles1 = searchData1?.ads || [];
   const vehicles2 = searchData2?.ads || [];
+
+  // Calculate price trends by year using createdAt
+  const priceTrendData = useMemo(() => {
+    if (!vehicle1 || !vehicle2 || !startYear || !endYear) return [];
+
+    const start = parseInt(startYear);
+    const end = parseInt(endYear);
+
+    if (isNaN(start) || isNaN(end) || start > end) return [];
+
+    // Get the year each vehicle was posted
+    const vehicle1Year = vehicle1.createdAt ? new Date(vehicle1.createdAt).getFullYear() : null;
+    const vehicle2Year = vehicle2.createdAt ? new Date(vehicle2.createdAt).getFullYear() : null;
+
+    // Create data points for all years in range
+    const dataPoints = [];
+    for (let year = start; year <= end; year++) {
+      dataPoints.push({
+        year: year.toString(),
+        vehicle1: (vehicle1Year === year && vehicle1.price) ? vehicle1.price : null,
+        vehicle2: (vehicle2Year === year && vehicle2.price) ? vehicle2.price : null,
+      });
+    }
+
+    return dataPoints;
+  }, [vehicle1, vehicle2, startYear, endYear]);
 
   const formatPrice = (price: number | null | undefined) => {
     if (!price) return "Price upon request";
@@ -639,6 +678,165 @@ export default function ComparisonPage() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Price Trend Analysis */}
+            <Card>
+              <CardHeader className="bg-gradient-to-r from-[#024950] to-teal-700 text-white">
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  <TrendingUp className="w-6 h-6" />
+                  Price Trend Analysis
+                </CardTitle>
+                <p className="text-sm text-teal-100 mt-2">
+                  Price comparison based on when each selected vehicle was posted
+                </p>
+              </CardHeader>
+              <CardContent className="pt-6">
+                {/* Year Range Selection */}
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <h4 className="font-semibold text-gray-700 mb-4">Select Year Range</h4>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Start Year
+                      </label>
+                      <Input
+                        type="number"
+                        placeholder="e.g., 2020"
+                        value={startYear}
+                        onChange={(e) => setStartYear(e.target.value)}
+                        className="w-full"
+                        min="2000"
+                        max={new Date().getFullYear()}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        End Year
+                      </label>
+                      <Input
+                        type="number"
+                        placeholder="e.g., 2025"
+                        value={endYear}
+                        onChange={(e) => setEndYear(e.target.value)}
+                        className="w-full"
+                        min="2000"
+                        max={new Date().getFullYear()}
+                      />
+                    </div>
+                  </div>
+                  {startYear && endYear && parseInt(startYear) > parseInt(endYear) && (
+                    <p className="text-sm text-red-600 mt-2">
+                      Start year must be less than or equal to end year
+                    </p>
+                  )}
+                </div>
+
+                {/* Chart */}
+                {priceTrendData.length > 0 ? (
+                  <>
+                    <ResponsiveContainer width="100%" height={400}>
+                      <LineChart data={priceTrendData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                        <XAxis
+                          dataKey="year"
+                          stroke="#666"
+                          style={{ fontSize: "12px" }}
+                          label={{ value: "Year Posted", position: "insideBottom", offset: -5 }}
+                        />
+                        <YAxis
+                          stroke="#666"
+                          style={{ fontSize: "12px" }}
+                          tickFormatter={(value) =>
+                            value >= 1000000
+                              ? `Rs. ${(value / 1000000).toFixed(1)}M`
+                              : `Rs. ${(value / 1000).toFixed(0)}K`
+                          }
+                          label={{ value: "Average Price", angle: -90, position: "insideLeft" }}
+                        />
+                        <Tooltip
+                          formatter={(value: any) => [
+                            formatPrice(value),
+                            "Avg Price",
+                          ]}
+                          contentStyle={{
+                            backgroundColor: "rgba(255, 255, 255, 0.95)",
+                            border: "1px solid #024950",
+                            borderRadius: "8px",
+                            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                          }}
+                        />
+                        <Legend
+                          wrapperStyle={{
+                            paddingTop: "20px",
+                          }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="vehicle1"
+                          stroke="#024950"
+                          strokeWidth={3}
+                          name={`${vehicle1?.brand} ${vehicle1?.model}`}
+                          dot={{ fill: "#024950", r: 5 }}
+                          activeDot={{ r: 7 }}
+                          connectNulls
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="vehicle2"
+                          stroke="#f59e0b"
+                          strokeWidth={3}
+                          name={`${vehicle2?.brand} ${vehicle2?.model}`}
+                          dot={{ fill: "#f59e0b", r: 5 }}
+                          activeDot={{ r: 7 }}
+                          connectNulls
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+
+                    {/* Statistics */}
+                    <div className="mt-6 grid md:grid-cols-2 gap-4">
+                      <div className="p-4 bg-[#024950]/5 rounded-lg border border-[#024950]/20">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-4 h-4 bg-[#024950] rounded"></div>
+                          <span className="font-semibold text-[#024950]">
+                            {vehicle1?.brand} {vehicle1?.model}
+                          </span>
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          Posted: {vehicle1?.createdAt ? new Date(vehicle1.createdAt).toLocaleDateString() : 'N/A'}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          Price: {formatPrice(vehicle1?.price)}
+                        </div>
+                      </div>
+                      <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-4 h-4 bg-amber-500 rounded"></div>
+                          <span className="font-semibold text-amber-700">
+                            {vehicle2?.brand} {vehicle2?.model}
+                          </span>
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          Posted: {vehicle2?.createdAt ? new Date(vehicle2.createdAt).toLocaleDateString() : 'N/A'}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          Price: {formatPrice(vehicle2?.price)}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-12 bg-gray-50 rounded-lg">
+                    <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-600">
+                      {!startYear || !endYear
+                        ? "Please select a year range to view price trends"
+                        : "No data available for the selected year range"}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Summary Card */}
             <Card className="bg-gradient-to-r from-blue-50 to-teal-50 border-2 border-blue-200">
