@@ -1340,6 +1340,23 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       andFilters.push({ listingType: listingTypeValue });
     }
 
+    // Filter by brand and model if provided (use case-insensitive exact match)
+    const rawBrand = query.brand ?? null;
+    const rawModel = query.model ?? null;
+
+    const brand = typeof rawBrand === "string" ? rawBrand.trim() : null;
+    const model = typeof rawModel === "string" ? rawModel.trim() : null;
+
+    if (brand) {
+      console.log("Filtering by brand (trimmed):", brand);
+      andFilters.push({ brand: { equals: brand, mode: "insensitive" } });
+    }
+
+    if (model) {
+      console.log("Filtering by model (trimmed):", model);
+      andFilters.push({ model: { equals: model, mode: "insensitive" } });
+    }
+
     // Filter by status: only show ACTIVE ads for public listings (unless admin is viewing or filtering by user)
     // Admin can see all ads, regular users and unauthenticated users only see ACTIVE ads in public listings
     // When filterByUser is true, show all user's ads regardless of status

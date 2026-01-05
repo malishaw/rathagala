@@ -12,7 +12,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Input } from "@/components/ui/input";
+// Input component not needed here (year select used)
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
@@ -53,8 +53,7 @@ export default function ComparisonPage() {
   const [search2, setSearch2] = useState("");
   const [open1, setOpen1] = useState(false);
   const [open2, setOpen2] = useState(false);
-  const [startYear, setStartYear] = useState<string>("");
-  const [endYear, setEndYear] = useState<string>("");
+  const [selectedYear, setSelectedYear] = useState<string>("");
 
   // Initialize vehicle1Id from URL parameter if present
   useEffect(() => {
@@ -86,35 +85,166 @@ export default function ComparisonPage() {
     adId: vehicle2Id || "",
   });
 
+  // Fetch all vehicles for price trend analysis with brand and model filters
+  // Only fetch when we have valid brand and model data
+  const shouldFetchVehicle1Data = !!(vehicle1?.brand && vehicle1?.model);
+  const shouldFetchVehicle2Data = !!(vehicle2?.brand && vehicle2?.model);
+
+  const { data: allVehiclesData1 } = useGetAds(
+    {
+      page: 1,
+      limit: 1000,
+      brand: vehicle1?.brand || null,
+      model: vehicle1?.model || null,
+    },
+    { enabled: shouldFetchVehicle1Data }
+  );
+
+  const { data: allVehiclesData2 } = useGetAds(
+    {
+      page: 1,
+      limit: 1000,
+      brand: vehicle2?.brand || null,
+      model: vehicle2?.model || null,
+    },
+    { enabled: shouldFetchVehicle2Data }
+  );
+
+  // Debug logging
+  useEffect(() => {
+    if (allVehiclesData1?.ads) {
+      console.log('Vehicle 1 Data:', {
+        brand: vehicle1?.brand,
+        model: vehicle1?.model,
+        count: allVehiclesData1.ads.length,
+        sample: allVehiclesData1.ads.slice(0, 3).map((ad: any) => ({ brand: ad.brand, model: ad.model }))
+      });
+    }
+  }, [allVehiclesData1, vehicle1]);
+
+  useEffect(() => {
+    if (allVehiclesData2?.ads) {
+      console.log('Vehicle 2 Data:', {
+        brand: vehicle2?.brand,
+        model: vehicle2?.model,
+        count: allVehiclesData2.ads.length,
+        sample: allVehiclesData2.ads.slice(0, 3).map((ad: any) => ({ brand: ad.brand, model: ad.model }))
+      });
+    }
+  }, [allVehiclesData2, vehicle2]);
+
   // Get vehicles list from search results
   const vehicles1 = searchData1?.ads || [];
   const vehicles2 = searchData2?.ads || [];
 
+  const availableYears = useMemo(() => {
+    const s = new Set<number>();
+    const pushYears = (ads: any[] = []) => {
+      ads.forEach((ad) => {
+        if (ad?.createdAt) s.add(new Date(ad.createdAt).getFullYear());
+      });
+    };
+    pushYears(allVehiclesData1?.ads || []);
+    pushYears(allVehiclesData2?.ads || []);
+    return Array.from(s).sort((a, b) => b - a);
+  }, [allVehiclesData1, allVehiclesData2]);
+
   // Calculate price trends by year using createdAt
   const priceTrendData = useMemo(() => {
-    if (!vehicle1 || !vehicle2 || !startYear || !endYear) return [];
+    // Require at least one dataset to compute trends
+    if (!allVehiclesData1?.ads && !allVehiclesData2?.ads) return [];
 
-    const start = parseInt(startYear);
-    const end = parseInt(endYear);
+    // Helper to extract months (YYYYMM as number) from ads
+    const extractMonths = (ads: any[] = []) => {
+      return ads
+        .map((ad) => {
+          if (!ad?.createdAt) return null;
+          const d = new Date(ad.createdAt);
+          return d.getFullYear() * 100 + (d.getMonth() + 1);
+        })
+        .filter((m) => typeof m === "number") as number[];
+    };
 
-    if (isNaN(start) || isNaN(end) || start > end) return [];
+    // Determine overall start/end months: use user input years if provided, otherwise derive from data
+    let startMonth: number | null = null;
+    let endMonth: number | null = null;
 
-    // Get the year each vehicle was posted
-    const vehicle1Year = vehicle1.createdAt ? new Date(vehicle1.createdAt).getFullYear() : null;
-    const vehicle2Year = vehicle2.createdAt ? new Date(vehicle2.createdAt).getFullYear() : null;
+    if (selectedYear) {
+      const s = parseInt(selectedYear);
+      if (isNaN(s)) return [];
+      startMonth = s * 100 + 1; // Jan of selected year
+      endMonth = s * 100 + 12; // Dec of selected year
+    } else {
+      const months1 = extractMonths(allVehiclesData1?.ads || []);
+      const months2 = extractMonths(allVehiclesData2?.ads || []);
+      const allMonths = [...months1, ...months2];
+      if (allMonths.length === 0) return [];
+      startMonth = Math.min(...allMonths);
+      endMonth = Math.max(...allMonths);
+    }
 
-    // Create data points for all years in range
-    const dataPoints = [];
-    for (let year = start; year <= end; year++) {
-      dataPoints.push({
-        year: year.toString(),
-        vehicle1: (vehicle1Year === year && vehicle1.price) ? vehicle1.price : null,
-        vehicle2: (vehicle2Year === year && vehicle2.price) ? vehicle2.price : null,
+    const monthToDate = (ym: number) => {
+      const y = Math.floor(ym / 100);
+      const m = ym % 100;
+      return new Date(y, m - 1, 1);
+    };
+
+    const formatMonthLabel = (ym: number) => {
+      return new Intl.DateTimeFormat("en-US", { month: "short", year: "numeric" }).format(monthToDate(ym));
+    };
+
+    const incrementMonth = (ym: number) => {
+      let y = Math.floor(ym / 100);
+      let m = ym % 100;
+      if (m === 12) {
+        y += 1;
+        m = 1;
+      } else {
+        m += 1;
+      }
+      return y * 100 + m;
+    };
+
+    const calculateMonthlyAverages = (ads: any[]) => {
+      const monthMap = new Map<number, { total: number; count: number }>();
+
+      ads.forEach((ad: any) => {
+        const price = ad.price === null || ad.price === undefined ? NaN : Number(ad.price);
+        if (Number.isNaN(price) || !ad.createdAt) return;
+        const d = new Date(ad.createdAt);
+        const ym = d.getFullYear() * 100 + (d.getMonth() + 1);
+        if (ym < (startMonth as number) || ym > (endMonth as number)) return;
+
+        const existing = monthMap.get(ym) || { total: 0, count: 0 };
+        monthMap.set(ym, { total: existing.total + price, count: existing.count + 1 });
       });
+
+      const averages = new Map<number, number>();
+      monthMap.forEach((value, month) => {
+        averages.set(month, value.total / value.count);
+      });
+
+      return averages;
+    };
+
+    const averages1 = calculateMonthlyAverages(allVehiclesData1?.ads || []);
+    const averages2 = calculateMonthlyAverages(allVehiclesData2?.ads || []);
+
+    // Create data points for all months in range
+    const dataPoints: any[] = [];
+    let cur = startMonth as number;
+    while (cur <= (endMonth as number)) {
+      dataPoints.push({
+        month: formatMonthLabel(cur),
+        monthNum: cur,
+        vehicle1: averages1.get(cur) || null,
+        vehicle2: averages2.get(cur) || null,
+      });
+      cur = incrementMonth(cur);
     }
 
     return dataPoints;
-  }, [vehicle1, vehicle2, startYear, endYear]);
+  }, [allVehiclesData1, allVehiclesData2, selectedYear]);
 
   const formatPrice = (price: number | null | undefined) => {
     if (!price) return "Price upon request";
@@ -687,48 +817,28 @@ export default function ComparisonPage() {
                   Price Trend Analysis
                 </CardTitle>
                 <p className="text-sm text-teal-100 mt-2">
-                  Price comparison based on when each selected vehicle was posted
+                  Average prices over time based on when ads were posted (createdAt)
                 </p>
               </CardHeader>
               <CardContent className="pt-6">
-                {/* Year Range Selection */}
+                {/* Year Selection */}
                 <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <h4 className="font-semibold text-gray-700 mb-4">Select Year Range</h4>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Start Year
-                      </label>
-                      <Input
-                        type="number"
-                        placeholder="e.g., 2020"
-                        value={startYear}
-                        onChange={(e) => setStartYear(e.target.value)}
-                        className="w-full"
-                        min="2000"
-                        max={new Date().getFullYear()}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        End Year
-                      </label>
-                      <Input
-                        type="number"
-                        placeholder="e.g., 2025"
-                        value={endYear}
-                        onChange={(e) => setEndYear(e.target.value)}
-                        className="w-full"
-                        min="2000"
-                        max={new Date().getFullYear()}
-                      />
-                    </div>
+                  <h4 className="font-semibold text-gray-700 mb-4">Select Year</h4>
+                  <div className="max-w-sm">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Year</label>
+                    <select
+                      className="w-full border rounded p-2"
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(e.target.value)}
+                    >
+                      <option value="">-- Auto (All Years) --</option>
+                      {availableYears.map((y) => (
+                        <option key={y} value={String(y)}>
+                          {y}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                  {startYear && endYear && parseInt(startYear) > parseInt(endYear) && (
-                    <p className="text-sm text-red-600 mt-2">
-                      Start year must be less than or equal to end year
-                    </p>
-                  )}
                 </div>
 
                 {/* Chart */}
@@ -738,10 +848,10 @@ export default function ComparisonPage() {
                       <LineChart data={priceTrendData}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                         <XAxis
-                          dataKey="year"
+                          dataKey="month"
                           stroke="#666"
                           style={{ fontSize: "12px" }}
-                          label={{ value: "Year Posted", position: "insideBottom", offset: -5 }}
+                          label={{ value: "Posted (Month)", position: "insideBottom", offset: -5 }}
                         />
                         <YAxis
                           stroke="#666"
@@ -803,10 +913,10 @@ export default function ComparisonPage() {
                           </span>
                         </div>
                         <div className="text-sm text-gray-600">
-                          Posted: {vehicle1?.createdAt ? new Date(vehicle1.createdAt).toLocaleDateString() : 'N/A'}
+                          Data points: {priceTrendData.filter((d) => d.vehicle1).length} months
                         </div>
                         <div className="text-sm text-gray-600">
-                          Price: {formatPrice(vehicle1?.price)}
+                          Total listings analyzed: {allVehiclesData1?.ads?.length || 0}
                         </div>
                       </div>
                       <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
@@ -817,10 +927,10 @@ export default function ComparisonPage() {
                           </span>
                         </div>
                         <div className="text-sm text-gray-600">
-                          Posted: {vehicle2?.createdAt ? new Date(vehicle2.createdAt).toLocaleDateString() : 'N/A'}
+                          Data points: {priceTrendData.filter((d) => d.vehicle2).length} months
                         </div>
                         <div className="text-sm text-gray-600">
-                          Price: {formatPrice(vehicle2?.price)}
+                          Total listings analyzed: {allVehiclesData2?.ads?.length || 0}
                         </div>
                       </div>
                     </div>
@@ -829,9 +939,9 @@ export default function ComparisonPage() {
                   <div className="text-center py-12 bg-gray-50 rounded-lg">
                     <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                     <p className="text-gray-600">
-                      {!startYear || !endYear
-                        ? "Please select a year range to view price trends"
-                        : "No data available for the selected year range"}
+                      {!selectedYear
+                        ? "Please select a year to view monthly trends"
+                        : "No data available for the selected year"}
                     </p>
                   </div>
                 )}
