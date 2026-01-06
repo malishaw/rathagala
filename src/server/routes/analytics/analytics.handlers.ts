@@ -222,12 +222,10 @@ export const getAdAdvancedSummary = async (c: any) => {
           whereClause["type"] = type;
         }
 
-        // For enum fields, always filter out nulls to avoid serialization errors
-        if (field === "type" || field === "listingType") {
-          if (!whereClause[field]) {
-            whereClause[field] = { not: null };
-          }
-        } else if (field !== "type" && field !== "listingType") {
+        // For enum fields:
+        // type and listingType are required in schema, so no need to filter nulls (and doing so with { not: null } causes validation error).
+        // For other optional fields (brand, model, etc.), we filter nulls.
+        if (field !== "type" && field !== "listingType") {
           whereClause[field] = { not: null };
         }
 

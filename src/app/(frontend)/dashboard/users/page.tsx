@@ -66,8 +66,13 @@ import {
   Loader2,
   Pencil,
   Building2,
+  FileSpreadsheet,
 } from "lucide-react";
 import { toast } from "sonner";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
+import { client } from "@/lib/rpc";
 
 interface User {
   id: string;
@@ -543,14 +548,84 @@ export default function UsersPage() {
     });
   };
 
+  // ... existing code
+
+  // Handle Excel Export
+  const handleExportExcel = async () => {
+    try {
+      toast.info("Generating Excel report...", { description: "Fetching all users..." });
+
+      const response = await client.api.users.$get({
+        query: {
+          page: "1",
+          limit: "10000", // Fetch large number to get all
+          search: searchInput // Respect current search filter
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch users data");
+      }
+
+      const reportData = await response.json();
+
+      if (!reportData.users || reportData.users.length === 0) {
+        toast.warning("No data to export");
+        return;
+      }
+
+      // Format data for Excel
+      const excelData = reportData.users.map((user: User) => ({
+        "Name": user.name || "N/A",
+        "Email": user.email || "N/A",
+        "Role": user.role || "User",
+        "Organization": user.organization?.name || "-",
+        "Status": user.banned ? "Banned" : user.emailVerified ? "Active" : "Unverified",
+        "Joined Date": new Date(user.createdAt).toLocaleDateString(),
+      }));
+
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
+
+      // Auto-size columns (rough approximation)
+      const colWidths = [
+        { wch: 20 }, // Name
+        { wch: 30 }, // Email
+        { wch: 10 }, // Role
+        { wch: 20 }, // Organization
+        { wch: 15 }, // Status
+        { wch: 15 }, // Joined Date
+      ];
+      ws["!cols"] = colWidths;
+
+      XLSX.utils.book_append_sheet(wb, ws, "Users");
+
+      // Save file
+      const fileName = `users-report-${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      toast.success("Report generated successfully");
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Failed to generate report");
+    }
+  };
+
   return (
     <div className="space-y-6 p-10">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-        <p className="text-gray-500 mt-2">
-          Manage and monitor all users in the system
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
+          <p className="text-gray-500 mt-2">
+            Manage and monitor all users in the system
+          </p>
+        </div>
+        <Button onClick={handleExportExcel} variant="outline" className="gap-2">
+          <FileSpreadsheet className="w-4 h-4" />
+          Export to Excel
+        </Button>
       </div>
 
       {/* Stats Cards */}
