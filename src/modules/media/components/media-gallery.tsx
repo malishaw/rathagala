@@ -218,6 +218,7 @@ export function MediaGallery({
         <Tabs
           value={activeTab}
           onValueChange={(v) => setActiveTab(v as "gallery" | "upload")}
+          className="h-full"
         >
           <div className="flex h-full">
             {/* Sidebar */}

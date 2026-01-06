@@ -19,6 +19,9 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
   const media = await prisma.media.findMany({
     where: {
       uploaderId: user.id
+    },
+    orderBy: {
+      createdAt: "desc"
     }
   });
 
