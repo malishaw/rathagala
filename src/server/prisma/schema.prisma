@@ -144,6 +144,7 @@ model User {
   
   // Contact information
   phone            String?
+  phoneVerified    String?       // "verified" | "not_verified" | "rejected"
   whatsappNumber   String?
   
   // Location information

@@ -66,6 +66,7 @@ import {
   Loader2,
   Pencil,
   Building2,
+  Phone,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -79,6 +80,8 @@ interface User {
   emailVerified: boolean;
   banned: boolean;
   organizationId: string | null;
+  phone: string | null;
+  phoneVerified: "verified" | "not_verified" | "rejected" | null;
   organization?: {
     id: string;
     name: string;
@@ -99,7 +102,9 @@ export default function UsersPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [orgDialogOpen, setOrgDialogOpen] = useState(false);
+  const [phoneVerifyDialogOpen, setPhoneVerifyDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [phoneVerifyStatus, setPhoneVerifyStatus] = useState<"verified" | "not_verified" | "rejected">("not_verified");
   const [selectedOrgId, setSelectedOrgId] = useState<string>("");
   const [banData, setBanData] = useState<BanUserData>({
     banReason: "",
@@ -395,6 +400,60 @@ export default function UsersPage() {
     setDeleteDialogOpen(true);
   };
 
+  const handlePhoneVerifyClick = (user: User) => {
+    setSelectedUser(user);
+    setPhoneVerifyStatus(user.phoneVerified || "not_verified");
+    setPhoneVerifyDialogOpen(true);
+  };
+
+  const handleUpdatePhoneVerification = async () => {
+    if (!selectedUser) return;
+
+    setIsLoading(selectedUser.id);
+    try {
+      const response = await fetch(`/api/users/${selectedUser.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          phoneVerified: phoneVerifyStatus,
+        }),
+      });
+
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage =
+            errorData.error?.message || errorData.message || errorMessage;
+        } catch {
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      toast.success("Phone verification status updated", {
+        description: `${selectedUser.name || selectedUser.email}'s phone verification status has been updated.`,
+      });
+
+      setPhoneVerifyDialogOpen(false);
+      setSelectedUser(null);
+      refetch();
+    } catch (error) {
+      console.error("Error updating phone verification:", error);
+      toast.error("Failed to update phone verification", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
+      });
+    } finally {
+      setIsLoading(null);
+    }
+  };
+
   const handleUpdateUser = async () => {
     if (!selectedUser) return;
 
@@ -543,6 +602,22 @@ export default function UsersPage() {
     });
   };
 
+  const getPhoneVerificationBadge = (status: "verified" | "not_verified" | "rejected" | null, phone: string | null) => {
+    if (!phone) {
+      return <Badge variant="outline" className="text-gray-500">No Phone</Badge>;
+    }
+    
+    switch (status) {
+      case "verified":
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Verified</Badge>;
+      case "rejected":
+        return <Badge variant="destructive">Rejected</Badge>;
+      case "not_verified":
+      default:
+        return <Badge variant="outline" className="text-yellow-600">Not Verified</Badge>;
+    }
+  };
+
   return (
     <div className="space-y-6 p-10">
       {/* Header */}
@@ -647,6 +722,7 @@ export default function UsersPage() {
                       <TableHead>Organization</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Email Verified</TableHead>
+                      <TableHead>Phone Verified</TableHead>
                       <TableHead>Joined</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -708,6 +784,24 @@ export default function UsersPage() {
                           )}
                         </TableCell>
 
+                        {/* Phone Verified */}
+                        <TableCell>
+                          <div 
+                            className="flex items-center gap-2 cursor-pointer hover:opacity-70 transition-opacity"
+                            onClick={() => handlePhoneVerifyClick(user)}
+                            title="Click to update phone verification status"
+                          >
+                            {user.phone ? (
+                              <div className="flex flex-col gap-1">
+                                <span className="text-xs text-gray-600">{user.phone}</span>
+                                {getPhoneVerificationBadge(user.phoneVerified, user.phone)}
+                              </div>
+                            ) : (
+                              getPhoneVerificationBadge(null, null)
+                            )}
+                          </div>
+                        </TableCell>
+
                         {/* Joined Date */}
                         <TableCell className="text-sm text-gray-500">
                           {formatDate(user.createdAt)}
@@ -744,6 +838,15 @@ export default function UsersPage() {
                                 <Building2 className="h-4 w-4 mr-2" />
                                 Assign Organization
                               </DropdownMenuItem>
+                              {user.phone && (
+                                <DropdownMenuItem
+                                  onClick={() => handlePhoneVerifyClick(user)}
+                                  disabled={isLoading === user.id}
+                                >
+                                  <Phone className="h-4 w-4 mr-2" />
+                                  Update Phone Verification
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuSeparator />
                               {user.banned ? (
                                 <DropdownMenuItem
@@ -1369,6 +1472,129 @@ export default function UsersPage() {
                 </>
               ) : (
                 "Save Changes"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Phone Verification Dialog */}
+      <Dialog open={phoneVerifyDialogOpen} onOpenChange={setPhoneVerifyDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Phone className="h-5 w-5 text-blue-600" />
+              Update Phone Verification Status
+            </DialogTitle>
+            <DialogDescription>
+              Update the phone verification status for {selectedUser?.name || selectedUser?.email}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedUser && (
+            <div className="space-y-4">
+              {/* User Info */}
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage
+                    src={selectedUser.image || undefined}
+                    alt={selectedUser.name || selectedUser.email}
+                  />
+                  <AvatarFallback className="text-sm bg-[#024950] text-white">
+                    {selectedUser.name?.[0]?.toUpperCase() ||
+                      selectedUser.email?.[0]?.toUpperCase() ||
+                      "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-medium text-sm">{selectedUser.name}</p>
+                  <p className="text-xs text-gray-500">{selectedUser.email}</p>
+                </div>
+              </div>
+
+              {/* Phone Number Display */}
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-gray-600 mb-1">Phone Number:</p>
+                <p className="font-semibold text-lg">
+                  {selectedUser.phone || "No phone number provided"}
+                </p>
+              </div>
+
+              {/* Verification Status Selection */}
+              {selectedUser.phone && (
+                <div className="space-y-2">
+                  <Label htmlFor="phoneVerifyStatus">Verification Status</Label>
+                  <Select
+                    value={phoneVerifyStatus}
+                    onValueChange={(value: "verified" | "not_verified" | "rejected") => 
+                      setPhoneVerifyStatus(value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select verification status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="verified">
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 w-2 rounded-full bg-green-500" />
+                          Verified
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="not_verified">
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 w-2 rounded-full bg-yellow-500" />
+                          Not Verified
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="rejected">
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 w-2 rounded-full bg-red-500" />
+                          Rejected
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Info Note */}
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                <p className="text-sm text-blue-800">
+                  <strong>Note:</strong> Changing the verification status will immediately update the user's phone verification status in the system.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setPhoneVerifyDialogOpen(false);
+                setSelectedUser(null);
+              }}
+              disabled={isLoading === selectedUser?.id}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdatePhoneVerification}
+              disabled={
+                !selectedUser?.phone ||
+                phoneVerifyStatus === selectedUser?.phoneVerified ||
+                isLoading === selectedUser?.id
+              }
+            >
+              {isLoading === selectedUser?.id ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Phone className="mr-2 h-4 w-4" />
+                  Update Status
+                </>
               )}
             </Button>
           </DialogFooter>

@@ -32,6 +32,7 @@ export const updateUserByAdminSchema = z.object({
   role: z.enum(["user", "admin"]).optional(),
   organizationId: z.string().nullable().optional(),
   phone: z.string().optional(),
+  phoneVerified: z.enum(["verified", "not_verified", "rejected"]).nullable().optional(),
   whatsappNumber: z.string().optional(),
   province: z.string().optional(),
   district: z.string().optional(),

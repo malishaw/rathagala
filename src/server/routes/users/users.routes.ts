@@ -84,6 +84,8 @@ export const getCurrentUser = createRoute({
         id: z.string(),
         name: z.string(),
         email: z.string(),
+        phone: z.string().nullable().optional(),
+        phoneVerified: z.enum(["verified", "not_verified", "rejected"]).nullable().optional(),
         organizationId: z.string().nullable(),
         organization: z.object({
           id: z.string(),
@@ -229,6 +231,7 @@ export const updateUserByAdmin = createRoute({
           email: z.string(),
           role: z.string().nullable(),
           phone: z.string().nullable().optional(),
+          phoneVerified: z.enum(["verified", "not_verified", "rejected"]).nullable().optional(),
           whatsappNumber: z.string().nullable().optional(),
           province: z.string().nullable().optional(),
           district: z.string().nullable().optional(),

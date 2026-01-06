@@ -77,6 +77,8 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       emailVerified: true,
       banned: true,
       organizationId: true,
+      phone: true,
+      phoneVerified: true,
       organization: {
         select: {
           id: true,
@@ -175,6 +177,8 @@ export const getCurrentUser: AppRouteHandler<GetCurrentUserRoute> = async (c) =>
         id: true,
         name: true,
         email: true,
+        phone: true,
+        phoneVerified: true,
         organizationId: true,
         organization: {
           select: {
@@ -198,6 +202,8 @@ export const getCurrentUser: AppRouteHandler<GetCurrentUserRoute> = async (c) =>
         id: userWithOrg.id,
         name: userWithOrg.name,
         email: userWithOrg.email,
+        phone: userWithOrg.phone,
+        phoneVerified: userWithOrg.phoneVerified,
         organizationId: userWithOrg.organizationId,
         organization: userWithOrg.organization,
       },
@@ -419,7 +425,7 @@ export const updateUserByAdmin: AppRouteHandler<UpdateUserByAdminRoute> = async 
   }
 
   const { userId } = c.req.valid("param");
-  const { name, email, role, organizationId, phone, whatsappNumber, province, district, city, location } = c.req.valid("json");
+  const { name, email, role, organizationId, phone, phoneVerified, whatsappNumber, province, district, city, location } = c.req.valid("json");
 
   try {
     // Check if user exists
@@ -455,6 +461,7 @@ export const updateUserByAdmin: AppRouteHandler<UpdateUserByAdminRoute> = async 
     if (role !== undefined) updateData.role = role;
     if (organizationId !== undefined) updateData.organizationId = organizationId;
     if (phone !== undefined) updateData.phone = phone;
+    if (phoneVerified !== undefined) updateData.phoneVerified = phoneVerified;
     if (whatsappNumber !== undefined) updateData.whatsappNumber = whatsappNumber;
     if (province !== undefined) updateData.province = province;
     if (district !== undefined) updateData.district = district;
@@ -477,6 +484,7 @@ export const updateUserByAdmin: AppRouteHandler<UpdateUserByAdminRoute> = async 
           },
         },
         phone: true,
+        phoneVerified: true,
         whatsappNumber: true,
         province: true,
         district: true,

@@ -29,6 +29,7 @@ interface User {
   district?: string;
   city?: string;
   location?: string;
+  phoneVerified?: "verified" | "not_verified" | "rejected" | null;
   organization?: {
     id: string;
     name: string;
@@ -152,32 +153,53 @@ export default function ProfilePage() {
           return;
         }
 
-        // Set user from session
-        setUser(session.user);
-
-        // Initialize form data with user info
-        setFormData({
-          name: session.user.name || "",
-          email: session.user.email || "",
-          phone: session.user.phone || "",
-          whatsappNumber: session.user.whatsappNumber || "",
-          province: session.user.province || "",
-          district: session.user.district || "",
-          city: session.user.city || "",
-          location: session.user.location || "",
-          currentPassword: "",
-          newPassword: "",
-          confirmPassword: ""
-        });
-
-        // Also fetch full user data to get organization info
+        // Fetch full user data to get organization info and phoneVerified
         try {
           const { data: meData } = await betterFetch<any>("/api/users/me");
-          if (meData?.organization) {
-            setUser(prev => prev ? { ...prev, organization: meData.organization } : null);
-          }
-        } catch (orgError) {
-          console.error("Error fetching organization data:", orgError);
+          
+          // Merge session user with full user data from API
+          const fullUser = {
+            ...session.user,
+            phone: meData?.phone || session.user.phone,
+            phoneVerified: meData?.phoneVerified || session.user.phoneVerified,
+            organization: meData?.organization
+          };
+          
+          setUser(fullUser);
+
+          // Initialize form data with user info
+          setFormData({
+            name: fullUser.name || "",
+            email: fullUser.email || "",
+            phone: fullUser.phone || "",
+            whatsappNumber: fullUser.whatsappNumber || "",
+            province: fullUser.province || "",
+            district: fullUser.district || "",
+            city: fullUser.city || "",
+            location: fullUser.location || "",
+            currentPassword: "",
+            newPassword: "",
+            confirmPassword: ""
+          });
+        } catch (meError) {
+          console.error("Error fetching full user data:", meError);
+          
+          // Fallback to session data if /api/users/me fails
+          setUser(session.user);
+          
+          setFormData({
+            name: session.user.name || "",
+            email: session.user.email || "",
+            phone: session.user.phone || "",
+            whatsappNumber: session.user.whatsappNumber || "",
+            province: session.user.province || "",
+            district: session.user.district || "",
+            city: session.user.city || "",
+            location: session.user.location || "",
+            currentPassword: "",
+            newPassword: "",
+            confirmPassword: ""
+          });
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -326,6 +348,23 @@ export default function ProfilePage() {
   const formatPrice = (price: number | null) => {
     if (price === null) return "Price on request";
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
+
+  // Get phone verification badge
+  const getPhoneVerificationBadge = (status: "verified" | "not_verified" | "rejected" | null | undefined) => {
+    if (!status) {
+      return <Badge variant="outline" className="text-gray-500 text-xs">Not Verified</Badge>;
+    }
+    
+    switch (status) {
+      case "verified":
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100 text-xs">Verified</Badge>;
+      case "rejected":
+        return <Badge variant="destructive" className="text-xs">Rejected</Badge>;
+      case "not_verified":
+      default:
+        return <Badge variant="outline" className="text-yellow-600 text-xs">Not Verified</Badge>;
+    }
   };
 
   // Handle delete ad
@@ -699,7 +738,10 @@ export default function ProfilePage() {
                           </div>
                           <div>
                             <div className="text-sm text-slate-500 font-medium">Phone Number</div>
-                            <div className="font-semibold text-slate-800 mt-1">{user.phone || "Not set"}</div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <div className="font-semibold text-slate-800">{user.phone || "Not set"}</div>
+                              {user.phone && getPhoneVerificationBadge(user.phoneVerified)}
+                            </div>
                           </div>
                         </div>
                         <div className="h-10 w-10 rounded-lg bg-white/50 flex items-center justify-center group-hover:bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300">
