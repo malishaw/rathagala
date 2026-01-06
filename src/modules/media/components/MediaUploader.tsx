@@ -36,7 +36,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
   onError,
   acceptedTypes = ["IMAGE", "VIDEO", "PDF"],
   path = "",
-  maxSize = 4 * 1024 * 1024,
+  maxSize = 10 * 1024 * 1024,
   className,
   multiple = true
 }) => {
@@ -108,7 +108,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
       }
 
       setUploadResults(results);
-      
+
       if (results.length > 0) {
         setAcceptedFiles([]);
       }
@@ -129,8 +129,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
       <Card
         {...getRootProps()}
         className={cn(
-          `p-0 w-full min-h-40 py-8 flex items-center justify-center border border-dashed rounded-lg ${
-            isDragActive ? "border-foreground/60" : ""
+          `p-0 w-full min-h-40 py-8 flex items-center justify-center border border-dashed rounded-lg ${isDragActive ? "border-foreground/60" : ""
           } transition-all ease-in-out duration-100 hover:bg-foreground/5`,
           className
         )}

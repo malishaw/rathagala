@@ -2,9 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 
 import { client } from "@/lib/rpc";
 
-export const useListMedia = () => {
+export const useListMedia = (userId?: string) => {
   const query = useQuery({
-    queryKey: ["media"],
+    queryKey: ["media", userId],
     queryFn: async () => {
       const response = await client.api.media.$get();
 
@@ -17,7 +17,8 @@ export const useListMedia = () => {
       const data = await response.json();
 
       return data;
-    }
+    },
+    enabled: !!userId
   });
 
   return query;
