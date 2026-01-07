@@ -13,6 +13,10 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CalendarIcon, TrendingUp, Users, Building2, FileText, BarChart3, Search, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { toPng } from "html-to-image";
+import { toast } from "sonner";
 import {
   BarChart,
   Bar,
@@ -87,6 +91,112 @@ export default function ReportPage() {
     period,
   });
 
+  // Handle PDF Download
+  const handleDownloadReport = async () => {
+    try {
+      toast.info("Generating PDF report...", { description: "Capturing charts and data..." });
+
+      const doc = new jsPDF("p", "mm", "a4");
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+
+      // -- PAGE 1: Summary --
+      doc.setFontSize(22);
+      doc.setTextColor(13, 92, 99); // Teal
+      doc.text("Analytics & Reports", 14, 20);
+
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 28);
+
+      doc.setFontSize(14);
+      doc.setTextColor(0);
+      doc.text("Overview Summary", 14, 40);
+
+      const summaryData = [
+        ["Metric", "Value"],
+        ["Total Ads", `${adSummary?.totalAds?.toLocaleString() || 0}`],
+        ["Approved Ads", `${adSummary?.approvedAds?.toLocaleString() || 0}`],
+        ["Pending Ads", `${adSummary?.pendingAds?.toLocaleString() || 0}`],
+        ["Draft Ads", `${adSummary?.draftAds?.toLocaleString() || 0}`],
+        ["Total Users", `${userSummary?.totalUsers?.toLocaleString() || 0}`],
+        ["Total Agents", `${userSummary?.totalAgents?.toLocaleString() || 0}`],
+        ["Total Organizations", `${userSummary?.totalOrganizations?.toLocaleString() || 0}`],
+      ];
+
+      autoTable(doc, {
+        head: [summaryData[0]],
+        body: summaryData.slice(1),
+        startY: 45,
+        theme: "grid",
+        headStyles: { fillColor: [13, 92, 99] },
+        styles: { fontSize: 10 },
+      });
+
+      let finalY = (doc as any).lastAutoTable.finalY + 15;
+
+      // Helper to add image to PDF
+      const addImageToPdf = async (elementId: string, title: string) => {
+        const element = document.getElementById(elementId);
+        if (!element) return;
+
+        // Check space for title
+        if (finalY > pageHeight - 60) { // Ensure space for title and at least some image
+          doc.addPage();
+          finalY = 20;
+        }
+
+        doc.setFontSize(12);
+        doc.setTextColor(0);
+        doc.text(title, 14, finalY);
+        finalY += 7;
+
+        try {
+          // Use html-to-image
+          const dataUrl = await toPng(element, {
+            cacheBust: true,
+            backgroundColor: '#ffffff', // Force white background
+            style: {
+              background: 'white', // Ensure background is white
+            }
+          });
+
+          const imgProps = doc.getImageProperties(dataUrl);
+          const pdfWidth = pageWidth - 28;
+          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+          // Check if image fits on current page
+          if (finalY + pdfHeight > pageHeight - 10) {
+            if (finalY < 40) {
+              // If we just started a page and it still doesn't fit, just place it (it will scale or cut, but usually fine)
+            } else {
+              doc.addPage();
+              finalY = 20;
+            }
+          }
+
+          doc.addImage(dataUrl, "PNG", 14, finalY, pdfWidth, pdfHeight);
+          finalY += pdfHeight + 10;
+        } catch (err) {
+          console.error(`Failed to capture ${title}:`, err);
+        }
+      };
+
+      // -- Capture Charts --
+      await addImageToPdf("report-creation-chart", "Ad Creation Trends");
+      await addImageToPdf("report-entity-split", "Creation by User / Org");
+
+      // Advanced charts on new page if space is tight, or just continue
+      await addImageToPdf("report-advanced-charts", "Advanced Ad Details");
+
+      doc.save("analytics-report.pdf");
+      toast.success("PDF generated successfully");
+    } catch (error) {
+      console.error("PDF Gen Error:", error);
+      toast.error("Failed to generate PDF");
+    }
+  };
+
   // Derived data for split charts
   const userAdsData = adByEntity?.data.filter(item => item.type === "user").slice(0, 10) || [];
   const orgAdsData = adByEntity?.data.filter(item => item.type === "organization").slice(0, 10) || [];
@@ -99,6 +209,13 @@ export default function ReportPage() {
           <p className="text-muted-foreground">
             View comprehensive reports and analytics for your platform
           </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button onClick={handleDownloadReport} variant="outline" className="gap-2">
+            <FileText className="w-4 h-4" />
+            Download Report
+          </Button>
+          {/* <DateRangePicker date={dateRange} setDate={setDateRange} /> */}
         </div>
       </div>
 
@@ -392,13 +509,13 @@ export default function ReportPage() {
           ) : !advancedSummary ? (
             <p className="text-muted-foreground">No advanced data available.</p>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-6" id="report-advanced-charts">
               {/* Row 1: Vehicle Types & Ad Types */}
               <div className="grid gap-4 md:grid-cols-2">
                 <Card>
                   <CardHeader>
                     <CardTitle>Vehicle Types</CardTitle>
-                    <CardDescription>Total: {advancedSummary.adTypes.total.length}</CardDescription>
+                    <CardDescription>Total: {advancedSummary.adTypes.total.reduce((a, b) => a + b.count, 0)}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
@@ -410,7 +527,7 @@ export default function ReportPage() {
                           cx="50%"
                           cy="50%"
                           outerRadius={80}
-                          label
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                         >
                           {advancedSummary.adTypes.top10.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -425,7 +542,7 @@ export default function ReportPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Ad Types</CardTitle>
-                    <CardDescription>Total: {advancedSummary.listingTypes.total.length}</CardDescription>
+                    <CardDescription>Total: {advancedSummary.listingTypes.total.reduce((a, b) => a + b.count, 0)}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
@@ -434,7 +551,11 @@ export default function ReportPage() {
                         <XAxis dataKey="value" />
                         <YAxis />
                         <Tooltip />
-                        <Bar dataKey="count" fill="#8884d8" />
+                        <Bar dataKey="count" name="Count">
+                          {advancedSummary.listingTypes.top10.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Bar>
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>

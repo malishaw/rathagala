@@ -12,6 +12,7 @@ export const querySchema = z.object({
   minPrice: z.string().optional(),
   maxPrice: z.string().optional(),
   location: z.string().optional(),
+  orgId: z.string().optional(),
 });
 
 export type QueryParams = z.infer<typeof querySchema>;
@@ -46,9 +47,9 @@ export const selectAdSchema = formattedAdSchema;
 
 export type SelectAdSchema = z.infer<typeof selectAdSchema>;
 
-export const createAdSchema = z
+// Basic required fields
+export const createAdBaseSchema = z
   .object({
-    // Basic required fields
     title: z.string().min(1, "Title is required"),
     description: z.string().min(1, "Description is required"),
     type: z.enum(
@@ -147,7 +148,10 @@ export const createAdSchema = z
     // Media
     mediaIds: z.array(z.string()).optional(),
     metadata: z.record(z.any()).optional(),
-  })
+  });
+
+export const createAdSchema = createAdBaseSchema
+
   .superRefine((data, ctx) => {
     // Only apply detailed validation for SELL listing type
     // WANT, RENT, HIRE can be more flexible with fewer required fields
@@ -355,3 +359,11 @@ export type UpdateAdSchema = z.infer<typeof updateAdSchema>;
 
 export const deleteAdSchema = IdParamsSchema;
 export type DeleteAdSchema = z.infer<typeof deleteAdSchema>;
+
+export const bulkCreateAdSchema = z.object({
+  ads: z.array(createAdBaseSchema.extend({
+    sellerEmail: z.string().email("Seller email is required to link ad"),
+  })),
+});
+
+

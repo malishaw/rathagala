@@ -1216,12 +1216,102 @@
 //     return c.json(formattedAd, HttpStatusCodes.OK);
 //   } catch (error: any) {
 //     console.error("[REJECT AD] Error:", error);
-//     return c.json(
-//       { message: error.message || "Failed to reject ad" },
-//       HttpStatusCodes.INTERNAL_SERVER_ERROR
-//     );
-//   }
-// };
+// ---------- Bulk Create Ads ----------
+export const bulkCreate: AppRouteHandler<BulkCreateRoute> = async (c) => {
+  const user = c.get("user");
+
+  if (!user) {
+    return c.json(
+      { message: "Unauthenticated user" },
+      HttpStatusCodes.UNAUTHORIZED
+    );
+  }
+
+  const isAdmin = user?.role === "admin";
+
+  if (!isAdmin) {
+    return c.json(
+      { message: "Unauthorized: Admin access required" },
+      HttpStatusCodes.FORBIDDEN
+    );
+  }
+
+  const { ads } = c.req.valid("json");
+  let createdCount = 0;
+
+  try {
+    for (const adData of ads) {
+      // Find seller by email
+      const seller = await prisma.user.findUnique({
+        where: { email: adData.sellerEmail },
+      });
+
+      if (!seller) {
+        console.warn(`Seller with email ${adData.sellerEmail} not found. Skipping ad.`);
+        continue;
+      }
+
+      // Generate SEO slug
+      let seoSlug = "";
+      if (adData.title) {
+        seoSlug = adData.title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "");
+      } else {
+        seoSlug = `ad-${Date.now()}`;
+      }
+      seoSlug += `-${Math.random().toString(36).substring(2, 8)}`;
+
+      // Create Ad
+      const { sellerEmail, ...createData } = adData;
+
+      // We need to cast inputs to match Prisma expectations where necessary
+      // especially enums if they come as strings
+
+      await prisma.ad.create({
+        data: {
+          ...createData,
+          price: createData.price ?? null,
+          createdBy: seller.id,
+          orgId: seller.organizationId || "", // Link to user's org if any
+          seoSlug,
+          status: AdStatus.ACTIVE, // Auto-approve imported ads? Or DRAFT? Let's say ACTIVE for admin import functionality usually.
+          // Enums casting
+          type: (createData.type as AdType) || AdType.CAR,
+          listingType: createData.listingType || "SELL",
+          fuelType: createData.fuelType as any,
+          transmission: createData.transmission as any,
+          bodyType: createData.bodyType as any,
+          bikeType: createData.bikeType as any,
+          vehicleType: createData.vehicleType as any,
+
+          metadata: createData.metadata || {},
+          tags: createData.tags || [],
+        },
+      });
+      createdCount++;
+    }
+
+    return c.json(
+      {
+        message: "Ads imported successfully",
+        count: createdCount,
+      },
+      HttpStatusCodes.OK
+    );
+  } catch (error) {
+    console.error("Error bulk creating ads:", error);
+    return c.json(
+      {
+        message: "Failed to bulk create ads",
+        error: error instanceof Error ? error.message : "Unknown error"
+      },
+      HttpStatusCodes.UNPROCESSABLE_ENTITY
+    );
+  }
+};
+
 
 
 
@@ -1239,6 +1329,7 @@ import {
   RemoveRoute,
   ApproveRoute,
   RejectRoute,
+  BulkCreateRoute,
 } from "./ad.routes";
 import { QueryParams } from "./ad.schemas";
 import { AdStatus, AdType } from "@prisma/client";
@@ -1278,7 +1369,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     console.log("Session : ", session);
     // Convert to numbers and validate
     const pageNum = Math.max(1, parseInt(page));
-    const limitNum = Math.max(1, Math.min(100, parseInt(limit))); // Cap at 100 items
+    const limitNum = Math.max(1, Math.min(10000, parseInt(limit))); // Cap at 10000 items for export
     const offset = (pageNum - 1) * limitNum;
 
 
