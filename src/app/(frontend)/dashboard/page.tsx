@@ -211,30 +211,32 @@ export default function DashboardPage() {
                   <div className="space-y-4">
                     <ul className="space-y-3">
                       {currentAds.map((ad: any) => (
-                        <li key={ad.id} className="group flex items-center gap-4 p-4 rounded-xl hover:bg-gradient-to-r hover:from-teal-50 hover:to-emerald-50 transition-all duration-300 border border-slate-100 hover:border-teal-200">
-                          <div className="w-24 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
-                            {ad.media && ad.media.length > 0 && ad.media[0].media?.url ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={ad.media[0].media.url} alt={ad.title} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-slate-400">
-                                <Car className="w-6 h-6" />
-                              </div>
-                            )}
-                          </div>
+                        <li key={ad.id} className="group relative rounded-xl hover:bg-gradient-to-r hover:from-teal-50 hover:to-emerald-50 transition-all duration-300 border border-slate-100 hover:border-teal-200">
+                          <Link href={`/${ad.id}`} className="flex items-center gap-3 p-2 w-full h-full">
+                            <div className="w-16 h-12 bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
+                              {ad.media && ad.media.length > 0 && ad.media[0].media?.url ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={ad.media[0].media.url} alt={ad.title} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                  <Car className="w-4 h-4" />
+                                </div>
+                              )}
+                            </div>
 
-                          <div className="flex-1">
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <div className="font-semibold text-slate-800 group-hover:text-teal-700 transition-colors">{ad.title || `${ad.brand} ${ad.model}`}</div>
-                                <div className="text-xs text-slate-500 mt-1">{ad.city ?? ad.province ?? "Location not specified"} • {ad.listingType}</div>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-teal-700 font-bold group-hover:text-teal-600 transition-colors">{ad.price ? `LKR ${Number(ad.price).toLocaleString()}` : "Price on request"}</div>
-                                <div className="text-xs text-slate-400 mt-1">{ad.updatedAt ? format(new Date(ad.updatedAt), "MMM d, yyyy") : "—"}</div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between">
+                                <div className="truncate pr-4">
+                                  <div className="font-semibold text-slate-800 text-sm truncate group-hover:text-teal-700 transition-colors">{ad.title || `${ad.brand} ${ad.model}`}</div>
+                                  <div className="text-xs text-slate-500 truncate">{ad.city ?? ad.province ?? "Location not specified"} • {ad.listingType}</div>
+                                </div>
+                                <div className="text-right flex-shrink-0">
+                                  <div className="text-teal-700 font-bold text-sm group-hover:text-teal-600 transition-colors">{ad.price ? `LKR ${Number(ad.price).toLocaleString()}` : "Price on request"}</div>
+                                  <div className="text-[10px] text-slate-400">{ad.updatedAt ? format(new Date(ad.updatedAt), "MMM d, yyyy") : "—"}</div>
+                                </div>
                               </div>
                             </div>
-                          </div>
+                          </Link>
                         </li>
                       ))}
                     </ul>

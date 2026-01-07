@@ -40,6 +40,10 @@ export const list = createRoute({
       schemas.withPaginationSchema,
       "The list of ads"
     ),
+    [HttpStatusCodes.BAD_REQUEST]: jsonContent(
+      z.object({ message: z.string() }),
+      "Invalid parameters"
+    ),
     [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
       z.object({ message: z.string() }),
       "Something went wrong while fetching ads"
@@ -235,28 +239,42 @@ export const reject = createRoute({
 
 export type RejectRoute = typeof reject;
 
-// --------- Get User's Ads ----------
-// export const getUserAds = createRoute({
-//   tags,
-//   summary: "Get current user's ads",
-//   description: "Retrieve all ads created by the currently authenticated user",
-//   path: "/by-user", // <-- Changed from "/user" to "/by-user" to be more specific
-//   method: "get",
-//   middleware: [serverAuthMiddleware],
-//   responses: {
-//     [HttpStatusCodes.OK]: jsonContent(
-//       z.array(schemas.selectAdSchema),
-//       "User's ads"
-//     ),
-//     [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
-//       z.object({ message: z.string() }),
-//       "Unauthorized"
-//     ),
-//     [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
-//       z.object({ message: z.string() }),
-//       "Something went wrong while fetching user ads"
-//     ),
-//   },
-// });
+// --------- Bulk Create Ads ----------
+export const bulkCreate = createRoute({
+  tags,
+  summary: "Bulk create ads",
+  description: "Create multiple ads at once (admin only)",
+  path: "/bulk",
+  method: "post",
+  middleware: [serverAuthMiddleware],
+  request: {
+    body: jsonContentRequired(
+      schemas.bulkCreateAdSchema,
+      "The list of ads to create"
+    ),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      z.object({
+        message: z.string(),
+        count: z.number(),
+      }),
+      "Ads created successfully"
+    ),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      z.object({ message: z.string() }),
+      "Unauthorized"
+    ),
+    [HttpStatusCodes.FORBIDDEN]: jsonContent(
+      z.object({ message: z.string() }),
+      "Admin access required"
+    ),
+    [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
+      z.object({ message: z.string() }),
+      "Validation or processing error"
+    ),
+  },
+});
 
-// export type GetUserAdsRoute = typeof getUserAds;
+export type BulkCreateRoute = typeof bulkCreate;
+

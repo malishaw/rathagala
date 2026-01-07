@@ -1,7 +1,7 @@
 "use client";
 
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useGetUsers } from "@/features/users/api/use-get-users";
 import { useGetOrganizations } from "@/features/organizations/api/use-get-orgs";
@@ -67,6 +67,7 @@ import {
   Pencil,
   Building2,
   FileSpreadsheet,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
@@ -612,6 +613,80 @@ export default function UsersPage() {
     }
   };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset input value to allow selecting the same file again
+    e.target.value = "";
+
+    const loadingToast = toast.loading("Processing Excel file...");
+
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      if (jsonData.length === 0) {
+        toast.error("Excel file is empty", { id: loadingToast });
+        return;
+      }
+
+      // Map Excel columns to API schema
+      // Expected headers: Name, Email, Role, Phone, Whatsapp, Province, District, City, Location, Organization
+      const mappedUsers = jsonData.map((row: any) => ({
+        name: row["Name"] || row["name"],
+        email: row["Email"] || row["email"],
+        role: (row["Role"] || row["role"] || "user").toLowerCase(), // 'user' or 'admin'
+        phone: row["Phone"] ? String(row["Phone"]) : undefined,
+        whatsappNumber: row["Whatsapp"] ? String(row["Whatsapp"]) : undefined,
+        province: row["Province"] || undefined,
+        district: row["District"] || undefined,
+        city: row["City"] || undefined,
+        location: row["Location"] || undefined,
+        organization: row["Organization"] || undefined, // Organization name to resolve
+      })).filter((u: any) => u.email); // Filter out rows without email
+
+      if (mappedUsers.length === 0) {
+        toast.error("No valid users found in Excel file", { id: loadingToast });
+        return;
+      }
+
+      // Send to API
+      const response = await fetch("/api/users/bulk", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ users: mappedUsers }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to import users");
+      }
+
+      const result = await response.json();
+
+      toast.success(`Successfully imported ${result.count} users`, { id: loadingToast });
+      refetch();
+    } catch (error) {
+      console.error("Import error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to import users",
+        { id: loadingToast }
+      );
+    }
+  };
+
   return (
     <div className="space-y-6 p-10">
       {/* Header */}
@@ -622,10 +697,23 @@ export default function UsersPage() {
             Manage and monitor all users in the system
           </p>
         </div>
-        <Button onClick={handleExportExcel} variant="outline" className="gap-2">
-          <FileSpreadsheet className="w-4 h-4" />
-          Export to Excel
-        </Button>
+        <div className="flex gap-2">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept=".xlsx, .xls"
+            className="hidden"
+          />
+          <Button onClick={handleImportClick} variant="outline" className="gap-2">
+            <Upload className="w-4 h-4" />
+            Import Excel
+          </Button>
+          <Button onClick={handleExportExcel} variant="outline" className="gap-2">
+            <FileSpreadsheet className="w-4 h-4" />
+            Export to Excel
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}

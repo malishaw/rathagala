@@ -169,6 +169,7 @@ model User {
   notifications    UserNotification[]
   reports          Report[]
   auditLogs        AuditLog[]
+  followedOrganizations OrganizationFollower[]
 
   @@unique([email])
   @@map("user")
@@ -235,6 +236,7 @@ model Organization {
   // Ad listing relations
   ads       Ad[]
   auditLogs AuditLog[]
+  followers OrganizationFollower[]
 
   @@unique([slug])
   @@map("organization")

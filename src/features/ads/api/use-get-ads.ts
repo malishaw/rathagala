@@ -10,6 +10,7 @@ interface FilterParams {
   minPrice?: number;
   maxPrice?: number;
   location?: string;
+  orgId?: string;
 }
 
 export const useGetAds = (params: FilterParams) => {
@@ -21,10 +22,11 @@ export const useGetAds = (params: FilterParams) => {
     minPrice,
     maxPrice,
     location,
+    orgId,
   } = params;
 
   const query = useQuery({
-    queryKey: ["ads", { page, limit, search, listingType, minPrice, maxPrice, location }],
+    queryKey: ["ads", { page, limit, search, listingType, minPrice, maxPrice, location, orgId }],
     queryFn: async () => {
       const queryParams = {
         page: page.toString(),
@@ -34,6 +36,7 @@ export const useGetAds = (params: FilterParams) => {
         ...(minPrice !== undefined && { minPrice: minPrice.toString() }),
         ...(maxPrice !== undefined && { maxPrice: maxPrice.toString() }),
         ...(location && { location }),
+        ...(orgId && { orgId }),
       };
 
       const response = await client.api.ad.$get({

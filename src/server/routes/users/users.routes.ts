@@ -4,7 +4,7 @@ import { z } from "zod";
 import { jsonContent } from "stoker/openapi/helpers";
 
 import { serverAuthMiddleware } from "@/server/middlewares/auth-middleware";
-import { querySchema, withPaginationSchema, updateProfileSchema, updateUserByAdminSchema, assignOrganizationSchema } from "./users.schemas";
+import { querySchema, withPaginationSchema, updateProfileSchema, updateUserByAdminSchema, assignOrganizationSchema, bulkCreateUserSchema } from "./users.schemas";
 
 const tags = ["Users"];
 
@@ -261,4 +261,45 @@ export const updateUserByAdmin = createRoute({
 });
 
 export type UpdateUserByAdminRoute = typeof updateUserByAdmin;
+
+// ---------- Bulk Create Users ----------
+export const bulkCreate = createRoute({
+  tags,
+  path: "/bulk",
+  method: "post",
+  middleware: [serverAuthMiddleware],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: bulkCreateUserSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      z.object({
+        message: z.string(),
+        count: z.number(),
+      }),
+      "Users created successfully"
+    ),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      z.object({ message: z.string() }),
+      "Unauthenticated request"
+    ),
+    [HttpStatusCodes.FORBIDDEN]: jsonContent(
+      z.object({ message: z.string() }),
+      "Forbidden: Admin access required"
+    ),
+    [HttpStatusCodes.BAD_REQUEST]: jsonContent(
+      z.object({ message: z.string() }),
+      "Bad request"
+    ),
+  },
+});
+
+export type BulkCreateRoute = typeof bulkCreate;
+
 
