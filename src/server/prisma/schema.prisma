@@ -255,6 +255,18 @@ model Member {
   @@map("member")
 }
 
+model OrganizationFollower {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+
+  @@unique([userId, organizationId])
+  @@map("organizationFollower")
+}
+
 model Invitation {
   id             String       @id @map("_id")
   organizationId String
