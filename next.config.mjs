@@ -26,15 +26,8 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   experimental: {
-    turbo: false,
   },
 
-  // Disable Turbopack
-  experimental: {
-    turbo: false,
-  },
-  // Empty turbopack config to silence webpack warning
-  turbopack: {},
 };
 
 export default withPlaiceholder(nextConfig);

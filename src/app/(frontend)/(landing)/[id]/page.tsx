@@ -44,6 +44,7 @@ import {
   BarChart3,
   Flag
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
@@ -58,7 +59,7 @@ export default function AdDetailPage() {
 
   // Using the hook to fetch ad data
   const { data: ad, isLoading, isError } = useGetAdById({ adId: adId || "" });
-  const { data: similarVehiclesData, isLoading: isLoadingSimilar } = useGetSimilarVehicles({ 
+  const { data: similarVehiclesData, isLoading: isLoadingSimilar } = useGetSimilarVehicles({
     adId: adId || "",
     limit: 3,
     enabled: !!adId
@@ -111,7 +112,7 @@ export default function AdDetailPage() {
       const target = e.target as HTMLElement;
       // Block if clicking on image or any element inside image container
       if (
-        target.tagName === "IMG" || 
+        target.tagName === "IMG" ||
         (target.closest && target.closest("img")) ||
         (target.closest && target.closest(".aspect-video")) ||
         (target.closest && target.closest('[class*="watermark"]'))
@@ -193,9 +194,116 @@ export default function AdDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-48">
-        <div className="animate-spin w-8 h-8 border-4 border-[#024950] border-t-transparent rounded-full"></div>
-        <span className="ml-2">Loading ad details...</span>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header Skeleton */}
+        <header className="bg-[#024950] text-white shadow-lg">
+          <div className="max-w-6xl mx-auto px-4 py-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <Skeleton className="h-10 w-32 bg-white/20" /> {/* Back Button */}
+              <div className="flex-1">
+                <Skeleton className="h-8 w-3/4 bg-white/20" /> {/* Title */}
+              </div>
+              <div className="flex gap-2 mt-2 sm:mt-0">
+                <Skeleton className="h-10 w-10 rounded-full bg-white/20" /> {/* Fav */}
+                <Skeleton className="h-10 w-10 rounded-full bg-white/20" /> {/* Report */}
+                <Skeleton className="h-10 w-10 rounded-full bg-white/20" /> {/* Share */}
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column Skeleton */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Image Slider Skeleton */}
+              <Card className="overflow-hidden border-none shadow-sm">
+                <Skeleton className="aspect-video w-full rounded-t-lg" />
+                <div className="p-4 bg-white">
+                  <div className="flex gap-2 overflow-hidden">
+                    {[1, 2, 3, 4].map((i) => (
+                      <Skeleton key={i} className="h-16 w-20 rounded-md shrink-0" />
+                    ))}
+                  </div>
+                </div>
+              </Card>
+
+              {/* Details Skeleton */}
+              <Card>
+                <CardHeader>
+                  <Skeleton className="h-6 w-32" />
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                      <div key={i} className="space-y-2">
+                        <Skeleton className="h-4 w-16" />
+                        <Skeleton className="h-5 w-24" />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Features Skeleton */}
+              <Card>
+                <CardHeader>
+                  <Skeleton className="h-6 w-40" />
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                      <Skeleton key={i} className="h-6 w-full rounded-full" />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Description Skeleton */}
+              <Card>
+                <CardHeader>
+                  <Skeleton className="h-6 w-28" />
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Right Column Skeleton */}
+            <div className="space-y-6">
+              <Card>
+                <CardContent className="p-6 space-y-4">
+                  <Skeleton className="h-10 w-2/3" /> {/* Price */}
+                  <Skeleton className="h-5 w-1/2" /> {/* Location */}
+                  <div className="space-y-3 pt-4">
+                    <Skeleton className="h-12 w-full rounded-md" /> {/* Phone */}
+                    <Skeleton className="h-12 w-full rounded-md" /> {/* Whatsapp */}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6 space-y-4 text-center">
+                  <div className="flex justify-center">
+                    <Skeleton className="h-16 w-16 rounded-full" />
+                  </div>
+                  <Skeleton className="h-6 w-3/4 mx-auto" />
+                  <Skeleton className="h-4 w-full" />
+                  <div className="space-y-3 pt-2">
+                    <Skeleton className="h-14 w-full rounded-md" />
+                    <Skeleton className="h-14 w-full rounded-md" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -211,8 +319,8 @@ export default function AdDetailPage() {
   // Extract media and organize it for the image slider
   const originalImages: string[] = Array.isArray((ad as any).media) && (ad as any).media.length > 0
     ? (ad as any).media
-        .map((item: any) => item?.media?.url)
-        .filter((u: any) => typeof u === "string" && u.length > 0)
+      .map((item: any) => item?.media?.url)
+      .filter((u: any) => typeof u === "string" && u.length > 0)
     : ["/placeholder.svg?height=400&width=600&text=No+Image"];
 
   // Helper function to get watermarked image URL
@@ -278,14 +386,14 @@ export default function AdDetailPage() {
             </Button>
             <div className="flex-1">
               <h1 className="text-lg sm:text-xl font-semibold">
-              {[ad.brand, ad.model, ad.manufacturedYear, ad.vehicleType]
-                .filter(Boolean)
-                .join(" ")}
+                {[ad.brand, ad.model, ad.manufacturedYear, ad.vehicleType]
+                  .filter(Boolean)
+                  .join(" ")}
               </h1>
             </div>
-              <div className="flex items-center space-x-2 mt-2 sm:mt-0">
-              <FavoriteButton 
-                adId={adId || ""} 
+            <div className="flex items-center space-x-2 mt-2 sm:mt-0">
+              <FavoriteButton
+                adId={adId || ""}
                 className="text-white hover:bg-white/10"
                 iconClassName="w-5 h-5"
               />
@@ -386,7 +494,7 @@ export default function AdDetailPage() {
                     }}
                   />
                   {/* Transparent overlay to prevent direct image interaction - BLOCKS ALL RIGHT CLICKS */}
-                  <div 
+                  <div
                     className="absolute inset-0 z-10 pointer-events-auto"
                     onContextMenu={(e) => {
                       e.preventDefault();
@@ -406,8 +514,8 @@ export default function AdDetailPage() {
                         return false;
                       }
                     }}
-                    style={{ 
-                      userSelect: 'none', 
+                    style={{
+                      userSelect: 'none',
                       WebkitUserSelect: 'none',
                       MozUserSelect: 'none',
                       msUserSelect: 'none'
@@ -454,9 +562,8 @@ export default function AdDetailPage() {
                       <button
                         key={index}
                         onClick={() => setCurrentImageIndex(index)}
-                        className={`flex-shrink-0 w-20 h-16 rounded border-2 overflow-hidden ${
-                          index === currentImageIndex ? "border-[#024950]" : "border-gray-300"
-                        }`}
+                        className={`flex-shrink-0 w-20 h-16 rounded border-2 overflow-hidden ${index === currentImageIndex ? "border-[#024950]" : "border-gray-300"
+                          }`}
                       >
                         <img
                           src={image || "/placeholder.svg"}
@@ -726,16 +833,16 @@ export default function AdDetailPage() {
                       </div>
                     </div>
                   )}
-                    <a
+                  <a
                     href={
                       ad.whatsappNumber
-                      ? `https://wa.me/${ad.whatsappNumber.replace(/\D/g, "")}`
-                      : `sms:${ad.phoneNumber || ""}`
+                        ? `https://wa.me/${ad.whatsappNumber.replace(/\D/g, "")}`
+                        : `sms:${ad.phoneNumber || ""}`
                     }
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full inline-block"
-                    >
+                  >
                     <Button
                       variant="outline"
                       className="w-full border-[#024950] text-[#024950] hover:bg-[#024950] hover:text-white"
@@ -744,7 +851,7 @@ export default function AdDetailPage() {
                       <MessageCircle className="w-4 h-4 mr-2" />
                       {ad.whatsappNumber ? "WhatsApp" : "Message"}
                     </Button>
-                    </a>
+                  </a>
                 </div>
               </CardContent>
             </Card>

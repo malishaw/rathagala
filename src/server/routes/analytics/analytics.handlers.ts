@@ -62,9 +62,9 @@ export const getAdSummary = async (c: any) => {
 export const getAdCreationReport = async (c: any) => {
   try {
     const { startDate, endDate, period } = c.req.query();
-    
+
     const dateFilter = getDateRangeFilter(startDate, endDate);
-    
+
     const ads = await prisma.ad.findMany({
       where: {
         createdAt: dateFilter,
@@ -101,9 +101,9 @@ export const getAdCreationReport = async (c: any) => {
 export const getAdDeletionReport = async (c: any) => {
   try {
     const { startDate, endDate, period } = c.req.query();
-    
+
     const dateFilter = getDateRangeFilter(startDate, endDate);
-    
+
     // Get expired or rejected ads
     const ads = await prisma.ad.findMany({
       where: {
@@ -209,33 +209,51 @@ export const getAdCreationByEntity = async (c: any) => {
 
 export const getAdAdvancedSummary = async (c: any) => {
   try {
+    const { type } = c.req.valid("query");
+
     // Helper function to get counts and top 10
     const getAttributeCounts = async (field: string) => {
-      const groupBy: any = await prisma.ad.groupBy({
-        by: [field as any],
-        _count: {
-          id: true,
-        },
-        where: {
-          [field]: {
-            not: null,
-          },
-        },
-        orderBy: {
+      try {
+        const whereClause: any = {};
+
+        // Add vehicle type filter if provided, but NOT when aggregating the type field itself
+        // (we want to see all vehicle types in the Vehicle Types chart)
+        if (type && field !== "type") {
+          whereClause["type"] = type;
+        }
+
+        // For enum fields:
+        // type and listingType are required in schema, so no need to filter nulls (and doing so with { not: null } causes validation error).
+        // For other optional fields (brand, model, etc.), we filter nulls.
+        if (field !== "type" && field !== "listingType") {
+          whereClause[field] = { not: null };
+        }
+
+        const groupBy: any = await prisma.ad.groupBy({
+          by: [field as any],
           _count: {
-            id: "desc",
+            id: true,
           },
-        },
-      });
+          where: whereClause,
+          orderBy: {
+            _count: {
+              id: "desc",
+            },
+          },
+        });
 
-      const total = groupBy.map((item: any) => ({
-        value: item[field] || "Unknown",
-        count: item._count.id,
-      }));
+        const total = groupBy.map((item: any) => ({
+          value: item[field] || "Unknown",
+          count: item._count.id,
+        }));
 
-      const top10 = total.slice(0, 10);
+        const top10 = total.slice(0, 10);
 
-      return { total, top10 };
+        return { total, top10 };
+      } catch (error: any) {
+        console.error(`Error getting attribute counts for ${field}:`, error);
+        return { total: [], top10: [], error: error.message };
+      }
     };
 
     const [
@@ -410,6 +428,203 @@ export const getUserSummary = async (c: any) => {
     console.error("Error fetching user summary:", error);
     return c.json(
       { message: "Failed to fetch user summary" },
+      HttpStatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+};
+
+export const getSearchUsers = async (c: any) => {
+  try {
+    const { q } = c.req.query();
+
+    if (!q || q.length < 2) {
+      return c.json({ users: [], organizations: [] }, HttpStatusCodes.OK);
+    }
+
+    // Search users
+    const users = await prisma.user.findMany({
+      where: {
+        OR: [
+          { name: { contains: q, mode: "insensitive" } },
+          { email: { contains: q, mode: "insensitive" } },
+        ],
+      },
+      take: 20,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        _count: {
+          select: {
+            adsCreated: true,
+          },
+        },
+      },
+    });
+
+    const formattedUsers = users.map((u) => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      adsCount: u._count.adsCreated,
+    }));
+
+    // Search organizations
+    const orgs = await prisma.organization.findMany({
+      where: {
+        name: { contains: q, mode: "insensitive" },
+      },
+      take: 20,
+      select: {
+        id: true,
+        name: true,
+        _count: {
+          select: {
+            members: true,
+            ads: true,
+          },
+        },
+      },
+    });
+
+    const formattedOrgs = orgs.map((o) => ({
+      id: o.id,
+      name: o.name,
+      membersCount: o._count.members,
+      adsCount: o._count.ads,
+    }));
+
+    return c.json(
+      {
+        users: formattedUsers,
+        organizations: formattedOrgs,
+      },
+      HttpStatusCodes.OK
+    );
+  } catch (error) {
+    console.error("Error searching users:", error);
+    return c.json(
+      { message: "Failed to search users" },
+      HttpStatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+};
+
+export const getEntityHistory = async (c: any) => {
+  try {
+    const { id, type, startDate, endDate, period } = c.req.query();
+
+    const dateFilter: any = getDateRangeFilter(startDate, endDate) || {};
+
+    let details: any = { id };
+    let history: any[] = [];
+
+    // Fetch generic counts from prisma based on type
+    if (type === "user") {
+      const user = await prisma.user.findUnique({
+        where: { id },
+        select: { id: true, name: true, email: true },
+      });
+
+      if (!user) {
+        return c.json({ message: "User not found" }, HttpStatusCodes.NOT_FOUND);
+      }
+
+      // Get all ads for this user count
+      const totalAds = await prisma.ad.count({
+        where: { createdBy: id },
+      });
+
+      details = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        totalAds,
+      };
+
+      // Get history
+      const ads = await prisma.ad.findMany({
+        where: {
+          createdBy: id,
+          createdAt: dateFilter,
+        },
+        select: {
+          createdAt: true,
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+      });
+
+      // Process history similar to general report
+      const dataMap = new Map<string, number>();
+      ads.forEach((ad) => {
+        const dateKey = formatDate(ad.createdAt, period || "monthly");
+        dataMap.set(dateKey, (dataMap.get(dateKey) || 0) + 1);
+      });
+
+      history = Array.from(dataMap.entries())
+        .map(([date, count]) => ({ date, count }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+    } else if (type === "organization") {
+      const org = await prisma.organization.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          name: true,
+          _count: {
+            select: { members: true }
+          }
+        },
+      });
+
+      if (!org) {
+        return c.json({ message: "Organization not found" }, HttpStatusCodes.NOT_FOUND);
+      }
+
+      const totalAds = await prisma.ad.count({
+        where: { orgId: id },
+      });
+
+      details = {
+        id: org.id,
+        name: org.name,
+        membersCount: org._count.members,
+        totalAds,
+      };
+
+      const ads = await prisma.ad.findMany({
+        where: {
+          orgId: id,
+          createdAt: dateFilter,
+        },
+        select: {
+          createdAt: true,
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+      });
+
+      const dataMap = new Map<string, number>();
+      ads.forEach((ad) => {
+        const dateKey = formatDate(ad.createdAt, period || "monthly");
+        dataMap.set(dateKey, (dataMap.get(dateKey) || 0) + 1);
+      });
+
+      history = Array.from(dataMap.entries())
+        .map(([date, count]) => ({ date, count }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    return c.json({ history, details }, HttpStatusCodes.OK);
+  } catch (error) {
+    console.error("Error fetching entity history:", error);
+    return c.json(
+      { message: "Failed to fetch entity history" },
       HttpStatusCodes.INTERNAL_SERVER_ERROR
     );
   }

@@ -45,21 +45,21 @@ export default function OrganizationDashboardPage() {
   const [isOrgLoading, setIsOrgLoading] = useState(true);
 
   // Fetch ads data
-  const { data: adsData, isLoading: isAdsLoading } = useGetAds({ page: 1, limit: 10, search: "" });
+  const { data: adsData, isLoading: isAdsLoading } = useGetAds({ page: 1, limit: 10, search: "", orgId: organizationId });
   const ads = adsData?.ads ?? [];
 
   // Fetch organization data
   useEffect(() => {
     const fetchOrganization = async () => {
       setIsOrgLoading(true);
-      
+
       try {
         const { data, error } = await betterFetch<Organization>(`/api/organizations/${organizationId}`);
-        
+
         if (error) {
           throw new Error(error.message || "Failed to fetch organization");
         }
-        
+
         if (data) {
           setOrganization(data);
         }
@@ -70,7 +70,7 @@ export default function OrganizationDashboardPage() {
         setIsOrgLoading(false);
       }
     };
-    
+
     if (organizationId) {
       fetchOrganization();
     }
@@ -276,18 +276,18 @@ export default function OrganizationDashboardPage() {
             ) : (
               <div className="space-y-4">
                 {ads.map((ad: any) => (
-                  <Link 
-                    key={ad.id} 
+                  <Link
+                    key={ad.id}
                     href={`/dashboard/ads/${ad.id}`}
                     className="flex items-center gap-4 p-4 rounded-lg hover:bg-muted/50 transition-colors border"
                   >
                     <div className="w-24 h-20 bg-muted rounded-lg overflow-hidden flex-shrink-0">
                       {ad.media && ad.media.length > 0 && ad.media[0].media?.url ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img 
-                          src={ad.media[0].media.url} 
-                          alt={ad.title} 
-                          className="w-full h-full object-cover" 
+                        <img
+                          src={ad.media[0].media.url}
+                          alt={ad.title}
+                          className="w-full h-full object-cover"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-muted-foreground">
@@ -306,13 +306,12 @@ export default function OrganizationDashboardPage() {
                             {ad.city ?? ad.province ?? "Location not specified"} • {ad.listingType}
                           </p>
                           <div className="flex items-center gap-2 mt-2">
-                            <span className={`text-xs px-2 py-1 rounded-full ${
-                              ad.status === "ACTIVE" 
-                                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" 
+                            <span className={`text-xs px-2 py-1 rounded-full ${ad.status === "ACTIVE"
+                                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                                 : ad.isDraft
-                                ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
-                                : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                            }`}>
+                                  ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                                  : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                              }`}>
                               {ad.isDraft ? "Draft" : ad.status}
                             </span>
                             {ad.featured && (

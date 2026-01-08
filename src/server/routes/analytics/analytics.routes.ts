@@ -96,6 +96,9 @@ const analyticsRoutes = createRouter()
       summary: "Get ad advanced summary",
       description: "Get total count and top 10 of various ad attributes",
       tags: ["Analytics"],
+      request: {
+        query: schemas.adAdvancedSummaryQuerySchema,
+      },
       responses: {
         200: {
           description: "Ad advanced summary",
@@ -128,6 +131,52 @@ const analyticsRoutes = createRouter()
       },
     },
     handlers.getUserSummary
+  )
+  .openapi(
+    {
+      method: "get",
+      path: "/search-users",
+      summary: "Search users and organizations",
+      description: "Search for users by name/email and organizations by name",
+      tags: ["Analytics"],
+      request: {
+        query: schemas.searchUserQuerySchema,
+      },
+      responses: {
+        200: {
+          description: "Search results",
+          content: {
+            "application/json": {
+              schema: schemas.searchUserResponseSchema,
+            },
+          },
+        },
+      },
+    },
+    handlers.getSearchUsers
+  )
+  .openapi(
+    {
+      method: "get",
+      path: "/entity-history",
+      summary: "Get entity ad creation history",
+      description: "Get ad creation history for a specific user or organization",
+      tags: ["Analytics"],
+      request: {
+        query: schemas.entityHistoryQuerySchema,
+      },
+      responses: {
+        200: {
+          description: "Entity history",
+          content: {
+            "application/json": {
+              schema: schemas.entityHistoryResponseSchema,
+            },
+          },
+        },
+      },
+    },
+    handlers.getEntityHistory
   );
 
 export default analyticsRoutes;

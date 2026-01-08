@@ -2,8 +2,9 @@
 import * as HttpStatusCodes from "stoker/http-status-codes";
 
 import { prisma } from "@/server/prisma/client";
-import type { ListRoute, UpdateOrganizationIdRoute, GetCurrentUserRoute, UpdateProfileRoute } from "./users.routes";
+import type { ListRoute, UpdateOrganizationIdRoute, GetCurrentUserRoute, UpdateProfileRoute, BulkCreateRoute } from "./users.routes";
 import { AppRouteHandler } from "@/types/server";
+import crypto from "crypto";
 
 export const list: AppRouteHandler<ListRoute> = async (c) => {
   const user = c.get("user");
@@ -77,6 +78,8 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       emailVerified: true,
       banned: true,
       organizationId: true,
+      phone: true,
+      phoneVerified: true,
       organization: {
         select: {
           id: true,
@@ -175,6 +178,8 @@ export const getCurrentUser: AppRouteHandler<GetCurrentUserRoute> = async (c) =>
         id: true,
         name: true,
         email: true,
+        phone: true,
+        phoneVerified: true,
         organizationId: true,
         organization: {
           select: {
@@ -198,6 +203,8 @@ export const getCurrentUser: AppRouteHandler<GetCurrentUserRoute> = async (c) =>
         id: userWithOrg.id,
         name: userWithOrg.name,
         email: userWithOrg.email,
+        phone: userWithOrg.phone,
+        phoneVerified: userWithOrg.phoneVerified,
         organizationId: userWithOrg.organizationId,
         organization: userWithOrg.organization,
       },
@@ -269,7 +276,7 @@ export const updateProfile: AppRouteHandler<UpdateProfileRoute> = async (c) => {
 
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
-      data: { 
+      data: {
         name,
         phone,
         whatsappNumber,
@@ -419,7 +426,7 @@ export const updateUserByAdmin: AppRouteHandler<UpdateUserByAdminRoute> = async 
   }
 
   const { userId } = c.req.valid("param");
-  const { name, email, role, organizationId, phone, whatsappNumber, province, district, city, location } = c.req.valid("json");
+  const { name, email, role, organizationId, phone, phoneVerified, whatsappNumber, province, district, city, location } = c.req.valid("json");
 
   try {
     // Check if user exists
@@ -455,6 +462,7 @@ export const updateUserByAdmin: AppRouteHandler<UpdateUserByAdminRoute> = async 
     if (role !== undefined) updateData.role = role;
     if (organizationId !== undefined) updateData.organizationId = organizationId;
     if (phone !== undefined) updateData.phone = phone;
+    if (phoneVerified !== undefined) updateData.phoneVerified = phoneVerified;
     if (whatsappNumber !== undefined) updateData.whatsappNumber = whatsappNumber;
     if (province !== undefined) updateData.province = province;
     if (district !== undefined) updateData.district = district;
@@ -477,6 +485,7 @@ export const updateUserByAdmin: AppRouteHandler<UpdateUserByAdminRoute> = async 
           },
         },
         phone: true,
+        phoneVerified: true,
         whatsappNumber: true,
         province: true,
         district: true,
@@ -506,4 +515,90 @@ export const updateUserByAdmin: AppRouteHandler<UpdateUserByAdminRoute> = async 
     );
   }
 };
+
+// ---------- Bulk Create Users ----------
+export const bulkCreate: AppRouteHandler<BulkCreateRoute> = async (c) => {
+  const user = c.get("user");
+
+  if (!user) {
+    return c.json(
+      { message: "Unauthenticated user" },
+      HttpStatusCodes.UNAUTHORIZED
+    );
+  }
+
+  const isAdmin = user?.role === "admin";
+
+  if (!isAdmin) {
+    return c.json(
+      { message: "Unauthorized: Admin access required" },
+      HttpStatusCodes.FORBIDDEN
+    );
+  }
+
+  const { users } = c.req.valid("json");
+  let createdCount = 0;
+
+  try {
+    for (const userData of users) {
+      // Check if user exists by email
+      const existingUser = await prisma.user.findUnique({
+        where: { email: userData.email },
+      });
+
+      if (existingUser) {
+        continue; // Skip if exists
+      }
+
+      // Resolve organization if provided
+      let organizationId = null;
+      if (userData.organization) {
+        const org = await prisma.organization.findFirst({
+          where: { name: userData.organization },
+        });
+        if (org) {
+          organizationId = org.id;
+        }
+      }
+
+      await prisma.user.create({
+        data: {
+          id: crypto.randomUUID(),
+          name: userData.name,
+          email: userData.email,
+          role: userData.role || "user",
+          phone: userData.phone,
+          whatsappNumber: userData.whatsappNumber,
+          province: userData.province,
+          district: userData.district,
+          city: userData.city,
+          location: userData.location,
+          organizationId: organizationId,
+          emailVerified: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
+      createdCount++;
+    }
+
+    return c.json(
+      {
+        message: "Users imported successfully",
+        count: createdCount,
+      },
+      HttpStatusCodes.OK
+    );
+  } catch (error) {
+    console.error("Error bulk creating users:", error);
+    return c.json(
+      {
+        message: "Failed to bulk create users",
+        error: error instanceof Error ? error.message : "Unknown error"
+      },
+      HttpStatusCodes.BAD_REQUEST // Or specific error code
+    );
+  }
+};
+
 

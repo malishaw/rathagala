@@ -1,5 +1,16 @@
 "use client";
 
+import { useState } from "react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+
 import { useGetAds } from "@/features/ads/api/use-get-ads";
 import { useGetOrganizations } from "@/features/organizations/api/use-get-orgs";
 import { useGetUsers } from "@/features/users/api/use-get-users";
@@ -19,21 +30,31 @@ export default function DashboardPage() {
   const { data, isLoading, error } = latestAdsQuery;
 
   // Fetch organizations for admin
-  const { data: orgsData, isLoading: orgsLoading } = useGetOrganizations({ 
-    page: 1, 
-    limit: 5, 
-    search: "" 
+  const { data: orgsData, isLoading: orgsLoading } = useGetOrganizations({
+    page: 1,
+    limit: 5,
+    search: ""
   });
 
   // Fetch users for admin
-  const { data: usersData, isLoading: usersLoading } = useGetUsers({ 
-    page: 1, 
-    limit: 5, 
-    search: "" 
+  const { data: usersData, isLoading: usersLoading } = useGetUsers({
+    page: 1,
+    limit: 5,
+    search: ""
   });
 
   const ads = data?.ads ?? [];
   const organizations = orgsData?.organizations ?? [];
+
+  // Client-side pagination for Latest Ads
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
+  const totalPages = Math.ceil(ads.length / ITEMS_PER_PAGE);
+  const currentAds = ads.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50">
@@ -63,7 +84,7 @@ export default function DashboardPage() {
             {/* Admin Stats Cards - Show for admin users */}
             {isAdmin && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-                <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 hover:shadow-xl transition-shadow duration-200">
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 duration-200">
                   <div className="flex items-center justify-between mb-4">
                     <div className="p-3 bg-blue-100 rounded-xl">
                       <TrendingUp className="w-6 h-6 text-blue-600" />
@@ -73,7 +94,7 @@ export default function DashboardPage() {
                   <div className="text-3xl font-bold text-slate-800">{data?.pagination?.total ?? "—"}</div>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 hover:shadow-xl transition-shadow duration-200">
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 duration-200">
                   <div className="flex items-center justify-between mb-4">
                     <div className="p-3 bg-green-100 rounded-xl">
                       <Star className="w-6 h-6 text-green-600" />
@@ -83,7 +104,7 @@ export default function DashboardPage() {
                   <div className="text-3xl font-bold text-slate-800">{ads.filter(a => a.status === "ACTIVE").length}</div>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 hover:shadow-xl transition-shadow duration-200">
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 duration-200">
                   <div className="flex items-center justify-between mb-4">
                     <div className="p-3 bg-yellow-100 rounded-xl">
                       <Clock className="w-6 h-6 text-yellow-600" />
@@ -93,7 +114,7 @@ export default function DashboardPage() {
                   <div className="text-3xl font-bold text-slate-800">{ads.filter(a => a.status === "PENDING_REVIEW").length}</div>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 hover:shadow-xl transition-shadow duration-200">
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 duration-200">
                   <div className="flex items-center justify-between mb-4">
                     <div className="p-3 bg-purple-100 rounded-xl">
                       <Building2 className="w-6 h-6 text-purple-600" />
@@ -103,7 +124,7 @@ export default function DashboardPage() {
                   <div className="text-3xl font-bold text-slate-800">{orgsData?.pagination?.total ?? "—"}</div>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 hover:shadow-xl transition-shadow duration-200">
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 duration-200">
                   <div className="flex items-center justify-between mb-4">
                     <div className="p-3 bg-orange-100 rounded-xl">
                       <Users className="w-6 h-6 text-orange-600" />
@@ -118,45 +139,45 @@ export default function DashboardPage() {
             {/* Regular Stats Cards - Show for non-admin users */}
             {!isAdmin && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="group relative bg-gradient-to-br from-teal-500 to-teal-600 p-6 rounded-2xl overflow-hidden hover:scale-[1.02] transition-all duration-300">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl group-hover:scale-110 transition-transform">
-                      <TrendingUp className="w-6 h-6 text-white" />
+                <div className="group relative bg-gradient-to-br from-teal-500 to-teal-600 p-6 rounded-2xl overflow-hidden hover:scale-[1.02] transition-all duration-300">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+                  <div className="relative">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl group-hover:scale-110 transition-transform">
+                        <TrendingUp className="w-6 h-6 text-white" />
+                      </div>
                     </div>
+                    <div className="text-xs font-semibold text-teal-100 uppercase tracking-wider mb-2">Total Ads</div>
+                    <div className="text-3xl font-bold text-white">{data?.pagination?.total ?? "—"}</div>
                   </div>
-                  <div className="text-xs font-semibold text-teal-100 uppercase tracking-wider mb-2">Total Ads</div>
-                  <div className="text-3xl font-bold text-white">{data?.pagination?.total ?? "—"}</div>
                 </div>
-              </div>
 
-              <div className="group relative bg-gradient-to-br from-emerald-500 to-green-600 p-6 rounded-2xl overflow-hidden hover:scale-[1.02] transition-all duration-300">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl group-hover:scale-110 transition-transform">
-                      <Star className="w-6 h-6 text-white" />
+                <div className="group relative bg-gradient-to-br from-emerald-500 to-green-600 p-6 rounded-2xl overflow-hidden hover:scale-[1.02] transition-all duration-300">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+                  <div className="relative">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl group-hover:scale-110 transition-transform">
+                        <Star className="w-6 h-6 text-white" />
+                      </div>
                     </div>
+                    <div className="text-xs font-semibold text-emerald-100 uppercase tracking-wider mb-2">Active Ads</div>
+                    <div className="text-3xl font-bold text-white">{ads.filter(a => a.status === "ACTIVE").length}</div>
                   </div>
-                  <div className="text-xs font-semibold text-emerald-100 uppercase tracking-wider mb-2">Active Ads</div>
-                  <div className="text-3xl font-bold text-white">{ads.filter(a => a.status === "ACTIVE").length}</div>
                 </div>
-              </div>
 
-              <div className="group relative bg-gradient-to-br from-orange-500 to-amber-600 p-6 rounded-2xl overflow-hidden hover:scale-[1.02] transition-all duration-300">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl group-hover:scale-110 transition-transform">
-                      <Clock className="w-6 h-6 text-white" />
+                <div className="group relative bg-gradient-to-br from-orange-500 to-amber-600 p-6 rounded-2xl overflow-hidden hover:scale-[1.02] transition-all duration-300">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+                  <div className="relative">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl group-hover:scale-110 transition-transform">
+                        <Clock className="w-6 h-6 text-white" />
+                      </div>
                     </div>
+                    <div className="text-xs font-semibold text-orange-100 uppercase tracking-wider mb-2">Drafts</div>
+                    <div className="text-3xl font-bold text-white">{ads.filter(a => a.isDraft).length}</div>
                   </div>
-                  <div className="text-xs font-semibold text-orange-100 uppercase tracking-wider mb-2">Drafts</div>
-                  <div className="text-3xl font-bold text-white">{ads.filter(a => a.isDraft).length}</div>
                 </div>
               </div>
-            </div>
             )}
 
             {/* Latest Ads */}
@@ -187,35 +208,100 @@ export default function DashboardPage() {
                     <p className="text-slate-500 text-sm mt-1">Create your first listing to get started</p>
                   </div>
                 ) : (
-                  <ul className="space-y-3">
-                    {ads.map((ad: any) => (
-                      <li key={ad.id} className="group flex items-center gap-4 p-4 rounded-xl hover:bg-gradient-to-r hover:from-teal-50 hover:to-emerald-50 transition-all duration-300 border border-slate-100 hover:border-teal-200">
-                        <div className="w-24 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
-                          {ad.media && ad.media.length > 0 && ad.media[0].media?.url ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={ad.media[0].media.url} alt={ad.title} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-slate-400">
-                              <Car className="w-6 h-6" />
+                  <div className="space-y-4">
+                    <ul className="space-y-3">
+                      {currentAds.map((ad: any) => (
+                        <li key={ad.id} className="group relative rounded-xl hover:bg-gradient-to-r hover:from-teal-50 hover:to-emerald-50 transition-all duration-300 border border-slate-100 hover:border-teal-200">
+                          <Link href={`/${ad.id}`} className="flex items-center gap-3 p-2 w-full h-full">
+                            <div className="w-16 h-12 bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
+                              {ad.media && ad.media.length > 0 && ad.media[0].media?.url ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={ad.media[0].media.url} alt={ad.title} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                  <Car className="w-4 h-4" />
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
 
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <div className="font-semibold text-slate-800 group-hover:text-teal-700 transition-colors">{ad.title || `${ad.brand} ${ad.model}`}</div>
-                              <div className="text-xs text-slate-500 mt-1">{ad.city ?? ad.province ?? "Location not specified"} • {ad.listingType}</div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between">
+                                <div className="truncate pr-4">
+                                  <div className="font-semibold text-slate-800 text-sm truncate group-hover:text-teal-700 transition-colors">{ad.title || `${ad.brand} ${ad.model}`}</div>
+                                  <div className="text-xs text-slate-500 truncate">{ad.city ?? ad.province ?? "Location not specified"} • {ad.listingType}</div>
+                                </div>
+                                <div className="text-right flex-shrink-0">
+                                  <div className="text-teal-700 font-bold text-sm group-hover:text-teal-600 transition-colors">{ad.price ? `LKR ${Number(ad.price).toLocaleString()}` : "Price on request"}</div>
+                                  <div className="text-[10px] text-slate-400">{ad.updatedAt ? format(new Date(ad.updatedAt), "MMM d, yyyy") : "—"}</div>
+                                </div>
+                              </div>
                             </div>
-                            <div className="text-right">
-                              <div className="text-teal-700 font-bold group-hover:text-teal-600 transition-colors">{ad.price ? `LKR ${Number(ad.price).toLocaleString()}` : "Price on request"}</div>
-                              <div className="text-xs text-slate-400 mt-1">{ad.updatedAt ? format(new Date(ad.updatedAt), "MMM d, yyyy") : "—"}</div>
-                            </div>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+
+                    {totalPages > 1 && (
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                if (currentPage > 1) setCurrentPage(p => p - 1);
+                              }}
+                              className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            />
+                          </PaginationItem>
+
+                          {Array.from({ length: totalPages }).map((_, i) => {
+                            const page = i + 1;
+                            // Simple logic to show limited page numbers could be added here if needed,
+                            // for now showing all as per simple requirement, or we can limit if too many.
+                            // Given "10 ads enough for one page" and unlikely to have thousands immediately displayed here,
+                            // simple mapping is okay, but let's be safe with a slice if there are many.
+                            if (totalPages > 7 && (page < currentPage - 1 || page > currentPage + 1) && page !== 1 && page !== totalPages) {
+                              if (page === currentPage - 2 || page === currentPage + 2) {
+                                return (
+                                  <PaginationItem key={page}>
+                                    <PaginationEllipsis />
+                                  </PaginationItem>
+                                );
+                              }
+                              return null;
+                            }
+
+                            return (
+                              <PaginationItem key={page}>
+                                <PaginationLink
+                                  href="#"
+                                  isActive={page === currentPage}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setCurrentPage(page);
+                                  }}
+                                >
+                                  {page}
+                                </PaginationLink>
+                              </PaginationItem>
+                            );
+                          })}
+
+                          <PaginationItem>
+                            <PaginationNext
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                if (currentPage < totalPages) setCurrentPage(p => p + 1);
+                              }}
+                              className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -231,7 +317,7 @@ export default function DashboardPage() {
 
             {/* Organizations Section - Admin Only */}
             {isAdmin && (
-              <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                 <div className="p-6 border-b border-slate-200">
                   <h2 className="text-2xl font-bold text-slate-800 mb-2">Organizations</h2>
                   <p className="text-slate-600">Recent organizations</p>
@@ -271,7 +357,7 @@ export default function DashboardPage() {
                                   {org.createdAt ? format(new Date(org.createdAt), "MMM d, yyyy") : "—"}
                                 </div>
                               </div>
-                              <Link 
+                              <Link
                                 href={`/dashboard/organizations/${org.id}`}
                                 className="text-teal-600 hover:text-teal-700 font-medium text-sm flex items-center gap-1"
                               >
@@ -299,7 +385,7 @@ export default function DashboardPage() {
 
             {/* Users Section - Admin Only */}
             {isAdmin && (
-              <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                 <div className="p-6 border-b border-slate-200">
                   <h2 className="text-2xl font-bold text-slate-800 mb-2">Users</h2>
                   <p className="text-slate-600">Recent user activity</p>
@@ -327,43 +413,43 @@ export default function DashboardPage() {
             {/* Static Content: Recent Activity */}
             {!isAdmin && (
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 overflow-hidden hover:border-teal-200 transition-all duration-300">
-              <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-teal-50 to-emerald-50">
-                <h2 className="text-2xl font-bold text-slate-800">Recent Activity</h2>
-                <p className="text-sm text-slate-600 mt-1">Your latest interactions and updates</p>
+                <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-teal-50 to-emerald-50">
+                  <h2 className="text-2xl font-bold text-slate-800">Recent Activity</h2>
+                  <p className="text-sm text-slate-600 mt-1">Your latest interactions and updates</p>
+                </div>
+                <div className="p-6 space-y-3">
+                  <div className="group flex items-start gap-4 p-4 bg-gradient-to-r from-teal-50 to-teal-50/50 rounded-xl hover:from-teal-100 hover:to-teal-50 transition-all duration-300 border border-teal-100">
+                    <div className="p-2.5 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl group-hover:scale-110 transition-transform">
+                      <Bell className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-800 text-sm">New inquiry received</p>
+                      <p className="text-xs text-slate-600 mt-1">Someone is interested in your Toyota Camry listing</p>
+                      <p className="text-xs text-teal-600 font-medium mt-1">2 hours ago</p>
+                    </div>
+                  </div>
+                  <div className="group flex items-start gap-4 p-4 bg-gradient-to-r from-emerald-50 to-emerald-50/50 rounded-xl hover:from-emerald-100 hover:to-emerald-50 transition-all duration-300 border border-emerald-100">
+                    <div className="p-2.5 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl group-hover:scale-110 transition-transform">
+                      <Star className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-800 text-sm">Ad featured</p>
+                      <p className="text-xs text-slate-600 mt-1">Your Honda Civic is now featured on the homepage</p>
+                      <p className="text-xs text-emerald-600 font-medium mt-1">1 day ago</p>
+                    </div>
+                  </div>
+                  <div className="group flex items-start gap-4 p-4 bg-gradient-to-r from-orange-50 to-orange-50/50 rounded-xl hover:from-orange-100 hover:to-orange-50 transition-all duration-300 border border-orange-100">
+                    <div className="p-2.5 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl group-hover:scale-110 transition-transform">
+                      <Clock className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-800 text-sm">Ad expires soon</p>
+                      <p className="text-xs text-slate-600 mt-1">Your Nissan Altima listing expires in 3 days</p>
+                      <p className="text-xs text-orange-600 font-medium mt-1">2 days ago</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="p-6 space-y-3">
-                <div className="group flex items-start gap-4 p-4 bg-gradient-to-r from-teal-50 to-teal-50/50 rounded-xl hover:from-teal-100 hover:to-teal-50 transition-all duration-300 border border-teal-100">
-                  <div className="p-2.5 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl group-hover:scale-110 transition-transform">
-                    <Bell className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-slate-800 text-sm">New inquiry received</p>
-                    <p className="text-xs text-slate-600 mt-1">Someone is interested in your Toyota Camry listing</p>
-                    <p className="text-xs text-teal-600 font-medium mt-1">2 hours ago</p>
-                  </div>
-                </div>
-                <div className="group flex items-start gap-4 p-4 bg-gradient-to-r from-emerald-50 to-emerald-50/50 rounded-xl hover:from-emerald-100 hover:to-emerald-50 transition-all duration-300 border border-emerald-100">
-                  <div className="p-2.5 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl group-hover:scale-110 transition-transform">
-                    <Star className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-slate-800 text-sm">Ad featured</p>
-                    <p className="text-xs text-slate-600 mt-1">Your Honda Civic is now featured on the homepage</p>
-                    <p className="text-xs text-emerald-600 font-medium mt-1">1 day ago</p>
-                  </div>
-                </div>
-                <div className="group flex items-start gap-4 p-4 bg-gradient-to-r from-orange-50 to-orange-50/50 rounded-xl hover:from-orange-100 hover:to-orange-50 transition-all duration-300 border border-orange-100">
-                  <div className="p-2.5 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl group-hover:scale-110 transition-transform">
-                    <Clock className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-slate-800 text-sm">Ad expires soon</p>
-                    <p className="text-xs text-slate-600 mt-1">Your Nissan Altima listing expires in 3 days</p>
-                    <p className="text-xs text-orange-600 font-medium mt-1">2 days ago</p>
-                  </div>
-                </div>
-              </div>
-            </div>
             )}
           </div>
 
