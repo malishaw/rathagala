@@ -366,7 +366,7 @@ export function Header() {
                       <Button
                         asChild
                         variant="outline"
-                        className="w-full justify-center text-white border-white/60 hover:bg-white hover:text-teal-900 transition-colors duration-200 rounded-xl"
+                        className="w-full justify-center text-teal-900 border-white/60 hover:bg-white hover:text-teal-900 transition-colors duration-200 rounded-xl"
                       >
                         <Link href="/signin">Login</Link>
                       </Button>
