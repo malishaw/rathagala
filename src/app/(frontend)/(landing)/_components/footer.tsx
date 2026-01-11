@@ -4,7 +4,7 @@ export function Footer() {
   return (
     <footer className="bg-gradient-to-r from-slate-900 to-teal-900 text-white py-10 md:py-16">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 md:gap-8">
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center space-x-2 mb-3 md:mb-6">
               <CarIcon className="h-6 w-6" />
@@ -15,23 +15,47 @@ export function Footer() {
                 and sellers nationwide.`}
             </p>
           </div>
-          <div className="col-span-2 md:col-span-1">
+          <div className="col-span-1 md:col-span-1">
             <h4 className="font-semibold mb-3 md:mb-6 text-lg">Quick Links</h4>
             <ul className="space-y-2 md:space-y-3 text-slate-300">
               <li>
-                <a href="/" className="hover:text-white transition-colors">
-                  Browse Cars
+                <a href="/signin" className="hover:text-white transition-colors">
+                  Login
                 </a>
               </li>
               <li>
-                <a href="/sell/new" className="hover:text-white transition-colors">
-                  Sell Your Car
+                <a href="/signup" className="hover:text-white transition-colors">
+                  Register
                 </a>
               </li>
-
+              <li>
+                <a href="/dashboard" className="hover:text-white transition-colors">
+                  Profile
+                </a>
+              </li>
             </ul>
           </div>
-          <div className="col-span-1">
+          <div className="col-span-1 md:col-span-1">
+            <h4 className="font-semibold mb-3 md:mb-6 text-lg">Features</h4>
+            <ul className="space-y-2 md:space-y-3 text-slate-300">
+              <li>
+                <a href="/compare" className="hover:text-white transition-colors">
+                  Compare Vehicle
+                </a>
+              </li>
+              <li>
+                <a href="/analyze" className="hover:text-white transition-colors">
+                  Analyze by Model
+                </a>
+              </li>
+              <li>
+                <a href="/saved-ads" className="hover:text-white transition-colors">
+                  Saved Ads
+                </a>
+              </li>
+            </ul>
+          </div>
+          <div className="col-span-1 md:col-span-1">
             <h4 className="font-semibold mb-3 md:mb-6 text-lg">Support</h4>
             <ul className="space-y-2 md:space-y-3 text-slate-300">
               <li>
@@ -57,7 +81,7 @@ export function Footer() {
               </li>
             </ul>
           </div>
-          <div className="col-span-1">
+          <div className="col-span-1 md:col-span-1">
             <h4 className="font-semibold mb-3 md:mb-6 text-lg">Connect</h4>
             <ul className="space-y-2 md:space-y-3 text-slate-300">
               <li>

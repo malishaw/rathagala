@@ -128,6 +128,7 @@ interface SearchFilters {
   vehicleType: string;
   brand: string;
   model: string;
+  grade: string;
   condition: string;
   minPrice: string;
   maxPrice: string;
@@ -152,6 +153,7 @@ export default function SearchPage() {
     vehicleType: searchParams.get('type') || 'all',
     brand: searchParams.get('brand') || 'all',
     model: searchParams.get('model') || '',
+    grade: searchParams.get('grade') || 'all',
     condition: searchParams.get('condition') || 'all',
     minPrice: searchParams.get('minPrice') || '',
     maxPrice: searchParams.get('maxPrice') || '',
@@ -214,6 +216,11 @@ export default function SearchPage() {
     return data.ads.filter((ad) => {
       // Note: Listing type filter is now handled on the backend
 
+      // Title/Query filter
+      if (filters.query && !ad.title?.toLowerCase().includes(filters.query.toLowerCase())) {
+        return false;
+      }
+
       // Vehicle type filter
       if (filters.vehicleType && filters.vehicleType !== 'all' && ad.type !== filters.vehicleType) {
         return false;
@@ -231,6 +238,11 @@ export default function SearchPage() {
 
       // Condition filter
       if (filters.condition && filters.condition !== 'all' && ad.condition?.toLowerCase() !== filters.condition.toLowerCase()) {
+        return false;
+      }
+
+      // Grade filter
+      if (filters.grade && filters.grade !== 'all' && (ad as any).grade?.toLowerCase() !== filters.grade.toLowerCase()) {
         return false;
       }
 
@@ -299,7 +311,7 @@ export default function SearchPage() {
 
       return true;
     });
-  }, [data?.ads, filters.vehicleType, filters.brand, filters.model, filters.condition, filters.minPrice, filters.maxPrice, filters.minYear, filters.maxYear, filters.fuelType, filters.transmission, filters.district, filters.city]);
+  }, [data?.ads, filters.query, filters.vehicleType, filters.brand, filters.model, filters.condition, filters.grade, filters.minPrice, filters.maxPrice, filters.minYear, filters.maxYear, filters.fuelType, filters.transmission, filters.district, filters.city]);
 
   // Handle filter changes
   const handleFilterChange = (key: keyof SearchFilters, value: string) => {
@@ -330,6 +342,7 @@ export default function SearchPage() {
       vehicleType: 'all',
       brand: 'all',
       model: '',
+      grade: 'all',
       condition: 'all',
       minPrice: '',
       maxPrice: '',
@@ -410,8 +423,8 @@ export default function SearchPage() {
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left Sidebar - Search Filters */}
-          <div className="w-full lg:w-80 space-y-6">
-            <Card className="p-4 lg:p-6">
+          <div className="w-full lg:w-80">
+            <Card className="p-4">
               <div
                 className="flex items-center justify-between mb-4 cursor-pointer lg:cursor-default"
                 onClick={() => setIsFiltersOpen(!isFiltersOpen)}
@@ -429,9 +442,9 @@ export default function SearchPage() {
                         e.stopPropagation();
                         clearFilters();
                       }}
-                      className="text-slate-600 hover:text-slate-900"
+                      className="text-xs text-slate-600 hover:text-slate-900 h-7 px-2"
                     >
-                      Clear All
+                      Clear
                     </Button>
                   )}
                   {/* Mobile Toggle Icon */}
@@ -445,199 +458,234 @@ export default function SearchPage() {
                 </div>
               </div>
 
-              <div className={`space-y-4 ${isFiltersOpen ? 'block' : 'hidden'} lg:block max-h-[60vh] lg:max-h-none overflow-y-auto lg:overflow-visible pr-2 lg:pr-0`}>
-                {/* Search Query */}
+              <div className={`space-y-4 ${isFiltersOpen ? 'block' : 'hidden'} lg:block max-h-[70vh] lg:max-h-none overflow-y-auto lg:overflow-visible pr-2 lg:pr-0`}>
+                {/* Search Title */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Search
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
+                    Search by Title
                   </label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
                     <Input
-                      placeholder="Search vehicles..."
+                      placeholder="Enter vehicle title..."
                       value={filters.query}
                       onChange={(e) => handleFilterChange('query', e.target.value)}
-                      className="pl-10"
+                      className="pl-10 h-9 text-sm"
                     />
                   </div>
                 </div>
 
-                {/* District */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    District
-                  </label>
-                  <Select
-                    value={filters.district}
-                    onValueChange={(value) => handleFilterChange('district', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="All districts" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All districts</SelectItem>
-                      {sriLankanDistricts.map((district) => (
-                        <SelectItem key={district} value={district}>{district}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <Separator className="my-3" />
+
+                {/* Row 1: District & City */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
+                      District
+                    </label>
+                    <Select
+                      value={filters.district}
+                      onValueChange={(value) => handleFilterChange('district', value)}
+                    >
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="All" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All districts</SelectItem>
+                        {sriLankanDistricts.map((district) => (
+                          <SelectItem key={district} value={district}>{district}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
+                      City
+                    </label>
+                    <Select
+                      value={filters.city}
+                      onValueChange={(value) => handleFilterChange('city', value)}
+                    >
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="All" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[250px]">
+                        <SelectItem value="all">All cities</SelectItem>
+                        {availableCities.map((city) => (
+                          <SelectItem key={city} value={city}>{city}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
-                {/* City (Dependent) */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    City
-                  </label>
-                  <Select
-                    value={filters.city}
-                    onValueChange={(value) => handleFilterChange('city', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="All cities" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[300px]">
-                      <SelectItem value="all">All cities</SelectItem>
-                      {availableCities.map((city) => (
-                        <SelectItem key={city} value={city}>{city}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <Separator className="my-3" />
+
+                {/* Row 2: Listing Type & Vehicle Type */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
+                      Listing Type
+                    </label>
+                    <Select
+                      value={filters.listingType}
+                      onValueChange={(value) => handleFilterChange('listingType', value)}
+                    >
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="All" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All types</SelectItem>
+                        <SelectItem value="SELL">For Sale</SelectItem>
+                        <SelectItem value="WANT">Want to Buy</SelectItem>
+                        <SelectItem value="RENT">For Rent</SelectItem>
+                        <SelectItem value="HIRE">For Hire</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
+                      Vehicle Type
+                    </label>
+                    <Select
+                      value={filters.vehicleType}
+                      onValueChange={(value) => handleFilterChange('vehicleType', value)}
+                    >
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="All" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All vehicles</SelectItem>
+                        {Object.entries(vehicleTypeLabels).map(([key, label]) => (
+                          <SelectItem key={key} value={key}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
-                {/* Listing Type */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Listing Type
-                  </label>
-                  <Select
-                    value={filters.listingType}
-                    onValueChange={(value) => handleFilterChange('listingType', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="All types" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All types</SelectItem>
-                      <SelectItem value="SELL">For Sale</SelectItem>
-                      <SelectItem value="WANT">Want to Buy</SelectItem>
-                      <SelectItem value="RENT">For Rent</SelectItem>
-                      <SelectItem value="HIRE">For Hire</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <Separator className="my-3" />
+
+                {/* Row 3: Brand & Model */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
+                      Brand
+                    </label>
+                    <Select
+                      value={filters.brand}
+                      onValueChange={(value) => handleFilterChange('brand', value)}
+                    >
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="All" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[250px]">
+                        <SelectItem value="all">All brands</SelectItem>
+                        {vehicleMakes.map((make) => (
+                          <SelectItem key={make} value={make}>{make}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
+                      Model
+                    </label>
+                    <Input
+                      placeholder="Enter model"
+                      value={filters.model}
+                      onChange={(e) => handleFilterChange('model', e.target.value)}
+                      className="h-9 text-sm"
+                    />
+                  </div>
                 </div>
 
-                {/* Vehicle Type */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Vehicle Type
-                  </label>
-                  <Select
-                    value={filters.vehicleType}
-                    onValueChange={(value) => handleFilterChange('vehicleType', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="All vehicles" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All vehicles</SelectItem>
-                      {Object.entries(vehicleTypeLabels).map(([key, label]) => (
-                        <SelectItem key={key} value={key}>{label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <Separator className="my-3" />
+
+                {/* Row 4: Grade & Condition */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
+                      Grade
+                    </label>
+                    <Select
+                      value={filters.grade}
+                      onValueChange={(value) => handleFilterChange('grade', value)}
+                    >
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="All" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All grades</SelectItem>
+                        <SelectItem value="A">Grade A</SelectItem>
+                        <SelectItem value="B">Grade B</SelectItem>
+                        <SelectItem value="C">Grade C</SelectItem>
+                        <SelectItem value="S">Grade S</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
+                      Condition
+                    </label>
+                    <Select
+                      value={filters.condition}
+                      onValueChange={(value) => handleFilterChange('condition', value)}
+                    >
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="All" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All conditions</SelectItem>
+                        <SelectItem value="New">Brand New</SelectItem>
+                        <SelectItem value="Reconditioned">Reconditioned</SelectItem>
+                        <SelectItem value="Used">Used</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
-                {/* Brand */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Manufacture
-                  </label>
-                  <Select
-                    value={filters.brand}
-                    onValueChange={(value) => handleFilterChange('brand', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="All brands" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All brands</SelectItem>
-                      {vehicleMakes.map((make) => (
-                        <SelectItem key={make} value={make}>{make}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <Separator className="my-3" />
 
-                {/* Model */}
+                {/* Row 5: Price Range */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Vehicle Model
-                  </label>
-                  <Input
-                    placeholder="Enter model"
-                    value={filters.model}
-                    onChange={(e) => handleFilterChange('model', e.target.value)}
-                  />
-                </div>
-
-                {/* Condition */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Condition
-                  </label>
-                  <Select
-                    value={filters.condition}
-                    onValueChange={(value) => handleFilterChange('condition', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="All conditions" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All conditions</SelectItem>
-                      <SelectItem value="New">Brand New</SelectItem>
-                      <SelectItem value="Reconditioned">Reconditioned</SelectItem>
-                      <SelectItem value="Used">Used</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Price Range */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
                     Price Range (Rs.)
                   </label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
                     <Input
                       placeholder="Min"
                       type="number"
                       value={filters.minPrice}
                       onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-                      className={isPriceRangeInvalid ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      className={`h-9 text-sm ${isPriceRangeInvalid ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                     />
                     <Input
                       placeholder="Max"
                       type="number"
                       value={filters.maxPrice}
                       onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-                      className={isPriceRangeInvalid ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      className={`h-9 text-sm ${isPriceRangeInvalid ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                     />
                   </div>
                   {isPriceRangeInvalid && (
-                    <p className="text-xs text-red-500 mt-1">Min price cannot be greater than Max price</p>
+                    <p className="text-xs text-red-500 mt-1">Min cannot exceed Max</p>
                   )}
                 </div>
 
-                {/* Year Range */}
+                <Separator className="my-3" />
+
+                {/* Row 6: Year Range */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
                     Year Range
                   </label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
                     <Select
                       value={filters.minYear}
                       onValueChange={(value) => handleFilterChange('minYear', value)}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="h-9 text-sm">
                         <SelectValue placeholder="Min" />
                       </SelectTrigger>
                       <SelectContent>
@@ -651,7 +699,7 @@ export default function SearchPage() {
                       value={filters.maxYear}
                       onValueChange={(value) => handleFilterChange('maxYear', value)}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="h-9 text-sm">
                         <SelectValue placeholder="Max" />
                       </SelectTrigger>
                       <SelectContent>
@@ -664,48 +712,49 @@ export default function SearchPage() {
                   </div>
                 </div>
 
-                {/* Fuel Type */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Fuel Type
-                  </label>
-                  <Select
-                    value={filters.fuelType}
-                    onValueChange={(value) => handleFilterChange('fuelType', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="All fuel types" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All fuel types</SelectItem>
-                      <SelectItem value="PETROL">Petrol</SelectItem>
-                      <SelectItem value="DIESEL">Diesel</SelectItem>
-                      <SelectItem value="HYBRID">Hybrid</SelectItem>
-                      <SelectItem value="ELECTRIC">Electric</SelectItem>
-                      <SelectItem value="GAS">Gas</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <Separator className="my-3" />
 
-                {/* Transmission */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Transmission
-                  </label>
-                  <Select
-                    value={filters.transmission}
-                    onValueChange={(value) => handleFilterChange('transmission', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="All transmissions" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All transmissions</SelectItem>
-                      <SelectItem value="MANUAL">Manual</SelectItem>
-                      <SelectItem value="AUTOMATIC">Automatic</SelectItem>
-                      <SelectItem value="CVT">CVT</SelectItem>
-                    </SelectContent>
-                  </Select>
+                {/* Row 7: Fuel Type & Transmission */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
+                      Fuel Type
+                    </label>
+                    <Select
+                      value={filters.fuelType}
+                      onValueChange={(value) => handleFilterChange('fuelType', value)}
+                    >
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="All" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All fuel types</SelectItem>
+                        <SelectItem value="PETROL">Petrol</SelectItem>
+                        <SelectItem value="DIESEL">Diesel</SelectItem>
+                        <SelectItem value="HYBRID">Hybrid</SelectItem>
+                        <SelectItem value="ELECTRIC">Electric</SelectItem>
+                        <SelectItem value="GAS">Gas</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
+                      Transmission
+                    </label>
+                    <Select
+                      value={filters.transmission}
+                      onValueChange={(value) => handleFilterChange('transmission', value)}
+                    >
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="All" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All transmissions</SelectItem>
+                        <SelectItem value="Automatic">Automatic</SelectItem>
+                        <SelectItem value="Manual">Manual</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
             </Card>

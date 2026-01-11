@@ -27,7 +27,18 @@ export async function AppSidebar({
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <OrgSwitcher />
+        <div className="flex flex-col gap-2">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-white text-teal-900 hover:bg-teal-50 border border-white/20 shadow-sm transition-colors text-sm font-medium"
+            aria-label="Back to home"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="leading-5">Back</span>
+          </Link>
+
+          <OrgSwitcher />
+        </div>
       </SidebarHeader>
 
       <ScrollArea className="flex-1">
