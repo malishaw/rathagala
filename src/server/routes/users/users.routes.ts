@@ -4,7 +4,7 @@ import { z } from "zod";
 import { jsonContent } from "stoker/openapi/helpers";
 
 import { serverAuthMiddleware } from "@/server/middlewares/auth-middleware";
-import { querySchema, withPaginationSchema, updateProfileSchema, updateUserByAdminSchema, assignOrganizationSchema } from "./users.schemas";
+import { querySchema, withPaginationSchema, updateProfileSchema, updateUserByAdminSchema, assignOrganizationSchema, bulkCreateUserSchema } from "./users.schemas";
 
 const tags = ["Users"];
 
@@ -84,6 +84,8 @@ export const getCurrentUser = createRoute({
         id: z.string(),
         name: z.string(),
         email: z.string(),
+        phone: z.string().nullable().optional(),
+        phoneVerified: z.enum(["verified", "not_verified", "rejected"]).nullable().optional(),
         organizationId: z.string().nullable(),
         organization: z.object({
           id: z.string(),
@@ -229,6 +231,7 @@ export const updateUserByAdmin = createRoute({
           email: z.string(),
           role: z.string().nullable(),
           phone: z.string().nullable().optional(),
+          phoneVerified: z.enum(["verified", "not_verified", "rejected"]).nullable().optional(),
           whatsappNumber: z.string().nullable().optional(),
           province: z.string().nullable().optional(),
           district: z.string().nullable().optional(),
@@ -261,4 +264,45 @@ export const updateUserByAdmin = createRoute({
 });
 
 export type UpdateUserByAdminRoute = typeof updateUserByAdmin;
+
+// ---------- Bulk Create Users ----------
+export const bulkCreate = createRoute({
+  tags,
+  path: "/bulk",
+  method: "post",
+  middleware: [serverAuthMiddleware],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: bulkCreateUserSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      z.object({
+        message: z.string(),
+        count: z.number(),
+      }),
+      "Users created successfully"
+    ),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      z.object({ message: z.string() }),
+      "Unauthenticated request"
+    ),
+    [HttpStatusCodes.FORBIDDEN]: jsonContent(
+      z.object({ message: z.string() }),
+      "Forbidden: Admin access required"
+    ),
+    [HttpStatusCodes.BAD_REQUEST]: jsonContent(
+      z.object({ message: z.string() }),
+      "Bad request"
+    ),
+  },
+});
+
+export type BulkCreateRoute = typeof bulkCreate;
+
 

@@ -12,7 +12,7 @@ import { useGetFavorites } from "@/features/saved-ads/api/use-get-favorites";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
 import { betterFetch } from "@better-fetch/fetch";
 import { format } from "date-fns";
-import { Car, CheckCircle, ChevronRight, CreditCard, Edit, Heart, Loader2, Lock, MapPin, MessageCircle, Phone, Shield, Trash2 } from "lucide-react";
+import { Building2, Car, CheckCircle, ChevronRight, CreditCard, Edit, Heart, Loader2, Lock, MapPin, MessageCircle, Phone, Shield, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -29,6 +29,12 @@ interface User {
   district?: string;
   city?: string;
   location?: string;
+  phoneVerified?: "verified" | "not_verified" | "rejected" | null;
+  organization?: {
+    id: string;
+    name: string;
+    slug: string | null;
+  } | null;
 }
 
 interface Session {
@@ -109,13 +115,13 @@ export default function ProfilePage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [sidebarActive, setSidebarActive] = useState("personal");
-  
+
   // Fetch user ads with the new hook
   const userAdsQuery = useGetUserAds();
-  
+
   // Fetch favorites
   const { data: favorites, isLoading: isFavoritesLoading, refetch: refetchFavorites } = useGetFavorites();
-  
+
   // Form data for profile edit
   const [formData, setFormData] = useState({
     name: "",
@@ -130,40 +136,71 @@ export default function ProfilePage() {
     newPassword: "",
     confirmPassword: ""
   });
-  
+
   // Fetch actual user data from session
   useEffect(() => {
     const fetchUserData = async () => {
       setIsLoading(true);
-      
+
       try {
         // Get user session from API
         const { data: session, error } = await betterFetch<Session>("/api/auth/get-session");
-        
+
         if (error || !session) {
           // If error or no session, redirect to signin
           // Note: Middleware should handle this, but this is a fallback
           router.push("/signin?callbackUrl=/profile");
           return;
         }
-        
-        // Set user from session
-        setUser(session.user);
-        
-        // Initialize form data with user info
-        setFormData({
-          name: session.user.name || "",
-          email: session.user.email || "",
-          phone: session.user.phone || "",
-          whatsappNumber: session.user.whatsappNumber || "",
-          province: session.user.province || "",
-          district: session.user.district || "",
-          city: session.user.city || "",
-          location: session.user.location || "",
-          currentPassword: "",
-          newPassword: "",
-          confirmPassword: ""
-        });
+
+        // Fetch full user data to get organization info and phoneVerified
+        try {
+          const { data: meData } = await betterFetch<any>("/api/users/me");
+          
+          // Merge session user with full user data from API
+          const fullUser = {
+            ...session.user,
+            phone: meData?.phone || session.user.phone,
+            phoneVerified: meData?.phoneVerified || session.user.phoneVerified,
+            organization: meData?.organization
+          };
+          
+          setUser(fullUser);
+
+          // Initialize form data with user info
+          setFormData({
+            name: fullUser.name || "",
+            email: fullUser.email || "",
+            phone: fullUser.phone || "",
+            whatsappNumber: fullUser.whatsappNumber || "",
+            province: fullUser.province || "",
+            district: fullUser.district || "",
+            city: fullUser.city || "",
+            location: fullUser.location || "",
+            currentPassword: "",
+            newPassword: "",
+            confirmPassword: ""
+          });
+        } catch (meError) {
+          console.error("Error fetching full user data:", meError);
+          
+          // Fallback to session data if /api/users/me fails
+          setUser(session.user);
+          
+          setFormData({
+            name: session.user.name || "",
+            email: session.user.email || "",
+            phone: session.user.phone || "",
+            whatsappNumber: session.user.whatsappNumber || "",
+            province: session.user.province || "",
+            district: session.user.district || "",
+            city: session.user.city || "",
+            location: session.user.location || "",
+            currentPassword: "",
+            newPassword: "",
+            confirmPassword: ""
+          });
+        }
       } catch (error) {
         console.error("Error fetching user data:", error);
         toast.error("Failed to load profile data");
@@ -171,10 +208,10 @@ export default function ProfilePage() {
         setIsLoading(false);
       }
     };
-    
+
     fetchUserData();
   }, [router]);
-  
+
   // Handle hash navigation (e.g., #my-ads)
   useEffect(() => {
     const hash = window.location.hash.replace('#', '');
@@ -182,13 +219,13 @@ export default function ProfilePage() {
       setSidebarActive('ads');
     }
   }, []);
-  
+
   // Handle input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
-  
+
   // Handle select change for location fields
   const handleFilterChange = (field: string, value: string) => {
     if (field === "province") {
@@ -213,11 +250,11 @@ export default function ProfilePage() {
     if (!province || !district || !locationData[province] || !locationData[province][district]) return [];
     return locationData[province][district];
   };
-  
+
   // Handle profile update
   const handleUpdateProfile = async () => {
     setIsSaving(true);
-    
+
     try {
       // Update user profile via API
       const { data, error } = await betterFetch("/api/user/profile", {
@@ -232,13 +269,13 @@ export default function ProfilePage() {
           location: formData.location
         }
       });
-      
+
       if (error) {
         const errorMessage = error.message || "Failed to update profile";
         toast.error(errorMessage);
         throw new Error(errorMessage);
       }
-      
+
       // Update local state
       if (user) {
         setUser({
@@ -252,13 +289,13 @@ export default function ProfilePage() {
           location: formData.location
         });
       }
-      
+
       // Show success message
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2000);
       toast.success("Profile updated successfully");
       setActiveSection(null);
-      
+
     } catch (error) {
       console.error("Error updating profile:", error);
       // Error toast already shown above
@@ -266,11 +303,11 @@ export default function ProfilePage() {
       setIsSaving(false);
     }
   };
-  
+
   // Handle password change
   const handleChangePassword = async () => {
     setIsSaving(true);
-    
+
     try {
       // Update password via API
       const { data, error } = await betterFetch("/api/user/change-password", {
@@ -280,11 +317,11 @@ export default function ProfilePage() {
           newPassword: formData.newPassword
         }
       });
-      
+
       if (error) {
         throw new Error(error.message || "Failed to change password");
       }
-      
+
       // Reset password fields
       setFormData(prev => ({
         ...prev,
@@ -292,12 +329,12 @@ export default function ProfilePage() {
         newPassword: "",
         confirmPassword: ""
       }));
-      
+
       // Show success message
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2000);
       toast.success("Password changed successfully");
-      
+
     } catch (error) {
       console.error("Error changing password:", error);
       toast.error("Failed to change password");
@@ -306,13 +343,30 @@ export default function ProfilePage() {
       setIsSaving(false);
     }
   };
-  
+
   // Format price to display with commas
   const formatPrice = (price: number | null) => {
     if (price === null) return "Price on request";
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
-  
+
+  // Get phone verification badge
+  const getPhoneVerificationBadge = (status: "verified" | "not_verified" | "rejected" | null | undefined) => {
+    if (!status) {
+      return <Badge variant="outline" className="text-gray-500 text-xs">Not Verified</Badge>;
+    }
+    
+    switch (status) {
+      case "verified":
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100 text-xs">Verified</Badge>;
+      case "rejected":
+        return <Badge variant="destructive" className="text-xs">Rejected</Badge>;
+      case "not_verified":
+      default:
+        return <Badge variant="outline" className="text-yellow-600 text-xs">Not Verified</Badge>;
+    }
+  };
+
   // Handle delete ad
   const handleDeleteAd = async (ad: UserAd) => {
     setIsDeleting(true);
@@ -331,7 +385,7 @@ export default function ProfilePage() {
       setIsDeleting(false);
     }
   };
-  
+
   // Format date helper
   const formatDate = (dateStr: string) => {
     try {
@@ -340,7 +394,7 @@ export default function ProfilePage() {
       return dateStr;
     }
   };
-  
+
   // Get ad image
   const getAdImage = (ad: UserAd) => {
     if (ad.media && ad.media.length > 0 && ad.media[0].media) {
@@ -352,7 +406,7 @@ export default function ProfilePage() {
   // Get status badge
   const getStatusBadge = (status?: string) => {
     if (!status) return null;
-    
+
     switch (status) {
       case "ACTIVE":
         return <Badge className="bg-green-500 text-white">Active</Badge>;
@@ -368,7 +422,7 @@ export default function ProfilePage() {
         return <Badge variant="outline">{status}</Badge>;
     }
   };
-  
+
   // Loading state for the entire page
   if (isLoading) {
     return (
@@ -377,15 +431,15 @@ export default function ProfilePage() {
       </div>
     );
   }
-  
+
   if (!user) return null;
-  
+
   // First letter for avatar
   const firstLetter = user.name?.charAt(0).toUpperCase() || "U";
-  
+
   const userAds = userAdsQuery.data || [];
   const isAdsLoading = userAdsQuery.isLoading;
-  
+
   return (
     <div className="min-h-screen bg-slate-100 py-20 px-4">
       <div className="max-w-6xl mx-auto">
@@ -414,7 +468,7 @@ export default function ProfilePage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-        
+
         {/* Success indicator */}
         {showSuccess && (
           <div className="fixed top-4 right-4 bg-white/90 backdrop-blur-xl border border-emerald-200 text-emerald-700 px-6 py-3 rounded-xl flex items-center z-50 animate-in slide-in-from-top">
@@ -422,12 +476,12 @@ export default function ProfilePage() {
             Changes saved successfully!
           </div>
         )}
-        
+
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-[#0D5C63] via-teal-600 to-emerald-600 bg-clip-text text-transparent">Profile</h1>
         </div>
-        
+
         <div className="flex flex-col md:flex-row gap-6 mt-6">
           {/* Left sidebar navigation */}
           <div className="md:w-1/4">
@@ -450,23 +504,21 @@ export default function ProfilePage() {
               {/* Navigation options */}
               <div className="space-y-1">
                 <button
-                  className={`w-full text-left py-3 px-4 rounded-xl transition-all duration-300 flex items-center gap-3 ${
-                    sidebarActive === "personal" 
-                      ? "bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white font-semibold" 
-                      : "text-slate-700 hover:bg-white/60 hover:backdrop-blur-md"
-                  }`}
+                  className={`w-full text-left py-3 px-4 rounded-xl transition-all duration-300 flex items-center gap-3 ${sidebarActive === "personal"
+                    ? "bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white font-semibold"
+                    : "text-slate-700 hover:bg-white/60 hover:backdrop-blur-md"
+                    }`}
                   onClick={() => setSidebarActive("personal")}
                 >
                   <Shield className="w-4 h-4" />
                   Personal Information
                 </button>
-                
+
                 <button
-                  className={`w-full text-left py-3 px-4 rounded-xl transition-all duration-300 flex items-center gap-3 ${
-                    sidebarActive === "security" 
-                      ? "bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white font-semibold" 
-                      : "text-slate-700 hover:bg-white/60 hover:backdrop-blur-md"
-                  }`}
+                  className={`w-full text-left py-3 px-4 rounded-xl transition-all duration-300 flex items-center gap-3 ${sidebarActive === "security"
+                    ? "bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white font-semibold"
+                    : "text-slate-700 hover:bg-white/60 hover:backdrop-blur-md"
+                    }`}
                   onClick={() => setSidebarActive("security")}
                 >
                   <Lock className="w-4 h-4" />
@@ -474,23 +526,21 @@ export default function ProfilePage() {
                 </button>
 
                 <button
-                  className={`w-full text-left py-3 px-4 rounded-xl transition-all duration-300 flex items-center gap-3 ${
-                    sidebarActive === "ads" 
-                      ? "bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white font-semibold" 
-                      : "text-slate-700 hover:bg-white/60 hover:backdrop-blur-md"
-                  }`}
+                  className={`w-full text-left py-3 px-4 rounded-xl transition-all duration-300 flex items-center gap-3 ${sidebarActive === "ads"
+                    ? "bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white font-semibold"
+                    : "text-slate-700 hover:bg-white/60 hover:backdrop-blur-md"
+                    }`}
                   onClick={() => setSidebarActive("ads")}
                 >
                   <Car className="w-4 h-4" />
                   My Ads
                 </button>
-                
+
                 <button
-                  className={`w-full text-left py-3 px-4 rounded-xl transition-all duration-300 flex items-center gap-3 ${
-                    sidebarActive === "favorites" 
-                      ? "bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white font-semibold" 
-                      : "text-slate-700 hover:bg-white/60 hover:backdrop-blur-md"
-                  }`}
+                  className={`w-full text-left py-3 px-4 rounded-xl transition-all duration-300 flex items-center gap-3 ${sidebarActive === "favorites"
+                    ? "bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white font-semibold"
+                    : "text-slate-700 hover:bg-white/60 hover:backdrop-blur-md"
+                    }`}
                   onClick={() => setSidebarActive("favorites")}
                 >
                   <Heart className="w-4 h-4" />
@@ -500,14 +550,14 @@ export default function ProfilePage() {
 
               {/* Signout Button */}
               <div className="pt-4 border-t border-white/30">
-                <SignoutButton 
+                <SignoutButton
                   variant="outline"
                   className="w-full bg-white/80 backdrop-blur-md text-red-600 hover:bg-red-50 border-2 border-white/30 hover:border-red-200 transition-all duration-300"
                 />
               </div>
             </div>
           </div>
-        
+
           {/* Right content area */}
           <div className="md:w-3/4 space-y-6">
             {/* Personal Information */}
@@ -521,7 +571,7 @@ export default function ProfilePage() {
                     Update your personal details here.
                   </p>
                 </div>
-                
+
                 <div className="space-y-5">
                   {activeSection === "personal" ? (
                     <div className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-6 space-y-4">
@@ -576,8 +626,8 @@ export default function ProfilePage() {
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-2">District</label>
-                        <Select 
-                          value={formData.district} 
+                        <Select
+                          value={formData.district}
                           onValueChange={(value) => handleFilterChange("district", value)}
                           disabled={!formData.province}
                         >
@@ -593,8 +643,8 @@ export default function ProfilePage() {
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-2">City</label>
-                        <Select 
-                          value={formData.city} 
+                        <Select
+                          value={formData.city}
                           onValueChange={(value) => handleFilterChange("city", value)}
                           disabled={!formData.district}
                         >
@@ -626,7 +676,7 @@ export default function ProfilePage() {
                         >
                           Cancel
                         </Button>
-                        <Button 
+                        <Button
                           className="flex-1 bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700 border-0"
                           onClick={handleUpdateProfile}
                         >
@@ -641,7 +691,7 @@ export default function ProfilePage() {
                     </div>
                   ) : (
                     <>
-                      <div 
+                      <div
                         className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-6 flex justify-between items-center cursor-pointer hover:bg-white/70 hover:border-[#0D5C63]/30 transition-all duration-300 group"
                         onClick={() => setActiveSection("personal")}
                       >
@@ -659,7 +709,26 @@ export default function ProfilePage() {
                         </div>
                       </div>
 
-                      <div 
+                      {user.organization && (
+                        <div
+                          className="bg-blue-50/50 backdrop-blur-md rounded-xl border-2 border-blue-100 p-6 flex justify-between items-center hover:bg-blue-100/50 transition-all duration-300 group"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
+                              <Building2 className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                              <div className="text-sm text-blue-600 font-medium">Organization</div>
+                              <div className="font-semibold text-slate-800 mt-1">{user.organization.name}</div>
+                            </div>
+                          </div>
+                          <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100 font-normal">
+                            Assigned
+                          </Badge>
+                        </div>
+                      )}
+
+                      <div
                         className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-6 flex justify-between items-center cursor-pointer hover:bg-white/70 hover:border-[#0D5C63]/30 transition-all duration-300 group"
                         onClick={() => setActiveSection("personal")}
                       >
@@ -669,7 +738,10 @@ export default function ProfilePage() {
                           </div>
                           <div>
                             <div className="text-sm text-slate-500 font-medium">Phone Number</div>
-                            <div className="font-semibold text-slate-800 mt-1">{user.phone || "Not set"}</div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <div className="font-semibold text-slate-800">{user.phone || "Not set"}</div>
+                              {user.phone && getPhoneVerificationBadge(user.phoneVerified)}
+                            </div>
                           </div>
                         </div>
                         <div className="h-10 w-10 rounded-lg bg-white/50 flex items-center justify-center group-hover:bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300">
@@ -677,7 +749,7 @@ export default function ProfilePage() {
                         </div>
                       </div>
 
-                      <div 
+                      <div
                         className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-6 flex justify-between items-center cursor-pointer hover:bg-white/70 hover:border-[#0D5C63]/30 transition-all duration-300 group"
                         onClick={() => setActiveSection("personal")}
                       >
@@ -695,7 +767,7 @@ export default function ProfilePage() {
                         </div>
                       </div>
 
-                      <div 
+                      <div
                         className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-6 flex justify-between items-center cursor-pointer hover:bg-white/70 hover:border-[#0D5C63]/30 transition-all duration-300 group"
                         onClick={() => setActiveSection("personal")}
                       >
@@ -716,7 +788,7 @@ export default function ProfilePage() {
                       </div>
                     </>
                   )}
-                  
+
                   <div className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-6 flex justify-between items-center hover:bg-white/70 hover:border-teal-500/30 transition-all duration-300 group">
                     <div className="flex items-center gap-4">
                       <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center">
@@ -734,7 +806,7 @@ export default function ProfilePage() {
                 </div>
               </div>
             )}
-            
+
             {/* Security Settings */}
             {sidebarActive === "security" && (
               <div className="bg-white/80 backdrop-blur-xl border-2 border-white/20 rounded-2xl p-8 space-y-6">
@@ -747,10 +819,10 @@ export default function ProfilePage() {
                     when you are having trouble signing in.
                   </p>
                 </div>
-                
+
                 <div className="space-y-4">
                   {/* Password card */}
-                  <div 
+                  <div
                     className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-6 flex justify-between items-center cursor-pointer hover:bg-white/70 hover:border-amber-500/30 transition-all duration-300 group"
                     onClick={() => setActiveSection("password")}
                   >
@@ -787,7 +859,7 @@ export default function ProfilePage() {
                             className="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 focus:border-[#0D5C63] focus:bg-white/80 transition-all duration-300 rounded-xl h-12 text-slate-800"
                           />
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-semibold text-slate-700 mb-2">New Password</label>
                           <Input
@@ -798,7 +870,7 @@ export default function ProfilePage() {
                             className="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 focus:border-[#0D5C63] focus:bg-white/80 transition-all duration-300 rounded-xl h-12 text-slate-800"
                           />
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-semibold text-slate-700 mb-2">Confirm New Password</label>
                           <Input
@@ -809,7 +881,7 @@ export default function ProfilePage() {
                             className="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 focus:border-[#0D5C63] focus:bg-white/80 transition-all duration-300 rounded-xl h-12 text-slate-800"
                           />
                         </div>
-                        
+
                         <div className="flex gap-3 pt-4">
                           <Button
                             variant="outline"
@@ -818,7 +890,7 @@ export default function ProfilePage() {
                           >
                             Cancel
                           </Button>
-                          <Button 
+                          <Button
                             className="flex-1 bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700 border-0"
                             onClick={handleChangePassword}
                             disabled={!formData.currentPassword || !formData.newPassword || formData.newPassword !== formData.confirmPassword}
@@ -837,7 +909,7 @@ export default function ProfilePage() {
                 )}
               </div>
             )}
-            
+
             {/* My Ads - Updated to use the real data from API */}
             {sidebarActive === "ads" && (
               <div className="bg-white/80 backdrop-blur-xl border-2 border-white/20 rounded-2xl p-8 space-y-6">
@@ -850,14 +922,14 @@ export default function ProfilePage() {
                       Manage your posted advertisements
                     </p>
                   </div>
-                  <Button 
+                  <Button
                     className="bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700 border-0 px-6"
                     onClick={() => router.push("/sell/new")}
                   >
                     Post New Ad
                   </Button>
                 </div>
-                
+
                 <div className="space-y-4">
                   {isAdsLoading ? (
                     <div className="p-12 flex justify-center">
@@ -869,7 +941,7 @@ export default function ProfilePage() {
                         <Car className="h-10 w-10 text-slate-400" />
                       </div>
                       <p className="text-slate-600 mb-5 text-lg font-medium">You haven't posted any ads yet</p>
-                      <Button 
+                      <Button
                         className="bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700 border-0 px-8"
                         onClick={() => router.push("/sell/new")}
                       >
@@ -878,15 +950,15 @@ export default function ProfilePage() {
                     </div>
                   ) : (
                     (Array.isArray(userAds) ? userAds : userAds.ads).map((ad: UserAd) => (
-                      <div 
-                        key={ad.id} 
+                      <div
+                        key={ad.id}
                         className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-5 flex items-center hover:bg-white/70 hover:border-[#0D5C63]/30 transition-all duration-300 group"
                       >
                         <div className="h-20 w-20 flex-shrink-0 mr-5 rounded-xl overflow-hidden border-2 border-white/50">
                           {getAdImage(ad) ? (
-                            <img 
-                              src={getAdImage(ad)} 
-                              alt={ad.title} 
+                            <img
+                              src={getAdImage(ad)}
+                              alt={ad.title}
                               className="h-full w-full object-cover"
                             />
                           ) : (
@@ -895,10 +967,10 @@ export default function ProfilePage() {
                             </div>
                           )}
                         </div>
-                        
+
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <div 
+                            <div
                               className="font-semibold text-lg text-slate-800 hover:text-[#0D5C63] cursor-pointer transition-colors duration-300"
                               onClick={() => router.push(`/${ad.id}`)}
                             >
@@ -922,19 +994,19 @@ export default function ProfilePage() {
                             </span>
                           </div>
                         </div>
-                        
+
                         <div className="flex gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             className="h-10 w-10 p-0 rounded-lg bg-white/50 hover:bg-gradient-to-r from-[#0D5C63] to-teal-600 text-slate-600 hover:text-white transition-all duration-300"
                             onClick={() => router.push(`/edit-ad/${ad.id}`)}
                           >
                             <Edit className="h-5 w-5" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             className="h-10 w-10 p-0 rounded-lg bg-white/50 hover:bg-gradient-to-r from-red-500 to-red-600 text-slate-600 hover:text-white transition-all duration-300"
                             onClick={() => setDeleteDialog({ open: true, ad })}
                           >
@@ -947,7 +1019,7 @@ export default function ProfilePage() {
                 </div>
               </div>
             )}
-            
+
             {/* Saved Ads Section */}
             {sidebarActive === "favorites" && (
               <div className="bg-white/80 backdrop-blur-xl border-2 border-white/20 rounded-2xl p-8 space-y-6">
@@ -959,7 +1031,7 @@ export default function ProfilePage() {
                     Your favorite advertisements
                   </p>
                 </div>
-                
+
                 {isFavoritesLoading ? (
                   <div className="p-12 flex justify-center">
                     <Loader2 className="h-10 w-10 animate-spin text-[#0D5C63]" />
@@ -970,7 +1042,7 @@ export default function ProfilePage() {
                       <Heart className="h-10 w-10 text-slate-400" />
                     </div>
                     <p className="text-slate-600 mb-5 text-lg font-medium">You haven't saved any ads yet</p>
-                    <Button 
+                    <Button
                       className="bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700 border-0 px-8"
                       onClick={() => router.push("/")}
                     >
@@ -982,7 +1054,7 @@ export default function ProfilePage() {
                     {favorites.map((favorite: any) => {
                       const ad = favorite.ad;
                       const adImage = ad.media?.[0]?.media?.url || "";
-                      
+
                       return (
                         <div
                           key={favorite.id}
@@ -993,7 +1065,7 @@ export default function ProfilePage() {
                           <div className="absolute top-2 right-2 z-10">
                             <FavoriteButton adId={ad.id} />
                           </div>
-                          
+
                           <div className="p-3">
                             {/* Ad Title - Centered */}
                             <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
@@ -1048,6 +1120,6 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }

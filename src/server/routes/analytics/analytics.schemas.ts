@@ -46,6 +46,14 @@ export const adAttributeCountSchema = z.object({
   count: z.number(),
 });
 
+export const adAdvancedSummaryQuerySchema = z.object({
+  type: z.enum([
+    "CAR", "VAN", "MOTORCYCLE", "BICYCLE", "THREE_WHEEL",
+    "BUS", "LORRY", "HEAVY_DUTY", "TRACTOR", "AUTO_SERVICE",
+    "RENTAL", "AUTO_PARTS", "MAINTENANCE", "BOAT"
+  ]).optional(),
+});
+
 export const adAdvancedSummaryResponseSchema = z.object({
   adTypes: z.object({
     total: z.array(adAttributeCountSchema),
@@ -113,4 +121,52 @@ export const userSummaryResponseSchema = z.object({
       membersCount: z.number(),
     })
   ),
+});
+
+export const searchUserQuerySchema = z.object({
+  q: z.string(),
+});
+
+export const searchUserResponseSchema = z.object({
+  users: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      email: z.string(),
+      role: z.string(),
+      adsCount: z.number(),
+    })
+  ),
+  organizations: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      membersCount: z.number(),
+      adsCount: z.number(),
+    })
+  ),
+});
+
+export const entityHistoryQuerySchema = z.object({
+  id: z.string(),
+  type: z.enum(["user", "organization"]),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  period: z.enum(["daily", "monthly", "range"]).optional().default("monthly"),
+});
+
+export const entityHistoryResponseSchema = z.object({
+  history: z.array(
+    z.object({
+      date: z.string(),
+      count: z.number(),
+    })
+  ),
+  details: z.object({
+    id: z.string(),
+    name: z.string(),
+    totalAds: z.number(),
+    email: z.string().optional(),
+    membersCount: z.number().optional(),
+  }),
 });

@@ -117,7 +117,7 @@
 //     // When filterByUser is true, show all user's ads regardless of status
 //     const userRole = (user as any)?.role;
 //     const isAdmin = userRole === "admin";
-    
+
 //     // If not admin and not filtering by user, only show ACTIVE ads
 //     // This applies to:
 //     // - Unauthenticated users (user is null/undefined, so isAdmin is false)
@@ -818,13 +818,13 @@
 //     if (adUpdates.published !== undefined)
 //       updateData.published = adUpdates.published;
 //     if (adUpdates.isDraft !== undefined) updateData.isDraft = adUpdates.isDraft;
-    
+
 //     // Update status based on published and isDraft flags
 //     // If ad is being published (isDraft=false and published=true), set to PENDING_REVIEW
 //     const willBePublished = (adUpdates.published !== undefined ? adUpdates.published : existingAd.published) && 
 //                            (adUpdates.isDraft !== undefined ? !adUpdates.isDraft : !existingAd.isDraft);
 //     const willBeDraft = adUpdates.isDraft !== undefined ? adUpdates.isDraft : existingAd.isDraft;
-    
+
 //     if (willBePublished && !willBeDraft) {
 //       // Ad is being published, set status to PENDING_REVIEW
 //       updateData.status = AdStatus.PENDING_REVIEW;
@@ -1015,7 +1015,7 @@
 //     // Verify user is the owner of the ad OR is an admin
 //     const userRole = (user as any)?.role;
 //     const isAdmin = userRole === "admin";
-    
+
 //     if (existingAd.createdBy !== user.id && !isAdmin) {
 //       return c.json(
 //         { message: "You don't have permission to delete this ad" },
@@ -1192,7 +1192,7 @@
 
 //     // Get rejection description from request body
 //     const body = c.req.valid("json");
-    
+
 //     // Update ad status to REJECTED with rejection description
 //     const updatedAd = await prisma.ad.update({
 //       where: { id: adId },
@@ -1216,12 +1216,102 @@
 //     return c.json(formattedAd, HttpStatusCodes.OK);
 //   } catch (error: any) {
 //     console.error("[REJECT AD] Error:", error);
-//     return c.json(
-//       { message: error.message || "Failed to reject ad" },
-//       HttpStatusCodes.INTERNAL_SERVER_ERROR
-//     );
-//   }
-// };
+// ---------- Bulk Create Ads ----------
+export const bulkCreate: AppRouteHandler<BulkCreateRoute> = async (c) => {
+  const user = c.get("user");
+
+  if (!user) {
+    return c.json(
+      { message: "Unauthenticated user" },
+      HttpStatusCodes.UNAUTHORIZED
+    );
+  }
+
+  const isAdmin = user?.role === "admin";
+
+  if (!isAdmin) {
+    return c.json(
+      { message: "Unauthorized: Admin access required" },
+      HttpStatusCodes.FORBIDDEN
+    );
+  }
+
+  const { ads } = c.req.valid("json");
+  let createdCount = 0;
+
+  try {
+    for (const adData of ads) {
+      // Find seller by email
+      const seller = await prisma.user.findUnique({
+        where: { email: adData.sellerEmail },
+      });
+
+      if (!seller) {
+        console.warn(`Seller with email ${adData.sellerEmail} not found. Skipping ad.`);
+        continue;
+      }
+
+      // Generate SEO slug
+      let seoSlug = "";
+      if (adData.title) {
+        seoSlug = adData.title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "");
+      } else {
+        seoSlug = `ad-${Date.now()}`;
+      }
+      seoSlug += `-${Math.random().toString(36).substring(2, 8)}`;
+
+      // Create Ad
+      const { sellerEmail, ...createData } = adData;
+
+      // We need to cast inputs to match Prisma expectations where necessary
+      // especially enums if they come as strings
+
+      await prisma.ad.create({
+        data: {
+          ...createData,
+          price: createData.price ?? null,
+          createdBy: seller.id,
+          orgId: seller.organizationId || "", // Link to user's org if any
+          seoSlug,
+          status: AdStatus.ACTIVE, // Auto-approve imported ads? Or DRAFT? Let's say ACTIVE for admin import functionality usually.
+          // Enums casting
+          type: (createData.type as AdType) || AdType.CAR,
+          listingType: createData.listingType || "SELL",
+          fuelType: createData.fuelType as any,
+          transmission: createData.transmission as any,
+          bodyType: createData.bodyType as any,
+          bikeType: createData.bikeType as any,
+          vehicleType: createData.vehicleType as any,
+
+          metadata: createData.metadata || {},
+          tags: createData.tags || [],
+        },
+      });
+      createdCount++;
+    }
+
+    return c.json(
+      {
+        message: "Ads imported successfully",
+        count: createdCount,
+      },
+      HttpStatusCodes.OK
+    );
+  } catch (error) {
+    console.error("Error bulk creating ads:", error);
+    return c.json(
+      {
+        message: "Failed to bulk create ads",
+        error: error instanceof Error ? error.message : "Unknown error"
+      },
+      HttpStatusCodes.UNPROCESSABLE_ENTITY
+    );
+  }
+};
+
 
 
 
@@ -1239,9 +1329,11 @@ import {
   RemoveRoute,
   ApproveRoute,
   RejectRoute,
+  BulkCreateRoute,
 } from "./ad.routes";
 import { QueryParams } from "./ad.schemas";
 import { AdStatus, AdType } from "@prisma/client";
+import { sendAdPostedEmail, sendAdApprovalEmail } from "@/lib/email";
 
 
 export const list: AppRouteHandler<ListRoute> = async (c) => {
@@ -1277,7 +1369,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     console.log("Session : ", session);
     // Convert to numbers and validate
     const pageNum = Math.max(1, parseInt(page));
-    const limitNum = Math.max(1, Math.min(100, parseInt(limit))); // Cap at 100 items
+    const limitNum = Math.max(1, Math.min(10000, parseInt(limit))); // Cap at 10000 items for export
     const offset = (pageNum - 1) * limitNum;
 
 
@@ -1339,12 +1431,29 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       andFilters.push({ listingType: listingTypeValue });
     }
 
+    // Filter by brand and model if provided (use case-insensitive exact match)
+    const rawBrand = query.brand ?? null;
+    const rawModel = query.model ?? null;
+
+    const brand = typeof rawBrand === "string" ? rawBrand.trim() : null;
+    const model = typeof rawModel === "string" ? rawModel.trim() : null;
+
+    if (brand) {
+      console.log("Filtering by brand (trimmed):", brand);
+      andFilters.push({ brand: { equals: brand, mode: "insensitive" } });
+    }
+
+    if (model) {
+      console.log("Filtering by model (trimmed):", model);
+      andFilters.push({ model: { equals: model, mode: "insensitive" } });
+    }
+
     // Filter by status: only show ACTIVE ads for public listings (unless admin is viewing or filtering by user)
     // Admin can see all ads, regular users and unauthenticated users only see ACTIVE ads in public listings
     // When filterByUser is true, show all user's ads regardless of status
     const userRole = (user as any)?.role;
     const isAdmin = userRole === "admin";
-    
+
     // If not admin and not filtering by user, only show ACTIVE ads
     // This applies to:
     // - Unauthenticated users (user is null/undefined, so isAdmin is false)
@@ -1420,7 +1529,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
         },
       });
       console.log("Ads query successful, found:", ads.length, "ads");
-      
+
       // Manually fetch creators for ads that have valid createdBy
       const creatorIds = Array.from(new Set(ads.map((ad: any) => ad.createdBy).filter(Boolean)));
       let creatorsById: Record<string, any> = {};
@@ -1439,7 +1548,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
           return acc;
         }, {} as Record<string, any>);
       }
-      
+
       // Attach creator to each ad
       ads = ads.map((ad: any) => ({
         ...ad,
@@ -1448,7 +1557,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     } catch (queryError) {
       console.error("Error in main query:", queryError);
       return c.json(
-        { message: "Database error while fetching ads " +queryError},
+        { message: "Database error while fetching ads " + queryError },
         HttpStatusCodes.INTERNAL_SERVER_ERROR
       );
     }
@@ -1462,7 +1571,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       mediaById = medias.reduce((acc: any, m: any) => {
         acc[m.id] = m;
         return acc;
-        }, {} as Record<string, any>);
+      }, {} as Record<string, any>);
     }
     ads = ads.map((ad: any) => ({
       ...ad,
@@ -1496,7 +1605,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
         | "AUTO_PARTS"
         | "MAINTENANCE"
         | "BOAT",
-  listingType: ((ad as any).listingType as "SELL" | "WANT" | "RENT" | "HIRE") ?? "SELL",
+      listingType: ((ad as any).listingType as "SELL" | "WANT" | "RENT" | "HIRE") ?? "SELL",
       status: ad.status as
         | "ACTIVE"
         | "EXPIRED"
@@ -1653,7 +1762,7 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
 
     const createdAd = await prisma.ad.create({
       data: {
-        orgId: session?.activeOrganizationId ||"",
+        orgId: session?.activeOrganizationId || "",
         createdBy: user.id,
         title: adDetails.title || "",
         description: adDetails.description || "",
@@ -1759,6 +1868,20 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
       metadata:
         typeof createdAd.metadata === "object" ? createdAd.metadata : null,
     };
+
+    // Send email to the user if the ad is posted (not a draft)
+    if (adStatus === AdStatus.PENDING_REVIEW && user.email) {
+      try {
+        await sendAdPostedEmail({
+          email: user.email,
+          name: user.name || "User",
+          adTitle: createdAd.title
+        });
+      } catch (emailError) {
+        console.error("Failed to send ad posted email:", emailError);
+        // We don't want to fail the ad creation if email fails
+      }
+    }
 
     return c.json(formattedAd, HttpStatusCodes.CREATED);
   } catch (error: any) {
@@ -2062,13 +2185,13 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
     if (adUpdates.published !== undefined)
       updateData.published = adUpdates.published;
     if (adUpdates.isDraft !== undefined) updateData.isDraft = adUpdates.isDraft;
-    
+
     // Update status based on published and isDraft flags
     // If ad is being published (isDraft=false and published=true), set to PENDING_REVIEW
-    const willBePublished = (adUpdates.published !== undefined ? adUpdates.published : existingAd.published) && 
-                           (adUpdates.isDraft !== undefined ? !adUpdates.isDraft : !existingAd.isDraft);
+    const willBePublished = (adUpdates.published !== undefined ? adUpdates.published : existingAd.published) &&
+      (adUpdates.isDraft !== undefined ? !adUpdates.isDraft : !existingAd.isDraft);
     const willBeDraft = adUpdates.isDraft !== undefined ? adUpdates.isDraft : existingAd.isDraft;
-    
+
     if (willBePublished && !willBeDraft) {
       // Ad is being published, set status to PENDING_REVIEW
       updateData.status = AdStatus.PENDING_REVIEW;
@@ -2259,7 +2382,7 @@ export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
     // Verify user is the owner of the ad OR is an admin
     const userRole = (user as any)?.role;
     const isAdmin = userRole === "admin";
-    
+
     if (existingAd.createdBy !== user.id && !isAdmin) {
       return c.json(
         { message: "You don't have permission to delete this ad" },
@@ -2358,9 +2481,18 @@ export const approve: AppRouteHandler<ApproveRoute> = async (c) => {
       );
     }
 
-    // Check if ad exists
+    // Check if ad exists and fetch creator data
     const existingAd = await prisma.ad.findUnique({
       where: { id: adId },
+      include: {
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
 
     if (!existingAd) {
@@ -2379,6 +2511,21 @@ export const approve: AppRouteHandler<ApproveRoute> = async (c) => {
         isDraft: false,
       },
     });
+
+    // Send approval email to the ad creator
+    try {
+      if (existingAd.creator?.email && existingAd.creator?.name) {
+        await sendAdApprovalEmail({
+          email: existingAd.creator.email,
+          name: existingAd.creator.name,
+          adTitle: existingAd.title,
+          adId: adId,
+        });
+      }
+    } catch (emailError) {
+      // Log email error but don't fail the approval
+      console.error("[APPROVE AD] Failed to send approval email:", emailError);
+    }
 
     // Format response
     const formattedAd = {
@@ -2436,7 +2583,7 @@ export const reject: AppRouteHandler<RejectRoute> = async (c) => {
 
     // Get rejection description from request body
     const body = c.req.valid("json");
-    
+
     // Update ad status to REJECTED with rejection description
     const updatedAd = await prisma.ad.update({
       where: { id: adId },

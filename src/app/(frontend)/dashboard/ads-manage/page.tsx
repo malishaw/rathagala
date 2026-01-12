@@ -14,8 +14,11 @@ import { DataTableSearch } from "@/components/table/data-table-search";
 import { useQueryState, parseAsString, parseAsInteger } from "nuqs";
 import { useBulkApproveAds } from "@/features/ads/api/use-bulk-approve-ads";
 import { useBulkDeleteAds } from "@/features/ads/api/use-bulk-delete-ads";
-import { Check, Trash2 } from "lucide-react";
+import { Check, Trash2, FileText, FileSpreadsheet } from "lucide-react";
 import type { AdType } from "@/features/ads/components/ad-table/admin-columns";
+import { toast } from "sonner";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +29,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import * as XLSX from "xlsx";
+import { client } from "@/lib/rpc";
 
 // Vehicle type labels for title generation
 const vehicleTypeLabels: Record<string, string> = {
@@ -69,10 +74,80 @@ export default function AdsManagePage() {
   const bulkApproveMutation = useBulkApproveAds();
   const bulkDeleteMutation = useBulkDeleteAds();
 
+  // Handle Excel Export
+  const handleExportExcel = async () => {
+    try {
+      toast.info("Generating Excel report...", { description: "Fetching all ads..." });
+
+      const response = await client.api.ad.$get({
+        query: {
+          page: "1",
+          limit: "10000", // Fetch large number to get all
+          search: searchQuery || "",
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch ads data");
+      }
+
+      const reportData = await response.json();
+
+      if (!reportData.ads || reportData.ads.length === 0) {
+        toast.warning("No data to export");
+        return;
+      }
+
+      // Format data for Excel
+      const excelData = reportData.ads.map((ad: AdType) => ({
+        "Title": ad.title,
+        "Type": vehicleTypeLabels[ad.type] || ad.type,
+        "Brand": ad.brand,
+        "Model": ad.model,
+        "Year": ad.manufacturedYear,
+        "Price": ad.price,
+        "Status": ad.status,
+        "Seller": ad.user?.name || "Unknown",
+        "Phone": ad.phoneNumber || ad.user?.phone || "-",
+        "Created At": new Date(ad.createdAt).toLocaleDateString(),
+      }));
+
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
+
+      // Auto-size columns (rough approximation)
+      const colWidths = [
+        { wch: 30 }, // Title
+        { wch: 15 }, // Type
+        { wch: 15 }, // Brand
+        { wch: 15 }, // Model
+        { wch: 10 }, // Year
+        { wch: 15 }, // Price
+        { wch: 15 }, // Status
+        { wch: 20 }, // Seller
+        { wch: 15 }, // Phone
+        { wch: 15 }, // Created
+      ];
+      ws["!cols"] = colWidths;
+
+      XLSX.utils.book_append_sheet(wb, ws, "Ads");
+
+      // Save file
+      const fileName = `ads-report-${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      toast.success("Report generated successfully");
+    } catch (error: any) {
+      console.error("Export error:", error);
+      toast.error("Failed to generate report", { description: error.message });
+    }
+  };
+
   // Handle bulk approval
   const handleBulkApprove = () => {
     if (selectedRows.length === 0) return;
-    
+
     // Filter to only approve ads that can be approved (not already ACTIVE)
     const adsToApprove = selectedRows.filter(
       (ad) => ad.status === "DRAFT" || ad.status === "PENDING_REVIEW" || ad.status === "REJECTED"
@@ -94,7 +169,7 @@ export default function AdsManagePage() {
   // Handle bulk delete
   const handleBulkDelete = () => {
     if (selectedRows.length === 0) return;
-    
+
     const ids = selectedRows.map((ad) => ad.id);
     bulkDeleteMutation.mutate(ids, {
       onSuccess: () => {
@@ -157,11 +232,17 @@ export default function AdsManagePage() {
   return (
     <PageContainer scrollable={false}>
       <div className="flex flex-1 flex-col space-y-4">
-        <AppPageShell
-          title="Ads Management"
-          description="Manage and approve/reject ads submitted by users"
-          actionComponent={<div />}
-        />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <AppPageShell
+            title="Ads Management"
+            description="Manage and approve/reject ads submitted by users"
+            actionComponent={<div />} // Clear action component
+          />
+          <Button onClick={handleExportExcel} variant="outline" className="gap-2 shrink-0">
+            <FileSpreadsheet className="w-4 h-4" />
+            Export to Excel
+          </Button>
+        </div>
         <Separator />
         <div className="flex items-center justify-between gap-4 mb-4">
           <DataTableSearch

@@ -100,7 +100,9 @@ export function MediaGallery({
   }, [open, initialTab]);
 
   // Fetch media using React Query
-  const { data: mediaItems, isLoading, error, refetch } = useListMedia();
+  const { data: mediaItems, isLoading, error, refetch } = useListMedia(
+    session?.user?.id
+  );
 
   // Filter media by search query
   const filteredMedia = mediaItems?.filter((item) =>
@@ -216,6 +218,7 @@ export function MediaGallery({
         <Tabs
           value={activeTab}
           onValueChange={(v) => setActiveTab(v as "gallery" | "upload")}
+          className="h-full"
         >
           <div className="flex h-full">
             {/* Sidebar */}
@@ -277,7 +280,7 @@ export function MediaGallery({
                   </h4>
                   <ul className="text-xs space-y-1 list-disc pl-4">
                     <li>Allowed types: Images, PDF, Videos</li>
-                    <li>Maximum file size: 4MB</li>
+                    <li>Maximum file size: 10MB</li>
                     <li>Files will be stored securely</li>
                   </ul>
                 </div>
@@ -334,9 +337,8 @@ export function MediaGallery({
                         return (
                           <Card
                             key={media.id}
-                            className={`overflow-hidden cursor-pointer group relative ${
-                              isSelected ? "ring-2 ring-primary" : ""
-                            } p-0 flex flex-col gap-0`}
+                            className={`overflow-hidden cursor-pointer group relative ${isSelected ? "ring-2 ring-primary" : ""
+                              } p-0 flex flex-col gap-0`}
                             onClick={() =>
                               toggleMediaSelection({
                                 ...media,

@@ -144,6 +144,7 @@ model User {
   
   // Contact information
   phone            String?
+  phoneVerified    String?       // "verified" | "not_verified" | "rejected"
   whatsappNumber   String?
   
   // Location information
@@ -169,6 +170,7 @@ model User {
   notifications    UserNotification[]
   reports          Report[]
   auditLogs        AuditLog[]
+  followedOrganizations OrganizationFollower[]
 
   @@unique([email])
   @@map("user")
@@ -235,6 +237,7 @@ model Organization {
   // Ad listing relations
   ads       Ad[]
   auditLogs AuditLog[]
+  followers OrganizationFollower[]
 
   @@unique([slug])
   @@map("organization")
@@ -250,6 +253,18 @@ model Member {
   createdAt      DateTime
 
   @@map("member")
+}
+
+model OrganizationFollower {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+
+  @@unique([userId, organizationId])
+  @@map("organizationFollower")
 }
 
 model Invitation {
@@ -289,7 +304,7 @@ model Ad {
   orgId          String
   org            Organization @relation(fields: [orgId], references: [id])
   createdBy      String
-  creator        User?        @relation("AdCreatedBy", fields: [createdBy], references: [id])
+  creator        User         @relation("AdCreatedBy", fields: [createdBy], references: [id])
 
   // Basic Info - Common to all types
   title          String

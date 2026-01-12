@@ -2155,42 +2155,55 @@ const [formData, setFormData] = useState({
                     <Separator />
                   </div>
 
+                  {/* Auto Generate SEO Button */}
+                  <div className="flex items-center mb-4">
+                    <div className="w-48 text-right pr-4 text-gray-600">
+                      Generate SEO
+                    </div>
+                    <div className="flex-1">
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          const location = formData.district || "Your Area";
+                          const autoTitle = [
+                            formData.brand,
+                            formData.model,
+                            formData.manufacturedYear,
+                            formData.vehicleType,
+                            "Sale in",
+                            location
+                          ].filter(Boolean).join(' ');
+                          
+                          const autoDescription = `Buy ${formData.brand} ${formData.model} ${formData.manufacturedYear} ${formData.vehicleType} at best price on Rathagala.lk - the largest Vehicle Marketplace in Sri Lanka. Discover more ${formData.brand} ${formData.model} ${formData.vehicleType}s for sale.`;
+                          
+                          handleInputChange("seoTitle", autoTitle);
+                          handleInputChange("seoDescription", autoDescription);
+                        }}
+                        variant="default"
+                        size="sm"
+                        className="text-xs bg-teal-600 hover:bg-teal-700"
+                      >
+                        Auto Generate SEO
+                      </Button>
+                    </div>
+                  </div>
+
                   {/* SEO Title */}
                   <div className="flex items-center">
                     <div className="w-48 text-right pr-4 text-gray-600">
-                      SEO Title
+                      Auto Generated SEO Title
                     </div>
                     <div className="flex-1">
                       <div className="space-y-2">
                         <Input
                           id="seoTitle"
-                          placeholder="SEO optimized title"
+                          placeholder="e.g., Nissan NV200 2011 Van Sale in Kandy"
                           value={formData.seoTitle}
                           onChange={(e) => handleInputChange("seoTitle", e.target.value)}
                           className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                         />
-                        <div className="flex justify-end">
-                          <Button
-                            type="button"
-                            onClick={() => {
-                              const autoTitle = [
-                                formData.brand,
-                                formData.model,
-                                formData.manufacturedYear,
-                                formData.vehicleType
-                              ].filter(Boolean).join(' ');
-                              
-                              handleInputChange("seoTitle", autoTitle);
-                            }}
-                            variant="outline"
-                            size="sm"
-                            className="text-xs"
-                          >
-                            Auto-Generate Title
-                          </Button>
-                        </div>
                         <p className="text-xs text-gray-500">
-                          Auto-generated title format: Make + Model + Year + Vehicle Type
+                          Format: Make + Model + Year + Type + "Sale in" + Location
                         </p>
                       </div>
                     </div>
@@ -2199,12 +2212,12 @@ const [formData, setFormData] = useState({
                   {/* SEO Description */}
                   <div className="flex items-center">
                     <div className="w-48 text-right pr-4 text-gray-600 pt-2">
-                      SEO Description
+                      Auto Generated SEO Description
                     </div>
                     <div className="flex-1">
                       <Textarea
                         id="seoDescription"
-                        placeholder="SEO meta description"
+                        placeholder="e.g., Buy Nissan NV200 2011 Van at best price on Rathagala.lk - the largest Vehicle Marketplace in Sri Lanka. Discover more Nissan NV200 Vans for sale."
                         value={formData.seoDescription}
                         onChange={(e) => handleInputChange("seoDescription", e.target.value)}
                         rows={3}
