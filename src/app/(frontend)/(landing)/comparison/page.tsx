@@ -500,20 +500,20 @@ export default function ComparisonPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-teal-50/30 to-gray-50">
       {/* Header */}
       <div className="bg-gradient-to-r from-[#024950] to-teal-700 text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
-                <Sparkles className="w-8 h-8" />
+        <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold mb-2 flex items-center gap-2">
+                <Sparkles className="w-6 h-6 sm:w-8 sm:h-8" />
                 Vehicle Comparison
               </h1>
-              <p className="text-teal-100">
+              <p className="text-sm sm:text-base text-teal-100">
                 Compare two vehicles side by side to make the best decision
               </p>
             </div>
             <Button
               variant="outline"
-              className="text-white bg-white/10 border-white/30 hover:bg-white/20"
+              className="text-white bg-white/10 border-white/30 hover:bg-white/20 w-full sm:w-auto"
               onClick={() => router.back()}
             >
               <X className="w-4 h-4 mr-2" />
@@ -525,22 +525,22 @@ export default function ComparisonPage() {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Price Trend Analysis - INDEPENDENT ANALYSIS TOOL AT TOP */}
-        <Card className="mb-8">
-          <CardHeader className="bg-gradient-to-r from-[#024950] to-teal-700 text-white">
-            <CardTitle className="text-2xl flex items-center gap-2">
-              <TrendingUp className="w-6 h-6" />
+        <Card className="mb-6 sm:mb-8">
+          <CardHeader className="bg-gradient-to-r from-[#024950] to-teal-700 text-white p-4 sm:p-6">
+            <CardTitle className="text-xl sm:text-2xl flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />
               Price Trend Analysis
             </CardTitle>
-            <p className="text-sm text-teal-100 mt-2">
+            <p className="text-xs sm:text-sm text-teal-100 mt-2">
               Analyze price trends over time. Filter by brand, model, and manufacture year from all posted ads.
             </p>
           </CardHeader>
-          <CardContent className="pt-6">
+          <CardContent className="p-4 sm:p-6 pt-4 sm:pt-6">
             {/* Trend Filters */}
-            <div className="mb-6 space-y-3">
+            <div className="mb-4 sm:mb-6 space-y-3">
               {/* Year Filter */}
               <div className="p-3 bg-white rounded-lg border border-gray-200">
-                <div className="max-w-xs">
+                <div className="w-full sm:max-w-xs">
                   <label className="block text-xs font-medium text-gray-600 mb-1">Analyse Year</label>
                   <select
                     className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs"
@@ -566,14 +566,14 @@ export default function ComparisonPage() {
               </div>
 
               {/* Two Column Layout for Selections */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {/* First Comparison Group */}
                 <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-semibold text-blue-900">First Selection</span>
                     
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     {/* Brand 1 */}
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">Brand</label>
@@ -643,7 +643,7 @@ export default function ComparisonPage() {
                     <span className="text-xs font-semibold text-teal-900">Second Selection</span>
                   
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     {/* Brand 2 */}
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">Brand</label>
@@ -712,7 +712,8 @@ export default function ComparisonPage() {
             {/* Chart */}
             {priceTrendData.length > 0 ? (
               <>
-                <ResponsiveContainer width="100%" height={400}>
+                <div className="w-full h-[300px] sm:h-[400px]">
+                  <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={priceTrendData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                     <XAxis
@@ -775,10 +776,11 @@ export default function ComparisonPage() {
                     )}
                   </LineChart>
                 </ResponsiveContainer>
+                </div>
 
                 {/* Statistics */}
-                <div className="mt-6 p-4 bg-[#024950]/5 rounded-lg border border-[#024950]/20">
-                  <div className="grid md:grid-cols-3 gap-4 text-sm">
+                <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-[#024950]/5 rounded-lg border border-[#024950]/20">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-sm">
                     <div>
                       <div className="text-xs text-gray-600">Data Points</div>
                       <div className="text-lg font-bold text-[#024950]">
@@ -834,18 +836,18 @@ export default function ComparisonPage() {
         </Card>
 
         {/* Vehicle Selection */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {/* Vehicle 1 Selection */}
           <Card className="border-2 border-dashed border-[#024950]/30">
-            <CardHeader>
-              <CardTitle className="text-[#024950] flex items-center gap-2">
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg text-[#024950] flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-[#024950] text-white flex items-center justify-center font-bold">
                   1
                 </div>
                 Vehicle 1
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6">
               <Popover open={open1} onOpenChange={setOpen1}>
                 <PopoverTrigger asChild>
                   <Button
@@ -938,15 +940,15 @@ export default function ComparisonPage() {
 
           {/* Vehicle 2 Selection */}
           <Card className="border-2 border-dashed border-[#024950]/30">
-            <CardHeader>
-              <CardTitle className="text-[#024950] flex items-center gap-2">
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg text-[#024950] flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold">
                   2
                 </div>
                 Vehicle 2
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6">
               <Popover open={open2} onOpenChange={setOpen2}>
                 <PopoverTrigger asChild>
                   <Button
@@ -1042,17 +1044,17 @@ export default function ComparisonPage() {
         {vehicle1Id && vehicle2Id && (
           <div className="space-y-6">
             {/* Vehicle Headers */}
-            <div className="grid md:grid-cols-3 gap-4" id="vehicle-headers">
-              <div></div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4" id="vehicle-headers">
+              <div className="hidden md:block"></div>
               <Card className="border-2 border-[#024950] bg-gradient-to-br from-[#024950] to-teal-700 text-white">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   {loading1 ? (
                     <div className="text-center py-8">
                       <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full mx-auto"></div>
                     </div>
                   ) : vehicle1 ? (
                     <>
-                      <div className="relative w-full h-48 rounded-lg overflow-hidden mb-4 bg-white/10">
+                      <div className="relative w-full h-40 sm:h-48 rounded-lg overflow-hidden mb-3 sm:mb-4 bg-white/10">
                         <Image
                           src={getVehicleImage(vehicle1)}
                           alt={getVehicleTitle(vehicle1)}
@@ -1060,10 +1062,10 @@ export default function ComparisonPage() {
                           className="object-cover"
                         />
                       </div>
-                      <h3 className="text-xl font-bold mb-2">
+                      <h3 className="text-lg sm:text-xl font-bold mb-2">
                         {getVehicleTitle(vehicle1)}
                       </h3>
-                      <div className="text-2xl font-bold mb-2">
+                      <div className="text-xl sm:text-2xl font-bold mb-2">
                         {formatPrice(vehicle1.price)}
                       </div>
                       <Link href={`/${vehicle1Id}`}>
@@ -1082,14 +1084,14 @@ export default function ComparisonPage() {
               </Card>
 
               <Card className="border-2 border-teal-600 bg-gradient-to-br from-teal-600 to-teal-700 text-white">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   {loading2 ? (
                     <div className="text-center py-8">
                       <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full mx-auto"></div>
                     </div>
                   ) : vehicle2 ? (
                     <>
-                      <div className="relative w-full h-48 rounded-lg overflow-hidden mb-4 bg-white/10">
+                      <div className="relative w-full h-40 sm:h-48 rounded-lg overflow-hidden mb-3 sm:mb-4 bg-white/10">
                         <Image
                           src={getVehicleImage(vehicle2)}
                           alt={getVehicleTitle(vehicle2)}
@@ -1097,10 +1099,10 @@ export default function ComparisonPage() {
                           className="object-cover"
                         />
                       </div>
-                      <h3 className="text-xl font-bold mb-2">
+                      <h3 className="text-lg sm:text-xl font-bold mb-2">
                         {getVehicleTitle(vehicle2)}
                       </h3>
-                      <div className="text-2xl font-bold mb-2">
+                      <div className="text-xl sm:text-2xl font-bold mb-2">
                         {formatPrice(vehicle2.price)}
                       </div>
                       <Link href={`/${vehicle2Id}`}>
@@ -1121,8 +1123,8 @@ export default function ComparisonPage() {
 
             {/* Comparison Details */}
             <Card className="overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-[#024950] to-teal-700 text-white">
-                <CardTitle className="text-2xl">Detailed Comparison</CardTitle>
+              <CardHeader className="bg-gradient-to-r from-[#024950] to-teal-700 text-white p-4 sm:p-6">
+                <CardTitle className="text-xl sm:text-2xl">Detailed Comparison</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="divide-y">
@@ -1135,43 +1137,43 @@ export default function ComparisonPage() {
                     return (
                       <div
                         key={index}
-                        className="grid md:grid-cols-3 gap-4 p-4 hover:bg-gray-50 transition-colors"
+                        className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-4 p-3 sm:p-4 hover:bg-gray-50 transition-colors"
                       >
-                        <div className="flex items-center gap-2 font-semibold text-gray-700">
-                          {Icon && <Icon className="w-5 h-5 text-[#024950]" />}
+                        <div className="flex items-center gap-2 font-semibold text-gray-700 text-sm sm:text-base">
+                          {Icon && <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-[#024950]" />}
                           <span>{field.label}</span>
                         </div>
                         <div
-                          className={`p-3 rounded-lg ${
+                          className={`p-2 sm:p-3 rounded-lg ${
                             winner === 1
                               ? "bg-green-50 border-2 border-green-500"
                               : "bg-gray-50"
                           }`}
                         >
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium text-sm sm:text-base break-words">
                               {field.format(value1)}
                             </span>
                             {winner === 1 && (
-                              <Badge className="bg-green-500 text-white">
+                              <Badge className="bg-green-500 text-white text-xs shrink-0">
                                 Winner
                               </Badge>
                             )}
                           </div>
                         </div>
                         <div
-                          className={`p-3 rounded-lg ${
+                          className={`p-2 sm:p-3 rounded-lg ${
                             winner === 2
                               ? "bg-green-50 border-2 border-green-500"
                               : "bg-gray-50"
                           }`}
                         >
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium text-sm sm:text-base break-words">
                               {field.format(value2)}
                             </span>
                             {winner === 2 && (
-                              <Badge className="bg-green-500 text-white">
+                              <Badge className="bg-green-500 text-white text-xs shrink-0">
                                 Winner
                               </Badge>
                             )}
@@ -1187,13 +1189,13 @@ export default function ComparisonPage() {
             {/* Features Comparison */}
             {(vehicle1?.tags?.length > 0 || vehicle2?.tags?.length > 0) && (
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-[#024950]">
+                <CardHeader className="p-4 sm:p-6">
+                  <CardTitle className="text-lg sm:text-xl text-[#024950]">
                     Features & Equipment
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-2 gap-6">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                     <div>
                       <h4 className="font-semibold mb-3 text-[#024950]">
                         Vehicle 1 Features
@@ -1241,47 +1243,51 @@ export default function ComparisonPage() {
 
             {/* Summary Card */}
             <Card className="bg-gradient-to-r from-blue-50 to-teal-50 border-2 border-blue-200">
-              <CardHeader>
-                <CardTitle className="text-[#024950] flex items-center gap-2">
-                  <Sparkles className="w-6 h-6" />
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="text-lg sm:text-xl text-[#024950] flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 sm:w-6 sm:h-6" />
                   Comparison Summary
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6">
                 <div className="space-y-3">
                   {vehicle1?.price && vehicle2?.price && (
-                    <div className="flex items-center justify-between p-3 bg-white rounded-lg">
-                      <span className="font-medium">Price Difference</span>
-                      <span className="font-bold text-[#024950]">
-                        {formatPrice(Math.abs(vehicle1.price - vehicle2.price))}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-white rounded-lg gap-2">
+                      <span className="font-medium text-sm sm:text-base">Price Difference</span>
+                      <div className="flex flex-col sm:items-end">
+                        <span className="font-bold text-[#024950] text-sm sm:text-base">
+                          {formatPrice(Math.abs(vehicle1.price - vehicle2.price))}
+                        </span>
                         {vehicle1.price < vehicle2.price ? (
-                          <span className="text-green-600 ml-2">
+                          <span className="text-green-600 text-xs sm:text-sm">
                             (Vehicle 1 is cheaper)
                           </span>
                         ) : (
-                          <span className="text-green-600 ml-2">
+                          <span className="text-green-600 text-xs sm:text-sm">
                             (Vehicle 2 is cheaper)
                           </span>
                         )}
-                      </span>
+                      </div>
                     </div>
                   )}
                   {vehicle1?.mileage && vehicle2?.mileage && (
-                    <div className="flex items-center justify-between p-3 bg-white rounded-lg">
-                      <span className="font-medium">Mileage Difference</span>
-                      <span className="font-bold text-[#024950]">
-                        {Math.abs(vehicle1.mileage - vehicle2.mileage).toLocaleString()}{" "}
-                        km
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-white rounded-lg gap-2">
+                      <span className="font-medium text-sm sm:text-base">Mileage Difference</span>
+                      <div className="flex flex-col sm:items-end">
+                        <span className="font-bold text-[#024950] text-sm sm:text-base">
+                          {Math.abs(vehicle1.mileage - vehicle2.mileage).toLocaleString()}{" "}
+                          km
+                        </span>
                         {vehicle1.mileage < vehicle2.mileage ? (
-                          <span className="text-green-600 ml-2">
+                          <span className="text-green-600 text-xs sm:text-sm">
                             (Vehicle 1 has lower mileage)
                           </span>
                         ) : (
-                          <span className="text-green-600 ml-2">
+                          <span className="text-green-600 text-xs sm:text-sm">
                             (Vehicle 2 has lower mileage)
                           </span>
                         )}
-                      </span>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1293,12 +1299,12 @@ export default function ComparisonPage() {
         {/* Empty State */}
         {(!vehicle1Id || !vehicle2Id) && (
           <Card className="border-2 border-dashed border-gray-300">
-            <CardContent className="p-12 text-center">
-              <Car className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">
+            <CardContent className="p-6 sm:p-12 text-center">
+              <Car className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-700 mb-2">
                 Select Two Vehicles to Compare
               </h3>
-              <p className="text-gray-500">
+              <p className="text-sm sm:text-base text-gray-500">
                 Use the search boxes above to find and select two vehicles you
                 want to compare side by side.
               </p>
