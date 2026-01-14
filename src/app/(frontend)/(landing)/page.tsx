@@ -1196,7 +1196,7 @@ export default function VehicleMarketplace() {
                           <div className="flex-1 pl-3 flex flex-col justify-between">
                             <div>
                               <div className="text-xs text-slate-600 mb-1 line-clamp-1">
-                                {vehicle.location || ""}
+                                {[vehicle.city, vehicle.district].filter(Boolean).join(", ") || vehicle.location || ""}
                               </div>
 
                               <div className="text-sm font-semibold text-teal-700 mb-1">

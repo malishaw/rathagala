@@ -761,7 +761,7 @@ export default function AdDetailPage() {
                             <div className="flex items-center justify-between text-xs text-gray-500">
                               <div className="flex items-center">
                                 <MapPin className="w-3 h-3 mr-1" />
-                                <span className="truncate">{vehicle.location}</span>
+                                <span className="truncate">{[vehicle.city, vehicle.district].filter(Boolean).join(", ") || vehicle.location || "N/A"}</span>
                               </div>
                             </div>
                             {vehicle.mileage && (
@@ -798,16 +798,13 @@ export default function AdDetailPage() {
                       {formatPrice(ad.price)}
                     </div>
                   )}
-                {(ad.city || ad.province) && (
-                  <div className="flex items-center text-gray-600 mb-2">
-                    <MapPin className="w-4 h-4 mr-1" />
-                    {[ad.city, ad.province].filter(Boolean).join(", ")}
-                  </div>
-                )}
-                {ad.location && (
+                {/* Location Display - show city/district or fallback to location field */}
+                {(ad.city || ad.district || ad.location) && (
                   <div className="flex items-center text-gray-600 mb-4">
                     <MapPin className="w-4 h-4 mr-1" />
-                    <span>{ad.location}</span>
+                    <span>
+                      {[ad.city, ad.district].filter(Boolean).join(", ") || ad.location}
+                    </span>
                   </div>
                 )}
 
@@ -1018,7 +1015,7 @@ export default function AdDetailPage() {
                   <div className="flex items-center justify-between text-sm text-gray-500">
                     <div className="flex items-center">
                       <MapPin className="w-3 h-3 mr-1" />
-                      {vehicle.location}
+                      {[vehicle.city, vehicle.district].filter(Boolean).join(", ") || vehicle.location || "N/A"}
                     </div>
                     <div>{vehicle.mileage}</div>
                   </div>
