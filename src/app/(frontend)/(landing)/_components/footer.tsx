@@ -49,7 +49,7 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="/saved-ads" className="hover:text-white transition-colors">
+                <a href="/profile" className="hover:text-white transition-colors">
                   Saved Ads
                 </a>
               </li>

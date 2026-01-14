@@ -33,6 +33,14 @@ export default function QuickAdCreatePage() {
   const [showPendingModal, setShowPendingModal] = useState(false);
   const [selectedImages, setSelectedImages] = useState<MediaFile[]>([]);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  
+  // Boost options
+  const boostOptions = [
+    { id: "bump_up", name: "Bump Up", price: 2000, description: "Boost your ad to the top" },
+    { id: "top_ad", name: "Top Ad", price: 1500, description: "Featured at the top of listings" },
+    { id: "featured", name: "Featured Ad", price: 2500, description: "Highlighted with badge" },
+    { id: "urgent", name: "Urgent", price: 1000, description: "Mark as urgent listing" }
+  ];
   const [formData, setFormData] = useState({
     // Listing type
     listingType: "SELL",
@@ -74,7 +82,10 @@ export default function QuickAdCreatePage() {
     
     // Publication status
     published: true,
-    isDraft: false
+    isDraft: false,
+    
+    // Boost selection
+    boostType: "" // "bump_up" | "top_ad" | "featured" | "urgent" | ""
   });
 
   // Generate available years (current year down to 1970)
@@ -269,8 +280,8 @@ export default function QuickAdCreatePage() {
       termsAndConditions: formData.termsAndConditions || undefined,
       published: formData.published,
       isDraft: formData.isDraft,
-      boosted: false,
-      featured: false
+      boosted: formData.boostType === "bump_up",
+      featured: formData.boostType === "featured"
     };
     
     createAd(
@@ -1621,6 +1632,50 @@ export default function QuickAdCreatePage() {
                 </Label>
               </div>
               
+              {/* Boost Ad Selection */}
+              <div className="pt-4 border-t border-slate-200">
+                <label className="block text-sm font-medium mb-3">Boost Your Ad (Optional)</label>
+                <div className="space-y-2">
+                  {boostOptions.map((boost) => (
+                    <div
+                      key={boost.id}
+                      onClick={() => handleInputChange("boostType", formData.boostType === boost.id ? "" : boost.id)}
+                      className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                        formData.boostType === boost.id
+                          ? "border-teal-700 bg-teal-50"
+                          : "border-slate-200 bg-white hover:border-teal-300"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="font-semibold text-sm text-slate-800">{boost.name}</div>
+                          <div className="text-xs text-slate-500 mt-1">{boost.description}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold text-teal-700">Rs. {boost.price.toLocaleString()}</div>
+                          <div className={`w-5 h-5 rounded-full border-2 ml-auto mt-2 ${
+                            formData.boostType === boost.id
+                              ? "border-teal-700 bg-teal-700"
+                              : "border-slate-300"
+                          }`}>
+                            {formData.boostType === boost.id && (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <div className="w-2 h-2 bg-white rounded-full"></div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {formData.boostType && (
+                  <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
+                    ✓ Boost selected: {boostOptions.find(b => b.id === formData.boostType)?.name} - Rs. {boostOptions.find(b => b.id === formData.boostType)?.price.toLocaleString()}
+                  </div>
+                )}
+              </div>
+              
               {/* Image Selection Section */}
               <div className="pt-2">
                 <label className="block text-sm font-medium mb-2">Vehicle Images (Optional)</label>
@@ -1777,7 +1832,8 @@ export default function QuickAdCreatePage() {
             location: "",
             termsAndConditions: false,
             published: true,
-            isDraft: false
+            isDraft: false,
+            boostType: ""
           });
         }}
       />

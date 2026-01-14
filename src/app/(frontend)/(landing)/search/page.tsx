@@ -491,7 +491,7 @@ export default function SearchPage() {
                         <SelectValue placeholder="All" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All districts</SelectItem>
+                        <SelectItem value="all">All</SelectItem>
                         {sriLankanDistricts.map((district) => (
                           <SelectItem key={district} value={district}>{district}</SelectItem>
                         ))}
@@ -510,7 +510,7 @@ export default function SearchPage() {
                         <SelectValue placeholder="All" />
                       </SelectTrigger>
                       <SelectContent className="max-h-[250px]">
-                        <SelectItem value="all">All cities</SelectItem>
+                        <SelectItem value="all">All</SelectItem>
                         {availableCities.map((city) => (
                           <SelectItem key={city} value={city}>{city}</SelectItem>
                         ))}
@@ -535,7 +535,7 @@ export default function SearchPage() {
                         <SelectValue placeholder="All" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All types</SelectItem>
+                        <SelectItem value="all">All</SelectItem>
                         <SelectItem value="SELL">For Sale</SelectItem>
                         <SelectItem value="WANT">Want to Buy</SelectItem>
                         <SelectItem value="RENT">For Rent</SelectItem>
@@ -555,7 +555,7 @@ export default function SearchPage() {
                         <SelectValue placeholder="All" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All vehicles</SelectItem>
+                        <SelectItem value="all">All</SelectItem>
                         {Object.entries(vehicleTypeLabels).map(([key, label]) => (
                           <SelectItem key={key} value={key}>{label}</SelectItem>
                         ))}
@@ -580,7 +580,7 @@ export default function SearchPage() {
                         <SelectValue placeholder="All" />
                       </SelectTrigger>
                       <SelectContent className="max-h-[250px]">
-                        <SelectItem value="all">All brands</SelectItem>
+                        <SelectItem value="all">All</SelectItem>
                         {vehicleMakes.map((make) => (
                           <SelectItem key={make} value={make}>{make}</SelectItem>
                         ))}
@@ -616,7 +616,7 @@ export default function SearchPage() {
                         <SelectValue placeholder="All" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All grades</SelectItem>
+                        <SelectItem value="all">All</SelectItem>
                         <SelectItem value="A">Grade A</SelectItem>
                         <SelectItem value="B">Grade B</SelectItem>
                         <SelectItem value="C">Grade C</SelectItem>
@@ -636,7 +636,7 @@ export default function SearchPage() {
                         <SelectValue placeholder="All" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All conditions</SelectItem>
+                        <SelectItem value="all">All</SelectItem>
                         <SelectItem value="New">Brand New</SelectItem>
                         <SelectItem value="Reconditioned">Reconditioned</SelectItem>
                         <SelectItem value="Used">Used</SelectItem>
@@ -728,7 +728,7 @@ export default function SearchPage() {
                         <SelectValue placeholder="All" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All fuel types</SelectItem>
+                        <SelectItem value="all">All</SelectItem>
                         <SelectItem value="PETROL">Petrol</SelectItem>
                         <SelectItem value="DIESEL">Diesel</SelectItem>
                         <SelectItem value="HYBRID">Hybrid</SelectItem>
@@ -749,7 +749,7 @@ export default function SearchPage() {
                         <SelectValue placeholder="All" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All transmissions</SelectItem>
+                        <SelectItem value="all">All</SelectItem>
                         <SelectItem value="Automatic">Automatic</SelectItem>
                         <SelectItem value="Manual">Manual</SelectItem>
                       </SelectContent>

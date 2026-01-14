@@ -17,6 +17,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -47,6 +53,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { authClient } from "@/lib/auth-client";
 
 export default function AdDetailPage() {
   const { id } = useParams();
@@ -56,6 +63,9 @@ export default function AdDetailPage() {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [reportDetails, setReportDetails] = useState("");
+
+  // Get session to check if user is logged in
+  const { data: session } = authClient.useSession();
 
   // Using the hook to fetch ad data
   const { data: ad, isLoading, isError } = useGetAdById({ adId: adId || "" });
@@ -398,15 +408,26 @@ export default function AdDetailPage() {
                 iconClassName="w-5 h-5"
               />
 
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-red-500 hover:bg-white/10"
-                onClick={() => setIsReportDialogOpen(true)}
-                aria-label="Report Ad"
-              >
-                <Flag className="w-5 h-5" />
-              </Button>
+              <div className="relative group">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-500 hover:bg-white/10"
+                  onClick={() => {
+                    if (session?.user) {
+                      setIsReportDialogOpen(true);
+                    }
+                  }}
+                  aria-label="Report Ad"
+                >
+                  <Flag className="w-5 h-5 text-gray-500" />
+                </Button>
+                {!session?.user && (
+                  <span className="absolute top-full left-1/2 -translate-x-1/2 mt-1 text-xs text-white/70 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity  bg-black/70 px-2 py-1 rounded">
+                    Please login to report
+                  </span>
+                )}
+              </div>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -856,6 +877,81 @@ export default function AdDetailPage() {
               </CardContent>
             </Card>
 
+            {/* Seller Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-[#024950]">
+                  Seller Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-start space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const sellerId = (ad as any).createdBy || (ad as any).creator?.id || (ad as any).userId || (ad as any).user_id || (ad as any).sellerId || (ad as any).ownerId || (ad as any).user?.id || (ad as any).seller?.id;
+                      if (sellerId) {
+                        router.push(`/search?seller=${encodeURIComponent(String(sellerId))}`);
+                      } else {
+                        router.push(`/search`);
+                      }
+                    }}
+                    className="w-12 h-12 bg-[#024950] bg-opacity-10 rounded-full flex items-center justify-center hover:bg-opacity-20 cursor-pointer"
+                  >
+                    <span className="text-[#024950] font-semibold text-lg">
+                      {((ad as any).creator?.name || "Seller").charAt(0).toUpperCase()}
+                    </span>
+                  </button>
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const sellerId = (ad as any).createdBy || (ad as any).creator?.id || (ad as any).userId || (ad as any).user_id || (ad as any).sellerId || (ad as any).ownerId || (ad as any).user?.id || (ad as any).seller?.id;
+                          if (sellerId) {
+                            router.push(`/search?seller=${encodeURIComponent(String(sellerId))}`);
+                          } else {
+                            router.push(`/search`);
+                          }
+                        }}
+                        className="font-semibold text-left hover:underline cursor-pointer"
+                      >
+                        {(ad as any).creator?.name || "Seller"}
+                      </button>
+                      <Shield className="w-4 h-4 text-green-500" />
+                    </div>
+                    <div className="text-sm text-gray-500 mb-2">
+                      {(ad as any).sellerType === "DEALER"
+                        ? "Dealer"
+                        : "Private Seller"}
+                    </div>
+                    <div className="flex items-center space-x-1 mb-2">
+                      {/* <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" /> */}
+                      {/* <span className="text-sm font-medium">4.8</span>
+                      <span className="text-sm text-gray-500">(5 ads)</span> */}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        // Try common seller id fields on the ad object
+                        const sellerId = (ad as any).createdBy || (ad as any).creator?.id || (ad as any).userId || (ad as any).user_id || (ad as any).sellerId || (ad as any).ownerId || (ad as any).user?.id || (ad as any).seller?.id;
+                        if (sellerId) {
+                          router.push(`/search?seller=${encodeURIComponent(String(sellerId))}`);
+                        } else {
+                          // Fallback: go to search without filter
+                          router.push(`/search`);
+                        }
+                      }}
+                    >
+                      View All Ads
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Vehicle Analytics Button */}
             {ad.price && (
               <Card className="border-2 border-dashed border-[#024950]/30 bg-gradient-to-br from-teal-50/50 to-white">
@@ -911,70 +1007,6 @@ export default function AdDetailPage() {
                 }}
               />
             )}
-
-            {/* Seller Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-[#024950]">
-                  Seller Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-start space-x-3">
-                  <div className="w-12 h-12 bg-[#024950] bg-opacity-10 rounded-full flex items-center justify-center">
-                    <span className="text-[#024950] font-semibold text-lg">
-                      {((ad as any).creator?.name || "Seller").charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const sellerId = (ad as any).createdBy || (ad as any).creator?.id || (ad as any).userId || (ad as any).user_id || (ad as any).sellerId || (ad as any).ownerId || (ad as any).user?.id || (ad as any).seller?.id;
-                          if (sellerId) {
-                            router.push(`/search?seller=${encodeURIComponent(String(sellerId))}`);
-                          } else {
-                            router.push(`/search`);
-                          }
-                        }}
-                        className="font-semibold text-left hover:underline cursor-pointer"
-                      >
-                        {(ad as any).creator?.name || "Seller"}
-                      </button>
-                      <Shield className="w-4 h-4 text-green-500" />
-                    </div>
-                    <div className="text-sm text-gray-500 mb-2">
-                      {(ad as any).sellerType === "DEALER"
-                        ? "Dealer"
-                        : "Private Seller"}
-                    </div>
-                    <div className="flex items-center space-x-1 mb-2">
-                      {/* <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" /> */}
-                      {/* <span className="text-sm font-medium">4.8</span>
-                      <span className="text-sm text-gray-500">(5 ads)</span> */}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      onClick={() => {
-                        // Try common seller id fields on the ad object
-                        const sellerId = (ad as any).createdBy || (ad as any).creator?.id || (ad as any).userId || (ad as any).user_id || (ad as any).sellerId || (ad as any).ownerId || (ad as any).user?.id || (ad as any).seller?.id;
-                        if (sellerId) {
-                          router.push(`/search?seller=${encodeURIComponent(String(sellerId))}`);
-                        } else {
-                          // Fallback: go to search without filter
-                          router.push(`/search`);
-                        }
-                      }}
-                    >
-                      View All Ads
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Safety Tips */}
             <Card>

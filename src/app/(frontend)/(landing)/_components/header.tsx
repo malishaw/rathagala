@@ -316,6 +316,13 @@ export function Header() {
                     Hire
                   </Link>
                   <Link
+                    href="/comparison"
+                    className="text-lg font-medium hover:text-teal-200 transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Comparison
+                  </Link>
+                  <Link
                     href="/search"
                     className="text-lg font-medium hover:text-teal-200 transition-colors"
                     onClick={() => setIsOpen(false)}
