@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
 
     // Build AND conditions for brand and model matching
     const andConditions: any[] = [];
-    
+
     // Match by brand and model if available (case-insensitive)
     if (currentAd.brand && currentAd.model) {
       andConditions.push(
@@ -59,22 +59,7 @@ export async function GET(request: NextRequest) {
       whereConditions.AND = andConditions;
     }
 
-    // Match by year (within ±3 years)
-    if (currentAd.manufacturedYear) {
-      const year = parseInt(currentAd.manufacturedYear);
-      if (!isNaN(year)) {
-        const yearOptions = [
-          year.toString(),
-          (year - 1).toString(),
-          (year + 1).toString(),
-          (year - 2).toString(),
-          (year + 2).toString(),
-          (year - 3).toString(),
-          (year + 3).toString(),
-        ];
-        whereConditions.manufacturedYear = { in: yearOptions };
-      }
-    }
+    // NOTE: Year filter removed to return more results
 
     // Find similar ads with full details
     const similarAds = await prisma.ad.findMany({
@@ -109,7 +94,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (similarAds.length === 0) {
-      // Try broader search (just type and brand)
+      // Try broader search (type + brand only, without model restriction)
       const broaderWhereConditions: any = {
         status: AdStatus.ACTIVE,
         listingType: "SELL",
@@ -118,6 +103,7 @@ export async function GET(request: NextRequest) {
         type: currentAd.type,
       };
 
+      // Fallback: Only require brand matching (not model)
       if (currentAd.brand) {
         broaderWhereConditions.brand = { contains: currentAd.brand, mode: "insensitive" };
       }

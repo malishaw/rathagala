@@ -61,7 +61,7 @@ export default function AdDetailPage() {
   const { data: ad, isLoading, isError } = useGetAdById({ adId: adId || "" });
   const { data: similarVehiclesData, isLoading: isLoadingSimilar } = useGetSimilarVehicles({
     adId: adId || "",
-    limit: 3,
+    limit: 5,
     enabled: !!adId
   });
   const { mutate: createReport, isPending: isSubmittingReport } = useCreateReport();
@@ -991,39 +991,6 @@ export default function AdDetailPage() {
           </div>
         </div>
 
-        {/* Similar Vehicles */}
-        {/* <div className="mt-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">
-            Similar Vehicles
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {similarVehicles.map((vehicle) => (
-              <Card
-                key={vehicle.id}
-                className="hover:shadow-md transition-shadow cursor-pointer"
-              >
-                <CardContent className="p-4">
-                  <img
-                    src={vehicle.image || "/placeholder.svg"}
-                    alt={vehicle.title}
-                    className="w-full h-40 object-cover rounded mb-3"
-                  />
-                  <h3 className="font-semibold mb-2">{vehicle.title}</h3>
-                  <div className="text-lg font-bold text-[#024950] mb-1">
-                    {formatPrice(vehicle.price)}
-                  </div>
-                  <div className="flex items-center justify-between text-sm text-gray-500">
-                    <div className="flex items-center">
-                      <MapPin className="w-3 h-3 mr-1" />
-                      {[vehicle.city, vehicle.district].filter(Boolean).join(", ") || vehicle.location || "N/A"}
-                    </div>
-                    <div>{vehicle.mileage}</div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div> */}
       </div>
 
       {/* Report Dialog */}
