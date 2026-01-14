@@ -853,62 +853,6 @@ export default function AdDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Vehicle Analytics Button */}
-            {ad.price && (
-              <Card className="border-2 border-dashed border-[#024950]/30 bg-gradient-to-br from-teal-50/50 to-white">
-                <CardContent className="p-8 text-center">
-                  <div className="flex flex-col items-center space-y-4">
-                    <div className="p-4 bg-gradient-to-br from-[#024950] to-teal-600 rounded-full">
-                      <BarChart3 className="w-8 h-8 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-800 mb-2">
-                        View Vehicle Analytics
-                      </h3>
-                      <p className="text-sm text-gray-600 mb-4 max-w-md">
-                        Get comprehensive market insights including price comparison and similar vehicle analysis
-                      </p>
-                    </div>
-                    <div className="flex flex-col gap-3 w-full max-w-md">
-                      <Button
-                        onClick={() => router.push(`/${adId}/analytics`)}
-                        className="bg-gradient-to-r from-[#024950] to-teal-600 text-white hover:from-[#036b75] hover:to-teal-700 border-0 px-6 py-6 text-lg w-full"
-                        size="lg"
-                      >
-                        <BarChart3 className="w-5 h-5 mr-2" />
-                        View Analytics
-                      </Button>
-                      <Button
-                        onClick={() => router.push(`/comparison?vehicle1=${adId}`)}
-                        variant="outline"
-                        className="border-2 border-[#024950] text-[#024950] hover:bg-[#024950] hover:text-white px-6 py-6 text-lg w-full"
-                        size="lg"
-                      >
-                        <BarChart3 className="w-5 h-5 mr-2" />
-                        Comparison
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Similar Vehicle Comparison */}
-            {ad.price && (
-              <SimilarVehicleComparison
-                adId={adId || ""}
-                currentPrice={(ad as any).discountPrice || ad.price}
-                currentVehicle={{
-                  brand: ad.brand,
-                  model: ad.model,
-                  year: ad.manufacturedYear,
-                  mileage: ad.mileage,
-                  fuelType: ad.fuelType,
-                  transmission: ad.transmission,
-                }}
-              />
-            )}
-
             {/* Seller Information */}
             <Card>
               <CardHeader>
@@ -972,6 +916,62 @@ export default function AdDetailPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Vehicle Analytics Button */}
+            {ad.price && (
+              <Card className="border-2 border-dashed border-[#024950]/30 bg-gradient-to-br from-teal-50/50 to-white">
+                <CardContent className="p-8 text-center">
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="p-4 bg-gradient-to-br from-[#024950] to-teal-600 rounded-full">
+                      <BarChart3 className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-800 mb-2">
+                        View Vehicle Analytics
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-4 max-w-md">
+                        Get comprehensive market insights including price comparison and similar vehicle analysis
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-3 w-full max-w-md">
+                      <Button
+                        onClick={() => router.push(`/${adId}/analytics`)}
+                        className="bg-gradient-to-r from-[#024950] to-teal-600 text-white hover:from-[#036b75] hover:to-teal-700 border-0 px-6 py-6 text-lg w-full"
+                        size="lg"
+                      >
+                        <BarChart3 className="w-5 h-5 mr-2" />
+                        View Analytics
+                      </Button>
+                      <Button
+                        onClick={() => router.push(`/comparison?vehicle1=${adId}`)}
+                        variant="outline"
+                        className="border-2 border-[#024950] text-[#024950] hover:bg-[#024950] hover:text-white px-6 py-6 text-lg w-full"
+                        size="lg"
+                      >
+                        <BarChart3 className="w-5 h-5 mr-2" />
+                        Comparison
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Similar Vehicle Comparison */}
+            {ad.price && (
+              <SimilarVehicleComparison
+                adId={adId || ""}
+                currentPrice={(ad as any).discountPrice || ad.price}
+                currentVehicle={{
+                  brand: ad.brand,
+                  model: ad.model,
+                  year: ad.manufacturedYear,
+                  mileage: ad.mileage,
+                  fuelType: ad.fuelType,
+                  transmission: ad.transmission,
+                }}
+              />
+            )}
 
             {/* Safety Tips */}
             <Card>
