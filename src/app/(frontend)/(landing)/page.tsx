@@ -1252,13 +1252,15 @@ export default function VehicleMarketplace() {
               <Card className="p-4 bg-white border border-slate-100 rounded-xl overflow-hidden shadow-none">
                 <div className="text-center text-slate-500">
 
-                  <div className="bg-slate-100 h-64 flex items-center justify-center rounded-lg overflow-hidden">
-                    <img
-                      src="/assets/Sidebar 01 new.jpg"
-                      alt="Advertisement"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+                  <Link href="/search" className="block cursor-pointer">
+                    <div className="bg-slate-100 h-64 flex items-center justify-center rounded-lg overflow-hidden">
+                      <img
+                        src="/assets/Sidebar 01 new.jpg"
+                        alt="Advertisement"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </Link>
                 </div>
               </Card>
 
@@ -1269,13 +1271,15 @@ export default function VehicleMarketplace() {
               <Card className="p-4 bg-white border border-slate-100 rounded-xl overflow-hidden shadow-none">
                 <div className="text-center text-slate-500">
 
-                  <div className="bg-slate-100 h-48 flex items-center justify-center rounded-lg overflow-hidden">
-                    <img
-                      src="/assets/Sidebar 02.jpg"
-                      alt="Advertisement"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+                  <Link href="/compare" className="block cursor-pointer">
+                    <div className="bg-slate-100 h-48 flex items-center justify-center rounded-lg overflow-hidden">
+                      <img
+                        src="/assets/Sidebar 02.jpg"
+                        alt="Advertisement"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </Link>
                 </div>
               </Card>
             </div>
@@ -1289,11 +1293,20 @@ export default function VehicleMarketplace() {
           <Card className="p-0 bg-white border border-slate-100 rounded-xl overflow-hidden shadow-none">
             <div className="text-center text-slate-500">
               <Link href="/sell/new" className="block">
-                <div className="bg-slate-100 h-24 flex items-center justify-center rounded-lg overflow-hidden">
+                {/* Desktop View Banner */}
+                <div className="hidden sm:flex bg-slate-100 h-24 items-center justify-center rounded-lg overflow-hidden">
                   <img
                     src="/assets/Bottom Banner.jpg"
                     alt="Free Advertisement"
                     className="w-full h-full object-cover"
+                  />
+                </div>
+                {/* Mobile View Banner - Added new slot for mobile and fixed alignment */}
+                <div className="flex sm:hidden bg-slate-100 h-32 items-center justify-center rounded-lg overflow-hidden">
+                  <img
+                    src="/assets/Bottom Banner - Mobile New.jpg"
+                    alt="Free Advertisement"
+                    className="w-full h-full object-cover object-center"
                   />
                 </div>
               </Link>

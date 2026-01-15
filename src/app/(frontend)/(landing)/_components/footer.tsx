@@ -44,8 +44,8 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="/analyze" className="hover:text-white transition-colors">
-                  Analyze by Model
+                <a href="/analyse" className="hover:text-white transition-colors">
+                  Analyze Trend
                 </a>
               </li>
               <li>

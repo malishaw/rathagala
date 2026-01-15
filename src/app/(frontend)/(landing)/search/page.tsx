@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Search, Filter, Car, ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, MapPin, TrendingUp, Sparkles, Loader2, Car, Search, Filter } from "lucide-react";
 import { format } from "date-fns";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
 
@@ -420,17 +420,17 @@ export default function SearchPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-[1600px] mx-auto px-4 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left Sidebar - Search Filters */}
-          <div className="w-full lg:w-80">
-            <Card className="p-4">
+          <div className="w-full lg:w-72 flex-shrink-0">
+            <Card className="p-4 shadow-sm border-slate-200">
               <div
                 className="flex items-center justify-between mb-4 cursor-pointer lg:cursor-default"
                 onClick={() => setIsFiltersOpen(!isFiltersOpen)}
               >
                 <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-                  <Filter className="h-5 w-5" />
+                  <Filter className="h-5 w-5 text-teal-600" />
                   Filters
                 </h2>
                 <div className="flex items-center gap-2">
@@ -442,55 +442,33 @@ export default function SearchPage() {
                         e.stopPropagation();
                         clearFilters();
                       }}
-                      className="text-xs text-slate-600 hover:text-slate-900 h-7 px-2"
+                      className="text-xs text-teal-600 hover:text-teal-700 h-7 px-2"
                     >
                       Clear
                     </Button>
                   )}
                   {/* Mobile Toggle Icon */}
-                  <div className="lg:hidden">
-                    {isFiltersOpen ? (
-                      <ChevronUp className="h-5 w-5 text-slate-500" />
-                    ) : (
-                      <ChevronDown className="h-5 w-5 text-slate-500" />
-                    )}
+                  <div className="lg:hidden text-slate-400">
+                    {isFiltersOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
                   </div>
                 </div>
               </div>
 
-              <div className={`space-y-4 ${isFiltersOpen ? 'block' : 'hidden'} lg:block max-h-[70vh] lg:max-h-none overflow-y-auto lg:overflow-visible pr-2 lg:pr-0`}>
-                {/* Search Title */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
-                    Search by Title
-                  </label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
-                    <Input
-                      placeholder="Enter vehicle title..."
-                      value={filters.query}
-                      onChange={(e) => handleFilterChange('query', e.target.value)}
-                      className="pl-10 h-9 text-sm"
-                    />
-                  </div>
-                </div>
-
-                <Separator className="my-3" />
-
-                {/* Row 1: District & City */}
-                <div className="grid grid-cols-2 gap-3">
+              <div className={`${isFiltersOpen ? 'block' : 'hidden'} lg:block space-y-4`}>
+                {/* Row 1: Location */}
+                <div className="grid grid-cols-1 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
                       District
                     </label>
                     <Select
                       value={filters.district}
                       onValueChange={(value) => handleFilterChange('district', value)}
                     >
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue placeholder="All" />
+                      <SelectTrigger className="h-10 text-sm border-slate-200 focus:ring-teal-500">
+                        <SelectValue placeholder="All Districts" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="max-h-[300px]">
                         <SelectItem value="all">All districts</SelectItem>
                         {sriLankanDistricts.map((district) => (
                           <SelectItem key={district} value={district}>{district}</SelectItem>
@@ -499,17 +477,17 @@ export default function SearchPage() {
                     </Select>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
                       City
                     </label>
                     <Select
                       value={filters.city}
                       onValueChange={(value) => handleFilterChange('city', value)}
                     >
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue placeholder="All" />
+                      <SelectTrigger className="h-10 text-sm border-slate-200 focus:ring-teal-500">
+                        <SelectValue placeholder="All Cities" />
                       </SelectTrigger>
-                      <SelectContent className="max-h-[250px]">
+                      <SelectContent className="max-h-[300px]">
                         <SelectItem value="all">All cities</SelectItem>
                         {availableCities.map((city) => (
                           <SelectItem key={city} value={city}>{city}</SelectItem>
@@ -760,180 +738,133 @@ export default function SearchPage() {
             </Card>
           </div>
 
-          {/* Right Side - Search Results */}
-          <div className="flex-1">
+          {/* Center Column - Search Results */}
+          <div className="flex-1 min-w-0">
             {/* Active Filters Display */}
             {activeFilterCount > 0 && (
-              <Card className="p-4 mb-6">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-medium text-slate-700">Active filters:</span>
-                  {filters.listingType && filters.listingType !== 'all' && (
-                    <Badge variant="secondary" className="gap-1">
-                      {listingTypeLabels[filters.listingType]}
-                      <button onClick={() => handleFilterChange('listingType', 'all')} className="ml-1 hover:text-slate-900">×</button>
-                    </Badge>
-                  )}
-                  {filters.vehicleType && filters.vehicleType !== 'all' && (
-                    <Badge variant="secondary" className="gap-1">
-                      {vehicleTypeLabels[filters.vehicleType]}
-                      <button onClick={() => handleFilterChange('vehicleType', 'all')} className="ml-1 hover:text-slate-900">×</button>
-                    </Badge>
-                  )}
-                  {filters.brand && filters.brand !== 'all' && (
-                    <Badge variant="secondary" className="gap-1">
-                      {filters.brand}
-                      <button onClick={() => handleFilterChange('brand', 'all')} className="ml-1 hover:text-slate-900">×</button>
-                    </Badge>
-                  )}
-                  {filters.condition && filters.condition !== 'all' && (
-                    <Badge variant="secondary" className="gap-1">
-                      {filters.condition}
-                      <button onClick={() => handleFilterChange('condition', 'all')} className="ml-1 hover:text-slate-900">×</button>
-                    </Badge>
-                  )}
-                  {(filters.minPrice || filters.maxPrice) && (
-                    <Badge variant="secondary" className="gap-1">
-                      Rs. {filters.minPrice || '0'} - {filters.maxPrice || '∞'}
-                      <button onClick={() => {
-                        handleFilterChange('minPrice', '');
-                        handleFilterChange('maxPrice', '');
-                      }} className="ml-1 hover:text-slate-900">×</button>
-                    </Badge>
-                  )}
-                  {(filters.minYear || filters.maxYear) && (
-                    <Badge variant="secondary" className="gap-1">
-                      Year: {filters.minYear || 'Any'} - {filters.maxYear || 'Any'}
-                      <button onClick={() => {
-                        handleFilterChange('minYear', 'any');
-                        handleFilterChange('maxYear', 'any');
-                      }} className="ml-1 hover:text-slate-900">×</button>
-                    </Badge>
-                  )}
-                  {filters.district && filters.district !== 'all' && (
-                    <Badge variant="secondary" className="gap-1">
-                      {filters.district}
-                      <button onClick={() => handleFilterChange('district', 'all')} className="ml-1 hover:text-slate-900">×</button>
-                    </Badge>
-                  )}
-                  {filters.city && filters.city !== 'all' && (
-                    <Badge variant="secondary" className="gap-1">
-                      {filters.city}
-                      <button onClick={() => handleFilterChange('city', 'all')} className="ml-1 hover:text-slate-900">×</button>
-                    </Badge>
-                  )}
-                  {filters.fuelType && filters.fuelType !== 'all' && (
-                    <Badge variant="secondary" className="gap-1">
-                      {filters.fuelType}
-                      <button onClick={() => handleFilterChange('fuelType', 'all')} className="ml-1 hover:text-slate-900">×</button>
-                    </Badge>
-                  )}
-                  {filters.transmission && filters.transmission !== 'all' && (
-                    <Badge variant="secondary" className="gap-1">
-                      {filters.transmission}
-                      <button onClick={() => handleFilterChange('transmission', 'all')} className="ml-1 hover:text-slate-900">×</button>
-                    </Badge>
-                  )}
-                </div>
-              </Card>
-            )}
-
-            {/* Loading State */}
-            {isLoading && (
-              <div className="flex justify-center items-center py-12">
-                <div className="text-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-teal-600 mx-auto mb-4" />
-                  <p className="text-slate-600">Searching for vehicles...</p>
-                </div>
+              <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+                <span className="text-sm font-medium text-slate-500 whitespace-nowrap">Active filters:</span>
+                {filters.listingType && filters.listingType !== 'all' && (
+                  <Badge variant="secondary" className="bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-100 py-1">
+                    {listingTypeLabels[filters.listingType]}
+                    <button onClick={() => handleFilterChange('listingType', 'all')} className="ml-1.5">×</button>
+                  </Badge>
+                )}
+                {filters.brand && filters.brand !== 'all' && (
+                  <Badge variant="secondary" className="bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-100 py-1">
+                    {filters.brand}
+                    <button onClick={() => handleFilterChange('brand', 'all')} className="ml-1.5">×</button>
+                  </Badge>
+                )}
+                {filters.district && filters.district !== 'all' && (
+                  <Badge variant="secondary" className="bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-100 py-1">
+                    {filters.district}
+                    <button onClick={() => handleFilterChange('district', 'all')} className="ml-1.5">×</button>
+                  </Badge>
+                )}
               </div>
             )}
 
-            {/* Error State */}
-            {error && (
-              <Card className="p-8 text-center">
-                <div className="text-red-600 mb-4">
-                  <Car className="h-12 w-12 mx-auto mb-2" />
-                  <p className="text-lg font-medium">Something went wrong</p>
-                  <p className="text-sm text-slate-600">Unable to load search results. Please try again.</p>
-                </div>
-              </Card>
-            )}
-
-            {/* No Results */}
-            {!isLoading && !error && filteredAds.length === 0 && (
-              <Card className="p-8 text-center">
-                <div className="text-slate-600 mb-4">
-                  <Search className="h-12 w-12 mx-auto mb-2" />
-                  <p className="text-lg font-medium">No vehicles found</p>
-                  <p className="text-sm">Try adjusting your search filters to find more results.</p>
-                </div>
-                <Button onClick={clearFilters} variant="outline" className="mt-4">
+            {/* Results Grid */}
+            {!isLoading && !error && filteredAds.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-4">
+                {filteredAds.map((vehicle) => (
+                  <div
+                    key={vehicle.id}
+                    className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer flex group"
+                    onClick={() => router.push(`/${vehicle.id}`)}
+                  >
+                    <div className="w-1/3 aspect-[4/3] flex-shrink-0 relative overflow-hidden bg-slate-100">
+                      <img
+                        src="/placeholder-image.jpg"
+                        alt={vehicle.title || 'Vehicle'}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                    </div>
+                    <div className="flex-1 p-3 flex flex-col justify-between">
+                      <div>
+                        <div className="flex justify-between items-start gap-2 mb-1">
+                          <h3 className="font-semibold text-sm text-slate-800 line-clamp-1 group-hover:text-teal-700 transition-colors">
+                            {[vehicle.brand, vehicle.model, vehicle.manufacturedYear].filter(Boolean).join(' ')}
+                          </h3>
+                        </div>
+                        <p className="text-xs text-slate-500 flex items-center gap-1 mb-2">
+                          <MapPin className="h-3 w-3" /> {vehicle.city || 'Sri Lanka'}
+                        </p>
+                        <div className="text-base font-bold text-teal-700">
+                          {formatPrice(vehicle.price)}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-50">
+                        <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
+                          {format(new Date(vehicle.createdAt), "MMM d, yyyy")}
+                        </span>
+                        <Badge variant="outline" className="text-[10px] h-5 py-0 border-slate-200 text-slate-600">
+                          {vehicle.condition}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : !isLoading && (
+              <Card className="p-12 text-center border-dashed border-2 bg-slate-50">
+                <Search className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-slate-900">No results found</h3>
+                <p className="text-slate-500 mt-1 max-w-xs mx-auto">Try adjusting your filters or clearing them to see more vehicles.</p>
+                <Button onClick={clearFilters} variant="outline" className="mt-6 border-slate-300">
                   Clear all filters
                 </Button>
               </Card>
             )}
 
-            {/* Search Results */}
-            {!isLoading && !error && filteredAds.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredAds.map((vehicle) => (
-                  <div
-                    key={vehicle.id}
-                    className="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group"
-                    onClick={() => router.push(`/${vehicle.id}`)}
-                  >
-                    <div className="p-3">
-                      {/* Vehicle Title - Centered */}
-                      <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
-                        {[vehicle.brand, vehicle.model, vehicle.manufacturedYear, vehicleTypeLabels[vehicle.type] || vehicle.type]
-                          .filter(Boolean)
-                          .join(' ')}
-                      </h3>
-
-                      <div className="flex">
-                        {/* Vehicle Image */}
-                        <div className="w-32 h-20 flex-shrink-0">
-                          <img
-                            src="/placeholder-image.jpg"
-                            alt={vehicle.title || 'Vehicle'}
-                            className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
-                          />
-                        </div>
-
-                        {/* Vehicle Details */}
-                        <div className="flex-1 pl-3 flex flex-col justify-between">
-                          <div>
-                            <div className="text-xs text-slate-600 mb-1 line-clamp-1">
-                              {vehicle.city || ""}
-                            </div>
-
-                            <div className="text-sm font-semibold text-teal-700 mb-1">
-                              {formatPrice(vehicle.price)}
-                            </div>
-
-                            <div className="text-xs text-slate-500">
-                              {vehicleTypeLabels[vehicle.type] || vehicle.type}
-                            </div>
-                          </div>
-
-                          <div className="text-xs text-slate-400 mt-1">
-                            {format(new Date(vehicle.createdAt), "MMM d, yyyy")}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                {/* Pagination could go here */}
-                {filteredAds.length >= 20 && (
-                  <div className="flex justify-center pt-6 col-span-full">
-                    <Button variant="outline">
-                      Load More Results
-                    </Button>
-                  </div>
-                )}
+            {/* Pagination */}
+            {!isLoading && filteredAds.length >= 20 && (
+              <div className="flex justify-center mt-10">
+                <Button className="bg-[#024950] hover:bg-[#024950]/90 px-8 py-6 rounded-xl text-md">
+                  Load More Vehicles
+                </Button>
               </div>
             )}
+          </div>
+
+          {/* Right Sidebar - Ad Space */}
+          <div className="hidden xl:block w-72 flex-shrink-0">
+            <div className="sticky top-6 space-y-4">
+              {/* Ad Placeholder 1 */}
+              <Card className="p-4 bg-white border-slate-200 overflow-hidden text-center shadow-none">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Advertisement</div>
+                <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-lg h-64 flex flex-col items-center justify-center text-slate-400 p-6">
+                  <TrendingUp className="h-8 w-8 mb-2 opacity-50" />
+                  <p className="text-xs font-medium">Your Ad Here</p>
+                </div>
+              </Card>
+
+              {/* Ad Placeholder 2 */}
+              <Card className="p-4 bg-teal-900 text-white overflow-hidden shadow-lg border-none relative">
+                <div className="relative z-10">
+                  <h4 className="font-bold text-lg mb-2">Sell Faster!</h4>
+                  <p className="text-xs text-teal-100 mb-4 leading-relaxed">Boost your vehicle reach to thousands of potential buyers instantly.</p>
+                  <Button onClick={() => router.push('/sell/new')} className="w-full bg-white text-teal-900 hover:bg-teal-50 font-bold border-none">
+                    Post Free Ad Now
+                  </Button>
+                </div>
+                <Car className="absolute -right-4 -bottom-4 h-24 w-24 text-white/10 rotate-12" />
+              </Card>
+
+              {/* Ad Placeholder 3 */}
+              <Card className="p-4 bg-white border-slate-200 overflow-hidden text-center shadow-none">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Advertisement</div>
+                <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-lg h-[400px] flex flex-col items-center justify-center text-slate-400 p-6">
+                  <div className="mb-4 flex gap-1">
+                    <Sparkles className="h-4 w-4" />
+                    <Sparkles className="h-4 w-4" />
+                    <Sparkles className="h-4 w-4" />
+                  </div>
+                  <p className="text-xs font-medium leading-relaxed">Promote your business<br />on Rathagala.lk</p>
+                </div>
+              </Card>
+            </div>
           </div>
         </div>
       </div>

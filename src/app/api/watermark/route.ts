@@ -26,48 +26,40 @@ export async function GET(request: NextRequest) {
 
     const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
 
-    // Load the watermark image
-    const watermarkPath = join(process.cwd(), "public", "watermark.png");
-    let watermarkBuffer: Buffer;
-    
-    try {
-      watermarkBuffer = await readFile(watermarkPath);
-    } catch (error) {
-      // If watermark file doesn't exist, return original image
-      return new NextResponse(imageBuffer, {
-        headers: {
-          "Content-Type": imageResponse.headers.get("Content-Type") || "image/jpeg",
-          "Cache-Control": "public, max-age=31536000, immutable",
-        },
-      });
-    }
-
-    // Get image metadata
+    // Get image metadata to calculate watermark dimensions
     const imageMetadata = await sharp(imageBuffer).metadata();
-    const watermarkMetadata = await sharp(watermarkBuffer).metadata();
+    const imgWidth = imageMetadata.width || 1200;
+    const imgHeight = imageMetadata.height || 800;
 
-    // Calculate watermark size (30% of image width, maintaining aspect ratio)
-    const watermarkWidth = Math.floor((imageMetadata.width || 1000) * 0.3);
-    const watermarkHeight = Math.floor(
-      (watermarkMetadata.height || 1) *
-        (watermarkWidth / (watermarkMetadata.width || 1))
-    );
+    // Calculate watermark dimensions (35% of image width)
+    const watermarkWidth = Math.floor(imgWidth * 0.35);
+    const watermarkHeight = Math.floor(watermarkWidth * 0.45); // Aspect ratio for two lines
 
-    // Resize watermark (preserve transparency if PNG)
-    const resizedWatermark = await sharp(watermarkBuffer)
-      .resize(watermarkWidth, watermarkHeight, {
-        fit: "inside",
-        withoutEnlargement: true,
-      })
-      .png()
-      .toBuffer();
+    // Generate dynamic SVG watermark
+    // Line 1: රථගාල
+    // Line 2: www.rathagala.lk
+    const svgWatermark = `
+      <svg width="${watermarkWidth}" height="${watermarkHeight}" viewBox="0 0 ${watermarkWidth} ${watermarkHeight}" xmlns="http://www.w3.org/2000/svg">
+        <style>
+          .watermark-text {
+            fill: white;
+            font-family: sans-serif;
+            text-anchor: middle;
+            font-weight: bold;
+          }
+          .title { font-size: ${Math.floor(watermarkHeight * 0.45)}px; }
+          .url { font-size: ${Math.floor(watermarkHeight * 0.25)}px; opacity: 0.8; }
+        </style>
+        <text x="50%" y="45%" class="watermark-text title">රථගාල</text>
+        <text x="50%" y="85%" class="watermark-text url">www.rathagala.lk</text>
+      </svg>
+    `;
 
     // Composite watermark onto image (centered)
-    // The watermark PNG's transparency will be preserved
     const watermarkedImage = await sharp(imageBuffer)
       .composite([
         {
-          input: resizedWatermark,
+          input: Buffer.from(svgWatermark),
           gravity: "center",
           blend: "over",
         },

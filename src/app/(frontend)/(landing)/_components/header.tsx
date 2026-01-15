@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { betterFetch } from "@better-fetch/fetch";
-import { ArrowRight, CarIcon, LayoutDashboard, LogOut, Menu, UserIcon, XIcon } from "lucide-react";
+import { ArrowRight, Calendar, CarIcon, Check, LayoutDashboard, LogOut, Menu, Search, TrendingUp, UserIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -19,7 +19,7 @@ export function Header() {
   useEffect(() => {
     const fetchUserData = async () => {
       if (session?.user) {
-        let userData = { ...session.user };
+        let userData: any = { ...session.user };
 
         // If organizationId is not in session, fetch it from user endpoint
         // session.user usually has role and other added fields
@@ -145,10 +145,16 @@ export function Header() {
               Hire
             </Link>
             <Link
-              href="/comparison"
+              href="/compare"
               className="hover:text-teal-200 transition-colors font-medium"
             >
               Compare
+            </Link>
+            <Link
+              href="/analyse"
+              className="hover:text-teal-200 transition-colors font-medium"
+            >
+              Analyse
             </Link>
             {/* <Link
               href="/search"
@@ -272,10 +278,10 @@ export function Header() {
                     </Button>
                   </SheetClose>
                 </div>
-                <nav className="flex flex-col gap-6">
+                <nav className="flex flex-col gap-0.5">
                   <Link
                     href="/"
-                    className="text-lg font-medium hover:text-teal-200 transition-colors"
+                    className="text-base font-semibold flex items-center gap-3 py-2 border-b border-white/5 hover:text-teal-200 transition-colors"
                     onClick={(e) => {
                       setIsOpen(false);
                       // If already on home page, force refresh
@@ -285,56 +291,93 @@ export function Header() {
                       }
                     }}
                   >
+                    <div className="bg-white/10 p-1.5 rounded-lg">
+                      <LayoutDashboard className="h-4 w-4" />
+                    </div>
                     Home
                   </Link>
                   <Link
                     href="/search?listingType=SELL"
-                    className="text-lg font-medium hover:text-teal-200 transition-colors"
+                    className="text-base font-semibold flex items-center gap-3 py-2 border-b border-white/5 hover:text-teal-200 transition-colors"
                     onClick={() => setIsOpen(false)}
                   >
-                    Sell
+                    <div className="bg-white/10 p-1.5 rounded-lg">
+                      <CarIcon className="h-4 w-4" />
+                    </div>
+                    Buy
                   </Link>
+
                   <Link
                     href="/search?listingType=WANT"
-                    className="text-lg font-medium hover:text-teal-200 transition-colors"
+                    className="text-base font-semibold flex items-center gap-3 py-2 border-b border-white/5 hover:text-teal-200 transition-colors"
                     onClick={() => setIsOpen(false)}
                   >
+                    <div className="bg-white/10 p-1.5 rounded-lg">
+                      <Search className="h-4 w-4" />
+                    </div>
                     Want
                   </Link>
+
                   <Link
                     href="/search?listingType=RENT"
-                    className="text-lg font-medium hover:text-teal-200 transition-colors"
+                    className="text-base font-semibold flex items-center gap-3 py-2 border-b border-white/5 hover:text-teal-200 transition-colors"
                     onClick={() => setIsOpen(false)}
                   >
+                    <div className="bg-white/10 p-1.5 rounded-lg">
+                      <Calendar className="h-4 w-4" />
+                    </div>
                     Rent
                   </Link>
+
                   <Link
                     href="/search?listingType=HIRE"
-                    className="text-lg font-medium hover:text-teal-200 transition-colors"
+                    className="text-base font-semibold flex items-center gap-3 py-2 border-b border-white/5 hover:text-teal-200 transition-colors"
                     onClick={() => setIsOpen(false)}
                   >
+                    <div className="bg-white/10 p-1.5 rounded-lg">
+                      <UserIcon className="h-4 w-4" />
+                    </div>
                     Hire
                   </Link>
+
                   <Link
-                    href="/search"
-                    className="text-lg font-medium hover:text-teal-200 transition-colors"
+                    href="/compare"
+                    className="text-base font-semibold flex items-center gap-3 py-2 border-b border-white/5 hover:text-teal-200 transition-colors"
                     onClick={() => setIsOpen(false)}
                   >
-                    Search
+                    <div className="bg-white/10 p-1.5 rounded-lg">
+                      <Check className="h-4 w-4" />
+                    </div>
+                    Compare
                   </Link>
+
+                  <Link
+                    href="/analyse"
+                    className="text-base font-semibold flex items-center gap-3 py-2 border-b border-white/5 hover:text-teal-200 transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <div className="bg-white/10 p-1.5 rounded-lg">
+                      <TrendingUp className="h-4 w-4" />
+                    </div>
+                    Analyse
+                  </Link>
+
                   {user && (
                     <button
                       type="button"
-                      className="text-lg font-medium text-white hover:bg-teal-800 text-white transition-colors text-left"
+                      className="text-base font-semibold flex items-center gap-3 py-2 border-b border-white/5 text-red-400 hover:text-red-300 transition-colors text-left"
                       onClick={() => {
                         setIsOpen(false);
                         void handleSignOut();
                       }}
                     >
+                      <div className="bg-red-500/10 p-1.5 rounded-lg">
+                        <LogOut className="h-4 w-4" />
+                      </div>
                       Logout
                     </button>
                   )}
-                  <div className="pt-6 mt-2 border-t border-white/10 space-y-4">
+                  <div className="pt-4 mt-2 border-t border-white/10 space-y-3">
                     {isLoading ? (
                       <div className="w-full h-10 bg-teal-700/60 rounded-lg animate-pulse" />
                     ) : user ? (
@@ -342,18 +385,18 @@ export function Header() {
                         <Button
                           asChild
                           variant="outline"
-                          className="w-full text-white border-white bg-teal-600/20 hover:bg-white hover:text-teal-900 transition-colors duration-200 cursor-pointer flex items-center gap-1"
+                          className="w-full text-white border-white bg-teal-600/20 hover:bg-white hover:text-teal-900 transition-colors duration-200 cursor-pointer flex items-center gap-1 py-5"
                         >
                           <Link href="/profile">
                             <UserIcon className="h-4 w-4" />
                             Account
                           </Link>
                         </Button>
-                        {(user.role === 'admin' || user.organizationId) && (
+                        {((user as any).role === 'admin' || (user as any).organizationId) && (
                           <Button
                             asChild
                             variant="outline"
-                            className="w-full text-white border-white bg-teal-600/20 hover:bg-white hover:text-teal-900 transition-colors duration-200 cursor-pointer flex items-center gap-1"
+                            className="w-full text-white border-white bg-teal-600/20 hover:bg-white hover:text-teal-900 transition-colors duration-200 cursor-pointer flex items-center gap-1 py-5"
                           >
                             <Link href="/dashboard">
                               <LayoutDashboard className="h-4 w-4" />
@@ -366,7 +409,7 @@ export function Header() {
                       <Button
                         asChild
                         variant="outline"
-                        className="w-full justify-center text-teal-900 border-white/60 hover:bg-white hover:text-teal-900 transition-colors duration-200 rounded-xl"
+                        className="w-full justify-center text-teal-900 border-white/60 hover:bg-white hover:text-teal-900 transition-colors duration-200 rounded-xl py-5"
                       >
                         <Link href="/signin">Login</Link>
                       </Button>
@@ -374,7 +417,7 @@ export function Header() {
 
                     <Button
                       asChild
-                      className="w-full justify-center bg-white text-teal-900 hover:bg-teal-50 rounded-xl shadow-sm"
+                      className="w-full justify-center bg-white text-teal-900 hover:bg-teal-50 rounded-xl shadow-sm py-5 font-bold"
                     >
                       <Link href="/sell/new">Post Free Ad</Link>
                     </Button>
