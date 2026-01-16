@@ -17,6 +17,13 @@ import { useBulkDeleteAds } from "@/features/ads/api/use-bulk-delete-ads";
 import { Check, Trash2, FileText, FileSpreadsheet } from "lucide-react";
 import type { AdType } from "@/features/ads/components/ad-table/admin-columns";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import {
@@ -62,11 +69,16 @@ export default function AdsManagePage() {
     "limit",
     parseAsInteger.withDefault(10)
   );
+  const [statusFilter, setStatusFilter] = useQueryState(
+    "status",
+    parseAsString.withDefault("all")
+  );
 
   const { data, error, isPending } = useGetAds({
     limit: limit || 10,
     page: page || 1,
     search: searchQuery || "",
+    status: statusFilter && statusFilter !== "all" ? statusFilter : null,
   });
 
   const [selectedRows, setSelectedRows] = useState<AdType[]>([]);
@@ -245,12 +257,28 @@ export default function AdsManagePage() {
         </div>
         <Separator />
         <div className="flex items-center justify-between gap-4 mb-4">
-          <DataTableSearch
-            searchKey="Mobile number, User Name or Model"
-            searchQuery={searchQuery || ""}
-            setSearchQuery={setSearchQuery}
-            setPage={setPage}
-          />
+          <div className="flex items-center gap-4 flex-1">
+            <DataTableSearch
+              searchKey="Mobile number, User Name or Model"
+              searchQuery={searchQuery || ""}
+              setSearchQuery={setSearchQuery}
+              setPage={setPage}
+            />
+            <Select value={statusFilter || "all"} onValueChange={(value) => {
+              setStatusFilter(value);
+              setPage(1);
+            }}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="ACTIVE">Active</SelectItem>
+                <SelectItem value="PENDING_REVIEW">Pending</SelectItem>
+                <SelectItem value="REJECTED">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           {selectedRows.length > 0 && (
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">

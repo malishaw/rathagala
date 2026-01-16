@@ -29,12 +29,13 @@ const vehicleTypeLabels: Record<string, string> = {
 };
 
 export function AdsTable() {
-  const { page, limit, searchQuery } = useAdsTableFilters();
+  const { page, limit, searchQuery, statusFilter } = useAdsTableFilters();
 
   const { data, error, isPending } = useGetAds({
     limit,
     page,
     search: searchQuery,
+    status: statusFilter && statusFilter !== "all" ? statusFilter : null,
   });
 
   if (isPending) {

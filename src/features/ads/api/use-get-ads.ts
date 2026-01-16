@@ -12,6 +12,7 @@ interface FilterParams {
   location?: string;
   brand?: string | null;
   model?: string | null;
+  status?: string | null;
 }
 
 interface QueryOptions {
@@ -29,10 +30,11 @@ export const useGetAds = (params: FilterParams, options?: QueryOptions) => {
     location,
     brand,
     model,
+    status,
   } = params;
 
   const query = useQuery({
-    queryKey: ["ads", { page, limit, search, listingType, minPrice, maxPrice, location, brand, model }],
+    queryKey: ["ads", { page, limit, search, listingType, minPrice, maxPrice, location, brand, model, status }],
     queryFn: async () => {
       const queryParams = {
         page: page.toString(),
@@ -44,6 +46,7 @@ export const useGetAds = (params: FilterParams, options?: QueryOptions) => {
         ...(location && { location }),
         ...(brand && { brand }),
         ...(model && { model }),
+        ...(status && status !== "all" && { status }),
       };
 
       const response = await client.api.ad.$get({
