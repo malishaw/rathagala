@@ -61,7 +61,7 @@ export default function AdDetailPage() {
   const { data: ad, isLoading, isError } = useGetAdById({ adId: adId || "" });
   const { data: similarVehiclesData, isLoading: isLoadingSimilar } = useGetSimilarVehicles({
     adId: adId || "",
-    limit: 3,
+    limit: 5,
     enabled: !!adId
   });
   const { mutate: createReport, isPending: isSubmittingReport } = useCreateReport();
@@ -761,7 +761,7 @@ export default function AdDetailPage() {
                             <div className="flex items-center justify-between text-xs text-gray-500">
                               <div className="flex items-center">
                                 <MapPin className="w-3 h-3 mr-1" />
-                                <span className="truncate">{vehicle.location}</span>
+                                <span className="truncate">{[vehicle.city, vehicle.district].filter(Boolean).join(", ") || vehicle.location || "N/A"}</span>
                               </div>
                             </div>
                             {vehicle.mileage && (
@@ -798,16 +798,13 @@ export default function AdDetailPage() {
                       {formatPrice(ad.price)}
                     </div>
                   )}
-                {(ad.city || ad.province) && (
-                  <div className="flex items-center text-gray-600 mb-2">
-                    <MapPin className="w-4 h-4 mr-1" />
-                    {[ad.city, ad.province].filter(Boolean).join(", ")}
-                  </div>
-                )}
-                {ad.location && (
+                {/* Location Display - show city/district or fallback to location field */}
+                {(ad.city || ad.district || ad.location) && (
                   <div className="flex items-center text-gray-600 mb-4">
                     <MapPin className="w-4 h-4 mr-1" />
-                    <span>{ad.location}</span>
+                    <span>
+                      {[ad.city, ad.district].filter(Boolean).join(", ") || ad.location}
+                    </span>
                   </div>
                 )}
 
@@ -855,62 +852,6 @@ export default function AdDetailPage() {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Vehicle Analytics Button */}
-            {ad.price && (
-              <Card className="border-2 border-dashed border-[#024950]/30 bg-gradient-to-br from-teal-50/50 to-white">
-                <CardContent className="p-8 text-center">
-                  <div className="flex flex-col items-center space-y-4">
-                    <div className="p-4 bg-gradient-to-br from-[#024950] to-teal-600 rounded-full">
-                      <BarChart3 className="w-8 h-8 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-800 mb-2">
-                        View Vehicle Analytics
-                      </h3>
-                      <p className="text-sm text-gray-600 mb-4 max-w-md">
-                        Get comprehensive market insights including price comparison and similar vehicle analysis
-                      </p>
-                    </div>
-                    <div className="flex flex-col gap-3 w-full max-w-md">
-                      <Button
-                        onClick={() => router.push(`/${adId}/analytics`)}
-                        className="bg-gradient-to-r from-[#024950] to-teal-600 text-white hover:from-[#036b75] hover:to-teal-700 border-0 px-6 py-6 text-lg w-full"
-                        size="lg"
-                      >
-                        <BarChart3 className="w-5 h-5 mr-2" />
-                        View Analytics
-                      </Button>
-                      <Button
-                        onClick={() => router.push(`/compare?vehicle1=${adId}`)}
-                        variant="outline"
-                        className="border-2 border-[#024950] text-[#024950] hover:bg-[#024950] hover:text-white px-6 py-6 text-lg w-full"
-                        size="lg"
-                      >
-                        <BarChart3 className="w-5 h-5 mr-2" />
-                        Comparison
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Similar Vehicle Comparison */}
-            {ad.price && (
-              <SimilarVehicleComparison
-                adId={adId || ""}
-                currentPrice={(ad as any).discountPrice || ad.price}
-                currentVehicle={{
-                  brand: ad.brand,
-                  model: ad.model,
-                  year: ad.manufacturedYear,
-                  mileage: ad.mileage,
-                  fuelType: ad.fuelType,
-                  transmission: ad.transmission,
-                }}
-              />
-            )}
 
             {/* Seller Information */}
             <Card>
@@ -976,6 +917,62 @@ export default function AdDetailPage() {
               </CardContent>
             </Card>
 
+            {/* Vehicle Analytics Button */}
+            {ad.price && (
+              <Card className="border-2 border-dashed border-[#024950]/30 bg-gradient-to-br from-teal-50/50 to-white">
+                <CardContent className="p-8 text-center">
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="p-4 bg-gradient-to-br from-[#024950] to-teal-600 rounded-full">
+                      <BarChart3 className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-800 mb-2">
+                        View Vehicle Analytics
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-4 max-w-md">
+                        Get comprehensive market insights including price comparison and similar vehicle analysis
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-3 w-full max-w-md">
+                      <Button
+                        onClick={() => router.push(`/${adId}/analytics`)}
+                        className="bg-gradient-to-r from-[#024950] to-teal-600 text-white hover:from-[#036b75] hover:to-teal-700 border-0 px-6 py-6 text-lg w-full"
+                        size="lg"
+                      >
+                        <BarChart3 className="w-5 h-5 mr-2" />
+                        View Analytics
+                      </Button>
+                      <Button
+                        onClick={() => router.push(`/comparison?vehicle1=${adId}`)}
+                        variant="outline"
+                        className="border-2 border-[#024950] text-[#024950] hover:bg-[#024950] hover:text-white px-6 py-6 text-lg w-full"
+                        size="lg"
+                      >
+                        <BarChart3 className="w-5 h-5 mr-2" />
+                        Comparison
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Similar Vehicle Comparison */}
+            {ad.price && (
+              <SimilarVehicleComparison
+                adId={adId || ""}
+                currentPrice={(ad as any).discountPrice || ad.price}
+                currentVehicle={{
+                  brand: ad.brand,
+                  model: ad.model,
+                  year: ad.manufacturedYear,
+                  mileage: ad.mileage,
+                  fuelType: ad.fuelType,
+                  transmission: ad.transmission,
+                }}
+              />
+            )}
+
             {/* Safety Tips */}
             <Card>
               <CardHeader>
@@ -994,39 +991,6 @@ export default function AdDetailPage() {
           </div>
         </div>
 
-        {/* Similar Vehicles */}
-        {/* <div className="mt-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">
-            Similar Vehicles
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {similarVehicles.map((vehicle) => (
-              <Card
-                key={vehicle.id}
-                className="hover:shadow-md transition-shadow cursor-pointer"
-              >
-                <CardContent className="p-4">
-                  <img
-                    src={vehicle.image || "/placeholder.svg"}
-                    alt={vehicle.title}
-                    className="w-full h-40 object-cover rounded mb-3"
-                  />
-                  <h3 className="font-semibold mb-2">{vehicle.title}</h3>
-                  <div className="text-lg font-bold text-[#024950] mb-1">
-                    {formatPrice(vehicle.price)}
-                  </div>
-                  <div className="flex items-center justify-between text-sm text-gray-500">
-                    <div className="flex items-center">
-                      <MapPin className="w-3 h-3 mr-1" />
-                      {vehicle.location}
-                    </div>
-                    <div>{vehicle.mileage}</div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div> */}
       </div>
 
       {/* Report Dialog */}
