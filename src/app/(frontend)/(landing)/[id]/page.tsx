@@ -55,6 +55,7 @@ import { authClient } from "@/lib/auth-client";
 import { FaFacebookSquare, FaWhatsappSquare, FaYoutubeSquare } from "react-icons/fa";
 import { FaSquareXTwitter, FaTelegram } from "react-icons/fa6";
 import { AdIdDisplay } from "./ad-id-display";
+import { client } from "@/lib/rpc";
 
 export default function AdDetailPage() {
   const { id } = useParams();
@@ -126,6 +127,22 @@ export default function AdDetailPage() {
       setTimeout(() => setIsCopied(false), 2000);
     });
   };
+
+  // Increment view count on mount
+  useEffect(() => {
+    if (adId) {
+      const incrementView = async () => {
+        try {
+          await client.api.ad[":id"].view.$post({
+            param: { id: adId },
+          });
+        } catch (error) {
+          console.error("Failed to increment view count", error);
+        }
+      };
+      incrementView();
+    }
+  }, [adId]);
 
   // Prevent image downloads and protect against various methods
   useEffect(() => {

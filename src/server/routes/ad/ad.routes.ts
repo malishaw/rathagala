@@ -276,5 +276,35 @@ export const bulkCreate = createRoute({
   },
 });
 
+
 export type BulkCreateRoute = typeof bulkCreate;
+
+
+// --------- Increment View Count ----------
+export const incrementView = createRoute({
+  tags,
+  summary: "Increment ad view count",
+  description: "Increment the view count for a specific ad",
+  path: "/{id}/view",
+  method: "post",
+  request: {
+    params: schemas.IdParamsSchema,
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      z.object({
+        success: z.boolean(),
+        views: z.number(),
+      }),
+      "View count incremented"
+    ),
+    [HttpStatusCodes.NOT_FOUND]: jsonContent(notFoundSchema, "Ad not found"),
+    [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
+      createErrorSchema(schemas.IdParamsSchema),
+      "Invalid Id param"
+    ),
+  },
+});
+
+export type IncrementViewRoute = typeof incrementView;
 

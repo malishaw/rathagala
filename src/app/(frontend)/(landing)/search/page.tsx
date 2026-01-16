@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ChevronDown, ChevronUp, MapPin, TrendingUp, Sparkles, Loader2, Car, Search, Filter } from "lucide-react";
+import { ChevronDown, ChevronUp, MapPin, TrendingUp, Sparkles, Loader2, Car, Search, Filter, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
 
@@ -798,25 +798,31 @@ export default function SearchPage() {
                     <div className="flex-1 p-3 flex flex-col justify-between">
                       <div>
                         <div className="flex justify-between items-start gap-2 mb-1">
-                          <h3 className="font-semibold text-sm text-slate-800 line-clamp-1 group-hover:text-teal-700 transition-colors">
-                            {[vehicle.brand, vehicle.model, vehicle.manufacturedYear].filter(Boolean).join(' ')}
+                          <h3 className="font-semibold text-slate-900 line-clamp-2 md:line-clamp-1 group-hover:text-teal-600 transition-colors">
+                            {[vehicle.brand, vehicle.model, vehicle.condition].filter(Boolean).join(" ")}
                           </h3>
                         </div>
-                        <p className="text-xs text-slate-500 flex items-center gap-1 mb-2">
-                          <MapPin className="h-3 w-3" /> {vehicle.city || 'Sri Lanka'}
-                        </p>
-                        <div className="text-base font-bold text-teal-700">
-                          {formatPrice(vehicle.price)}
-                        </div>
                       </div>
-                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-50">
+                      <p className="text-xs text-slate-500 flex items-center gap-1 mb-2">
+                        <MapPin className="h-3 w-3" /> {vehicle.city || 'Sri Lanka'}
+                      </p>
+                      <div className="text-base font-bold text-teal-700">
+                        {formatPrice(vehicle.price)}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between px-3 pb-3 pt-2 border-t border-slate-50">
+                      <div className="flex items-center gap-3">
                         <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
                           {format(new Date(vehicle.createdAt), "MMM d, yyyy")}
                         </span>
-                        <Badge variant="outline" className="text-[10px] h-5 py-0 border-slate-200 text-slate-600">
-                          {vehicle.condition}
-                        </Badge>
+                        <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
+                          <Eye className="h-3 w-3" />
+                          {(vehicle as any).analytics?.views || 0}
+                        </span>
                       </div>
+                      <Badge variant="outline" className="text-[10px] h-5 py-0 border-slate-200 text-slate-600">
+                        {vehicle.condition}
+                      </Badge>
                     </div>
                   </div>
                 ))}
@@ -882,6 +888,6 @@ export default function SearchPage() {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }

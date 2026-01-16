@@ -27,6 +27,11 @@ const formattedAdSchema = AdSchema.extend({
   boostExpiry: z.string().nullable(),
   featureExpiry: z.string().nullable(),
   expiryDate: z.string().nullable(),
+  analytics: z.object({
+    views: z.number(),
+    clicks: z.number(),
+    impressions: z.number(),
+  }).nullable().optional(),
 });
 
 export const withPaginationSchema = z.object({

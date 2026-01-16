@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { format } from "date-fns";
-import { Filter, Loader2, Search, X } from "lucide-react";
+import { Filter, Loader2, Search, X, Eye } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -343,6 +343,7 @@ export default function VehicleMarketplace() {
       model: null,
       vehicleType: null,
       city: null,
+      district: null,
       condition: null,
       minYear: null,
       maxYear: null,
@@ -1198,8 +1199,14 @@ export default function VehicleMarketplace() {
                               </div>
                             </div>
 
-                            <div className="text-xs text-slate-400 mt-1">
-                              {format(new Date(vehicle.createdAt), "MMM d, yyyy")}
+                            <div className="flex items-center justify-between mt-1">
+                              <div className="text-xs text-slate-400">
+                                {format(new Date(vehicle.createdAt), "MMM d, yyyy")}
+                              </div>
+                              <div className="text-xs text-slate-400 flex items-center gap-1">
+                                <Eye className="h-3 w-3" />
+                                {(vehicle as any).analytics?.views || 0}
+                              </div>
                             </div>
                           </div>
                         </div>
