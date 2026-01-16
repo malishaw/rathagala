@@ -86,23 +86,26 @@ export default function QuickAdCreatePage() {
   
   // Vehicle makes list - same as your ad-form.tsx
   const vehicleMakes = [
+    // Popular brands first
+    "Toyota", "Suzuki", "Honda", "Nissan", "Audi", "Mitsubishi",
+    // Rest alphabetically
     "Acura", "Alfa-Romeo", "Aprilia", "Ashok-Leyland", "Aston", "Atco", "ATHER", 
-    "Audi", "Austin", "Baic", "Bajaj", "Bentley", "BMW", "Borgward", "BYD", 
+    "Austin", "Baic", "Bajaj", "Bentley", "BMW", "Borgward", "BYD", 
     "Cadillac", "Cal", "CAT", "Ceygra", "Changan", "Chery", "Chevrolet", 
     "Chrysler", "Citroen", "Corvette", "Daewoo", "Daido", "Daihatsu", "Datsun", 
     "Demak", "Dfac", "DFSK", "Ducati", "Dyno", "Eicher", "FAW", "Ferrari", "Fiat", 
     "Force", "Ford", "Foton", "Hero", "Hero-Honda", "Higer", "Hillman", "HINO", 
-    "Hitachi", "Holden", "Honda", "Hummer", "Hyundai", "IHI", "Isuzu", "Iveco", 
+    "Hitachi", "Holden", "Hummer", "Hyundai", "IHI", "Isuzu", "Iveco", 
     "JAC", "Jaguar", "JCB", "Jeep", "JiaLing", "JMC", "John-Deere", "Jonway", 
     "KAPLA", "Kawasaki", "Kia", "Kinetic", "KMC", "Kobelco", "Komatsu", "KTM", 
     "Kubota", "Lamborghini", "Land-Rover", "Lexus", "Loncin", "Longjia", "Lotus", 
     "Lti", "Mahindra", "Maserati", "Massey-Ferguson", "Mazda", "Mercedes-Benz", 
-    "Metrocab", "MG", "Mg-Rover", "Micro", "Mini", "Minnelli", "Mitsubishi", 
-    "Morgan", "Morris", "New-Holland", "Nissan", "NWOW", "Opel", "Other", 
+    "Metrocab", "MG", "Mg-Rover", "Micro", "Mini", "Minnelli", 
+    "Morgan", "Morris", "New-Holland", "NWOW", "Opel", "Other", 
     "Perodua", "Peugeot", "Piaggio", "Porsche", "Powertrac", "Proton", 
     "Range-Rover", "Ranomoto", "Renault", "Reva", "REVOLT", "Rolls-Royce", "Saab", 
     "Sakai", "Seat", "Senaro", "Singer", "Skoda", "Smart", "Sonalika", "Subaru", 
-    "Suzuki", "Swaraj", "Syuk", "TAFE", "TAILG", "Tata", "Tesla", "Toyota", 
+    "Swaraj", "Syuk", "TAFE", "TAILG", "Tata", "Tesla", 
     "Triumph", "TVS", "Vauxhall", "Vespa", "Volkswagen", "Volvo", "Wave", "Willys", 
     "Yadea", "Yamaha", "Yanmar", "Yuejin", "Zongshen", "Zotye"
   ];

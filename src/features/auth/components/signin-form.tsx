@@ -96,31 +96,39 @@ export function SigninForm({ className }: Props) {
             router.replace("/");
           }
         },
-        onError({ error }) {
+        
+          onError({ error }) {
           console.log(error);
           
-          // Check if error is due to unverified email
-          if (error.message?.toLowerCase().includes("email") && 
-              (error.message?.toLowerCase().includes("verify") || 
-               error.message?.toLowerCase().includes("verified"))) {
-            // Store email and password in sessionStorage for verification
-            sessionStorage.setItem("verifyEmail", formData.email);
-            sessionStorage.setItem("verifyName", formData.email.split("@")[0]); // Use email prefix as name fallback
-            sessionStorage.setItem("verifyPassword", formData.password);
-            
-            toast.info("Email not verified", {
-              id: toastId,
-              description: "Redirecting to verification page..."
-            });
-            
-            // Redirect to verify-email page
-            router.push("/verify-email");
-          } else {
-            toast.error("Sign in Failed !", {
-              id: toastId,
-              description: error.message
-            });
-          }
+         if (error.code === "EMAIL_NOT_VERIFIED") {
+    // IMPORTANT: prevent infinite loop
+    const alreadyVerified = sessionStorage.getItem("emailJustVerified");
+
+    if (alreadyVerified === "true") {
+      toast.error("Email verification is syncing. Please try again in a moment.", {
+        id: toastId,
+      });
+      return;
+    }
+
+    sessionStorage.setItem("verifyEmail", formData.email);
+    sessionStorage.setItem("verifyName", formData.email.split("@")[0]);
+    sessionStorage.setItem("verifyPassword", formData.password);
+
+    toast.info("Email not verified", {
+      id: toastId,
+      description: "Redirecting to verification page..."
+    });
+
+    router.push("/verify-email");
+    return;
+  }
+
+  toast.error("Sign in Failed!", {
+    id: toastId,
+    description: error.message,
+  });
+              
         }
       }
     );

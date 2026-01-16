@@ -163,7 +163,7 @@ export default function ProfilePage() {
             phone: meData?.phone || session.user.phone,
             phoneVerified: meData?.phoneVerified || session.user.phoneVerified,
             organization: meData?.organization
-          };
+          };  
           
           setUser(fullUser);
 
