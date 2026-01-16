@@ -1388,7 +1388,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     }
 
     // Add search functionality if search term is provided
-    // Search by: title, description, brand, model, phone number, user name
+    // Search by: title, description, brand, model, phone number, user name, ad ID
     if (search && search.trim() !== "") {
       const searchConditions: any[] = [
         { title: { contains: search, mode: "insensitive" } },
@@ -1398,6 +1398,11 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
         { phoneNumber: { contains: search, mode: "insensitive" } },
         { whatsappNumber: { contains: search, mode: "insensitive" } },
       ];
+
+      // Check if search term looks like a MongoDB ObjectId (24 hex chars) and add to search
+      if (/^[0-9a-f]{24}$/i.test(search.trim())) {
+        searchConditions.push({ id: search.trim() });
+      }
 
       // Also search by creator name/email if creator relation is available
       // Note: This requires the creator relation to be included in the query
