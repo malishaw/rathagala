@@ -482,13 +482,8 @@ export default function SearchPage() {
                       <SelectTrigger className="h-10 text-sm border-slate-200 focus:ring-teal-500">
                         <SelectValue placeholder="All Districts" />
                       </SelectTrigger>
-<<<<<<< HEAD
                       <SelectContent className="max-h-[300px]">
                         <SelectItem value="all">All districts</SelectItem>
-=======
-                      <SelectContent>
-                        <SelectItem value="all">All</SelectItem>
->>>>>>> origin/minor-fix
                         {sriLankanDistricts.map((district) => (
                           <SelectItem key={district} value={district}>{district}</SelectItem>
                         ))}
@@ -506,13 +501,8 @@ export default function SearchPage() {
                       <SelectTrigger className="h-10 text-sm border-slate-200 focus:ring-teal-500">
                         <SelectValue placeholder="All Cities" />
                       </SelectTrigger>
-<<<<<<< HEAD
                       <SelectContent className="max-h-[300px]">
                         <SelectItem value="all">All cities</SelectItem>
-=======
-                      <SelectContent className="max-h-[250px]">
-                        <SelectItem value="all">All</SelectItem>
->>>>>>> origin/minor-fix
                         {availableCities.map((city) => (
                           <SelectItem key={city} value={city}>{city}</SelectItem>
                         ))}
