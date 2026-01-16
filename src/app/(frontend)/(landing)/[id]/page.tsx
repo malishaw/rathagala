@@ -17,12 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -48,12 +43,17 @@ import {
   Share2,
   Shield,
   BarChart3,
-  Flag
+  Flag,
+  Copy,
+  Check,
+  
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { authClient } from "@/lib/auth-client";
+import { FaFacebookSquare, FaWhatsappSquare, FaYoutubeSquare} from "react-icons/fa";
+import { FaSquareXTwitter, FaTelegram } from "react-icons/fa6";
 
 export default function AdDetailPage() {
   const { id } = useParams();
@@ -63,6 +63,8 @@ export default function AdDetailPage() {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [reportDetails, setReportDetails] = useState("");
+  const [isCopied, setIsCopied] = useState(false);
+  const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
 
   // Get session to check if user is logged in
   const { data: session } = authClient.useSession();
@@ -113,6 +115,15 @@ export default function AdDetailPage() {
         },
       }
     );
+  };
+
+  // Handle copy link to clipboard
+  const handleCopyLink = () => {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    navigator.clipboard.writeText(url).then(() => {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    });
   };
 
   // Prevent image downloads and protect against various methods
@@ -697,6 +708,112 @@ export default function AdDetailPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Share Section */}
+            <div className="relative w-auto">
+              <Button
+                onClick={() => setIsShareMenuOpen(!isShareMenuOpen)}
+                variant="outline"
+                size="sm"
+                className="gap-1"
+              >
+                <Share2 className="w-4 h-4" />
+                Share
+              </Button>
+
+              {isShareMenuOpen && (
+                <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-50">
+                  <div className="flex gap-1">
+                    {/* Facebook */}
+                    <button
+                      onClick={() => {
+                        const url = typeof window !== 'undefined' ? window.location.href : '';
+                        const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+                        window.open(shareUrl, '_blank', 'noopener');
+                        setIsShareMenuOpen(false);
+                      }}
+                      className="p-1 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                      title="Share on Facebook"
+                    >
+                      <FaFacebookSquare className="w-7 h-7 text-blue-600" />
+                    </button>
+
+                    {/* WhatsApp */}
+                    <button
+                      onClick={() => {
+                        const url = typeof window !== 'undefined' ? window.location.href : '';
+                        const text = `Rathagala.lk Check out this vehicle: ${[ad.brand, ad.model, ad.manufacturedYear].filter(Boolean).join(" ")}`;
+                        const shareUrl = `https://wa.me/?text=${encodeURIComponent(text + " " + url)}`;
+                        window.open(shareUrl, '_blank', 'noopener');
+                        setIsShareMenuOpen(false);
+                      }}
+                      className="p-1 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                      title="Share on WhatsApp"
+                    >
+                      <FaWhatsappSquare className="w-7 h-7 text-green-600" />
+                    </button>
+
+                    {/* X (Twitter) */}
+                    <button
+                      onClick={() => {
+                        const url = typeof window !== 'undefined' ? window.location.href : '';
+                        const text = `Rathagala.lk Check out this ${[ad.brand, ad.model, ad.manufacturedYear].filter(Boolean).join(" ")}`;
+                        const shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+                        window.open(shareUrl, '_blank', 'noopener');
+                        setIsShareMenuOpen(false);
+                      }}
+                      className="p-1 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                      title="Share on X"
+                    >
+                      <FaSquareXTwitter className="w-7 h-7 text-gray-900" />
+                    </button>
+
+                    {/* YouTube */}
+                    {/* <button
+                      onClick={() => {
+                        window.open('https://www.youtube.com/', '_blank', 'noopener');
+                        setIsShareMenuOpen(false);
+                      }}
+                      className="p-1 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                      title="Share on YouTube"
+                    >
+                      <FaYoutubeSquare className="w-7 h-7 text-red-600" />
+                    </button> */}
+
+                    {/* Telegram */}
+                    <button
+                      onClick={() => {
+                        const url = typeof window !== 'undefined' ? window.location.href : '';
+                        const text = `Rathagala.lk Check out this vehicle: ${[ad.brand, ad.model, ad.manufacturedYear].filter(Boolean).join(" ")}`;
+                        const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+                        window.open(shareUrl, '_blank', 'noopener');
+                        setIsShareMenuOpen(false);
+                      }}
+                      className="p-1 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                      title="Share on Telegram"
+                    >
+                      <FaTelegram className="w-7 h-7 text-white bg-blue-500 p-1 rounded" />
+                    </button>
+
+                    {/* Copy Link */}
+                    <button
+                      onClick={() => {
+                        handleCopyLink();
+                        setIsShareMenuOpen(false);
+                      }}
+                      className="p-1 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                      title="Copy Link"
+                    >
+                      {isCopied ? (
+                        <Check className=" cursor-pointer w-7 h-7 text-green-600 bg-green-100 p-1 rounded" />
+                      ) : (
+                        <Copy className=" cursor-pointer w-7 h-7 text-gray-50 bg-gray-400 p-1 rounded" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Features */}
             {features.length > 0 && (
