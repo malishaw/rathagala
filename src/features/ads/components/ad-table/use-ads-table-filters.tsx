@@ -23,16 +23,24 @@ export function useAdsTableFilters() {
     searchParams.limit.withDefault(10)
   );
 
+  const [statusFilter, setStatusFilter] = useQueryState(
+    "status",
+    searchParams.q
+      .withOptions({ shallow: false })
+      .withDefault("all")
+  );
+
   const resetFilters = useCallback(() => {
     setSearchQuery(null);
+    setStatusFilter("all");
 
     setPage(1);
     setLimit(10);
-  }, [setSearchQuery, setPage]);
+  }, [setSearchQuery, setStatusFilter, setPage, setLimit]);
 
   const isAnyFilterActive = useMemo(() => {
-    return !!searchQuery;
-  }, [searchQuery]);
+    return !!searchQuery || !!(statusFilter && statusFilter !== "all");
+  }, [searchQuery, statusFilter]);
 
   return {
     // Search
@@ -44,6 +52,10 @@ export function useAdsTableFilters() {
     setPage,
     limit,
     setLimit,
+
+    // Status Filter
+    statusFilter,
+    setStatusFilter,
 
     // Reset
     resetFilters,

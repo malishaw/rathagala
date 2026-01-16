@@ -97,7 +97,7 @@ export const adminColumns: ColumnDef<AdType>[] = [
     cell: ({ row }) => {
       const ad = row.original;
       const displayTitle = generateAdTitle(ad);
-      
+
       return (
         <Link
           href={`/dashboard/ads/${ad.id}`}
@@ -114,7 +114,7 @@ export const adminColumns: ColumnDef<AdType>[] = [
     cell: ({ row }) => {
       const type = row.original.type;
       const displayType = vehicleTypeLabels[type] || type;
-      
+
       return (
         <Badge variant="outline" className="bg-slate-100 text-slate-800 border-slate-200">
           {displayType}
@@ -155,6 +155,14 @@ export const adminColumns: ColumnDef<AdType>[] = [
     }
   },
   {
+    accessorKey: "userName",
+    header: "Name",
+    cell: ({ row }) => {
+      const name = (row.original as any).name;
+      return name || "—";
+    }
+  },
+  {
     accessorKey: "phoneNumber",
     header: "Phone Number",
     cell: ({ row }) => {
@@ -187,7 +195,7 @@ function AdminActionsCell({ ad }: { ad: AdType }) {
   const [rejectionDescription, setRejectionDescription] = useState("");
   const approveMutation = useApproveAd();
   const rejectMutation = useRejectAd();
-  
+
   // Show approve button for DRAFT, PENDING_REVIEW, and REJECTED statuses
   const canApprove = ad.status === "DRAFT" || ad.status === "PENDING_REVIEW" || ad.status === "REJECTED";
   // Show reject button for DRAFT, PENDING_REVIEW, and ACTIVE statuses

@@ -1454,12 +1454,23 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     const userRole = (user as any)?.role;
     const isAdmin = userRole === "admin";
 
+    // Get status filter from query (for admin filtering)
+    const statusQuery = query.status ?? null;
+
+    // If admin provides a specific status filter, use it
+    if (isAdmin && statusQuery && statusQuery.trim() !== "" && statusQuery.toLowerCase() !== "all") {
+      const validStatuses = ["ACTIVE", "PENDING_REVIEW", "REJECTED", "DRAFT", "EXPIRED"];
+      const statusValue = statusQuery.toUpperCase();
+      if (validStatuses.includes(statusValue)) {
+        andFilters.push({ status: statusValue });
+      }
+    }
     // If not admin and not filtering by user, only show ACTIVE ads
     // This applies to:
     // - Unauthenticated users (user is null/undefined, so isAdmin is false)
     // - Authenticated non-admin users (isAdmin is false)
     // When filterByUser is true, show all ads (user wants to see their own ads with all statuses)
-    if (!isAdmin && !query.filterByUser) {
+    else if (!isAdmin && !query.filterByUser) {
       andFilters.push({ status: AdStatus.ACTIVE });
     }
 
