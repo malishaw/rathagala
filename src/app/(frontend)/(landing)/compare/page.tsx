@@ -237,7 +237,7 @@ export default function AdComparisonPage() {
 
             <div className="max-w-7xl mx-auto px-4 py-8">
                 {/* Vehicle Selection */}
-                <div className="grid md:grid-cols-2 gap-6 mb-8">
+                <div className="grid grid-cols-2 gap-3 md:gap-6 mb-8">
                     {/* Vehicle 1 Selection */}
                     <Card className="border-2 border-dashed border-[#024950]/30">
                         <CardHeader>
@@ -262,8 +262,9 @@ export default function AdComparisonPage() {
                                                 {getVehicleTitle(vehicle1)}
                                             </span>
                                         ) : (
-                                            <span className="text-muted-foreground">
-                                                Search and select vehicle...
+                                            <span className="text-muted-foreground text-xs md:text-base">
+                                                <span className="md:hidden">Select</span>
+                                                <span className="hidden md:inline">Search and select vehicle...</span>
                                             </span>
                                         )}
                                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -291,8 +292,8 @@ export default function AdComparisonPage() {
                                                     >
                                                         <Check
                                                             className={`mr-2 h-4 w-4 ${vehicle1Id === vehicle.id
-                                                                    ? "opacity-100"
-                                                                    : "opacity-0"
+                                                                ? "opacity-100"
+                                                                : "opacity-0"
                                                                 }`}
                                                         />
                                                         <div className="flex items-center gap-3 flex-1">
@@ -362,8 +363,9 @@ export default function AdComparisonPage() {
                                                 {getVehicleTitle(vehicle2)}
                                             </span>
                                         ) : (
-                                            <span className="text-muted-foreground">
-                                                Search and select vehicle...
+                                            <span className="text-muted-foreground text-xs md:text-base">
+                                                <span className="md:hidden">Select</span>
+                                                <span className="hidden md:inline">Search and select vehicle...</span>
                                             </span>
                                         )}
                                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -391,8 +393,8 @@ export default function AdComparisonPage() {
                                                     >
                                                         <Check
                                                             className={`mr-2 h-4 w-4 ${vehicle2Id === vehicle.id
-                                                                    ? "opacity-100"
-                                                                    : "opacity-0"
+                                                                ? "opacity-100"
+                                                                : "opacity-0"
                                                                 }`}
                                                         />
                                                         <div className="flex items-center gap-3 flex-1">
@@ -443,17 +445,17 @@ export default function AdComparisonPage() {
                 {vehicle1Id && vehicle2Id && (
                     <div className="space-y-6">
                         {/* Vehicle Headers */}
-                        <div className="grid md:grid-cols-3 gap-4" id="vehicle-headers">
-                            <div></div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4" id="vehicle-headers">
+                            <div className="hidden md:block"></div>
                             <Card className="border-2 border-[#024950] bg-gradient-to-br from-[#024950] to-teal-700 text-white">
-                                <CardContent className="p-6">
+                                <CardContent className="p-3 md:p-6">
                                     {loading1 ? (
                                         <div className="text-center py-8">
                                             <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full mx-auto"></div>
                                         </div>
                                     ) : vehicle1 ? (
                                         <>
-                                            <div className="relative w-full h-48 rounded-lg overflow-hidden mb-4 bg-white/10">
+                                            <div className="relative w-full h-24 md:h-48 rounded-lg overflow-hidden mb-2 md:mb-4 bg-white/10">
                                                 <Image
                                                     src={getVehicleImage(vehicle1)}
                                                     alt={getVehicleTitle(vehicle1)}
@@ -461,16 +463,16 @@ export default function AdComparisonPage() {
                                                     className="object-cover"
                                                 />
                                             </div>
-                                            <h3 className="text-xl font-bold mb-2">
+                                            <h3 className="text-sm md:text-xl font-bold mb-1 md:mb-2 line-clamp-2 min-h-[2.5em] md:min-h-0">
                                                 {getVehicleTitle(vehicle1)}
                                             </h3>
-                                            <div className="text-2xl font-bold mb-2">
+                                            <div className="text-sm md:text-2xl font-bold mb-1 md:mb-2">
                                                 {formatPrice(vehicle1.price)}
                                             </div>
                                             <Link href={`/${vehicle1Id}`}>
                                                 <Button
                                                     variant="outline"
-                                                    className="w-full mt-4 bg-white/10 border-white/30 text-white hover:bg-white/20"
+                                                    className="w-full mt-2 md:mt-4 h-8 md:h-10 text-xs md:text-sm bg-white/10 border-white/30 text-white hover:bg-white/20"
                                                 >
                                                     View Details
                                                 </Button>
@@ -483,14 +485,14 @@ export default function AdComparisonPage() {
                             </Card>
 
                             <Card className="border-2 border-teal-600 bg-gradient-to-br from-teal-600 to-teal-700 text-white">
-                                <CardContent className="p-6">
+                                <CardContent className="p-3 md:p-6">
                                     {loading2 ? (
                                         <div className="text-center py-8">
                                             <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full mx-auto"></div>
                                         </div>
                                     ) : vehicle2 ? (
                                         <>
-                                            <div className="relative w-full h-48 rounded-lg overflow-hidden mb-4 bg-white/10">
+                                            <div className="relative w-full h-24 md:h-48 rounded-lg overflow-hidden mb-2 md:mb-4 bg-white/10">
                                                 <Image
                                                     src={getVehicleImage(vehicle2)}
                                                     alt={getVehicleTitle(vehicle2)}
@@ -498,16 +500,16 @@ export default function AdComparisonPage() {
                                                     className="object-cover"
                                                 />
                                             </div>
-                                            <h3 className="text-xl font-bold mb-2">
+                                            <h3 className="text-sm md:text-xl font-bold mb-1 md:mb-2 line-clamp-2 min-h-[2.5em] md:min-h-0">
                                                 {getVehicleTitle(vehicle2)}
                                             </h3>
-                                            <div className="text-2xl font-bold mb-2">
+                                            <div className="text-sm md:text-2xl font-bold mb-1 md:mb-2">
                                                 {formatPrice(vehicle2.price)}
                                             </div>
                                             <Link href={`/${vehicle2Id}`}>
                                                 <Button
                                                     variant="outline"
-                                                    className="w-full mt-4 bg-white/10 border-white/30 text-white hover:bg-white/20"
+                                                    className="w-full mt-2 md:mt-4 h-8 md:h-10 text-xs md:text-sm bg-white/10 border-white/30 text-white hover:bg-white/20"
                                                 >
                                                     View Details
                                                 </Button>
@@ -536,20 +538,20 @@ export default function AdComparisonPage() {
                                         return (
                                             <div
                                                 key={index}
-                                                className="grid md:grid-cols-3 gap-4 p-4 hover:bg-gray-50 transition-colors"
+                                                className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 hover:bg-gray-50 transition-colors"
                                             >
-                                                <div className="flex items-center gap-2 font-semibold text-gray-700">
-                                                    {Icon && <Icon className="w-5 h-5 text-[#024950]" />}
+                                                <div className="col-span-2 md:col-span-1 flex items-center gap-2 font-semibold text-gray-700 text-xs md:text-base">
+                                                    {Icon && <Icon className="w-4 h-4 md:w-5 md:h-5 text-[#024950]" />}
                                                     <span>{field.label}</span>
                                                 </div>
                                                 <div
                                                     className={`p-3 rounded-lg ${winner === 1
-                                                            ? "bg-green-50 border-2 border-green-500"
-                                                            : "bg-gray-50"
+                                                        ? "bg-green-50 border-2 border-green-500"
+                                                        : "bg-gray-50"
                                                         }`}
                                                 >
                                                     <div className="flex items-center justify-between">
-                                                        <span className="font-medium">
+                                                        <span className="font-medium text-sm md:text-base">
                                                             {field.format(value1)}
                                                         </span>
                                                         {winner === 1 && (
@@ -561,12 +563,12 @@ export default function AdComparisonPage() {
                                                 </div>
                                                 <div
                                                     className={`p-3 rounded-lg ${winner === 2
-                                                            ? "bg-green-50 border-2 border-green-500"
-                                                            : "bg-gray-50"
+                                                        ? "bg-green-50 border-2 border-green-500"
+                                                        : "bg-gray-50"
                                                         }`}
                                                 >
                                                     <div className="flex items-center justify-between">
-                                                        <span className="font-medium">
+                                                        <span className="font-medium text-sm md:text-base">
                                                             {field.format(value2)}
                                                         </span>
                                                         {winner === 2 && (
@@ -705,6 +707,6 @@ export default function AdComparisonPage() {
                     </Card>
                 )}
             </div>
-        </div>
+        </div >
     );
 }

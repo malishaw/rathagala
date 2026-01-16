@@ -145,9 +145,13 @@ export default function ComparisonPage() {
     return Array.from(mfgYears).sort((a, b) => b - a);
   }, [trendFilterYear, trendFilterBrand2, trendFilterModel2, allVehiclesForTrendAnalysis]);
 
-  // Calculate price trends for two brands/models comparison
   const priceTrendData = useMemo(() => {
-    if (!allVehiclesForTrendAnalysis?.ads || !trendFilterBrand1 || !trendFilterModel1 || !trendFilterBrand2 || !trendFilterModel2 || !trendFilterYear) return [];
+    if (!allVehiclesForTrendAnalysis?.ads || !trendFilterYear) return [];
+
+    const hasSelection1 = trendFilterBrand1 && trendFilterModel1;
+    const hasSelection2 = trendFilterBrand2 && trendFilterModel2;
+
+    if (!hasSelection1 && !hasSelection2) return [];
 
     const year = parseInt(trendFilterYear);
     if (isNaN(year)) return [];
@@ -511,71 +515,75 @@ export default function ComparisonPage() {
                 {/* Chart */}
                 {priceTrendData.length > 0 ? (
                   <>
-                    <ResponsiveContainer width="100%" height={400}>
-                      <LineChart data={priceTrendData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                        <XAxis
-                          dataKey="month"
-                          stroke="#666"
-                          minTickGap={30}
-                          style={{ fontSize: "14px", fontWeight: 500 }}
-                          label={{ value: "Posted (Month)", position: "insideBottom", offset: -10, fontSize: 14, fontWeight: 600 }}
-                        />
-                        <YAxis
-                          stroke="#666"
-                          style={{ fontSize: "14px", fontWeight: 500 }}
-                          tickFormatter={(value) =>
-                            value >= 1000000
-                              ? `Rs. ${(value / 1000000).toFixed(1)}M`
-                              : `Rs. ${(value / 1000).toFixed(0)}K`
-                          }
-                          label={{ value: "Average Price", angle: -90, position: "insideLeft", fontSize: 14, fontWeight: 600 }}
-                        />
-                        <Tooltip
-                          formatter={(value: any) => [
-                            formatPrice(value),
-                            value === undefined ? "N/A" : "Avg Price",
-                          ]}
-                          contentStyle={{
-                            backgroundColor: "rgba(255, 255, 255, 0.95)",
-                            border: "1px solid #024950",
-                            borderRadius: "8px",
-                            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-                          }}
-                        />
-                        <Legend
-                          wrapperStyle={{
-                            paddingTop: "30px",
-                            fontSize: "14px",
-                            fontWeight: 500,
-                          }}
-                        />
-                        {trendFilterBrand1 && trendFilterModel1 && (
-                          <Line
-                            type="monotone"
-                            dataKey="avgPrice1"
-                            stroke="#024950"
-                            strokeWidth={2}
-                            name={`${trendFilterBrand1} ${trendFilterModel1}`}
-                            dot={{ fill: "#024950", r: 4 }}
-                            activeDot={{ r: 6 }}
-                            connectNulls
-                          />
-                        )}
-                        {trendFilterBrand2 && trendFilterModel2 && (
-                          <Line
-                            type="monotone"
-                            dataKey="avgPrice2"
-                            stroke="#14b8a6"
-                            strokeWidth={2}
-                            name={`${trendFilterBrand2} ${trendFilterModel2}`}
-                            dot={{ fill: "#14b8a6", r: 4 }}
-                            activeDot={{ r: 6 }}
-                            connectNulls
-                          />
-                        )}
-                      </LineChart>
-                    </ResponsiveContainer>
+                    <div className="w-full overflow-x-auto pb-4">
+                      <div className="min-w-[800px]">
+                        <ResponsiveContainer width="100%" height={400}>
+                          <LineChart data={priceTrendData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                            <XAxis
+                              dataKey="month"
+                              stroke="#666"
+                              minTickGap={30}
+                              style={{ fontSize: "14px", fontWeight: 500 }}
+                              label={{ value: "Posted (Month)", position: "insideBottom", offset: -10, fontSize: 14, fontWeight: 600 }}
+                            />
+                            <YAxis
+                              stroke="#666"
+                              style={{ fontSize: "14px", fontWeight: 500 }}
+                              tickFormatter={(value) =>
+                                value >= 1000000
+                                  ? `Rs. ${(value / 1000000).toFixed(1)}M`
+                                  : `Rs. ${(value / 1000).toFixed(0)}K`
+                              }
+                              label={{ value: "Average Price", angle: -90, position: "insideLeft", fontSize: 14, fontWeight: 600 }}
+                            />
+                            <Tooltip
+                              formatter={(value: any) => [
+                                formatPrice(value),
+                                value === undefined ? "N/A" : "Avg Price",
+                              ]}
+                              contentStyle={{
+                                backgroundColor: "rgba(255, 255, 255, 0.95)",
+                                border: "1px solid #024950",
+                                borderRadius: "8px",
+                                boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                              }}
+                            />
+                            <Legend
+                              wrapperStyle={{
+                                paddingTop: "30px",
+                                fontSize: "14px",
+                                fontWeight: 500,
+                              }}
+                            />
+                            {trendFilterBrand1 && trendFilterModel1 && (
+                              <Line
+                                type="monotone"
+                                dataKey="avgPrice1"
+                                stroke="#024950"
+                                strokeWidth={2}
+                                name={`${trendFilterBrand1} ${trendFilterModel1}`}
+                                dot={{ fill: "#024950", r: 4 }}
+                                activeDot={{ r: 6 }}
+                                connectNulls
+                              />
+                            )}
+                            {trendFilterBrand2 && trendFilterModel2 && (
+                              <Line
+                                type="monotone"
+                                dataKey="avgPrice2"
+                                stroke="#14b8a6"
+                                strokeWidth={2}
+                                name={`${trendFilterBrand2} ${trendFilterModel2}`}
+                                dot={{ fill: "#14b8a6", r: 4 }}
+                                activeDot={{ r: 6 }}
+                                connectNulls
+                              />
+                            )}
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
 
                     {/* Statistics */}
                     <div className="mt-6 p-4 bg-[#024950]/5 rounded-lg border border-[#024950]/20">
@@ -625,8 +633,8 @@ export default function ComparisonPage() {
                     <p className="text-sm text-gray-600">
                       {!trendFilterYear
                         ? "Select a year to view price trends"
-                        : !trendFilterBrand1 || !trendFilterModel1 || !trendFilterBrand2 || !trendFilterModel2
-                          ? "Select brand and model for both selections to compare"
+                        : (!trendFilterBrand1 || !trendFilterModel1) && (!trendFilterBrand2 || !trendFilterModel2)
+                          ? "Select at least one vehicle (Brand & Model) to view trends"
                           : "No data available for the selected filters"}
                     </p>
                   </div>
