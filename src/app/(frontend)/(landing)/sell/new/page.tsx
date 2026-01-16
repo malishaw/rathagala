@@ -215,6 +215,12 @@ export default function QuickAdCreatePage() {
   
   // Handle form submission
   const handleSubmit = () => {
+    // Validate at least 1 image is selected (uncomment this part and line no 381 for working)
+    // if (selectedImages.length === 0) {
+    //   alert("Please upload at least 1 image for your ad");
+    //   return;
+    // }
+    
     // Auto-generate title from vehicle details
     const titleParts = [
       formData.condition,
@@ -370,8 +376,10 @@ export default function QuickAdCreatePage() {
         return detailsRequired;
         
       case 3:
-        // Contact info required for all listing types
-        return formData.name && formData.phoneNumber && formData.province && formData.district && formData.city && formData.location && formData.termsAndConditions;
+        // Contact info required for all listing types + at least 1 image
+        return formData.name && formData.phoneNumber && formData.province && formData.district && formData.city && formData.location && formData.termsAndConditions 
+        // && selectedImages.length > 0
+        ;
         
       default:
         return false;
@@ -1681,7 +1689,7 @@ export default function QuickAdCreatePage() {
               
               {/* Image Selection Section */}
               <div className="pt-2">
-                <label className="block text-sm font-medium mb-2">Vehicle Images (Optional)</label>
+                <label className="block text-sm font-medium mb-2">Vehicle Images<span className="ms-1 text-red-500">*</span></label>
                 <p className="text-xs text-slate-500 mb-3">
                   Select up to 6 images from your media gallery. First image will be the main photo.
                 </p>
