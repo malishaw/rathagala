@@ -100,6 +100,7 @@ export default function UsersPage() {
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [banDialogOpen, setBanDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [orgDialogOpen, setOrgDialogOpen] = useState(false);
   const [phoneVerifyDialogOpen, setPhoneVerifyDialogOpen] = useState(false);
@@ -400,6 +401,12 @@ export default function UsersPage() {
     setDeleteDialogOpen(true);
   };
 
+
+  const handleDeleteClick = (user: User) => {
+    setSelectedUser(user);
+    setDeleteDialogOpen(true);
+  };
+
   const handlePhoneVerifyClick = (user: User) => {
     setSelectedUser(user);
     setPhoneVerifyStatus(user.phoneVerified || "not_verified");
@@ -515,51 +522,6 @@ export default function UsersPage() {
     }
   };
 
-  const handleDeleteUser = async () => {
-    if (!selectedUser) return;
-
-    setIsLoading(selectedUser.id);
-    try {
-      const response = await fetch("/api/auth/admin/remove-user", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ userId: selectedUser.id }),
-      });
-
-      if (!response.ok) {
-        let errorMessage = `HTTP error! status: ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage =
-            errorData.error?.message || errorData.message || errorMessage;
-        } catch {
-          errorMessage = response.statusText || errorMessage;
-        }
-        throw new Error(errorMessage);
-      }
-
-      toast.success("User deleted successfully", {
-        description: `${selectedUser.name || selectedUser.email} has been removed from the system.`,
-      });
-
-      setDeleteDialogOpen(false);
-      setSelectedUser(null);
-      refetch();
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      toast.error("Failed to delete user", {
-        description:
-          error instanceof Error
-            ? error.message
-            : "An unexpected error occurred",
-      });
-    } finally {
-      setIsLoading(null);
-    }
-  };
 
   const getRoleBadge = (role: string | null) => {
     const userRole = role || "user";
@@ -606,7 +568,7 @@ export default function UsersPage() {
     if (!phone) {
       return <Badge variant="outline" className="text-gray-500">No Phone</Badge>;
     }
-    
+
     switch (status) {
       case "verified":
         return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Verified</Badge>;
@@ -786,7 +748,7 @@ export default function UsersPage() {
 
                         {/* Phone Verified */}
                         <TableCell>
-                          <div 
+                          <div
                             className="flex items-center gap-2 cursor-pointer hover:opacity-70 transition-opacity"
                             onClick={() => handlePhoneVerifyClick(user)}
                             title="Click to update phone verification status"
@@ -865,6 +827,15 @@ export default function UsersPage() {
                                   Ban User
                                 </DropdownMenuItem>
                               )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => handleDeleteClick(user)}
+                                className="text-red-600"
+                                disabled={isLoading === user.id}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete User
+                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 onClick={() => handleDeleteClick(user)}
@@ -1005,80 +976,6 @@ export default function UsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete User Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Trash2 className="h-5 w-5 text-red-600" />
-              Delete User
-            </DialogTitle>
-            <DialogDescription>
-              Are you sure you want to permanently delete{" "}
-              {selectedUser?.name || selectedUser?.email}? This action cannot be
-              undone and will remove all associated data.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-5 w-5 text-yellow-400"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-yellow-800">Warning</h3>
-                <div className="mt-2 text-sm text-yellow-700">
-                  <p>This will permanently delete:</p>
-                  <ul className="list-disc list-inside mt-1">
-                    <li>User account and profile</li>
-                    <li>All posts and associated data</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDeleteDialogOpen(false);
-                setSelectedUser(null);
-              }}
-              disabled={isLoading === selectedUser?.id}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteUser}
-              disabled={isLoading === selectedUser?.id}
-            >
-              {isLoading === selectedUser?.id ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Permanently
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Assign Organization Dialog */}
       <Dialog open={orgDialogOpen} onOpenChange={setOrgDialogOpen}>
@@ -1526,7 +1423,7 @@ export default function UsersPage() {
                   <Label htmlFor="phoneVerifyStatus">Verification Status</Label>
                   <Select
                     value={phoneVerifyStatus}
-                    onValueChange={(value: "verified" | "not_verified" | "rejected") => 
+                    onValueChange={(value: "verified" | "not_verified" | "rejected") =>
                       setPhoneVerifyStatus(value)
                     }
                   >

@@ -46,14 +46,15 @@ import {
   Flag,
   Copy,
   Check,
-  
+
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { authClient } from "@/lib/auth-client";
-import { FaFacebookSquare, FaWhatsappSquare, FaYoutubeSquare} from "react-icons/fa";
+import { FaFacebookSquare, FaWhatsappSquare, FaYoutubeSquare } from "react-icons/fa";
 import { FaSquareXTwitter, FaTelegram } from "react-icons/fa6";
+import { AdIdDisplay } from "./ad-id-display";
 
 export default function AdDetailPage() {
   const { id } = useParams();
@@ -861,7 +862,7 @@ export default function AdDetailPage() {
                       <span>Posted {formatDate(ad.createdAt)}</span>
                     </div>
                   </div>
-                  <div>Ad ID: {ad.id}</div>
+                  <AdIdDisplay id={ad.id} />
                 </div>
               </CardContent>
             </Card>
