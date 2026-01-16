@@ -100,7 +100,6 @@ export default function UsersPage() {
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [banDialogOpen, setBanDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [orgDialogOpen, setOrgDialogOpen] = useState(false);
   const [phoneVerifyDialogOpen, setPhoneVerifyDialogOpen] = useState(false);
@@ -395,12 +394,6 @@ export default function UsersPage() {
     });
     setEditDialogOpen(true);
   };
-
-  const handleDeleteClick = (user: User) => {
-    setSelectedUser(user);
-    setDeleteDialogOpen(true);
-  };
-
 
   const handleDeleteClick = (user: User) => {
     setSelectedUser(user);
