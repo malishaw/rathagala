@@ -216,9 +216,23 @@ export default function SearchPage() {
     return data.ads.filter((ad) => {
       // Note: Listing type filter is now handled on the backend
 
-      // Title/Query filter
-      if (filters.query && !ad.title?.toLowerCase().includes(filters.query.toLowerCase())) {
-        return false;
+      // Title/Query filter - search in brand, model, year, and description
+      if (filters.query) {
+        const query = filters.query.toLowerCase();
+        const searchableText = [
+          ad.brand,
+          ad.model,
+          ad.manufacturedYear?.toString(),
+          ad.description,
+          vehicleTypeLabels[ad.type] || ad.type
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+
+        if (!searchableText.includes(query)) {
+          return false;
+        }
       }
 
       // Vehicle type filter
