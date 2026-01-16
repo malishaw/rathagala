@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -42,11 +43,17 @@ import {
   Share2,
   Shield,
   BarChart3,
-  Flag
+  Flag,
+  Copy,
+  Check,
+  
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { authClient } from "@/lib/auth-client";
+import { FaFacebookSquare, FaWhatsappSquare, FaYoutubeSquare} from "react-icons/fa";
+import { FaSquareXTwitter, FaTelegram } from "react-icons/fa6";
 
 export default function AdDetailPage() {
   const { id } = useParams();
@@ -108,6 +115,15 @@ export default function AdDetailPage() {
         },
       }
     );
+  };
+
+  // Handle copy link to clipboard
+  const handleCopyLink = () => {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    navigator.clipboard.writeText(url).then(() => {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    });
   };
 
   // Prevent image downloads and protect against various methods
@@ -403,15 +419,26 @@ export default function AdDetailPage() {
                 iconClassName="w-5 h-5"
               />
 
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-red-500 hover:bg-white/10"
-                onClick={() => setIsReportDialogOpen(true)}
-                aria-label="Report Ad"
-              >
-                <Flag className="w-5 h-5" />
-              </Button>
+              <div className="relative group">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-500 hover:bg-white/10"
+                  onClick={() => {
+                    if (session?.user) {
+                      setIsReportDialogOpen(true);
+                    }
+                  }}
+                  aria-label="Report Ad"
+                >
+                  <Flag className="w-5 h-5 text-gray-500" />
+                </Button>
+                {!session?.user && (
+                  <span className="absolute top-full left-1/2 -translate-x-1/2 mt-1 text-xs text-white/70 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity  bg-black/70 px-2 py-1 rounded">
+                    Please login to report
+                  </span>
+                )}
+              </div>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -973,11 +1000,22 @@ export default function AdDetailPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex items-start space-x-3">
-                  <div className="w-12 h-12 bg-[#024950] bg-opacity-10 rounded-full flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const sellerId = (ad as any).createdBy || (ad as any).creator?.id || (ad as any).userId || (ad as any).user_id || (ad as any).sellerId || (ad as any).ownerId || (ad as any).user?.id || (ad as any).seller?.id;
+                      if (sellerId) {
+                        router.push(`/search?seller=${encodeURIComponent(String(sellerId))}`);
+                      } else {
+                        router.push(`/search`);
+                      }
+                    }}
+                    className="w-12 h-12 bg-[#024950] bg-opacity-10 rounded-full flex items-center justify-center hover:bg-opacity-20 cursor-pointer"
+                  >
                     <span className="text-[#024950] font-semibold text-lg">
                       {((ad as any).creator?.name || "Seller").charAt(0).toUpperCase()}
                     </span>
-                  </div>
+                  </button>
                   <div className="flex-1">
                     <div className="flex items-center space-x-2">
                       <button

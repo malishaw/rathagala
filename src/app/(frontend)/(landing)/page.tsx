@@ -603,8 +603,8 @@ export default function VehicleMarketplace() {
                   </button>
                 </SheetTrigger>
                 <SheetContent
-                  side="bottom"
-                  className="h-auto max-h-[90vh] rounded-t-3xl p-0 sm:max-h-[95vh] sm:rounded-2xl sm:mb-4 left-1/2 -translate-x-1/2"
+                  side="top"
+                  className="h-auto max-h-[90vh] rounded-b-3xl p-0 sm:max-h-[95vh] sm:rounded-b-2xl sm:mt-4 left-1/2 -translate-x-1/2"
                   style={{ width: '900px', maxWidth: '95vw' }}
                 >
                   <div className="px-4 pt-4 pb-0">
@@ -887,7 +887,7 @@ export default function VehicleMarketplace() {
                         </Select>
                       </div>
 
-                      <div>
+                      {/* <div>
                         <label className="text-xs font-medium text-slate-600 mb-1 block">Transmission</label>
                         <Select
                           value={filters.transmission || "any"}
@@ -902,7 +902,7 @@ export default function VehicleMarketplace() {
                             <SelectItem value="Manual">Manual</SelectItem>
                           </SelectContent>
                         </Select>
-                      </div>
+                      </div> */}
                     </div>
                   </div>
 
