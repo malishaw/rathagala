@@ -34,6 +34,8 @@ import { useGetAds } from "@/features/ads/api/use-get-ads";
 import { useGetOrganizations } from "@/features/organizations/api/use-get-orgs";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
 
+import { authClient } from "@/lib/auth-client";
+
 // Vehicle type labels
 const vehicleTypeLabels: Record<string, string> = {
   CAR: "Car",
@@ -112,6 +114,10 @@ export default function VehicleMarketplace() {
   const [cityQuery, setCityQuery] = useState("");
   const [showFilterSheet, setShowFilterSheet] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Check authentication
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
 
   // Initialize filter state (pending filters)
   const [filters, setFilters] = useState<FilterState>({
