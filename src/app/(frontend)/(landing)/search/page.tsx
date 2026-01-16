@@ -124,6 +124,7 @@ const sriLankanLocations = [
 // Search filter interface
 interface SearchFilters {
   query: string;
+  globalSearch: string;
   listingType: string;
   vehicleType: string;
   brand: string;
@@ -149,6 +150,7 @@ export default function SearchPage() {
   // Initialize filters from URL params
   const [filters, setFilters] = useState<SearchFilters>({
     query: searchParams.get('q') || '',
+    globalSearch: '',
     listingType: searchParams.get('listingType') || 'all',
     vehicleType: searchParams.get('type') || 'all',
     brand: searchParams.get('brand') || 'all',
@@ -166,6 +168,12 @@ export default function SearchPage() {
     seller: searchParams.get('seller') || 'all',
     page: parseInt(searchParams.get('page') || '1')
   });
+
+  // Search states for dropdown filtering
+  const [districtSearch, setDistrictSearch] = useState('');
+  const [citySearch, setCitySearch] = useState('');
+  const [vehicleTypeSearch, setVehicleTypeSearch] = useState('');
+  const [brandSearch, setBrandSearch] = useState('');
 
   // Mobile sidebar state
   const [isFiltersOpen, setIsFiltersOpen] = useState(true);
@@ -199,6 +207,38 @@ export default function SearchPage() {
 
     return districtCities.length > 0 ? districtCities.sort() : sriLankanCities;
   }, [filters.district]);
+
+  // Filter districts based on search input
+  const filteredDistricts = useMemo(() => {
+    if (!districtSearch) return sriLankanDistricts;
+    return sriLankanDistricts.filter(district =>
+      district.toLowerCase().includes(districtSearch.toLowerCase())
+    );
+  }, [districtSearch]);
+
+  // Filter cities based on search input
+  const filteredCities = useMemo(() => {
+    if (!citySearch) return availableCities;
+    return availableCities.filter(city =>
+      city.toLowerCase().includes(citySearch.toLowerCase())
+    );
+  }, [citySearch, availableCities]);
+
+  // Filter vehicle types based on search input
+  const filteredVehicleTypes = useMemo(() => {
+    if (!vehicleTypeSearch) return Object.entries(vehicleTypeLabels);
+    return Object.entries(vehicleTypeLabels).filter(([_, label]) =>
+      label.toLowerCase().includes(vehicleTypeSearch.toLowerCase())
+    );
+  }, [vehicleTypeSearch]);
+
+  // Filter brands based on search input
+  const filteredBrands = useMemo(() => {
+    if (!brandSearch) return vehicleMakes;
+    return vehicleMakes.filter(brand =>
+      brand.toLowerCase().includes(brandSearch.toLowerCase())
+    );
+  }, [brandSearch]);
 
   // Fetch ads with current filters
   const { data, isLoading, error } = useGetAds({
@@ -323,9 +363,33 @@ export default function SearchPage() {
         }
       }
 
+      // Global search filter (searches across multiple fields)
+      if (filters.globalSearch && filters.globalSearch.trim() !== '') {
+        const searchQuery = filters.globalSearch.toLowerCase();
+        const searchableFields = [
+          ad.id,
+          ad.brand,
+          ad.model,
+          ad.city,
+          ad.description,
+          (ad as any).phoneNumber,
+          (ad as any).whatsappNumber,
+          (ad as any).creator?.name,
+          (ad as any).creator?.email,
+          vehicleTypeLabels[ad.type] || ad.type
+        ]
+          .filter(Boolean)
+          .map(f => String(f).toLowerCase())
+          .join(' ');
+
+        if (!searchableFields.includes(searchQuery)) {
+          return false;
+        }
+      }
+
       return true;
     });
-  }, [data?.ads, filters.query, filters.vehicleType, filters.brand, filters.model, filters.condition, filters.grade, filters.minPrice, filters.maxPrice, filters.minYear, filters.maxYear, filters.fuelType, filters.transmission, filters.district, filters.city]);
+  }, [data?.ads, filters.query, filters.vehicleType, filters.brand, filters.model, filters.condition, filters.grade, filters.minPrice, filters.maxPrice, filters.minYear, filters.maxYear, filters.fuelType, filters.transmission, filters.district, filters.city, filters.globalSearch]);
 
   // Handle filter changes
   const handleFilterChange = (key: keyof SearchFilters, value: string) => {
@@ -352,6 +416,7 @@ export default function SearchPage() {
   const clearFilters = () => {
     setFilters({
       query: '',
+      globalSearch: '',
       listingType: 'all',
       vehicleType: 'all',
       brand: 'all',
@@ -469,6 +534,23 @@ export default function SearchPage() {
               </div>
 
               <div className={`${isFiltersOpen ? 'block' : 'hidden'} lg:block space-y-4`}>
+                {/* Global Search Bar */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
+                    <Search className="h-4 w-4 inline mr-1" />
+                    Search
+                  </label>
+                  <Input
+                    placeholder="Search by ID, make, model, city, phone..."
+                    value={filters.globalSearch}
+                    onChange={(e) => handleFilterChange('globalSearch', e.target.value)}
+                    className="h-10 text-sm border-slate-200 focus:ring-teal-500"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">Search by ad ID, make, model, city, or phone number</p>
+                </div>
+
+                <Separator className="my-3" />
+
                 {/* Row 1: Location */}
                 <div className="grid grid-cols-1 gap-4">
                   <div>
@@ -477,16 +559,33 @@ export default function SearchPage() {
                     </label>
                     <Select
                       value={filters.district}
-                      onValueChange={(value) => handleFilterChange('district', value)}
+                      onValueChange={(value) => {
+                        handleFilterChange('district', value);
+                        setDistrictSearch('');
+                      }}
                     >
                       <SelectTrigger className="h-10 text-sm border-slate-200 focus:ring-teal-500">
                         <SelectValue placeholder="All Districts" />
                       </SelectTrigger>
                       <SelectContent className="max-h-[300px]">
+                        <div className="p-2 border-b sticky top-0 bg-white z-10">
+                          <Input
+                            autoFocus
+                            placeholder="Search districts..."
+                            value={districtSearch}
+                            onChange={(e) => setDistrictSearch(e.target.value)}
+                            className="h-8 text-sm"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                          />
+                        </div>
                         <SelectItem value="all">All districts</SelectItem>
-                        {sriLankanDistricts.map((district) => (
+                        {filteredDistricts.map((district) => (
                           <SelectItem key={district} value={district}>{district}</SelectItem>
                         ))}
+                        {filteredDistricts.length === 0 && (
+                          <div className="p-2 text-sm text-slate-500 text-center">No districts found</div>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -496,16 +595,33 @@ export default function SearchPage() {
                     </label>
                     <Select
                       value={filters.city}
-                      onValueChange={(value) => handleFilterChange('city', value)}
+                      onValueChange={(value) => {
+                        handleFilterChange('city', value);
+                        setCitySearch('');
+                      }}
                     >
                       <SelectTrigger className="h-10 text-sm border-slate-200 focus:ring-teal-500">
                         <SelectValue placeholder="All Cities" />
                       </SelectTrigger>
                       <SelectContent className="max-h-[300px]">
+                        <div className="p-2 border-b sticky top-0 bg-white z-10">
+                          <Input
+                            autoFocus
+                            placeholder="Search cities..."
+                            value={citySearch}
+                            onChange={(e) => setCitySearch(e.target.value)}
+                            className="h-8 text-sm"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                          />
+                        </div>
                         <SelectItem value="all">All cities</SelectItem>
-                        {availableCities.map((city) => (
+                        {filteredCities.map((city) => (
                           <SelectItem key={city} value={city}>{city}</SelectItem>
                         ))}
+                        {filteredCities.length === 0 && (
+                          <div className="p-2 text-sm text-slate-500 text-center">No cities found</div>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -541,16 +657,33 @@ export default function SearchPage() {
                     </label>
                     <Select
                       value={filters.vehicleType}
-                      onValueChange={(value) => handleFilterChange('vehicleType', value)}
+                      onValueChange={(value) => {
+                        handleFilterChange('vehicleType', value);
+                        setVehicleTypeSearch('');
+                      }}
                     >
                       <SelectTrigger className="h-9 text-sm">
                         <SelectValue placeholder="All" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="max-h-[300px]">
+                        <div className="p-2 border-b sticky top-0 bg-white z-10">
+                          <Input
+                            autoFocus
+                            placeholder="Search types..."
+                            value={vehicleTypeSearch}
+                            onChange={(e) => setVehicleTypeSearch(e.target.value)}
+                            className="h-8 text-sm"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                          />
+                        </div>
                         <SelectItem value="all">All</SelectItem>
-                        {Object.entries(vehicleTypeLabels).map(([key, label]) => (
+                        {filteredVehicleTypes.map(([key, label]) => (
                           <SelectItem key={key} value={key}>{label}</SelectItem>
                         ))}
+                        {filteredVehicleTypes.length === 0 && (
+                          <div className="p-2 text-sm text-slate-500 text-center">No types found</div>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -566,16 +699,33 @@ export default function SearchPage() {
                     </label>
                     <Select
                       value={filters.brand}
-                      onValueChange={(value) => handleFilterChange('brand', value)}
+                      onValueChange={(value) => {
+                        handleFilterChange('brand', value);
+                        setBrandSearch('');
+                      }}
                     >
                       <SelectTrigger className="h-9 text-sm">
                         <SelectValue placeholder="All" />
                       </SelectTrigger>
                       <SelectContent className="max-h-[250px]">
+                        <div className="p-2 border-b sticky top-0 bg-white z-10">
+                          <Input
+                            autoFocus
+                            placeholder="Search brands..."
+                            value={brandSearch}
+                            onChange={(e) => setBrandSearch(e.target.value)}
+                            className="h-8 text-sm"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                          />
+                        </div>
                         <SelectItem value="all">All</SelectItem>
-                        {vehicleMakes.map((make) => (
+                        {filteredBrands.map((make) => (
                           <SelectItem key={make} value={make}>{make}</SelectItem>
                         ))}
+                        {filteredBrands.length === 0 && (
+                          <div className="p-2 text-sm text-slate-500 text-center">No brands found</div>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
