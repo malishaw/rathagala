@@ -180,6 +180,11 @@ export const getCurrentUser: AppRouteHandler<GetCurrentUserRoute> = async (c) =>
         email: true,
         phone: true,
         phoneVerified: true,
+        whatsappNumber: true,
+        province: true,
+        district: true,
+        city: true,
+        location: true,
         organizationId: true,
         organization: {
           select: {
@@ -205,6 +210,11 @@ export const getCurrentUser: AppRouteHandler<GetCurrentUserRoute> = async (c) =>
         email: userWithOrg.email,
         phone: userWithOrg.phone,
         phoneVerified: userWithOrg.phoneVerified,
+        whatsappNumber: userWithOrg.whatsappNumber,
+        province: userWithOrg.province,
+        district: userWithOrg.district,
+        city: userWithOrg.city,
+        location: userWithOrg.location,
         organizationId: userWithOrg.organizationId,
         organization: userWithOrg.organization,
       },
@@ -236,11 +246,14 @@ export const updateProfile: AppRouteHandler<UpdateProfileRoute> = async (c) => {
   const { name, phone, whatsappNumber, province, district, city, location } = c.req.valid("json");
 
   try {
-    // Check if phone number is being updated and if it already exists for another user
+    // Check if phone number exists in any other user's phone OR whatsappNumber field
     if (phone) {
       const existingUserWithPhone = await prisma.user.findFirst({
         where: {
-          phone: phone,
+          OR: [
+            { phone: phone },
+            { whatsappNumber: phone }
+          ],
           NOT: {
             id: user.id, // Exclude current user
           },
@@ -249,17 +262,20 @@ export const updateProfile: AppRouteHandler<UpdateProfileRoute> = async (c) => {
 
       if (existingUserWithPhone) {
         return c.json(
-          { message: "This phone number is already registered with another account" },
+          { message: "This phone number already in use. Add another" },
           HttpStatusCodes.BAD_REQUEST
         );
       }
     }
 
-    // Check if WhatsApp number is being updated and if it already exists for another user
+    // Check if WhatsApp number exists in any other user's phone OR whatsappNumber field
     if (whatsappNumber) {
       const existingUserWithWhatsApp = await prisma.user.findFirst({
         where: {
-          whatsappNumber: whatsappNumber,
+          OR: [
+            { phone: whatsappNumber },
+            { whatsappNumber: whatsappNumber }
+          ],
           NOT: {
             id: user.id, // Exclude current user
           },
@@ -268,7 +284,7 @@ export const updateProfile: AppRouteHandler<UpdateProfileRoute> = async (c) => {
 
       if (existingUserWithWhatsApp) {
         return c.json(
-          { message: "This WhatsApp number is already registered with another account" },
+          { message: "This Whatsapp number already in use. Add another" },
           HttpStatusCodes.BAD_REQUEST
         );
       }

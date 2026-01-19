@@ -113,6 +113,7 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [sidebarActive, setSidebarActive] = useState("personal");
 
@@ -254,10 +255,11 @@ export default function ProfilePage() {
   // Handle profile update
   const handleUpdateProfile = async () => {
     setIsSaving(true);
+    setErrorMessage(null); // Clear any previous error
 
     try {
       // Update user profile via API
-      const { data, error } = await betterFetch("/api/user/profile", {
+      const response = await betterFetch("/api/user/profile", {
         method: "PATCH",
         body: {
           name: formData.name,
@@ -270,10 +272,17 @@ export default function ProfilePage() {
         }
       });
 
-      if (error) {
-        const errorMessage = error.message || "Failed to update profile";
-        toast.error(errorMessage);
-        throw new Error(errorMessage);
+      // Check if response has error or missing user data (validation error)
+      if (!response.data?.user) {
+        // Try to extract error message from various possible paths
+        const message = 
+          (response.error as any)?.message ||
+          (response.data as any)?.message || 
+          "This phone number already in use. Add another";
+        setErrorMessage(message);
+        setTimeout(() => setErrorMessage(null), 5000);
+        setIsSaving(false);
+        return;
       }
 
       // Update local state
@@ -296,9 +305,18 @@ export default function ProfilePage() {
       toast.success("Profile updated successfully");
       setActiveSection(null);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating profile:", error);
-      // Error toast already shown above
+      // Extract error message from betterFetch thrown error - try multiple paths
+      const message = 
+        error?.error?.message || 
+        error?.data?.message || 
+        error?.body?.message ||
+        error?.response?.data?.message ||
+        error?.message || 
+        "This phone number already in use. Add another";
+      setErrorMessage(message);
+      setTimeout(() => setErrorMessage(null), 5000);
     } finally {
       setIsSaving(false);
     }
@@ -477,6 +495,16 @@ export default function ProfilePage() {
           </div>
         )}
 
+        {/* Error indicator */}
+        {errorMessage && (
+          <div className="fixed top-4 right-4 bg-white/90 backdrop-blur-xl border border-red-200 text-red-700 px-6 py-3 rounded-xl flex items-center z-50 animate-in slide-in-from-top">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            {errorMessage}
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-[#0D5C63] via-teal-600 to-emerald-600 bg-clip-text text-transparent">Profile</h1>
@@ -576,7 +604,7 @@ export default function ProfilePage() {
                   {activeSection === "personal" ? (
                     <div className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-6 space-y-4">
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">Name</label>
+                         <label className="block text-sm font-semibold text-slate-700 mb-2">Name</label>
                         <Input
                           name="name"
                           value={formData.name}

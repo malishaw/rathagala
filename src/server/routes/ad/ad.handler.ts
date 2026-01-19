@@ -72,31 +72,37 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     }
 
     // Add search functionality if search term is provided
-    // Search by: title, description, brand, model, phone number, user name
+    // Search by: title, description, brand, model, phone number, user name, ad ID
     if (search && search.trim() !== "") {
-      const searchConditions: any[] = [
-        { title: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } },
-        { brand: { contains: search, mode: "insensitive" } },
-        { model: { contains: search, mode: "insensitive" } },
-        { phoneNumber: { contains: search, mode: "insensitive" } },
-        { whatsappNumber: { contains: search, mode: "insensitive" } },
-      ];
+      // Check if search term looks like a MongoDB ObjectId (24 hex chars)
+      const isIdSearch = /^[0-9a-f]{24}$/i.test(search.trim());
+      
+      if (isIdSearch) {
+        // Only search by exact ID match - no other conditions
+        andFilters.push({ id: search.trim() });
+      } else {
+        // Search by text fields
+        const searchConditions: any[] = [
+          { title: { contains: search, mode: "insensitive" } },
+          { description: { contains: search, mode: "insensitive" } },
+          { brand: { contains: search, mode: "insensitive" } },
+          { model: { contains: search, mode: "insensitive" } },
+          { phoneNumber: { contains: search, mode: "insensitive" } },
+          { whatsappNumber: { contains: search, mode: "insensitive" } },
+          {
+            creator: {
+              OR: [
+                { name: { contains: search, mode: "insensitive" } },
+                { email: { contains: search, mode: "insensitive" } },
+              ],
+            },
+          },
+        ];
 
-      // Also search by creator name/email if creator relation is available
-      // Note: This requires the creator relation to be included in the query
-      searchConditions.push({
-        creator: {
-          OR: [
-            { name: { contains: search, mode: "insensitive" } },
-            { email: { contains: search, mode: "insensitive" } },
-          ],
-        },
-      });
-
-      andFilters.push({
-        OR: searchConditions,
-      });
+        andFilters.push({
+          OR: searchConditions,
+        });
+      }
     }
 
     // Add listingType filtering if provided

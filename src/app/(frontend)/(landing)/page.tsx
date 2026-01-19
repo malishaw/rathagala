@@ -561,7 +561,7 @@ export default function VehicleMarketplace() {
               <div className="flex-1 relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <Input
-                  placeholder="Search by make, model, or city..."
+                  placeholder="Search by make, model, city, or ad ID..."
                   className="w-full h-14 pl-12 pr-14 rounded-xl border-slate-200 bg-white shadow-md text-base"
                   value={searchQuery}
                   onChange={(e) => {
