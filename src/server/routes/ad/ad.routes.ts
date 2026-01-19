@@ -308,3 +308,37 @@ export const incrementView = createRoute({
 
 export type IncrementViewRoute = typeof incrementView;
 
+// --------- Get Trending Ads ----------
+export const trending = createRoute({
+  tags,
+  summary: "Get trending ads",
+  description: "Retrieve trending ads ordered by view count",
+  path: "/trending",
+  method: "get",
+  request: {
+    query: z.object({
+      limit: z
+        .string()
+        .optional()
+        .transform((val) => (val ? parseInt(val) : 10))
+        .pipe(z.number().min(1).max(50).default(10)),
+    }),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      z.array(schemas.adSchema),
+      "The trending ads"
+    ),
+    [HttpStatusCodes.BAD_REQUEST]: jsonContent(
+      z.object({ message: z.string() }),
+      "Invalid parameters"
+    ),
+    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({ message: z.string() }),
+      "Something went wrong while fetching trending ads"
+    ),
+  },
+});
+
+export type TrendingRoute = typeof trending;
+

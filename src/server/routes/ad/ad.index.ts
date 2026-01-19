@@ -13,6 +13,7 @@ const router = createRouter()
   .openapi(routes.approve, handlers.approve)
   .openapi(routes.reject, handlers.reject)
   .openapi(routes.bulkCreate, handlers.bulkCreate)
-  .openapi(routes.incrementView, handlers.incrementView);
+  .openapi(routes.incrementView, handlers.incrementView)
+  .openapi(routes.trending, handlers.trending);
 
 export default router;

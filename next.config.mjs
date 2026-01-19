@@ -5,15 +5,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "rathagala.s3.ap-south-1.amazonaws.com"
-      },
-      {
-        protocol: "https",
-        hostname: "kidlink.s3.ap-south-1.amazonaws.com"
-      },
-      {
-        protocol: "https",
-        hostname: "donext-org.s3.eu-west-2.amazonaws.com"
+        hostname: "myunivrs-s3-storage.s3.eu-west-2.amazonaws.com"
       }
     ]
   },

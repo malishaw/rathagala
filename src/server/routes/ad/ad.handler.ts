@@ -13,6 +13,7 @@ import {
   RejectRoute,
   BulkCreateRoute,
   IncrementViewRoute,
+  TrendingRoute,
 } from "./ad.routes";
 import { QueryParams } from "./ad.schemas";
 import { AdStatus, AdType } from "@prisma/client";
@@ -1303,6 +1304,121 @@ export const reject: AppRouteHandler<RejectRoute> = async (c) => {
     console.error("[REJECT AD] Error:", error);
     return c.json(
       { message: error.message || "Failed to reject ad" },
+      HttpStatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+};
+
+export const incrementView: AppRouteHandler<IncrementViewRoute> = async (c) => {
+  try {
+    const { id } = c.req.param();
+
+    // Check if ad exists
+    const ad = await prisma.ad.findUnique({
+      where: { id },
+      select: { id: true, status: true },
+    });
+
+    if (!ad) {
+      return c.json(
+        { message: "Ad not found" },
+        HttpStatusCodes.NOT_FOUND
+      );
+    }
+
+    // Only increment views for active ads
+    if (ad.status !== AdStatus.ACTIVE) {
+      return c.json(
+        { success: false, views: 0 },
+        HttpStatusCodes.OK
+      );
+    }
+
+    // Increment view count using upsert to create analytics record if it doesn't exist
+    const analytics = await prisma.adAnalytics.upsert({
+      where: { adId: id },
+      update: {
+        views: {
+          increment: 1,
+        },
+      },
+      create: {
+        adId: id,
+        views: 1,
+        clicks: 0,
+        impressions: 0,
+      },
+    });
+
+    return c.json(
+      {
+        success: true,
+        views: analytics.views,
+      },
+      HttpStatusCodes.OK
+    );
+  } catch (error: any) {
+    console.error("[INCREMENT VIEW] Error:", error);
+    return c.json(
+      { message: error.message || "Failed to increment view count" },
+      HttpStatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+};
+
+export const trending: AppRouteHandler<TrendingRoute> = async (c) => {
+  try {
+    const { limit = 10 } = c.req.query();
+
+    // Get trending ads ordered by view count
+    const trendingAds = await prisma.ad.findMany({
+      where: {
+        status: AdStatus.ACTIVE,
+      },
+      include: {
+        media: {
+          take: 1, // Only get the first media item
+          orderBy: { createdAt: 'asc' },
+        },
+        analytics: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            verified: true,
+          },
+        },
+      },
+      orderBy: {
+        analytics: {
+          views: 'desc',
+        },
+      },
+      take: limit,
+    });
+
+    // Format the response
+    const formattedAds = trendingAds.map((ad) => ({
+      ...ad,
+      createdAt: ad.createdAt.toISOString(),
+      updatedAt: ad.updatedAt.toISOString(),
+      boostExpiry: ad.boostExpiry?.toISOString() ?? null,
+      featureExpiry: ad.featureExpiry?.toISOString() ?? null,
+      expiryDate: ad.expiryDate?.toISOString() ?? null,
+      media: ad.media.map((media) => ({
+        ...media,
+        createdAt: media.createdAt.toISOString(),
+        updatedAt: media.updatedAt.toISOString(),
+      })),
+    }));
+
+    return c.json(formattedAds, HttpStatusCodes.OK);
+  } catch (error: any) {
+    console.error("[TRENDING ADS] Error:", error);
+    return c.json(
+      { message: error.message || "Failed to fetch trending ads" },
       HttpStatusCodes.INTERNAL_SERVER_ERROR
     );
   }
