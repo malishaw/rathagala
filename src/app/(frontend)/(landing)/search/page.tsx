@@ -904,6 +904,18 @@ export default function SearchPage() {
 
           {/* Center Column - Search Results */}
           <div className="flex-1 min-w-0">
+            {/* Seller Name Display */}
+            {filters.seller && filters.seller !== 'all' && filteredAds.length > 0 && (
+              <div className="mb-6 pb-4 border-b border-slate-200">
+                <h3 className="text-xl font-bold text-slate-900">
+                  {filteredAds[0] && ((filteredAds[0] as any).creator?.name || (filteredAds[0] as any).seller?.name || 'Seller')}'s Listings
+                </h3>
+                <p className="text-slate-600 text-sm mt-1">
+                  {filteredAds.length} vehicle{filteredAds.length !== 1 ? 's' : ''} available
+                </p>
+              </div>
+            )}
+
             {/* Active Filters Display */}
             {activeFilterCount > 0 && (
               <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">

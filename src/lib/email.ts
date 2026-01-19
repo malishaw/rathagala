@@ -457,7 +457,7 @@ export async function sendAdApprovalEmail({ email, name, adTitle, adId }: SendAd
                 <div class="ad-title">${adTitle}</div>
                 <p>Your ad is now live and visible to all users on Rathagala. Potential buyers can now view and contact you about your listing.</p>
                 <p style="text-align: center;">
-                  <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://rathagala.lk"}/dashboard/ads" class="cta-button">View My Ads</a>
+                  <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://rathagala.lk"}/${adId}" class="cta-button">View My Ads</a>
                 </p>
                 <p><strong>What's Next?</strong></p>
                 <ul>
