@@ -215,11 +215,11 @@ export default function QuickAdCreatePage() {
   
   // Handle form submission
   const handleSubmit = () => {
-    // Validate at least 1 image is selected (uncomment this part and line no 381 for working)
-    // if (selectedImages.length === 0) {
-    //   alert("Please upload at least 1 image for your ad");
-    //   return;
-    // }
+    // Validate at least 1 image is selected
+    if (selectedImages.length === 0) {
+      alert("Please upload at least 1 image for your ad");
+      return;
+    }
     
     // Auto-generate title from vehicle details
     const titleParts = [
@@ -378,7 +378,7 @@ export default function QuickAdCreatePage() {
       case 3:
         // Contact info required for all listing types + at least 1 image
         return formData.name && formData.phoneNumber && formData.province && formData.district && formData.city && formData.location && formData.termsAndConditions 
-        // && selectedImages.length > 0
+         && selectedImages.length > 0
         ;
         
       default:
