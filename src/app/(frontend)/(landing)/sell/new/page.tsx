@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSetupAd } from "@/features/ads/api/use-setup-ad";
 import { useRouter } from "next/navigation";
 import { CreateAdSchema } from "@/server/routes/ad/ad.schemas";
 import { authClient } from "@/lib/auth-client";
+import { client } from "@/lib/rpc";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -87,6 +88,37 @@ export default function QuickAdCreatePage() {
     // Boost selection
     boostType: "" // "bump_up" | "top_ad" | "featured" | "urgent" | ""
   });
+
+  // Auto-fill user profile data
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const response = await client.api.users.me.$get();
+        if (response.ok) {
+          const userData = await response.json();
+          console.log("Fetched user data:", userData);
+          setFormData(prev => ({
+            ...prev,
+            name: userData.name || "",
+            phoneNumber: userData.phone || "",
+            whatsappNumber: userData.whatsappNumber || "",
+            province: userData.province || "",
+            district: userData.district || "",
+            city: userData.city || "",
+            location: userData.location || "",
+          }));
+        } else {
+          console.error("Failed to fetch user profile, status:", response.status);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user profile:", error);
+      }
+    };
+
+    if (session?.user) {
+      fetchUserProfile();
+    }
+  }, [session]);
 
   // Generate available years (current year down to 1970)
   const currentYear = new Date().getFullYear();

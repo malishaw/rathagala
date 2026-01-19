@@ -180,6 +180,11 @@ export const getCurrentUser: AppRouteHandler<GetCurrentUserRoute> = async (c) =>
         email: true,
         phone: true,
         phoneVerified: true,
+        whatsappNumber: true,
+        province: true,
+        district: true,
+        city: true,
+        location: true,
         organizationId: true,
         organization: {
           select: {
@@ -205,6 +210,11 @@ export const getCurrentUser: AppRouteHandler<GetCurrentUserRoute> = async (c) =>
         email: userWithOrg.email,
         phone: userWithOrg.phone,
         phoneVerified: userWithOrg.phoneVerified,
+        whatsappNumber: userWithOrg.whatsappNumber,
+        province: userWithOrg.province,
+        district: userWithOrg.district,
+        city: userWithOrg.city,
+        location: userWithOrg.location,
         organizationId: userWithOrg.organizationId,
         organization: userWithOrg.organization,
       },

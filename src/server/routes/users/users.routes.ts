@@ -86,6 +86,11 @@ export const getCurrentUser = createRoute({
         email: z.string(),
         phone: z.string().nullable().optional(),
         phoneVerified: z.enum(["verified", "not_verified", "rejected"]).nullable().optional(),
+        whatsappNumber: z.string().nullable().optional(),
+        province: z.string().nullable().optional(),
+        district: z.string().nullable().optional(),
+        city: z.string().nullable().optional(),
+        location: z.string().nullable().optional(),
         organizationId: z.string().nullable(),
         organization: z.object({
           id: z.string(),
