@@ -10,9 +10,11 @@ import { useGetUserAds } from "@/features/ads/api/use-get-user-ads";
 import { SignoutButton } from "@/features/auth/components/signout-button";
 import { useGetFavorites } from "@/features/saved-ads/api/use-get-favorites";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
+import { MediaGallery } from "@/modules/media/components/media-gallery";
+import type { MediaFile } from "@/modules/media/types";
 import { betterFetch } from "@better-fetch/fetch";
 import { format } from "date-fns";
-import { Building2, Car, CheckCircle, ChevronRight, CreditCard, Edit, Heart, Loader2, Lock, MapPin, MessageCircle, Phone, Shield, Trash2 } from "lucide-react";
+import { Building2, Car, CheckCircle, ChevronRight, CreditCard, Edit, Heart, Loader2, Lock, MapPin, MessageCircle, Phone, Shield, Trash2, Camera } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -116,6 +118,7 @@ export default function ProfilePage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [sidebarActive, setSidebarActive] = useState("personal");
+  const [isSavingPhoto, setIsSavingPhoto] = useState(false);
 
   // Fetch user ads with the new hook
   const userAdsQuery = useGetUserAds();
@@ -404,6 +407,78 @@ export default function ProfilePage() {
     }
   };
 
+  // Handle profile photo selection
+  const handlePhotoSelect = async (media: MediaFile[]) => {
+    if (media.length === 0) return;
+    
+    const selectedPhoto = media[0];
+    setIsSavingPhoto(true);
+    
+    try {
+      const response = await betterFetch("/api/user/profile", {
+        method: "PATCH",
+        body: {
+          image: selectedPhoto.url
+        }
+      });
+
+      if (!response.data?.user) {
+        throw new Error("Failed to update profile photo");
+      }
+
+      if (user) {
+        setUser({
+          ...user,
+          avatar: selectedPhoto.url
+        });
+      }
+
+      setIsPhotoGalleryOpen(false);
+      toast.success("Profile photo updated");
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
+    } catch (error: any) {
+      console.error("Error updating profile photo:", error);
+      toast.error("Failed to update profile photo");
+    } finally {
+      setIsSavingPhoto(false);
+    }
+  };
+
+  // Handle remove profile photo
+  const handleRemovePhoto = async () => {
+    setIsSavingPhoto(true);
+    
+    try {
+      const response = await betterFetch("/api/user/profile", {
+        method: "PATCH",
+        body: {
+          image: null
+        }
+      });
+
+      if (!response.data?.user) {
+        throw new Error("Failed to remove profile photo");
+      }
+
+      if (user) {
+        setUser({
+          ...user,
+          avatar: undefined
+        });
+      }
+
+      toast.success("Profile photo removed");
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
+    } catch (error: any) {
+      console.error("Error removing profile photo:", error);
+      toast.error("Failed to remove profile photo");
+    } finally {
+      setIsSavingPhoto(false);
+    }
+  };
+
   // Format date helper
   const formatDate = (dateStr: string) => {
     try {
@@ -516,17 +591,40 @@ export default function ProfilePage() {
             <div className="bg-white/80 backdrop-blur-xl border-2 border-white/20 rounded-2xl p-6 space-y-6">
               {/* User info at the top of sidebar */}
               <div className="text-center">
-                <div className="relative inline-block mb-3">
-                  <Avatar className="h-20 w-20 ring-4 ring-white/50">
-                    <AvatarImage src={user.avatar || ""} alt={user.name} />
-                    <AvatarFallback className="bg-gradient-to-br from-[#0D5C63] to-teal-600 text-white text-2xl font-semibold">
-                      {firstLetter}
-                    </AvatarFallback>
-                  </Avatar>
+                <div className="relative inline-block mb-3 group">
+                  <MediaGallery
+                    onMediaSelect={handlePhotoSelect}
+                    multiSelect={false}
+                    title="Change Profile Photo"
+                  >
+                    <button
+                      className="relative cursor-pointer transition-transform hover:scale-105"
+                      disabled={isSavingPhoto}
+                    >
+                      <Avatar className="h-20 w-20 ring-4 ring-white/50 group-hover:ring-teal-500/50 transition-all">
+                        <AvatarImage src={user.avatar || ""} alt={user.name} />
+                        <AvatarFallback className="bg-gradient-to-br from-[#0D5C63] to-teal-600 text-white text-2xl font-semibold">
+                          {firstLetter}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Camera className="h-6 w-6 text-white" />
+                      </div>
+                    </button>
+                  </MediaGallery>
                   <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-emerald-500 border-2 border-white rounded-full"></div>
                 </div>
                 <h2 className="font-semibold text-lg text-slate-800">{user.name}</h2>
                 <p className="text-sm text-slate-500">{user.email}</p>
+                {user.avatar && (
+                  <button
+                    onClick={handleRemovePhoto}
+                    disabled={isSavingPhoto}
+                    className="text-xs text-red-600 hover:text-red-700 mt-2 transition-colors"
+                  >
+                    Remove photo
+                  </button>
+                )}
               </div>
 
               {/* Navigation options */}
