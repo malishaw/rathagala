@@ -384,7 +384,7 @@ export default function AdDetailPage() {
   };
 
   const formatPrice = (price: number | null | undefined) => {
-    if (!price) return "Price upon request";
+    if (!price) return "Price Negotiable";
     return new Intl.NumberFormat("en-LK", {
       style: "currency",
       currency: "LKR",

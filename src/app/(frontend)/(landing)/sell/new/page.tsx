@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Camera, ChevronRight, CheckCircle2, X, PlusCircle } from "lucide-react";
 import { MediaGallery } from "@/modules/media/components/media-gallery";
 import type { MediaFile } from "@/modules/media/types";
@@ -53,6 +54,7 @@ export default function QuickAdCreatePage() {
     manufacturedYear: "",
     modelYear: "",
     price: "",
+    isNegotiable: false,
     condition: "",
     description: "",
     
@@ -86,7 +88,7 @@ export default function QuickAdCreatePage() {
     isDraft: false,
     
     // Boost selection
-    boostType: "" // "bump_up" | "top_ad" | "featured" | "urgent" | ""
+    boostType: "", // "bump_up" | "top_ad" | "featured" | "urgent" | ""
   });
 
   // Auto-fill user profile data
@@ -248,10 +250,10 @@ export default function QuickAdCreatePage() {
   // Handle form submission
   const handleSubmit = () => {
     // Validate at least 1 image is selected
-    if (selectedImages.length === 0) {
-      alert("Please upload at least 1 image for your ad");
-      return;
-    }
+    // if (selectedImages.length === 0) {
+    //   alert("Please upload at least 1 image for your ad");
+    //   return;
+    // }
     
     // Auto-generate title from vehicle details
     const titleParts = [
@@ -265,7 +267,7 @@ export default function QuickAdCreatePage() {
     const title = titleParts.length > 0 ? titleParts.join(" ") : "Vehicle Ad";
     
     // Format numeric fields
-    const price = formData.price ? parseFloat(formData.price) : undefined;
+    const price = formData.isNegotiable ? undefined : (formData.price ? parseFloat(formData.price) : undefined);
     const mileage = formData.mileage ? parseFloat(formData.mileage) : undefined;
     const engineCapacity = formData.engineCapacity ? parseFloat(formData.engineCapacity) : undefined;
     
@@ -386,7 +388,9 @@ export default function QuickAdCreatePage() {
         }
         
         // For SELL - require detailed information as before
-        let detailsRequired = formData.price && formData.condition && formData.description;
+        // Price is only required if NOT negotiable
+        let priceRequired = formData.isNegotiable || formData.price;
+        let detailsRequired = priceRequired && formData.condition && formData.description;
         
         // Type-specific required fields for SELL
         if (formData.type === "CAR") {
@@ -410,7 +414,7 @@ export default function QuickAdCreatePage() {
       case 3:
         // Contact info required for all listing types + at least 1 image
         return formData.name && formData.phoneNumber && formData.province && formData.district && formData.city && formData.location && formData.termsAndConditions 
-         && selectedImages.length > 0
+        //  && selectedImages.length > 0
         ;
         
       default:
@@ -1520,7 +1524,24 @@ export default function QuickAdCreatePage() {
                   placeholder="e.g., 2500000" 
                   value={formData.price}
                   onChange={(e) => handleInputChange("price", e.target.value)}
+                  disabled={formData.isNegotiable}
                 />
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="negotiable" 
+                  checked={formData.isNegotiable}
+                  onCheckedChange={(checked) => {
+                    handleInputChange("isNegotiable", checked);
+                    if (checked) {
+                      handleInputChange("price", "");
+                    }
+                  }}
+                />
+                <Label htmlFor="negotiable" className="text-sm cursor-pointer font-medium">
+                  Price is Negotiable
+                </Label>
               </div>
               
               {/* <div>
@@ -1853,6 +1874,7 @@ export default function QuickAdCreatePage() {
             manufacturedYear: "",
             modelYear: "",
             price: "",
+            isNegotiable: false,
             condition: "",
             description: "",
             transmission: "",

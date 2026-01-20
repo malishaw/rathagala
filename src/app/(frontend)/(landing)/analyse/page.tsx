@@ -255,7 +255,7 @@ export default function ComparisonPage() {
   }, [allVehiclesForTrendAnalysis, trendFilterYear, trendFilterBrand1, trendFilterModel1, trendFilterMfgYear1, trendFilterBrand2, trendFilterModel2, trendFilterMfgYear2]);
 
   const formatPrice = (price: number | null | undefined) => {
-    if (!price) return "Price upon request";
+    if (!price) return "Price Negotiable";
     return new Intl.NumberFormat("en-LK", {
       style: "currency",
       currency: "LKR",

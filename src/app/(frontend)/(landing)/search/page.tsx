@@ -444,7 +444,7 @@ export default function SearchPage() {
 
   // Format price
   const formatPrice = (price: number | null) => {
-    if (!price) return "Price on request";
+    if (!price) return "Negotiable";
     return `Rs. ${price.toLocaleString()}`;
   };
 
@@ -552,7 +552,7 @@ export default function SearchPage() {
                 <Separator className="my-3" />
 
                 {/* Row 1: Location */}
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
                       District
@@ -579,7 +579,7 @@ export default function SearchPage() {
                             onKeyDown={(e) => e.stopPropagation()}
                           />
                         </div>
-                        <SelectItem value="all">All districts</SelectItem>
+                        <SelectItem value="all">All</SelectItem>
                         {filteredDistricts.map((district) => (
                           <SelectItem key={district} value={district}>{district}</SelectItem>
                         ))}
@@ -615,7 +615,7 @@ export default function SearchPage() {
                             onKeyDown={(e) => e.stopPropagation()}
                           />
                         </div>
-                        <SelectItem value="all">All cities</SelectItem>
+                        <SelectItem value="all">All</SelectItem>
                         {filteredCities.map((city) => (
                           <SelectItem key={city} value={city}>{city}</SelectItem>
                         ))}
