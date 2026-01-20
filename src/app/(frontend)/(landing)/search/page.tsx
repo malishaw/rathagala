@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { ChevronDown, ChevronUp, MapPin, TrendingUp, Sparkles, Loader2, Car, Search, Filter, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
+import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
 
 // Vehicle type labels
 const vehicleTypeLabels: Record<string, string> = {
@@ -943,48 +944,69 @@ export default function SearchPage() {
 
             {/* Results Grid */}
             {!isLoading && !error && filteredAds.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {filteredAds.map((vehicle) => (
                   <div
                     key={vehicle.id}
-                    className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer flex group"
+                    className="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative"
                     onClick={() => router.push(`/${vehicle.id}`)}
                   >
-                    <div className="w-1/3 aspect-[4/3] flex-shrink-0 relative overflow-hidden bg-slate-100">
-                      <img
-                        src="/placeholder-image.jpg"
-                        alt={vehicle.title || 'Vehicle'}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                      />
+                    {/* Favorite Button */}
+                    <div className="absolute top-2 right-2 z-10">
+                      <FavoriteButton adId={vehicle.id} />
                     </div>
-                    <div className="flex-1 p-3 flex flex-col justify-between">
-                      <div>
-                        <div className="flex justify-between items-start gap-2 mb-1">
-                          <h3 className="font-semibold text-slate-900 line-clamp-2 md:line-clamp-1 group-hover:text-teal-600 transition-colors">
-                            {[vehicle.brand, vehicle.model, vehicle.condition].filter(Boolean).join(" ")}
-                          </h3>
+
+                    <div className="p-3">
+                      {/* Vehicle Title - Centered */}
+                      <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
+                        {[vehicle.brand, vehicle.model, vehicle.manufacturedYear].filter(Boolean).join(' ')}
+                      </h3>
+
+                      <div className="flex">
+                        {/* Vehicle Image */}
+                        <div className="w-32 h-20 flex-shrink-0">
+                          {vehicle?.media && vehicle.media.length > 0 && vehicle.media[0]?.media?.url ? (
+                            <img
+                              src={vehicle.media[0].media.url}
+                              alt={vehicle.title || 'Vehicle'}
+                              className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                            />
+                          ) : (
+                            <img
+                              src="/placeholder-image.jpg"
+                              alt={vehicle.title || 'Vehicle'}
+                              className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                            />
+                          )}
+                        </div>
+
+                        {/* Vehicle Details */}
+                        <div className="flex-1 pl-3 flex flex-col justify-between">
+                          <div>
+                            <div className="text-xs text-slate-600 mb-1 line-clamp-1">
+                              {vehicle.city || vehicle.location || ""}
+                            </div>
+
+                            <div className="text-sm font-semibold text-teal-700 mb-1">
+                              {formatPrice(vehicle.price)}
+                            </div>
+
+                            <div className="text-xs text-slate-500">
+                              {vehicle.condition || vehicle.type}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between mt-1">
+                            <div className="text-xs text-slate-400">
+                              {format(new Date(vehicle.createdAt), "MMM d, yyyy")}
+                            </div>
+                            <div className="text-xs text-slate-400 flex items-center gap-1">
+                              <Eye className="h-3 w-3" />
+                              {(vehicle as any).analytics?.views || 0}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <p className="text-xs text-slate-500 flex items-center gap-1 mb-2">
-                        <MapPin className="h-3 w-3" /> {vehicle.city || 'Sri Lanka'}
-                      </p>
-                      <div className="text-base font-bold text-teal-700">
-                        {formatPrice(vehicle.price)}
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between px-3 pb-3 pt-2 border-t border-slate-50">
-                      <div className="flex items-center gap-3">
-                        <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
-                          {format(new Date(vehicle.createdAt), "MMM d, yyyy")}
-                        </span>
-                        <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
-                          <Eye className="h-3 w-3" />
-                          {(vehicle as any).analytics?.views || 0}
-                        </span>
-                      </div>
-                      <Badge variant="outline" className="text-[10px] h-5 py-0 border-slate-200 text-slate-600">
-                        {vehicle.condition}
-                      </Badge>
                     </div>
                   </div>
                 ))}
