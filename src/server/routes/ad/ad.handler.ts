@@ -1273,6 +1273,7 @@ export const reject: AppRouteHandler<RejectRoute> = async (c) => {
     // Check if ad exists
     const existingAd = await prisma.ad.findUnique({
       where: { id: adId },
+      include: { creator: true },
     });
 
     if (!existingAd) {
@@ -1294,6 +1295,22 @@ export const reject: AppRouteHandler<RejectRoute> = async (c) => {
         rejectionDescription: body?.rejectionDescription || null,
       },
     });
+
+    // Send rejection email to user
+    try {
+      const { sendAdRejectionEmail } = await import("@/lib/email");
+      if (existingAd.creator?.email) {
+        await sendAdRejectionEmail({
+          email: existingAd.creator.email,
+          name: existingAd.creator.name || "User",
+          adTitle: existingAd.title,
+          rejectionReason: body?.rejectionDescription,
+        });
+      }
+    } catch (emailError) {
+      console.error("[REJECT AD] Failed to send rejection email:", emailError);
+      // Don't fail the ad rejection if email fails
+    }
 
     // Format response
     const formattedAd = {
