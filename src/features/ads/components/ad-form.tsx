@@ -515,6 +515,22 @@ const [formData, setFormData] = useState({
     "Yadea", "Yamaha", "Yanmar", "Yuejin", "Zongshen", "Zotye"
   ];
 
+  // Motorcycle brands list
+  const motorbikeBrands = [
+    "Honda", "Yamaha", "Suzuki", "Kawasaki", "BMW Motorrad", "Ducati", "KTM", "Husqvarna",
+    "GasGas", "Aprilia", "Moto Guzzi", "MV Agusta", "Benelli", "CFMoto", "Royal Enfield",
+    "Triumph", "Harley-Davidson", "Indian", "Victory", "Zero Motorcycles", "Energica",
+    "LiveWire", "Bajaj", "TVS", "Hero", "Hero Honda", "Mahindra", "Jawa", "Yezdi",
+    "Lifan", "Loncin", "Zongshen", "QJMotor", "Keeway", "Kymco", "SYM", "PGO",
+    "Aeon", "Daelim", "Hyosung", "Sanyang", "AJP", "Beta", "Sherco", "Fantic",
+    "Rieju", "Derbi", "Montesa", "Bultaco", "Ossa", "MZ", "Ural", "Izh",
+    "Jawa Moto", "CZ", "Zundapp", "NSU", "Horex", "Brough Superior", "Norton", "Vincent",
+    "Matchless", "AJS", "Royal Enfield (UK)", "Lambretta", "Vespa", "Piaggio", "Gilera",
+    "Italjet", "Malaguti", "Cagiva", "SWM", "Mondial", "Kreidler", "Sachs", "Peugeot Motocycles",
+    "MBK", "Romet", "Junak", "Bajaj Auto", "TVS Motor", "Hero MotoCorp", "Kymstone", "Zontes",
+    "Voge", "Haojue", "Dayang", "Husaberg", "Alta Motors", "Buccaneer", "Mash", "Arch Motorcycle"
+  ];
+
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
       <div className="mb-8">
@@ -830,12 +846,16 @@ const [formData, setFormData] = useState({
                             </FormField>
                             
                             <FormField label="Brand" required>
-                              <Input 
-                                placeholder="e.g., Honda" 
-                                value={formData.brand || ""} 
-                                onChange={(e) => handleInputChange("brand", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
-                              />
+                              <Select value={formData.brand || ""} onValueChange={(value) => handleInputChange("brand", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select brand" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[280px]">
+                                  {motorbikeBrands.map((brand) => (
+                                    <SelectItem key={brand} value={brand}>{brand}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </FormField>
 
                             <FormField label="Model" required>

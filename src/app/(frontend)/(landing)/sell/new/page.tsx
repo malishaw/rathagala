@@ -154,6 +154,22 @@ export default function QuickAdCreatePage() {
     "Triumph", "TVS", "Vauxhall", "Vespa", "Volkswagen", "Volvo", "Wave", "Willys", 
     "Yadea", "Yamaha", "Yanmar", "Yuejin", "Zongshen", "Zotye"
   ];
+
+  // Motorcycle brands list
+  const motorbikeBrands = [
+    "Honda", "Yamaha", "Suzuki", "Kawasaki", "BMW Motorrad", "Ducati", "KTM", "Husqvarna",
+    "GasGas", "Aprilia", "Moto Guzzi", "MV Agusta", "Benelli", "CFMoto", "Royal Enfield",
+    "Triumph", "Harley-Davidson", "Indian", "Victory", "Zero Motorcycles", "Energica",
+    "LiveWire", "Bajaj", "TVS", "Hero", "Hero Honda", "Mahindra", "Jawa", "Yezdi",
+    "Lifan", "Loncin", "Zongshen", "QJMotor", "Keeway", "Kymco", "SYM", "PGO",
+    "Aeon", "Daelim", "Hyosung", "Sanyang", "AJP", "Beta", "Sherco", "Fantic",
+    "Rieju", "Derbi", "Montesa", "Bultaco", "Ossa", "MZ", "Ural", "Izh",
+    "Jawa Moto", "CZ", "Zundapp", "NSU", "Horex", "Brough Superior", "Norton", "Vincent",
+    "Matchless", "AJS", "Royal Enfield (UK)", "Lambretta", "Vespa", "Piaggio", "Gilera",
+    "Italjet", "Malaguti", "Cagiva", "SWM", "Mondial", "Kreidler", "Sachs", "Peugeot Motocycles",
+    "MBK", "Romet", "Junak", "Bajaj Auto", "TVS Motor", "Hero MotoCorp", "Kymstone", "Zontes",
+    "Voge", "Haojue", "Dayang", "Husaberg", "Alta Motors", "Buccaneer", "Mash", "Arch Motorcycle"
+  ];
   
   // Sri Lankan provinces, districts, and cities data
   const locationData = {
@@ -632,11 +648,16 @@ export default function QuickAdCreatePage() {
             {/* Brand */}
             <div>
               <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
-              <Input 
-                placeholder="e.g., Honda" 
-                value={formData.brand}
-                onChange={(e) => handleInputChange("brand", e.target.value)}
-              />
+              <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select brand" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[280px]">
+                  {motorbikeBrands.map((brand) => (
+                    <SelectItem key={brand} value={brand}>{brand}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Model */}
