@@ -82,6 +82,11 @@ interface User {
   organizationId: string | null;
   phone: string | null;
   phoneVerified: "verified" | "not_verified" | "rejected" | null;
+  whatsappNumber?: string | null;
+  province?: string | null;
+  district?: string | null;
+  city?: string | null;
+  location?: string | null;
   organization?: {
     id: string;
     name: string;
@@ -381,16 +386,17 @@ export default function UsersPage() {
 
   const handleEditClick = (user: User) => {
     setSelectedUser(user);
+    
     setEditData({
       name: user.name || "",
       email: user.email || "",
       role: user.role || "user",
-      phone: "",
-      whatsappNumber: "",
-      province: "",
-      district: "",
-      city: "",
-      location: "",
+      phone: user.phone || "",
+      whatsappNumber: user.whatsappNumber || "",
+      province: user.province || "",
+      district: user.district || "",
+      city: user.city || "",
+      location: user.location || "",
     });
     setEditDialogOpen(true);
   };
@@ -464,23 +470,28 @@ export default function UsersPage() {
 
     setIsLoading(selectedUser.id);
     try {
+      // Build request body with only non-empty fields
+      const requestBody: any = {
+        name: editData.name.trim(),
+        email: editData.email.trim(),
+        role: editData.role,
+      };
+
+      // Only include optional fields if they have values
+      if (editData.phone?.trim()) requestBody.phone = editData.phone.trim();
+      if (editData.whatsappNumber?.trim()) requestBody.whatsappNumber = editData.whatsappNumber.trim();
+      if (editData.province?.trim()) requestBody.province = editData.province.trim();
+      if (editData.district?.trim()) requestBody.district = editData.district.trim();
+      if (editData.city?.trim()) requestBody.city = editData.city.trim();
+      if (editData.location?.trim()) requestBody.location = editData.location.trim();
+
       const response = await fetch(`/api/users/${selectedUser.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({
-          name: editData.name.trim(),
-          email: editData.email.trim(),
-          role: editData.role,
-          phone: editData.phone || undefined,
-          whatsappNumber: editData.whatsappNumber || undefined,
-          province: editData.province || undefined,
-          district: editData.district || undefined,
-          city: editData.city || undefined,
-          location: editData.location || undefined,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {

@@ -80,6 +80,11 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       organizationId: true,
       phone: true,
       phoneVerified: true,
+      whatsappNumber: true,
+      province: true,
+      district: true,
+      city: true,
+      location: true,
       organization: {
         select: {
           id: true,
