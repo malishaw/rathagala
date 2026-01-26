@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { format } from "date-fns";
-import { Filter, Loader2, Search, X, Eye } from "lucide-react";
+import { Filter, Loader2, Search, X, Eye, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -1283,6 +1283,81 @@ export default function VehicleMarketplace() {
           </div>
         </div>
       </div>
+
+      {/* Trending Vehicles Section */}
+      <section className="bg-white py-12 md:py-16 border-b border-slate-100">
+        <div className="max-w-6xl mx-auto px-4">
+          {/* Trending Vehicles */}
+          <div>
+            <h2 className="text-2xl md:text-2xl font-bold text-slate-800 mb-6">Trending Vehicles</h2>
+            {isLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[...Array(6)].map((_, index) => (
+                  <div key={index} className="bg-slate-100 rounded-lg border border-slate-200 overflow-hidden animate-pulse">
+                    <div className="w-full h-40 bg-slate-200"></div>
+                    <div className="p-4 space-y-2">
+                      <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+                      <div className="h-3 bg-slate-200 rounded w-1/2"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {allAds
+                  .filter(ad => ad.status === "ACTIVE")
+                  .sort((a, b) => ((b as any).analytics?.views || 0) - ((a as any).analytics?.views || 0))
+                  .slice(0, 6)
+                  .map((vehicle) => (
+                    <div
+                      key={vehicle.id}
+                      className="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group"
+                      onClick={() => (window.location.href = `/${vehicle.id}`)}
+                    >
+
+
+                      {/* Vehicle Image */}
+                      <div className="w-full h-40 overflow-hidden bg-slate-100 relative">
+                        {vehicle?.media && vehicle.media.length > 0 && vehicle.media[0]?.media?.url ? (
+                          <img
+                            src={vehicle.media[0].media.url}
+                            alt={vehicle.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <img
+                            src="/placeholder-image.jpg"
+                            alt={vehicle.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        )}
+                        {/* Badge for Trending with view count */}
+                        <div className="absolute top-2 left-2 bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-md flex items-center gap-1">
+                          <TrendingUp className="w-3 h-3" /><span className="font-semibold italic" >Trending</span>
+                        </div>
+                      </div>
+
+                      {/* Vehicle Details */}
+                      <div className="p-3">
+                        <h3 className="font-semibold text-sm text-slate-800 mb-2 line-clamp-2 group-hover:text-teal-700">
+                          {[vehicle.brand, vehicle.model, vehicle.manufacturedYear]
+                            .filter(Boolean)
+                            .join(' ')}
+                        </h3>
+
+                        <div className="text-xs text-slate-600 mb-2">{vehicle.city || vehicle.location || ""}</div>
+
+                        <div className="text-sm font-semibold text-teal-700">
+                          {formatPrice(vehicle.price)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
 
       {/* Banner Ad Space */}
       <div className="bg-white py-6">
