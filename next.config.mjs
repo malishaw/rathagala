@@ -1,11 +1,12 @@
 import withPlaiceholder from "@plaiceholder/next";
+import { hostname } from "os";
 
 const nextConfig = {
   images: {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "myunivrs-s3-storage.s3.eu-west-2.amazonaws.com"
+        hostname: process.env.NEXT_PUBLIC_AWS_S3_BUCKET + ".s3." + process.env.NEXT_PUBLIC_AWS_REGION + ".amazonaws.com",
       }
     ]
   },

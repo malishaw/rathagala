@@ -678,7 +678,7 @@ export default function ProfilePage() {
               <div className="pt-4 border-t border-white/30">
                 <SignoutButton
                   variant="outline"
-                  className="w-full bg-white/80 backdrop-blur-md text-red-600 hover:bg-red-50 border-2 border-white/30 hover:border-red-200 transition-all duration-300"
+                  className="w-full bg-white/80 backdrop-blur-md text-red-600 hover:bg-red-50 border-2 hover:text-red-600  border-white/30 hover:border-red-200 transition-all duration-300"
                 />
               </div>
             </div>
@@ -797,7 +797,7 @@ export default function ProfilePage() {
                       <div className="flex gap-3 pt-2">
                         <Button
                           variant="outline"
-                          className="flex-1 bg-white/50 hover:bg-white/70 backdrop-blur-md border-2 border-white/30"
+                          className="flex-1 bg-white hover:bg-gray-100 text-black hover:text-black border-2 border-white/30"
                           onClick={() => setActiveSection(null)}
                         >
                           Cancel

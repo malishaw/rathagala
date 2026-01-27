@@ -44,7 +44,7 @@ export function SignoutButton({ className, variant }: Props) {
       onClick={handleSignout}
       className={cn("", className)}
       variant={variant ?? "default"}
-      icon={<LogOut />}
+      icon={<LogOut className=" hover:text-white" />}
     >
       Sign out
     </Button>
