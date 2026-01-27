@@ -412,6 +412,52 @@ export default function UsersPage() {
     setPhoneVerifyDialogOpen(true);
   };
 
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+
+    setIsLoading(selectedUser.id);
+    try {
+      const response = await fetch("/api/admin/users/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ userId: selectedUser.id }),
+      });
+
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage =
+            errorData.error?.message || errorData.message || errorMessage;
+        } catch {
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      toast.success("User deleted successfully", {
+        description: `${selectedUser.name || selectedUser.email} has been permanently deleted.`,
+      });
+
+      setDeleteDialogOpen(false);
+      setSelectedUser(null);
+      refetch();
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      toast.error("Failed to delete user", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
+      });
+    } finally {
+      setIsLoading(null);
+    }
+  };
+
   const handleUpdatePhoneVerification = async () => {
     if (!selectedUser) return;
 
@@ -794,14 +840,14 @@ export default function UsersPage() {
                                 onClick={() => handleEditClick(user)}
                                 disabled={isLoading === user.id}
                               >
-                                <Pencil className="h-4 w-4 mr-2" />
+                                <Pencil className="h-4 w-4 mr-2 hover:text-white" />
                                 Edit Details
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => handleAssignOrgClick(user)}
                                 disabled={isLoading === user.id}
                               >
-                                <Building2 className="h-4 w-4 mr-2" />
+                                <Building2 className="h-4 w-4 mr-2 hover:text-white" />
                                 Assign Organization
                               </DropdownMenuItem>
                               {user.phone && (
@@ -809,7 +855,7 @@ export default function UsersPage() {
                                   onClick={() => handlePhoneVerifyClick(user)}
                                   disabled={isLoading === user.id}
                                 >
-                                  <Phone className="h-4 w-4 mr-2" />
+                                  <Phone className="h-4 w-4 mr-2 hover:text-white" />
                                   Update Phone Verification
                                 </DropdownMenuItem>
                               )}
@@ -819,7 +865,7 @@ export default function UsersPage() {
                                   onClick={() => handleUnban(user)}
                                   disabled={isLoading === user.id}
                                 >
-                                  <Check className="h-4 w-4 mr-2" />
+                                  <Check className="h-4 w-4 mr-2 hover:text-white" />
                                   Unban User
                                 </DropdownMenuItem>
                               ) : (
@@ -827,7 +873,7 @@ export default function UsersPage() {
                                   onClick={() => handleBanClick(user)}
                                   disabled={isLoading === user.id}
                                 >
-                                  <Ban className="h-4 w-4 mr-2" />
+                                  <Ban className="h-4 w-4 mr-2 hover:text-white" />
                                   Ban User
                                 </DropdownMenuItem>
                               )}
@@ -837,7 +883,7 @@ export default function UsersPage() {
                                 className="text-red-600"
                                 disabled={isLoading === user.id}
                               >
-                                <Trash2 className="h-4 w-4 mr-2" />
+                                <Trash2 className="h-4 w-4 mr-2 hover:text-white" />
                                 Delete User
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -1486,6 +1532,81 @@ export default function UsersPage() {
                 <>
                   <Phone className="mr-2 h-4 w-4" />
                   Update Status
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-red-600" />
+              Delete User
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {selectedUser?.name || selectedUser?.email}?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-sm text-red-800">
+                <strong>Warning:</strong> This action is permanent and cannot be undone. 
+                The user and all associated data will be permanently deleted from the system.
+              </p>
+            </div>
+
+            {selectedUser && (
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage
+                    src={selectedUser.image || undefined}
+                    alt={selectedUser.name || selectedUser.email}
+                  />
+                  <AvatarFallback className="text-sm bg-[#024950] text-white">
+                    {selectedUser.name?.[0]?.toUpperCase() ||
+                      selectedUser.email?.[0]?.toUpperCase() ||
+                      "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-medium text-sm">{selectedUser.name}</p>
+                  <p className="text-xs text-gray-500">{selectedUser.email}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setSelectedUser(null);
+              }}
+              disabled={isLoading === selectedUser?.id}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteUser}
+              disabled={isLoading === selectedUser?.id}
+              className="hover:text-white"
+            >
+              {isLoading === selectedUser?.id ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete User
                 </>
               )}
             </Button>
