@@ -35,15 +35,30 @@ export async function GET(request: NextRequest) {
     const watermarkWidth = Math.floor(imgWidth * 0.35);
     const watermarkHeight = Math.floor(watermarkWidth * 0.45); // Aspect ratio for two lines
 
+    // Attempt to embed a local Sinhala-capable font (optional)
+    // Place a TTF file at `public/fonts/NotoSansSinhala-Bold.ttf` (or similar)
+    const fontPath = join(process.cwd(), "public", "fonts", "NotoSansSinhala-Bold.ttf");
+    let embeddedFontCss = "";
+    try {
+      const fontBuffer = await readFile(fontPath);
+      const fontBase64 = fontBuffer.toString("base64");
+      embeddedFontCss = `@font-face{font-family: 'NotoSinhalaEmbedded'; src: url('data:font/ttf;base64,${fontBase64}') format('truetype'); font-weight: normal; font-style: normal;}`;
+    } catch (e) {
+      // No embedded font found; will fall back to system fonts
+      console.warn("No embedded Sinhala font found at", fontPath);
+    }
+
     // Generate dynamic SVG watermark
     // Line 1: රථගාල
     // Line 2: www.rathagala.lk
     const svgWatermark = `
       <svg width="${watermarkWidth}" height="${watermarkHeight}" viewBox="0 0 ${watermarkWidth} ${watermarkHeight}" xmlns="http://www.w3.org/2000/svg">
         <style>
+          ${embeddedFontCss}
           .watermark-text {
             fill: white;
-            font-family: sans-serif;
+            /* prefer embedded Sinhala font, then common system fallbacks */
+            font-family: 'NotoSinhalaEmbedded', 'Noto Sans Sinhala', 'FM Abhaya', sans-serif;
             text-anchor: middle;
             font-weight: bold;
           }
