@@ -183,6 +183,7 @@ export const getCurrentUser: AppRouteHandler<GetCurrentUserRoute> = async (c) =>
         id: true,
         name: true,
         email: true,
+        image: true,
         phone: true,
         phoneVerified: true,
         whatsappNumber: true,
@@ -213,6 +214,7 @@ export const getCurrentUser: AppRouteHandler<GetCurrentUserRoute> = async (c) =>
         id: userWithOrg.id,
         name: userWithOrg.name,
         email: userWithOrg.email,
+        image: userWithOrg.image,
         phone: userWithOrg.phone,
         phoneVerified: userWithOrg.phoneVerified,
         whatsappNumber: userWithOrg.whatsappNumber,
@@ -248,7 +250,7 @@ export const updateProfile: AppRouteHandler<UpdateProfileRoute> = async (c) => {
     );
   }
 
-  const { name, phone, whatsappNumber, province, district, city, location } = c.req.valid("json");
+  const { name, phone, whatsappNumber, province, district, city, location, image } = c.req.valid("json");
 
   try {
     // Check if phone number exists in any other user's phone OR whatsappNumber field
@@ -304,12 +306,14 @@ export const updateProfile: AppRouteHandler<UpdateProfileRoute> = async (c) => {
         province,
         district,
         city,
-        location
+        location,
+        image
       },
       select: {
         id: true,
         name: true,
         email: true,
+        image: true,
         phone: true,
         whatsappNumber: true,
         province: true,

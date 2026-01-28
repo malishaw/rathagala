@@ -1,13 +1,7 @@
-import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { client } from "@/lib/rpc";
 
 import type { UploadParams, MediaFile } from "@/modules/media/types";
-import {
-  generatePresignedUrl,
-  generateUniqueFileName,
-  getMediaType
-} from "@/modules/media/utils";
-import { s3Client, s3Config } from "@/modules/media/config";
+import { getMediaType } from "@/modules/media/utils";
 
 export class MediaService {
   private static instance: MediaService;
@@ -23,67 +17,34 @@ export class MediaService {
   }
 
   async uploadFile({ file, path = "" }: UploadParams): Promise<MediaFile> {
-    // Step 1: Upload file to S3
-    const filename = generateUniqueFileName(file.name);
-    const key = path ? `${path}/${filename}` : filename;
-
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    await s3Client.send(
-      new PutObjectCommand({
-        Bucket: s3Config.bucket,
-        Key: key,
-        Body: buffer,
-        ContentType: file.type,
-        ACL: "public-read", // This makes the object publicly readable
-        CacheControl: "max-age=31536000" // Optional: 1 year cache
-      })
-    );
-
-    // Step 2: Create media file metadata
-    const mediaData: MediaFile = {
-      id: key,
-      url: `${s3Config.baseUrl}/${key}`,
-      type: getMediaType(file.type),
-      filename: filename,
-      size: file.size,
-      createdAt: new Date()
-    };
-
-    // Step 3: Save media metadata to database via API
-    try {
-      await client.api.media.$post({
-        json: {
-          url: mediaData.url,
-          type: mediaData.type,
-          filename: mediaData.filename,
-          size: mediaData.size
-        }
-      });
-
-      return {
-        ...mediaData
-      };
-    } catch (error) {
-      console.log(error);
-
-      // If database save fails, try to clean up the S3 file to avoid orphaned files
-      try {
-        await this.deleteS3File(key);
-      } catch (cleanupError) {
-        console.error(
-          "Failed to clean up S3 file after database save error:",
-          cleanupError
-        );
-      }
-
-      throw new Error(
-        `Failed to save media metadata to database: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
+    // Upload via API route (handles S3 server-side)
+    const formData = new FormData();
+    formData.append('file', file);
+    if (path) {
+      formData.append('path', path);
     }
+
+    const response = await fetch('/api/media/upload', {
+      method: 'POST',
+      body: formData,
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Upload failed: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    return {
+      id: data.id,
+      url: data.url,
+      type: data.type,
+      filename: data.filename,
+      size: data.size,
+      createdAt: new Date(data.createdAt)
+    };
   }
 
   async deleteFile(id: string): Promise<void> {
@@ -93,9 +54,14 @@ export class MediaService {
         param: { id }
       });
 
-      // Step 2: Delete from S3
+      // Step 2: Ask server to delete S3 object
       const key = this.extractKeyFromUrl(media.url);
-      await this.deleteS3File(key);
+      await fetch('/api/media/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key }),
+        credentials: 'include'
+      });
 
       // Step 3: Delete from database
       await client.api.media[":id"].$delete({
@@ -110,26 +76,18 @@ export class MediaService {
     }
   }
 
-  private async deleteS3File(key: string): Promise<void> {
-    await s3Client.send(
-      new DeleteObjectCommand({
-        Bucket: s3Config.bucket,
-        Key: key
-      })
-    );
-  }
-
   private extractKeyFromUrl(url: string): string {
     // Extract the key from the S3 URL
-    const baseUrlWithoutProtocol = s3Config.baseUrl.replace(/^https?:\/\//, "");
-    return url
-      .replace(/^https?:\/\//, "")
-      .replace(baseUrlWithoutProtocol + "/", "");
-  }
-
-  async getPresignedUrl(filename: string, path = ""): Promise<string> {
-    const key = path ? `${path}/${filename}` : filename;
-    return await generatePresignedUrl(key);
+    const bucket = process.env.NEXT_PUBLIC_AWS_S3_BUCKET;
+    const region = process.env.NEXT_PUBLIC_AWS_REGION;
+    const baseUrl = `https://${bucket}.s3.${region}.amazonaws.com`;
+    const baseUrlWithoutProtocol = baseUrl.replace(/^https?:\/\//, "");
+    const remainder = url.replace(/^https?:\/\//, "").replace(baseUrlWithoutProtocol + "/", "");
+    try {
+      return decodeURIComponent(remainder);
+    } catch {
+      return remainder;
+    }
   }
 
   async getAllMedia() {

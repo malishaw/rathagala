@@ -161,14 +161,23 @@ export default function ProfilePage() {
         try {
           const { data: meData } = await betterFetch<any>("/api/users/me");
           
+          console.log("meData from /api/users/me:", meData);
+          
           // Merge session user with full user data from API
           const fullUser = {
             ...session.user,
+            avatar: meData?.image || meData?.avatar || session.user.avatar,
             phone: meData?.phone || session.user.phone,
             phoneVerified: meData?.phoneVerified || session.user.phoneVerified,
-            organization: meData?.organization
+            organization: meData?.organization,
+            whatsappNumber: meData?.whatsappNumber || session.user.whatsappNumber,
+            province: meData?.province || session.user.province,
+            district: meData?.district || session.user.district,
+            city: meData?.city || session.user.city,
+            location: meData?.location || session.user.location
           };  
           
+          console.log("fullUser after merge:", fullUser);
           setUser(fullUser);
 
           // Initialize form data with user info
@@ -415,15 +424,26 @@ export default function ProfilePage() {
     setIsSavingPhoto(true);
     
     try {
+      // Include all profile fields to avoid validation errors
       const response = await betterFetch("/api/user/profile", {
         method: "PATCH",
         body: {
+          name: formData.name,
+          phone: formData.phone,
+          whatsappNumber: formData.whatsappNumber,
+          province: formData.province,
+          district: formData.district,
+          city: formData.city,
+          location: formData.location,
           image: selectedPhoto.url
         }
       });
 
       if (!response.data?.user) {
-        throw new Error("Failed to update profile photo");
+        const errorMsg = (response.error as any)?.message || 
+                         (response.data as any)?.message || 
+                         "Failed to update profile photo";
+        throw new Error(errorMsg);
       }
 
       if (user) {
@@ -433,13 +453,13 @@ export default function ProfilePage() {
         });
       }
 
-      setIsPhotoGalleryOpen(false);
       toast.success("Profile photo updated");
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2000);
     } catch (error: any) {
       console.error("Error updating profile photo:", error);
-      toast.error("Failed to update profile photo");
+      const message = error?.error?.message || error?.message || "Failed to update profile photo";
+      toast.error(message);
     } finally {
       setIsSavingPhoto(false);
     }
@@ -450,15 +470,26 @@ export default function ProfilePage() {
     setIsSavingPhoto(true);
     
     try {
+      // Include all profile fields to avoid validation errors
       const response = await betterFetch("/api/user/profile", {
         method: "PATCH",
         body: {
+          name: formData.name,
+          phone: formData.phone,
+          whatsappNumber: formData.whatsappNumber,
+          province: formData.province,
+          district: formData.district,
+          city: formData.city,
+          location: formData.location,
           image: null
         }
       });
 
       if (!response.data?.user) {
-        throw new Error("Failed to remove profile photo");
+        const errorMsg = (response.error as any)?.message || 
+                         (response.data as any)?.message || 
+                         "Failed to remove profile photo";
+        throw new Error(errorMsg);
       }
 
       if (user) {
@@ -473,7 +504,8 @@ export default function ProfilePage() {
       setTimeout(() => setShowSuccess(false), 2000);
     } catch (error: any) {
       console.error("Error removing profile photo:", error);
-      toast.error("Failed to remove profile photo");
+      const message = error?.error?.message || error?.message || "Failed to remove profile photo";
+      toast.error(message);
     } finally {
       setIsSavingPhoto(false);
     }
@@ -602,7 +634,7 @@ export default function ProfilePage() {
                       disabled={isSavingPhoto}
                     >
                       <Avatar className="h-20 w-20 ring-4 ring-white/50 group-hover:ring-teal-500/50 transition-all">
-                        <AvatarImage src={user.avatar || ""} alt={user.name} />
+                        <AvatarImage src={user.avatar} alt={user.name} />
                         <AvatarFallback className="bg-gradient-to-br from-[#0D5C63] to-teal-600 text-white text-2xl font-semibold">
                           {firstLetter}
                         </AvatarFallback>

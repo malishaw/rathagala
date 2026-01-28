@@ -2,6 +2,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -1028,11 +1029,20 @@ export default function AdDetailPage() {
                         router.push(`/search`);
                       }
                     }}
-                    className="w-12 h-12 bg-[#024950] bg-opacity-10 rounded-full flex items-center justify-center hover:bg-opacity-20 cursor-pointer"
+                    className="w-12 h-12 rounded-full flex items-center justify-center hover:bg-opacity-20 cursor-pointer"
                   >
-                    <span className="text-[#024950] font-semibold text-lg">
-                      {((ad as any).creator?.name || "Seller").charAt(0).toUpperCase()}
-                    </span>
+                    <Avatar className="h-12 w-12">
+                      {((ad as any).creator?.image || (ad as any).creator?.avatar) ? (
+                        <AvatarImage
+                          src={(ad as any).creator?.image || (ad as any).creator?.avatar}
+                          alt={(ad as any).creator?.name || "Seller"}
+                        />
+                      ) : (
+                        <AvatarFallback className="bg-gradient-to-br from-[#0D5C63] to-teal-600 text-white font-semibold">
+                          {(((ad as any).creator?.name || "Seller").charAt(0) || "S").toUpperCase()}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
                   </button>
                   <div className="flex-1">
                     <div className="flex items-center space-x-2">

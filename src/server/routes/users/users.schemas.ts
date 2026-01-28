@@ -24,6 +24,7 @@ export const updateProfileSchema = z.object({
   district: z.string().optional(),
   city: z.string().optional(),
   location: z.string().optional(),
+  image: z.string().nullable().optional(),
 });
 
 export const updateUserByAdminSchema = z.object({

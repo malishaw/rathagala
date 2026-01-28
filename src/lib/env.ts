@@ -11,10 +11,10 @@ const EnvSchema = z.object({
 
   NEXT_PUBLIC_APP_URL: z.string().optional(),
 
-  NEXT_PUBLIC_AWS_REGION: z.string().optional(),
-  NEXT_PUBLIC_AWS_ACCESS_KEY_ID: z.string().optional(),
-  NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY: z.string().optional(),
-  NEXT_PUBLIC_AWS_S3_BUCKET: z.string().optional()
+  AWS_REGION: z.string().optional(),
+  AWS_ACCESS_KEY_ID: z.string().optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  AWS_S3_BUCKET: z.string().optional()
 });
 
 export type Env = z.infer<typeof EnvSchema>;
