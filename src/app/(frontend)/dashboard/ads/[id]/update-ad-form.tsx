@@ -36,7 +36,7 @@ export default function UpdateAdFormPage() {
           } else {
             // Admin or draft - redirect normally
             if (isAdmin) {
-              router.push('/dashboard/ads');
+              router.push('/dashboard/ads-manage');
             } else {
               router.push('/profile#my-ads');
             }

@@ -16,14 +16,39 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { useApproveAd } from "@/features/ads/api/use-approve-ad";
 import { useRejectAd } from "@/features/ads/api/use-reject-ad";
-import { Check, X } from "lucide-react";
+import { useDeleteAd } from "@/features/ads/api/use-delete-ad";
+import { Check, X, Eye, Edit, Trash2 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useRouter } from "next/navigation";
+import { FaMobileAlt, FaWhatsapp } from "react-icons/fa";
 
 // This type is used to define the shape of our data.
 export type AdType = Omit<Ad, "createdAt"> & {
   createdAt: string;
+  creator?: {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+    avatar?: string | null;
+  };
 };
 
 // Vehicle type labels mapping
@@ -97,28 +122,21 @@ export const adminColumns: ColumnDef<AdType>[] = [
     cell: ({ row }) => {
       const ad = row.original;
       const displayTitle = generateAdTitle(ad);
-
-      return (
-        <Link
-          href={`/dashboard/ads/${ad.id}`}
-          className="hover:underline font-medium"
-        >
-          {displayTitle}
-        </Link>
-      );
-    }
-  },
-  {
-    accessorKey: "type",
-    header: "Ad Type",
-    cell: ({ row }) => {
-      const type = row.original.type;
+      const type = ad.type;
       const displayType = vehicleTypeLabels[type] || type;
 
       return (
-        <Badge variant="outline" className="bg-slate-100 text-slate-800 border-slate-200">
-          {displayType}
-        </Badge>
+        <div className="flex flex-col gap-2">
+          <Link
+            href={`/dashboard/ads/${ad.id}`}
+            className="hover:underline font-medium text-sm"
+          >
+            {displayTitle}
+          </Link>
+          <Badge variant="outline" className="bg-slate-100 text-slate-800 border-1 w-fit border-amber-200">
+            {displayType}
+          </Badge>
+        </div>
       );
     }
   },
@@ -126,59 +144,110 @@ export const adminColumns: ColumnDef<AdType>[] = [
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      return getStatusBadge(row.original.status);
-    }
-  },
-  {
-    accessorKey: "rejectionDescription",
-    header: "Rejection Reason",
-    cell: ({ row }) => {
-      const rejectionDescription = (row.original as any).rejectionDescription;
-      if (!rejectionDescription) {
-        return <span className="text-muted-foreground text-sm">—</span>;
-      }
+      const status = row.original.status;
+      const rejectionDescription = row.original.rejectionDescription;
+      
       return (
-        <div className="max-w-xs">
-          <p className="text-sm text-red-600 line-clamp-2" title={rejectionDescription}>
-            {rejectionDescription}
-          </p>
+        <div className="flex items-center gap-2">
+          {getStatusBadge(status)}
+          {status === "REJECTED" && rejectionDescription && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Eye className="w-4 h-4 text-red-500 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs bg-blue-100 text-gray-800 border-red-600 text-sm">
+                  <p>{rejectionDescription}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
       );
     }
   },
+  // {
+  //   accessorKey: "rejectionDescription",
+  //   header: "Rejection Reason",
+  //   cell: ({ row }) => {
+  //     const rejectionDescription = row.original.rejectionDescription;
+  //     if (!rejectionDescription) {
+  //       return <span className="text-muted-foreground text-sm">—</span>;
+  //     }
+  //     return (
+  //       <div className="max-w-xs">
+  //         <p className="text-sm text-red-600 line-clamp-2" title={rejectionDescription}>
+  //           {rejectionDescription}
+  //         </p>
+  //       </div>
+  //     );
+  //   }
+  // },
   {
     accessorKey: "createdBy",
     header: "Created By",
     cell: ({ row }) => {
       const creator = row.original.creator;
-      return creator?.name || creator?.email || "Unknown";
-    }
-  },
-  {
-    accessorKey: "userName",
-    header: "Name",
-    cell: ({ row }) => {
-      const name = (row.original as any).name;
-      return name || "—";
+      const formName = row.original.name;
+      
+      return (
+        <div className="flex flex-col gap-1 text-sm">
+          <div className="font-medium">Profile: {creator?.name || creator?.email || "Unknown"}</div>
+          <div className="text-muted-foreground text-xs">seller: {formName || "—"}</div>
+        </div>
+      );
     }
   },
   {
     accessorKey: "phoneNumber",
-    header: "Phone Number",
+    header: "Contact No",
     cell: ({ row }) => {
-      const phone = (row.original as any).phoneNumber;
-      if (!phone) return <span className="text-muted-foreground text-sm">—</span>;
+      const phone = row.original.phoneNumber;
+      const whatsapp = row.original.whatsappNumber;
+      
       return (
-        <a href={`tel:${phone}`} className="text-sm text-teal-700 hover:underline">
-          {phone}
-        </a>
+        <div className="flex flex-col gap-1 text-sm">
+          {phone ? (
+            <a href={`tel:${phone}`} className="text-teal-700 hover:underline">
+              <span className="inline-flex items-center gap-2">
+                <FaMobileAlt className="w-4 h-4" />
+                <span className="inline">{phone}</span>
+              </span>
+            </a>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+          {whatsapp ? (
+            <a
+              href={`https://wa.me/${whatsapp.replace(/\D/g, "")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-green-600 hover:underline"
+            >
+              <span className="inline-flex items-center gap-2">
+                <FaWhatsapp className="w-4 h-4" />
+                <span className="inline">{whatsapp}</span>
+              </span>
+            </a>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </div>
       );
     }
   },
   {
     accessorKey: "createdAt",
     header: "Created At",
-    cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString()
+    cell: ({ row }) => {
+      const date = new Date(row.original.createdAt);
+      return (
+        <div className="flex flex-col gap-1 text-sm">
+          <div>{date.toLocaleDateString()}</div>
+          <div className="text-muted-foreground text-xs">at {date.toLocaleTimeString()}</div>
+        </div>
+      );
+    }
   },
   {
     id: "actions",
@@ -191,10 +260,13 @@ export const adminColumns: ColumnDef<AdType>[] = [
 
 // Separate component to use hooks properly
 function AdminActionsCell({ ad }: { ad: AdType }) {
+  const router = useRouter();
   const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [rejectionDescription, setRejectionDescription] = useState("");
   const approveMutation = useApproveAd();
   const rejectMutation = useRejectAd();
+  const deleteMutation = useDeleteAd();
 
   // Show approve button for DRAFT, PENDING_REVIEW, and REJECTED statuses
   const canApprove = ad.status === "DRAFT" || ad.status === "PENDING_REVIEW" || ad.status === "REJECTED";
@@ -213,10 +285,19 @@ function AdminActionsCell({ ad }: { ad: AdType }) {
     );
   };
 
-  // If no actions available, show a message
-  if (!canApprove && !canReject) {
-    return <span className="text-muted-foreground text-sm">No actions</span>;
-  }
+  const handleDelete = () => {
+    deleteMutation.mutate(ad.id, {
+      onSuccess: () => {
+        setShowDeleteDialog(false);
+      },
+    });
+  };
+
+  const handleEdit = () => {
+    router.push(`/dashboard/ads/${ad.id}`);
+  };
+
+  const isLoading = approveMutation.isPending || rejectMutation.isPending || deleteMutation.isPending;
 
   return (
     <>
@@ -225,24 +306,44 @@ function AdminActionsCell({ ad }: { ad: AdType }) {
           <Button
             size="sm"
             onClick={() => approveMutation.mutate(ad.id)}
-            disabled={approveMutation.isPending || rejectMutation.isPending}
-            className="bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700 border-0"
+            disabled={isLoading}
+            className="bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700 border-0 h-8"
+            title="Approve Ad"
           >
-            <Check className="w-4 h-4 mr-1" />
-            Approve
+            <Check className="w-4 h-4" />
           </Button>
         )}
         {canReject && (
           <Button
             size="sm"
             onClick={() => setShowRejectDialog(true)}
-            disabled={approveMutation.isPending || rejectMutation.isPending}
-            className="bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 border-0"
+            disabled={isLoading}
+            className="bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 border-0 h-8"
+            title="Reject Ad"
           >
-            <X className="w-4 h-4 mr-1" />
-            Reject
+            <X className="w-4 h-4" />
           </Button>
         )}
+        <Button
+          size="sm"
+          onClick={handleEdit}
+          disabled={isLoading}
+          variant="outline"
+          className="border-[#024950] text-[#024950] hover:bg-[#024950] hover:text-white h-8"
+          title="Edit Ad"
+        >
+          <Edit className="w-4 h-4" />
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => setShowDeleteDialog(true)}
+          disabled={isLoading}
+          variant="outline"
+          className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white h-8"
+          title="Delete Ad"
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
       </div>
 
       {/* Reject Dialog */}
@@ -288,6 +389,30 @@ function AdminActionsCell({ ad }: { ad: AdType }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Ad</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this ad? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex gap-3">
+            <AlertDialogCancel disabled={deleteMutation.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleteMutation.isPending}
+              className="bg-red-600 hover:bg-red-700 text-white "
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

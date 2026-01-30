@@ -864,8 +864,9 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
       ) as any;
     }
 
-    // Verify user is the owner of the ad
-    if (existingAd.createdBy !== user.id) {
+    // Verify user is the owner of the ad OR is an admin
+    const isAdmin = (user as any)?.role === "admin";
+    if (existingAd.createdBy !== user.id && !isAdmin) {
       return c.json(
         { message: "You don't have permission to update this ad" },
         HttpStatusCodes.FORBIDDEN
