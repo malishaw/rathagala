@@ -885,57 +885,59 @@ export default function AdDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Similar Vehicles */}
-            {(similarVehicles.length > 0 || isLoadingSimilar) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-[#024950]">Similar Vehicles</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {isLoadingSimilar ? (
-                    <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin w-6 h-6 border-4 border-[#024950] border-t-transparent rounded-full"></div>
-                      <span className="ml-2 text-sm text-gray-500">Loading similar vehicles...</span>
-                    </div>
-                  ) : similarVehicles.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      {similarVehicles.map((vehicle) => (
-                        <Card
-                          key={vehicle.id}
-                          className="hover:shadow-md transition-shadow cursor-pointer"
-                          onClick={() => router.push(`/${vehicle.id}`)}
-                        >
-                          <CardContent className="p-3">
-                            <img
-                              src={vehicle.image || "/placeholder.svg"}
-                              alt={vehicle.title}
-                              className="w-full h-24 object-cover rounded mb-2"
-                            />
-                            <h3 className="font-semibold text-xs mb-1 line-clamp-2">{vehicle.title}</h3>
-                            <div className="text-sm font-bold text-[#024950] mb-1">
-                              {formatPrice(vehicle.price || 0)}
-                            </div>
-                            <div className="flex items-center justify-between text-xs text-gray-500">
-                              <div className="flex items-center">
-                                <MapPin className="w-3 h-3 mr-1" />
-                                <span className="truncate">{[vehicle.city, vehicle.district].filter(Boolean).join(", ") || vehicle.location || "N/A"}</span>
+            {/* Similar Vehicles (desktop/tablet) - hidden on mobile so we can show it last on small screens */}
+            <div className="hidden sm:block">
+              {(similarVehicles.length > 0 || isLoadingSimilar) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-[#024950]">Similar Vehicles</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {isLoadingSimilar ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="animate-spin w-6 h-6 border-4 border-[#024950] border-t-transparent rounded-full"></div>
+                        <span className="ml-2 text-sm text-gray-500">Loading similar vehicles...</span>
+                      </div>
+                    ) : similarVehicles.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {similarVehicles.map((vehicle) => (
+                          <Card
+                            key={vehicle.id}
+                            className="hover:shadow-md transition-shadow cursor-pointer"
+                            onClick={() => router.push(`/${vehicle.id}`)}
+                          >
+                            <CardContent className="p-3">
+                              <img
+                                src={vehicle.image || "/placeholder.svg"}
+                                alt={vehicle.title}
+                                className="w-full h-24 object-cover rounded mb-2"
+                              />
+                              <h3 className="font-semibold text-xs mb-1 line-clamp-2">{vehicle.title}</h3>
+                              <div className="text-sm font-bold text-[#024950] mb-1">
+                                {formatPrice(vehicle.price || 0)}
                               </div>
-                            </div>
-                            {vehicle.mileage && (
-                              <div className="text-xs text-gray-500 mt-1">
-                                {vehicle.mileage.toLocaleString()} km
+                              <div className="flex items-center justify-between text-xs text-gray-500">
+                                <div className="flex items-center">
+                                  <MapPin className="w-3 h-3 mr-1" />
+                                  <span className="truncate">{[vehicle.city, vehicle.district].filter(Boolean).join(", ") || vehicle.location || "N/A"}</span>
+                                </div>
                               </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-center text-gray-500 py-4">No similar vehicles found</p>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+                              {vehicle.mileage && (
+                                <div className="text-xs text-gray-500 mt-1">
+                                  {vehicle.mileage.toLocaleString()} km
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-center text-gray-500 py-4">No similar vehicles found</p>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </div>
 
           {/* Right Column - Price and Contact */}
@@ -1169,6 +1171,60 @@ export default function AdDetailPage() {
         </div>
 
       </div>
+
+      {/* Similar Vehicles (mobile: show last) */}
+      {(similarVehicles.length > 0 || isLoadingSimilar) && (
+        <div className="max-w-6xl mx-auto px-4 py-6 sm:hidden">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-[#024950]">Similar Vehicles</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingSimilar ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin w-6 h-6 border-4 border-[#024950] border-t-transparent rounded-full"></div>
+                  <span className="ml-2 text-sm text-gray-500">Loading similar vehicles...</span>
+                </div>
+              ) : similarVehicles.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {similarVehicles.map((vehicle) => (
+                    <Card
+                      key={vehicle.id}
+                      className="hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => router.push(`/${vehicle.id}`)}
+                    >
+                      <CardContent className="p-3">
+                        <img
+                          src={vehicle.image || "/placeholder.svg"}
+                          alt={vehicle.title}
+                          className="w-full h-24 object-cover rounded mb-2"
+                        />
+                        <h3 className="font-semibold text-xs mb-1 line-clamp-2">{vehicle.title}</h3>
+                        <div className="text-sm font-bold text-[#024950] mb-1">
+                          {formatPrice(vehicle.price || 0)}
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          <div className="flex items-center">
+                            <MapPin className="w-3 h-3 mr-1" />
+                            <span className="truncate">{[vehicle.city, vehicle.district].filter(Boolean).join(", ") || vehicle.location || "N/A"}</span>
+                          </div>
+                        </div>
+                        {vehicle.mileage && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            {vehicle.mileage.toLocaleString()} km
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-gray-500 py-4">No similar vehicles found</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Report Dialog */}
       <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
