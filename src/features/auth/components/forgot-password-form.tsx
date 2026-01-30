@@ -79,7 +79,7 @@ export function ForgotPasswordForm({ className }: Props) {
                 <FormControl>
                   <Input
                     disabled={isPending}
-                    placeholder="john.doe@example.com"
+                    placeholder="your.name@email.com"
                     className="bg-white border-teal-200 focus:border-teal-500 focus:ring-teal-500"
                     {...field}
                   />

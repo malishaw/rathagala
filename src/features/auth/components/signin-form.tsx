@@ -152,7 +152,7 @@ export function SigninForm({ className }: Props) {
                 <FormControl>
                   <Input
                     disabled={isPending}
-                    placeholder="john.doe@example.com"
+                    placeholder="your.name@email.com"
                     className="bg-white border-teal-200 focus:border-teal-500 focus:ring-teal-500"
                     {...field}
                   />
@@ -190,14 +190,15 @@ export function SigninForm({ className }: Props) {
       </Form>
 
       {/* Option texts */}
-      <div className="flex items-center text-center justify-between text-sm">
-        <Button asChild variant={"link"} className="p-0 h-auto text-teal-700 hover:text-teal-900">
+      <div className="flex text-center items-center justify-center gap-3 text-sm">
+        <Button asChild variant={"link"} className="p-0 h-auto text-teal-700 hover:text-teal-900 whitespace-nowrap">
           <Link href={"/signup"}>Need an account? <span className="font-semibold ml-1">Sign Up</span></Link>
         </Button>
-        <Button asChild variant={"link"} className="p-0 h-auto text-teal-700 hover:text-teal-900">
+        
+      </div>
+      <Button asChild variant={"link"} className="p-0 h-auto text-teal-700 hover:text-teal-900 whitespace-nowrap">
           <Link href={"/forgot-password"}>Forgot Password?</Link>
         </Button>
-      </div>
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">

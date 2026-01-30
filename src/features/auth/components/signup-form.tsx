@@ -142,7 +142,7 @@ export function SignupForm({ className }: Props) {
                 <FormControl>
                   <Input
                     disabled={isPending}
-                    placeholder="John R. Doe"
+                    placeholder="Your Name"
                     className="bg-white border-teal-200 focus:border-teal-500 focus:ring-teal-500 h-9"
                     {...field}
                   />
@@ -160,7 +160,7 @@ export function SignupForm({ className }: Props) {
                 <FormControl>
                   <Input
                     disabled={isPending}
-                    placeholder="john.doe@example.com"
+                    placeholder="your.name@email.com"
                     className="bg-white border-teal-200 focus:border-teal-500 focus:ring-teal-500 h-9"
                     {...field}
                   />
@@ -230,7 +230,7 @@ export function SignupForm({ className }: Props) {
           />
           <Button 
             type="submit" 
-            className="w-full bg-teal-700 hover:bg-teal-800 text-white font-semibold h-9 shadow-lg transition-all duration-200" 
+            className="w-full bg-teal-700 hover:bg-teal-800 text-white font-semibold h-9 shadow-lg transition-all duration-200 mt-3" 
             loading={isPending}
           >
             Create Account
@@ -240,8 +240,8 @@ export function SignupForm({ className }: Props) {
 
       {/* Option texts */}
       <div className="flex items-center text-center justify-center text-xs -mt-1">
-        <Button asChild variant={"link"} className="p-0 h-auto text-teal-700 hover:text-teal-900 text-xs">
-          <Link href={"/signin"}>Already have an account? <span className="font-semibold ml-1">Sign In</span></Link>
+        <Button asChild variant={"link"} className="my-3 h-auto text-teal-700 hover:text-teal-900 text-sm">
+          <Link href={"/signin"}>Already have an account? <span className="font-semibold ml-1 text-sm">Sign In</span></Link>
         </Button>
       </div>
 
