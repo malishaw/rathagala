@@ -410,6 +410,43 @@ export default function AdDetailPage() {
   // Organize features/options for display
   const features = ad.tags || [];
 
+  // Helper function to format ad title with listing type prefix/suffix
+  const formatAdTitle = (ad: any): string => {
+    // Vehicle type labels (keep in-sync with search page labels)
+    const vehicleTypeLabels: Record<string, string> = {
+      CAR: "Car",
+      VAN: "Van",
+      MOTORCYCLE: "Motorcycle",
+      BICYCLE: "Bicycle",
+      THREE_WHEEL: "Three Wheeler",
+      BUS: "Bus",
+      LORRY: "Lorry",
+      HEAVY_DUTY: "Heavy Duty",
+      TRACTOR: "Tractor",
+      AUTO_SERVICE: "Auto Service",
+      RENTAL: "Rental",
+      AUTO_PARTS: "Auto Parts",
+      MAINTENANCE: "Maintenance",
+      BOAT: "Boat"
+    };
+
+    // Build vehicle info with type at the end (brand model year [Type])
+    const rawType = (ad.type ?? ad.vehicleType) as string | undefined;
+    const typeLabel = rawType ? (vehicleTypeLabels[rawType] || String(rawType)) : undefined;
+    const vehicleInfo = [ad.brand, ad.model, ad.manufacturedYear, typeLabel]
+      .filter(Boolean)
+      .join(' ');
+
+    if (ad.listingType === 'WANT') {
+      return `Want ${vehicleInfo}`;
+    } else if (ad.listingType === 'RENT') {
+      return `${vehicleInfo} for Rent`;
+    } else if (ad.listingType === 'HIRE') {
+      return `${vehicleInfo} for Hire`;
+    }
+    return vehicleInfo;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -426,9 +463,7 @@ export default function AdDetailPage() {
             </Button>
             <div className="flex-1">
               <h1 className="text-lg sm:text-xl font-semibold">
-                {[ad.brand, ad.model, ad.manufacturedYear, ad.vehicleType]
-                  .filter(Boolean)
-                  .join(" ")}
+                {formatAdTitle(ad)}
               </h1>
             </div>
             <div className="flex items-center space-x-2 mt-2 sm:mt-0">

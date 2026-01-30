@@ -39,6 +39,22 @@ const listingTypeLabels: Record<string, string> = {
   HIRE: "For Hire"
 };
 
+// Helper function to format ad title with listing type prefix/suffix
+const formatAdTitle = (ad: any): string => {
+  const vehicleInfo = [ad.brand, ad.model, ad.manufacturedYear, vehicleTypeLabels[ad.type] || ad.type]
+    .filter(Boolean)
+    .join(' ');
+  
+  if (ad.listingType === 'WANT') {
+    return `Want ${vehicleInfo}`;
+  } else if (ad.listingType === 'RENT') {
+    return `${vehicleInfo} for Rent`;
+  } else if (ad.listingType === 'HIRE') {
+    return `${vehicleInfo} for Hire`;
+  }
+  return vehicleInfo;
+};
+
 // Vehicle makes
 const vehicleMakes = [
   "Toyota", "Honda", "Nissan", "BMW", "Mercedes-Benz", "Audi", "Hyundai", "Kia",
@@ -959,7 +975,7 @@ export default function SearchPage() {
                     <div className="p-3">
                       {/* Vehicle Title - Centered */}
                       <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
-                        {[vehicle.brand, vehicle.model, vehicle.manufacturedYear].filter(Boolean).join(' ')}
+                        {formatAdTitle(vehicle)}
                       </h3>
 
                       <div className="flex">
