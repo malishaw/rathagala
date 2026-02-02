@@ -174,8 +174,10 @@ export const adminColumns: ColumnDef<AdType>[] = [
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      const status = row.original.status;
-      const rejectionDescription = row.original.rejectionDescription;
+      const ad = row.original;
+      const now = new Date();
+      const status = ad.status;
+      const rejectionDescription = ad.rejectionDescription;
       
       return (
         <div className="flex items-center gap-2">
@@ -186,7 +188,7 @@ export const adminColumns: ColumnDef<AdType>[] = [
                 <TooltipTrigger asChild>
                   <Eye className="w-4 h-4 text-red-500 cursor-help" />
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs bg-blue-100 text-gray-800 border-red-600 text-sm">
+                <TooltipContent className="max-w-xs bg-teal-700 text-white border-red-600 text-sm">
                   <p>{rejectionDescription}</p>
                 </TooltipContent>
               </Tooltip>
@@ -217,8 +219,9 @@ export const adminColumns: ColumnDef<AdType>[] = [
     accessorKey: "createdBy",
     header: "Created By",
     cell: ({ row }) => {
-      const creator = row.original.creator;
-      const formName = row.original.name;
+      const ad = row.original;
+      const creator = ad.creator;
+      const formName = ad.name;
       
       return (
         <div className="flex flex-col gap-1 text-sm">
@@ -232,8 +235,9 @@ export const adminColumns: ColumnDef<AdType>[] = [
     accessorKey: "phoneNumber",
     header: "Contact No",
     cell: ({ row }) => {
-      const phone = row.original.phoneNumber;
-      const whatsapp = row.original.whatsappNumber;
+      const ad = row.original;
+      const phone = ad.phoneNumber;
+      const whatsapp = ad.whatsappNumber;
       
       return (
         <div className="flex flex-col gap-1 text-sm">
@@ -270,7 +274,9 @@ export const adminColumns: ColumnDef<AdType>[] = [
     accessorKey: "createdAt",
     header: "Created At",
     cell: ({ row }) => {
-      const date = new Date(row.original.createdAt);
+      const ad = row.original;
+      const date = new Date(ad.createdAt);
+      
       return (
         <div className="flex flex-col gap-1 text-sm">
           <div>{date.toLocaleDateString()}</div>
@@ -320,7 +326,7 @@ function PromotionBadge({ type, expiry }: { type: "boost" | "featured"; expiry: 
             variant="outline" 
             className={`${
               type === "boost" 
-                ? "bg-orange-100 text-orange-700 border-orange-300" 
+                ? "bg-blue-100 text-blue-700 border-blue-300" 
                 : "bg-yellow-100 text-yellow-700 border-yellow-300"
             } cursor-help flex items-center gap-1`}
           >
@@ -587,16 +593,16 @@ function PromotionButton({ ad, hasPromotion }: { ad: AdType; hasPromotion: boole
         variant="outline"
         className={hasPromotion 
           ? "border-amber-500 text-amber-600 hover:bg-amber-50 h-6 px-2" 
-          : "border-gray-300 text-gray-400 hover:bg-gray-50 h-6 px-2"
+          : "border-gray-300 text-gray-900 hover:bg-gray-50 h-6 px-2"
         }
         title="Manage Promotion"
       >
         {hasActiveBoost ? (
-          <Zap className="w-3 h-3" />
+          <Zap className="w-3 h-3 text-gray-700" />
         ) : hasActiveFeatured ? (
-          <Star className="w-3 h-3" />
+          <Star className="w-3 h-3 text-gray-700" />
         ) : (
-          <Sparkles className="w-3 h-3 text-gray-400" />
+          <Sparkles className="w-3 h-3 text-gray-700" />
         )}
       </Button>
 
@@ -614,12 +620,12 @@ function PromotionButton({ ad, hasPromotion }: { ad: AdType; hasPromotion: boole
             {currentPromotionType !== "none" && (
               <div className={`rounded-lg p-4 border-2 ${
                 currentPromotionType === "boost" 
-                  ? "bg-orange-50 border-orange-300" 
+                  ? "bg-blue-50 border-blue-300" 
                   : "bg-yellow-50 border-yellow-300"
               }`}>
                 <div className="flex items-center gap-2 mb-2">
                   {currentPromotionType === "boost" ? (
-                    <Zap className="w-5 h-5 text-orange-600" />
+                    <Zap className="w-5 h-5 text-blue-600" />
                   ) : (
                     <Star className="w-5 h-5 text-yellow-600" />
                   )}
@@ -652,7 +658,7 @@ function PromotionButton({ ad, hasPromotion }: { ad: AdType; hasPromotion: boole
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="boost" id="boost" />
                   <Label htmlFor="boost" className="font-normal cursor-pointer flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-orange-600" />
+                    <Zap className="w-4 h-4 text-blue-600" />
                     <span>Boost Ad</span>
                   </Label>
                 </div>
@@ -689,7 +695,7 @@ function PromotionButton({ ad, hasPromotion }: { ad: AdType; hasPromotion: boole
             )}
 
             {hasActiveBoost && promotionType !== "boost" && (
-              <div className="bg-orange-50 border border-orange-200 rounded-md p-3 text-sm text-orange-800">
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3 text-sm text-blue-800">
                 ⚠️ Current boost will be removed
               </div>
             )}

@@ -145,7 +145,7 @@ export function DataTable<TData, TValue>({
                         data-state={row.getIsSelected() && "selected"}
                         className={
                           isBoosted 
-                            ? "bg-orange-50 hover:bg-orange-100" 
+                            ? "bg-blue-50 hover:bg-blue-100" 
                             : isFeatured 
                             ? "bg-yellow-50 hover:bg-yellow-100" 
                             : ""

@@ -159,6 +159,7 @@ export default function VehicleMarketplace() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [allAds, setAllAds] = useState<any[]>([]);
+  const [visibleCount, setVisibleCount] = useState(12); // State to track how many vehicles to show
 
   // Use the existing hook to fetch real vehicle data
   // Don't use backend search - we'll do comprehensive client-side search instead
@@ -190,6 +191,7 @@ export default function VehicleMarketplace() {
   // Reset pagination when filters or search change
   useEffect(() => {
     setCurrentPage(1);
+    setVisibleCount(12); // Reset visible count when filters/search change
     // Don't clear allAds here - let the data fetch update it
   }, [activeFilters, searchQuery]);
 
@@ -1195,7 +1197,7 @@ export default function VehicleMarketplace() {
               {/* Vehicle Grid - Using Real Data */}
               {filteredAds.length > 0 && !isLoading && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {filteredAds.map((vehicle) => {
+                  {filteredAds.slice(0, visibleCount).map((vehicle) => {
                     const now = new Date();
                     const isBoosted = vehicle.boosted && vehicle.boostExpiry && new Date(vehicle.boostExpiry) > now;
                     const isFeatured = vehicle.featured && vehicle.featureExpiry && new Date(vehicle.featureExpiry) > now;
@@ -1300,26 +1302,18 @@ export default function VehicleMarketplace() {
               {/* Load More */}
               {filteredAds.length > 0 && (
                 <div className="text-center mt-8">
-                  {data?.pagination && currentPage < data.pagination.totalPages ? (
+                  {visibleCount < filteredAds.length ? (
                     <Button
                       size="lg"
                       variant="outline"
                       className="px-8 py-5 border-teal-700 text-teal-700 hover:bg-teal-700 hover:text-white transition-all duration-300"
-                      onClick={handleLoadMore}
-                      disabled={isLoading}
+                      onClick={() => setVisibleCount((prev) => prev + 12)}
                     >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Loading...
-                        </>
-                      ) : (
-                        "Load More Vehicles"
-                      )}
+                      Load More Vehicles
                     </Button>
-                  ) : (
+                  ) : filteredAds.length > 12 ? (
                     <p className="text-slate-500 text-sm">No more vehicles to load</p>
-                  )}
+                  ) : null}
                 </div>
               )}
             </div>
