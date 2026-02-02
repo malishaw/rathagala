@@ -409,7 +409,7 @@ export function Header() {
                       <Button
                         asChild
                         variant="outline"
-                        className="w-full justify-center text-teal-900 border-white/60 hover:bg-white hover:text-teal-900 transition-colors duration-200 rounded-xl py-5"
+                        className="w-full justify-center text-teal-900 border-white/60 hover:bg-white hover:text-teal-900 transition-colors duration-200 rounded-md py-5"
                       >
                         <Link href="/signin">Login</Link>
                       </Button>
@@ -417,7 +417,7 @@ export function Header() {
 
                     <Button
                       asChild
-                      className="w-full justify-center bg-white text-teal-900 hover:bg-teal-50 rounded-xl shadow-sm py-5 font-bold"
+                      className="w-full justify-center bg-white hover:text-white border-1 hover:border-white text-teal-900 hover:bg-teal-900 rounded-md shadow-sm py-5 font-bold"
                     >
                       <Link href={user ? "/sell/new" : "/signup"}>Post Free Ad</Link>
                     </Button>

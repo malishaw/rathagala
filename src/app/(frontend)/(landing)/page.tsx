@@ -163,7 +163,7 @@ export default function VehicleMarketplace() {
   // Use the existing hook to fetch real vehicle data
   const { data, isLoading, error } = useGetAds({
     page: currentPage,
-    limit: 8, // Show 8 items initially for better grid layout
+    limit: 12, // Show 12 items on the homepage
     search: searchQuery || "", // Pass general search query to backend
   });
 

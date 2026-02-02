@@ -132,10 +132,10 @@ export default function QuickAdCreatePage() {
   // Vehicle makes list - same as your ad-form.tsx
   const vehicleMakes = [
     // Popular brands first
-    "Toyota", "Suzuki", "Honda", "Nissan", "Audi", "Mitsubishi",
+    "Toyota", "Suzuki", "Honda", "Nissan", "Mitsubishi","BMW","Audi", "BYD",
     // Rest alphabetically
     "Acura", "Alfa-Romeo", "Aprilia", "Ashok-Leyland", "Aston", "Atco", "ATHER", 
-    "Austin", "Baic", "Bajaj", "Bentley", "BMW", "Borgward", "BYD", 
+    "Austin", "Baic", "Bajaj", "Bentley", "Borgward",  
     "Cadillac", "Cal", "CAT", "Ceygra", "Changan", "Chery", "Chevrolet", 
     "Chrysler", "Citroen", "Corvette", "Daewoo", "Daido", "Daihatsu", "Datsun", 
     "Demak", "Dfac", "DFSK", "Ducati", "Dyno", "Eicher", "FAW", "Ferrari", "Fiat", 
