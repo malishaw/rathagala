@@ -16,7 +16,7 @@ import { betterFetch } from "@better-fetch/fetch";
 import { format } from "date-fns";
 import { Building2, Car, CheckCircle, ChevronRight, CreditCard, Edit, Heart, Loader2, Lock, MapPin, MessageCircle, Phone, Shield, Trash2, Camera, Zap, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
 
 // User type from auth
@@ -552,6 +552,23 @@ export default function ProfilePage() {
     }
   };
 
+  // Sort boosted ads to the top - must be before all conditional returns
+  const userAds = useMemo(() => {
+    const rawUserAds = userAdsQuery.data || [];
+    const adsArray = Array.isArray(rawUserAds) ? rawUserAds : rawUserAds.ads || [];
+    
+    return [...adsArray].sort((a, b) => {
+      const now = new Date();
+      const aIsBoosted = a.boosted && a.boostExpiry && new Date(a.boostExpiry) > now;
+      const bIsBoosted = b.boosted && b.boostExpiry && new Date(b.boostExpiry) > now;
+      
+      if (aIsBoosted && !bIsBoosted) return -1;
+      if (!aIsBoosted && bIsBoosted) return 1;
+      
+      return 0;
+    });
+  }, [userAdsQuery.data]);
+
   // Loading state for the entire page
   if (isLoading) {
     return (
@@ -566,7 +583,6 @@ export default function ProfilePage() {
   // First letter for avatar
   const firstLetter = user.name?.charAt(0).toUpperCase() || "U";
 
-  const userAds = userAdsQuery.data || [];
   const isAdsLoading = userAdsQuery.isLoading;
 
   return (
@@ -1097,7 +1113,7 @@ export default function ProfilePage() {
                     <div className="p-12 flex justify-center">
                       <Loader2 className="h-10 w-10 animate-spin text-[#0D5C63]" />
                     </div>
-                  ) : (Array.isArray(userAds) && userAds.length === 0) || (!Array.isArray(userAds) && userAds.ads && userAds.ads.length === 0) ? (
+                  ) : userAds.length === 0 ? (
                     <div className="p-12 text-center">
                       <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 mx-auto flex items-center justify-center mb-4">
                         <Car className="h-10 w-10 text-slate-400" />
@@ -1111,7 +1127,7 @@ export default function ProfilePage() {
                       </Button>
                     </div>
                   ) : (
-                    (Array.isArray(userAds) ? userAds : userAds.ads).map((ad: UserAd) => {
+                    userAds.map((ad: UserAd) => {
                       const now = new Date();
                       const isBoosted = ad.boosted && ad.boostExpiry && new Date(ad.boostExpiry) > now;
                       const isFeatured = ad.featured && ad.featureExpiry && new Date(ad.featureExpiry) > now;

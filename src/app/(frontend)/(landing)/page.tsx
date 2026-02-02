@@ -161,10 +161,10 @@ export default function VehicleMarketplace() {
   const [allAds, setAllAds] = useState<any[]>([]);
 
   // Use the existing hook to fetch real vehicle data
+  // Don't use backend search - we'll do comprehensive client-side search instead
   const { data, isLoading, error } = useGetAds({
     page: currentPage,
-    limit: 12, // Show 12 items on the homepage
-    search: searchQuery || "", // Pass general search query to backend
+    limit: 50, // Fetch more items to allow comprehensive client-side filtering
   });
 
   // Accumulate ads when new data arrives
@@ -200,16 +200,54 @@ export default function VehicleMarketplace() {
     }
   };
 
-  // Apply filters to the accumulated data - modify to use activeFilters instead of filters
+  // Apply filters and search to the accumulated data
   // Also ensure only ACTIVE ads are shown (safety filter in case backend doesn't filter correctly)
   const filteredAds = useMemo(() => {
     if (!allAds || allAds.length === 0) return [];
+
+    // Split search query into individual terms
+    const searchTerms = searchQuery
+      .toLowerCase()
+      .trim()
+      .split(/\s+/)
+      .filter(term => term.length > 0);
 
     return allAds.filter((ad) => {
       // Only show ACTIVE ads on the landing page
       if (ad.status !== "ACTIVE") {
         return false;
       }
+
+      // If there's a search query, ALL search terms must match (AND logic)
+      if (searchTerms.length > 0) {
+        const matchesAllSearchTerms = searchTerms.every(term => {
+          return (
+            // Ad ID
+            ad.id?.toLowerCase().includes(term) ||
+            // Title
+            ad.title?.toLowerCase().includes(term) ||
+            // Brand
+            ad.brand?.toLowerCase().includes(term) ||
+            // Model
+            ad.model?.toLowerCase().includes(term) ||
+            // Vehicle Type
+            vehicleTypeLabels[ad.type as keyof typeof vehicleTypeLabels]?.toLowerCase().includes(term) ||
+            // City
+            ad.city?.toLowerCase().includes(term) ||
+            // Location
+            ad.location?.toLowerCase().includes(term) ||
+            // District (if available in ad object)
+            (ad as any).district?.toLowerCase().includes(term) ||
+            // Manufacture Year
+            ad.manufacturedYear?.toString().includes(term)
+          );
+        });
+
+        if (!matchesAllSearchTerms) {
+          return false;
+        }
+      }
+
       // Make filter
       if (
         activeFilters.make &&
@@ -305,8 +343,19 @@ export default function VehicleMarketplace() {
       }
 
       return true;
+    }).sort((a, b) => {
+      // Sort boosted ads to the top
+      const now = new Date();
+      const aIsBoosted = a.boosted && a.boostExpiry && new Date(a.boostExpiry) > now;
+      const bIsBoosted = b.boosted && b.boostExpiry && new Date(b.boostExpiry) > now;
+      
+      if (aIsBoosted && !bIsBoosted) return -1;
+      if (!aIsBoosted && bIsBoosted) return 1;
+      
+      // If both are boosted or both are not, maintain original order
+      return 0;
     });
-  }, [allAds, activeFilters]);
+  }, [allAds, activeFilters, searchQuery]);
 
   // Handle filter changes - only updates pending filters
   const handleFilterChange = (

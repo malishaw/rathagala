@@ -270,24 +270,73 @@ export default function SearchPage() {
   const filteredAds = useMemo(() => {
     if (!data?.ads) return [];
 
+    // Split search query into individual terms for comprehensive search
+    const queryTerms = filters.query
+      .toLowerCase()
+      .trim()
+      .split(/\s+/)
+      .filter(term => term.length > 0);
+
+    // Split global search into individual terms
+    const globalSearchTerms = filters.globalSearch
+      .toLowerCase()
+      .trim()
+      .split(/\s+/)
+      .filter(term => term.length > 0);
+
     return data.ads.filter((ad) => {
-      // Note: Listing type filter is now handled on the backend
+      // Query filter - ALL search terms must match (AND logic)
+      if (queryTerms.length > 0) {
+        const matchesAllQueryTerms = queryTerms.every(term => {
+          return (
+            // Ad ID
+            ad.id?.toLowerCase().includes(term) ||
+            // Title
+            ad.title?.toLowerCase().includes(term) ||
+            // Brand
+            ad.brand?.toLowerCase().includes(term) ||
+            // Model
+            ad.model?.toLowerCase().includes(term) ||
+            // Vehicle Type
+            vehicleTypeLabels[ad.type as keyof typeof vehicleTypeLabels]?.toLowerCase().includes(term) ||
+            // City
+            ad.city?.toLowerCase().includes(term) ||
+            // Location
+            ad.location?.toLowerCase().includes(term) ||
+            // District (if available in ad object)
+            (ad as any).district?.toLowerCase().includes(term) ||
+            // Manufacture Year
+            ad.manufacturedYear?.toString().includes(term)
+          );
+        });
 
-      // Title/Query filter - search in brand, model, year, and description
-      if (filters.query) {
-        const query = filters.query.toLowerCase();
-        const searchableText = [
-          ad.brand,
-          ad.model,
-          ad.manufacturedYear?.toString(),
-          ad.description,
-          vehicleTypeLabels[ad.type] || ad.type
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
+        if (!matchesAllQueryTerms) {
+          return false;
+        }
+      }
 
-        if (!searchableText.includes(query)) {
+      // Global search filter - ALL search terms must match (AND logic)
+      if (globalSearchTerms.length > 0) {
+        const matchesAllGlobalTerms = globalSearchTerms.every(term => {
+          return (
+            ad.id?.toLowerCase().includes(term) ||
+            ad.brand?.toLowerCase().includes(term) ||
+            ad.model?.toLowerCase().includes(term) ||
+            ad.city?.toLowerCase().includes(term) ||
+            ad.description?.toLowerCase().includes(term) ||
+            (ad as any).phoneNumber?.toString().includes(term) ||
+            (ad as any).whatsappNumber?.toString().includes(term) ||
+            (ad as any).creator?.name?.toLowerCase().includes(term) ||
+            (ad as any).creator?.email?.toLowerCase().includes(term) ||
+            vehicleTypeLabels[ad.type as keyof typeof vehicleTypeLabels]?.toLowerCase().includes(term) ||
+            ad.title?.toLowerCase().includes(term) ||
+            ad.location?.toLowerCase().includes(term) ||
+            (ad as any).district?.toLowerCase().includes(term) ||
+            ad.manufacturedYear?.toString().includes(term)
+          );
+        });
+
+        if (!matchesAllGlobalTerms) {
           return false;
         }
       }
@@ -345,14 +394,9 @@ export default function SearchPage() {
 
       // Location filter (District)
       if (filters.district && filters.district !== 'all' && filters.district !== 'any') {
-        // This assumes ad object has 'city' but maybe we need district map? 
-        // For now let's rely on city mapping if ad only has city, or if ad has district use it.
-        // Simple check: if ad.district exists check it.
         if ((ad as any).district && (ad as any).district.toLowerCase() !== filters.district.toLowerCase()) {
           return false;
         } else if (!(ad as any).district && ad.city) {
-          // Reverse lookup city to district if needed, or skip strict district check if data missing
-          // BUT user wants strict filtering. Let's try to match city to district using locationData
           let cityDistrict = "";
           Object.values(locationData).forEach(province => {
             Object.entries(province).forEach(([dist, cities]) => {
@@ -380,33 +424,20 @@ export default function SearchPage() {
         }
       }
 
-      // Global search filter (searches across multiple fields)
-      if (filters.globalSearch && filters.globalSearch.trim() !== '') {
-        const searchQuery = filters.globalSearch.toLowerCase();
-        const searchableFields = [
-          ad.id,
-          ad.brand,
-          ad.model,
-          ad.city,
-          ad.description,
-          (ad as any).phoneNumber,
-          (ad as any).whatsappNumber,
-          (ad as any).creator?.name,
-          (ad as any).creator?.email,
-          vehicleTypeLabels[ad.type] || ad.type
-        ]
-          .filter(Boolean)
-          .map(f => String(f).toLowerCase())
-          .join(' ');
-
-        if (!searchableFields.includes(searchQuery)) {
-          return false;
-        }
-      }
-
       return true;
+    }).sort((a, b) => {
+      // Sort boosted ads to the top
+      const now = new Date();
+      const aIsBoosted = a.boosted && a.boostExpiry && new Date(a.boostExpiry) > now;
+      const bIsBoosted = b.boosted && b.boostExpiry && new Date(b.boostExpiry) > now;
+      
+      if (aIsBoosted && !bIsBoosted) return -1;
+      if (!aIsBoosted && bIsBoosted) return 1;
+      
+      // If both are boosted or both are not, maintain original order
+      return 0;
     });
-  }, [data?.ads, filters.query, filters.vehicleType, filters.brand, filters.model, filters.condition, filters.grade, filters.minPrice, filters.maxPrice, filters.minYear, filters.maxYear, filters.fuelType, filters.transmission, filters.district, filters.city, filters.globalSearch]);
+  }, [data?.ads, filters.query, filters.vehicleType, filters.brand, filters.model, filters.condition, filters.grade, filters.minPrice, filters.maxPrice, filters.minYear, filters.maxYear, filters.fuelType, filters.transmission, filters.district, filters.city, filters.globalSearch, filters.seller]);
 
   // Handle filter changes
   const handleFilterChange = (key: keyof SearchFilters, value: string) => {
@@ -563,7 +594,7 @@ export default function SearchPage() {
                     onChange={(e) => handleFilterChange('globalSearch', e.target.value)}
                     className="h-10 text-sm border-slate-200 focus:ring-teal-500"
                   />
-                  <p className="text-xs text-slate-500 mt-1">Search by ad ID, make, model, city, or phone number</p>
+                  <p className="text-xs text-slate-500 mt-1">Search by ad ID, make, model, city, title</p>
                 </div>
 
                 <Separator className="my-3" />
