@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ChevronDown, ChevronUp, MapPin, TrendingUp, Sparkles, Loader2, Car, Search, Filter, Eye } from "lucide-react";
+import { ChevronDown, ChevronUp, MapPin, TrendingUp, Sparkles, Loader2, Car, Search, Filter, Eye, Star, Zap } from "lucide-react";
 import { format } from "date-fns";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
@@ -961,12 +961,43 @@ export default function SearchPage() {
             {/* Results Grid */}
             {!isLoading && !error && filteredAds.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredAds.map((vehicle) => (
+                {filteredAds.map((vehicle) => {
+                  const now = new Date();
+                  const isBoosted = vehicle.boosted && vehicle.boostExpiry && new Date(vehicle.boostExpiry) > now;
+                  const isFeatured = vehicle.featured && vehicle.featureExpiry && new Date(vehicle.featureExpiry) > now;
+                  
+                  return (
                   <div
                     key={vehicle.id}
-                    className="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative"
+                    className={`rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative ${
+                      isBoosted
+                        ? "bg-blue-50/80 border-blue-200 hover:border-blue-300"
+                        : isFeatured 
+                        ? "bg-yellow-50/80 border-yellow-200 hover:border-yellow-300" 
+                        : "bg-white border-slate-200 hover:border-slate-300"
+                    }`}
                     onClick={() => router.push(`/${vehicle.id}`)}
                   >
+                    {/* Boosted Label */}
+                    {isBoosted && (
+                      <div className="absolute z-20">
+                        <div className="bg-orange-500 text-white px-2 font-semibold text-xs flex rounded-full items-center gap-1">
+                          <Zap className="h-3 w-3" />
+                          Boosted
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Featured Label */}
+                    {isFeatured && (
+                      <div className="absolute z-20">
+                        <div className="bg-yellow-500 text-white px-2 font-semibold text-xs flex rounded-full items-center gap-1">
+                          <Star className="h-3 w-3" />
+                          Featured
+                        </div>
+                      </div>
+                    )}
+
                     {/* Favorite Button */}
                     <div className="absolute top-2 right-2 z-10">
                       <FavoriteButton adId={vehicle.id} />
@@ -1025,7 +1056,8 @@ export default function SearchPage() {
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             ) : !isLoading && (
               <Card className="p-12 text-center border-dashed border-2 bg-slate-50">

@@ -18,7 +18,9 @@ import {
   XCircle,
   Loader2,
   Check,
-  TagIcon
+  TagIcon,
+  Zap,
+  Star
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -34,6 +36,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -55,6 +58,8 @@ import {
 import { MediaGallery } from "@/modules/media/components/media-gallery";
 import type { MediaFile } from "@/modules/media/types";
 import { CreateAdSchema } from "@/server/routes/ad/ad.schemas";
+import { authClient } from "@/lib/auth-client";
+import { locationData } from "@/lib/location-data";
 
 export type AdFormProps = {
   initialData?: any;
@@ -96,8 +101,17 @@ export function AdForm({
 }: AdFormProps) {
   const router = useRouter();
 
+  // Check if user is admin
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
+  const isAdmin = (user as any)?.role === "admin";
+
   // Set "vehicle" as the default active tab
   const [activeTab, setActiveTab] = useState("vehicle");
+
+  // Promotion state (for admins only)
+  const [promotionType, setPromotionType] = useState<"boost" | "featured" | "none">("none");
+  const [promotionDuration, setPromotionDuration] = useState<"1week" | "2weeks" | "1month">("1week");
 
   // Define tab order for navigation
   const tabOrder = [
@@ -239,6 +253,35 @@ const [formData, setFormData] = useState({
       specialNote: initialData.specialNote || "",
       metadata: initialData.metadata || {}
     });
+
+    // Initialize promotion state from initialData
+    const now = new Date();
+    if (initialData.boosted && initialData.boostExpiry && new Date(initialData.boostExpiry) > now) {
+      setPromotionType("boost");
+      // Estimate duration based on days remaining
+      const daysRemaining = Math.ceil((new Date(initialData.boostExpiry).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysRemaining >= 25) {
+        setPromotionDuration("1month");
+      } else if (daysRemaining >= 12) {
+        setPromotionDuration("2weeks");
+      } else {
+        setPromotionDuration("1week");
+      }
+    } else if (initialData.featured && initialData.featureExpiry && new Date(initialData.featureExpiry) > now) {
+      setPromotionType("featured");
+      // Estimate duration based on days remaining
+      const daysRemaining = Math.ceil((new Date(initialData.featureExpiry).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysRemaining >= 25) {
+        setPromotionDuration("1month");
+      } else if (daysRemaining >= 12) {
+        setPromotionDuration("2weeks");
+      } else {
+        setPromotionDuration("1week");
+      }
+    } else {
+      setPromotionType("none");
+      setPromotionDuration("1week");
+    }
 
     // Load images from initialData if available
     if (initialData.media && Array.isArray(initialData.media)) {
@@ -391,6 +434,39 @@ const [formData, setFormData] = useState({
   const handleSubmit = (e: React.FormEvent) => {
   e.preventDefault();
 
+  // Calculate boost/featured expiry dates based on user selection
+  let boostExpiry: Date | undefined = undefined;
+  let featureExpiry: Date | undefined = undefined;
+  let boosted = false;
+  let featured = false;
+
+  if (promotionType !== "none") {
+    const now = new Date();
+    let expiryDate: Date;
+
+    switch (promotionDuration) {
+      case "1week":
+        expiryDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        break;
+      case "2weeks":
+        expiryDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+        break;
+      case "1month":
+        expiryDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        expiryDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    }
+
+    if (promotionType === "boost") {
+      boosted = true;
+      boostExpiry = expiryDate;
+    } else if (promotionType === "featured") {
+      featured = true;
+      featureExpiry = expiryDate;
+    }
+  }
+
   // Generate title based on ad type and available data
   let autoTitle = "";
   
@@ -448,10 +524,11 @@ const [formData, setFormData] = useState({
   // Normalize critical fields and build the ad data object
   const resolvedType = formData.type && formData.type !== "" ? formData.type : (initialData?.type ?? "CAR");
 
-  const adData: CreateAdSchema = {
+  const adData = {
     title: autoTitle,
     description: formData.description,
     type: resolvedType as any,
+    listingType: "SELL" as const, // Default to SELL
     price: formData.price ? parseFloat(formData.price) : undefined,
     
     // Include all the dynamic fields
@@ -475,8 +552,10 @@ const [formData, setFormData] = useState({
     // Keep all your existing fields
     published: formData.published,
     isDraft: formData.isDraft,
-    boosted: formData.boosted,
-    featured: formData.featured,
+    boosted: boosted,
+    featured: featured,
+    boostExpiry: boostExpiry,
+    featureExpiry: featureExpiry,
     name: formData.name || undefined,
     phoneNumber: formData.phoneNumber || undefined,
     whatsappNumber: formData.whatsappNumber || undefined,
@@ -1949,24 +2028,75 @@ const [formData, setFormData] = useState({
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {/* City - Now required */}
+                  {/* Province - Required */}
+                  <div className="flex items-center">
+                    <div className="w-48 text-right pr-4 text-gray-600">
+                      Province<span className="text-red-500">*</span>
+                    </div>
+                    <div className="flex-1">
+                      <Select 
+                        value={formData.province}
+                        onValueChange={(value) => handleInputChange("province", value)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select province" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.keys(locationData).map(province => (
+                            <SelectItem key={province} value={province}>{province}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* District - Required */}
+                  <div className="flex items-center">
+                    <div className="w-48 text-right pr-4 text-gray-600">
+                      District<span className="text-red-500">*</span>
+                    </div>
+                    <div className="flex-1">
+                      <Select 
+                        value={formData.district}
+                        onValueChange={(value) => handleInputChange("district", value)}
+                        disabled={!formData.province}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder={formData.province ? "Select district" : "Select province first"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {formData.province && Object.keys(locationData[formData.province] || {}).map(district => (
+                            <SelectItem key={district} value={district}>{district}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* City - Required */}
                   <div className="flex items-center">
                     <div className="w-48 text-right pr-4 text-gray-600">
                       City<span className="text-red-500">*</span>
                     </div>
                     <div className="flex-1">
-                      <Input
-                        id="city"
-                        placeholder="e.g., Colombo"
+                      <Select 
                         value={formData.city}
-                        onChange={(e) => handleInputChange("city", e.target.value)}
-                        required
-                        className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
-                      />
+                        onValueChange={(value) => handleInputChange("city", value)}
+                        disabled={!formData.district}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder={formData.district ? "Select city" : "Select district first"} />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[280px]">
+                          {formData.province && formData.district && (locationData[formData.province]?.[formData.district] || []).map(city => (
+                            <SelectItem key={city} value={city}>{city}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
-                  {/* Location/Area - Now required */}
+                  {/* Location/Area - Required */}
                   <div className="flex items-center">
                     <div className="w-48 text-right pr-4 text-gray-600">
                       Location/Area<span className="text-red-500">*</span>
@@ -1978,38 +2108,6 @@ const [formData, setFormData] = useState({
                         value={formData.location}
                         onChange={(e) => handleInputChange("location", e.target.value)}
                         required
-                        className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Province/State */}
-                  <div className="flex items-center">
-                    <div className="w-48 text-right pr-4 text-gray-600">
-                      Province
-                    </div>
-                    <div className="flex-1">
-                      <Input
-                        id="province"
-                        placeholder="e.g., Western Province"
-                        value={formData.province}
-                        onChange={(e) => handleInputChange("province", e.target.value)}
-                        className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* District */}
-                  <div className="flex items-center">
-                    <div className="w-48 text-right pr-4 text-gray-600">
-                      District
-                    </div>
-                    <div className="flex-1">
-                      <Input
-                        id="district"
-                        placeholder="e.g., Colombo District"
-                        value={formData.district}
-                        onChange={(e) => handleInputChange("district", e.target.value)}
                         className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                       />
                     </div>
@@ -2137,37 +2235,96 @@ const [formData, setFormData] = useState({
                     </div>
                   </div>
 
-                  {/* Boost ad */}
-                  <div className="flex items-center">
-                    <div className="w-48 text-right pr-4 text-gray-600">
-                      Boost Ad
+                  {/* Boost ad - Show for all users */}
+                  <div className="flex items-start mb-6">
+                    <div className="w-48 text-right pr-4 text-gray-600 pt-2">
+                      Ad Promotion
                     </div>
                     <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="boosted"
-                          checked={formData.boosted}
-                          onCheckedChange={(checked) => handleInputChange("boosted", checked)}
-                        />
-                        <Label htmlFor="boosted">Boost ad</Label>
-                      </div>
-                    </div>
-                  </div>
+                      {/* Show current promotion status if editing an ad with active promotion */}
+                      {initialData && (promotionType === "boost" || promotionType === "featured") && (
+                        <div className={`mb-4 rounded-lg p-4 border-2 ${
+                          promotionType === "boost" 
+                            ? "bg-orange-50 border-orange-300" 
+                            : "bg-yellow-50 border-yellow-300"
+                        }`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            {promotionType === "boost" ? (
+                              <Zap className="w-5 h-5 text-orange-600" />
+                            ) : (
+                              <Star className="w-5 h-5 text-yellow-600" />
+                            )}
+                            <span className="font-semibold text-sm">
+                              Currently {promotionType === "boost" ? "Boosted" : "Featured"}
+                            </span>
+                          </div>
+                          {initialData.boostExpiry && promotionType === "boost" && (
+                            <p className="text-sm text-orange-700">
+                              Expires: {new Date(initialData.boostExpiry).toLocaleDateString()} 
+                              ({Math.ceil((new Date(initialData.boostExpiry).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days remaining)
+                            </p>
+                          )}
+                          {initialData.featureExpiry && promotionType === "featured" && (
+                            <p className="text-sm text-yellow-700">
+                              Expires: {new Date(initialData.featureExpiry).toLocaleDateString()} 
+                              ({Math.ceil((new Date(initialData.featureExpiry).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days remaining)
+                            </p>
+                          )}
+                        </div>
+                      )}
+                      <Card className="border-amber-200">
+                        <CardContent className="pt-6">
+                          <div className="space-y-4">
+                            <div>
+                              <Label className="text-base font-semibold mb-3 block">Promotion Type</Label>
+                              <RadioGroup value={promotionType} onValueChange={(value) => setPromotionType(value as any)}>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="none" id="promo-none" />
+                                  <Label htmlFor="promo-none" className="font-normal cursor-pointer">
+                                    No Promotion
+                                  </Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="boost" id="promo-boost" />
+                                  <Label htmlFor="promo-boost" className="font-normal cursor-pointer flex items-center gap-2">
+                                    <Zap className="w-4 h-4 text-orange-600" />
+                                    <span>Boost Ad</span>
+                                  </Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="featured" id="promo-featured" />
+                                  <Label htmlFor="promo-featured" className="font-normal cursor-pointer flex items-center gap-2">
+                                    <Star className="w-4 h-4 text-yellow-600" />
+                                    <span>Featured Ad</span>
+                                  </Label>
+                                </div>
+                              </RadioGroup>
+                            </div>
 
-                  {/* Featured ad */}
-                  <div className="flex items-center">
-                    <div className="w-48 text-right pr-4 text-gray-600">
-                      Featured Ad
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="featured"
-                          checked={formData.featured}
-                          onCheckedChange={(checked) => handleInputChange("featured", checked)}
-                        />
-                        <Label htmlFor="featured">Featured ad</Label>
-                      </div>
+                            {promotionType !== "none" && (
+                              <div>
+                                <Label className="text-base font-semibold mb-3 block">Duration & Pricing</Label>
+                                <Select value={promotionDuration} onValueChange={(value) => setPromotionDuration(value as any)}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select duration" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="1week">
+                                      1 Week - Rs {promotionType === "boost" ? "1,500" : "1,000"}
+                                    </SelectItem>
+                                    <SelectItem value="2weeks">
+                                      2 Weeks - Rs {promotionType === "boost" ? "2,500" : "1,500"}
+                                    </SelectItem>
+                                    <SelectItem value="1month">
+                                      1 Month - Rs {promotionType === "boost" ? "4,000" : "2,500"}
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
                     </div>
                   </div>
 

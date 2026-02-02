@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { format } from "date-fns";
-import { Filter, Loader2, Search, X, Eye, TrendingUp } from "lucide-react";
+import { Filter, Loader2, Search, X, Eye, TrendingUp, Star, Zap } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -1146,12 +1146,43 @@ export default function VehicleMarketplace() {
               {/* Vehicle Grid - Using Real Data */}
               {filteredAds.length > 0 && !isLoading && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {filteredAds.map((vehicle) => (
+                  {filteredAds.map((vehicle) => {
+                    const now = new Date();
+                    const isBoosted = vehicle.boosted && vehicle.boostExpiry && new Date(vehicle.boostExpiry) > now;
+                    const isFeatured = vehicle.featured && vehicle.featureExpiry && new Date(vehicle.featureExpiry) > now;
+                    
+                    return (
                     <div
                       key={vehicle.id}
-                      className="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative"
+                      className={`rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative ${
+                        isBoosted
+                          ? "bg-blue-50 border-blue-200 hover:border-blue-300"
+                          : isFeatured 
+                          ? "bg-yellow-50/80 border-yellow-200 hover:border-yellow-300" 
+                          : "bg-white border-slate-200 hover:border-slate-300"
+                      }`}
                       onClick={() => (window.location.href = `/${vehicle.id}`)}
                     >
+                      {/* Boosted Label */}
+                      {isBoosted && (
+                        <div className="absolute  z-20">
+                          <div className="bg-orange-500 text-white px-2 font-semibold text-xs flex rounded-full items-center gap-1">
+                            <Zap className="h-3 w-3" />
+                            Boosted
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Featured Label */}
+                      {isFeatured && (
+                        <div className="absolute  z-20">
+                          <div className="bg-yellow-500 text-white px-2 font-semibold text-xs flex rounded-full items-center gap-1">
+                            <Star className="h-3 w-3" />
+                            Featured
+                          </div>
+                        </div>
+                      )}
+
                       {/* Favorite Button */}
                       <div className="absolute top-2 right-2 z-10">
                         <FavoriteButton adId={vehicle.id} />
@@ -1212,7 +1243,8 @@ export default function VehicleMarketplace() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 

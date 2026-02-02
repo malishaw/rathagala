@@ -8,6 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -29,7 +37,8 @@ import { Label } from "@/components/ui/label";
 import { useApproveAd } from "@/features/ads/api/use-approve-ad";
 import { useRejectAd } from "@/features/ads/api/use-reject-ad";
 import { useDeleteAd } from "@/features/ads/api/use-delete-ad";
-import { Check, X, Eye, Edit, Trash2 } from "lucide-react";
+import { useUpdatePromotion } from "@/features/ads/api/use-update-promotion";
+import { Check, X, Eye, Edit, Trash2, Zap, Star, Sparkles } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -38,6 +47,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useRouter } from "next/navigation";
 import { FaMobileAlt, FaWhatsapp } from "react-icons/fa";
+import { format } from "date-fns";
 
 // This type is used to define the shape of our data.
 export type AdType = Omit<Ad, "createdAt"> & {
@@ -125,6 +135,11 @@ export const adminColumns: ColumnDef<AdType>[] = [
       const type = ad.type;
       const displayType = vehicleTypeLabels[type] || type;
 
+      // Check if promotion is still active
+      const now = new Date();
+      const isBoosted = ad.boosted && ad.boostExpiry && new Date(ad.boostExpiry) > now;
+      const isFeatured = ad.featured && ad.featureExpiry && new Date(ad.featureExpiry) > now;
+
       return (
         <div className="flex flex-col gap-2">
           <Link
@@ -133,9 +148,24 @@ export const adminColumns: ColumnDef<AdType>[] = [
           >
             {displayTitle}
           </Link>
-          <Badge variant="outline" className="bg-slate-100 text-slate-800 border-1 w-fit border-amber-200">
-            {displayType}
-          </Badge>
+          <div className="flex gap-2 flex-wrap items-center">
+            <Badge variant="outline" className="bg-slate-100 text-slate-800 border-1 w-fit border-amber-200">
+              {displayType}
+            </Badge>
+            {isBoosted && (
+              <PromotionBadge
+                type="boost"
+                expiry={ad.boostExpiry!}
+              />
+            )}
+            {isFeatured && (
+              <PromotionBadge
+                type="featured"
+                expiry={ad.featureExpiry!}
+              />
+            )}
+            <PromotionButton ad={ad} hasPromotion={isBoosted || isFeatured} />
+          </div>
         </div>
       );
     }
@@ -258,15 +288,70 @@ export const adminColumns: ColumnDef<AdType>[] = [
   }
 ];
 
+// Promotion Badge Component with Tooltip
+function PromotionBadge({ type, expiry }: { type: "boost" | "featured"; expiry: string }) {
+  const expiryDate = new Date(expiry);
+  const now = new Date();
+  const isActive = expiryDate > now;
+  
+  if (!isActive) return null;
+
+  const daysLeft = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  const weeksLeft = Math.floor(daysLeft / 7);
+  
+  let durationText = "";
+  if (weeksLeft >= 4) {
+    durationText = "1 month";
+  } else if (weeksLeft >= 2) {
+    durationText = "2 weeks";
+  } else if (weeksLeft >= 1) {
+    durationText = "1 week";
+  } else {
+    durationText = `${daysLeft} day${daysLeft > 1 ? 's' : ''}`;
+  }
+
+  const tooltipText = `${type === "boost" ? "Boosted" : "Featured"} until ${format(expiryDate, "PPP")} (${daysLeft} days left)`;
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge 
+            variant="outline" 
+            className={`${
+              type === "boost" 
+                ? "bg-orange-100 text-orange-700 border-orange-300" 
+                : "bg-yellow-100 text-yellow-700 border-yellow-300"
+            } cursor-help flex items-center gap-1`}
+          >
+            {type === "boost" ? <Zap className="w-3 h-3" /> : <Star className="w-3 h-3" />}
+            {type === "boost" ? "Boosted" : "Featured"} ({durationText})
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-xs">
+          <p>{tooltipText}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 // Separate component to use hooks properly
 function AdminActionsCell({ ad }: { ad: AdType }) {
   const router = useRouter();
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [rejectionDescription, setRejectionDescription] = useState("");
+  
   const approveMutation = useApproveAd();
   const rejectMutation = useRejectAd();
   const deleteMutation = useDeleteAd();
+  const updatePromotionMutation = useUpdatePromotion();
+
+  // Check if promotion is still active
+  const now = new Date();
+  const hasActiveBoost = ad.boosted && ad.boostExpiry && new Date(ad.boostExpiry) > now;
+  const hasActiveFeatured = ad.featured && ad.featureExpiry && new Date(ad.featureExpiry) > now;
 
   // Show approve button for DRAFT, PENDING_REVIEW, and REJECTED statuses
   const canApprove = ad.status === "DRAFT" || ad.status === "PENDING_REVIEW" || ad.status === "REJECTED";
@@ -297,7 +382,7 @@ function AdminActionsCell({ ad }: { ad: AdType }) {
     router.push(`/dashboard/ads/${ad.id}`);
   };
 
-  const isLoading = approveMutation.isPending || rejectMutation.isPending || deleteMutation.isPending;
+  const isLoading = approveMutation.isPending || rejectMutation.isPending || deleteMutation.isPending || updatePromotionMutation.isPending;
 
   return (
     <>
@@ -413,6 +498,237 @@ function AdminActionsCell({ ad }: { ad: AdType }) {
           </div>
         </AlertDialogContent>
       </AlertDialog>
+    </>
+  );
+}
+
+// New PromotionButton Component - displayed next to vehicle type badge
+function PromotionButton({ ad, hasPromotion }: { ad: AdType; hasPromotion: boolean }) {
+  const [showPromotionDialog, setShowPromotionDialog] = useState(false);
+  const [promotionType, setPromotionType] = useState<"boost" | "featured" | "none">("none");
+  const [duration, setDuration] = useState<"1week" | "2weeks" | "1month">("1week");
+  
+  const updatePromotionMutation = useUpdatePromotion();
+
+  // Check if promotion is still active
+  const now = new Date();
+  const hasActiveBoost = ad.boosted && ad.boostExpiry && new Date(ad.boostExpiry) > now;
+  const hasActiveFeatured = ad.featured && ad.featureExpiry && new Date(ad.featureExpiry) > now;
+
+  // Calculate current promotion details
+  let currentPromotionType: "boost" | "featured" | "none" = "none";
+  let currentExpiry: Date | null = null;
+  let daysRemaining = 0;
+  
+  if (hasActiveBoost) {
+    currentPromotionType = "boost";
+    currentExpiry = new Date(ad.boostExpiry!);
+    daysRemaining = Math.ceil((currentExpiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  } else if (hasActiveFeatured) {
+    currentPromotionType = "featured";
+    currentExpiry = new Date(ad.featureExpiry!);
+    daysRemaining = Math.ceil((currentExpiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  }
+
+  // Initialize dialog state when opening
+  const handleOpenDialog = () => {
+    setPromotionType(currentPromotionType);
+    // Try to guess the duration based on days remaining
+    if (currentPromotionType !== "none" && daysRemaining > 0) {
+      if (daysRemaining >= 25) {
+        setDuration("1month");
+      } else if (daysRemaining >= 12) {
+        setDuration("2weeks");
+      } else {
+        setDuration("1week");
+      }
+    } else {
+      setDuration("1week");
+    }
+    setShowPromotionDialog(true);
+  };
+
+  const handlePromotion = () => {
+    updatePromotionMutation.mutate(
+      { 
+        id: ad.id, 
+        promotionType, 
+        duration: promotionType !== "none" ? duration : undefined 
+      },
+      {
+        onSuccess: () => {
+          setShowPromotionDialog(false);
+        },
+      }
+    );
+  };
+
+  const handleCancelPromotion = () => {
+    updatePromotionMutation.mutate(
+      { 
+        id: ad.id, 
+        promotionType: "none", 
+        duration: undefined 
+      },
+      {
+        onSuccess: () => {
+          setShowPromotionDialog(false);
+        },
+      }
+    );
+  };
+
+  return (
+    <>
+      <Button
+        size="sm"
+        onClick={handleOpenDialog}
+        disabled={updatePromotionMutation.isPending}
+        variant="outline"
+        className={hasPromotion 
+          ? "border-amber-500 text-amber-600 hover:bg-amber-50 h-6 px-2" 
+          : "border-gray-300 text-gray-400 hover:bg-gray-50 h-6 px-2"
+        }
+        title="Manage Promotion"
+      >
+        {hasActiveBoost ? (
+          <Zap className="w-3 h-3" />
+        ) : hasActiveFeatured ? (
+          <Star className="w-3 h-3" />
+        ) : (
+          <Sparkles className="w-3 h-3 text-gray-400" />
+        )}
+      </Button>
+
+      {/* Promotion Dialog */}
+      <Dialog open={showPromotionDialog} onOpenChange={setShowPromotionDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Manage Ad Promotion</DialogTitle>
+            <DialogDescription>
+              Set or remove boost/featured status for this ad. Only one promotion type can be active at a time.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            {/* Current Promotion Status */}
+            {currentPromotionType !== "none" && (
+              <div className={`rounded-lg p-4 border-2 ${
+                currentPromotionType === "boost" 
+                  ? "bg-orange-50 border-orange-300" 
+                  : "bg-yellow-50 border-yellow-300"
+              }`}>
+                <div className="flex items-center gap-2 mb-2">
+                  {currentPromotionType === "boost" ? (
+                    <Zap className="w-5 h-5 text-orange-600" />
+                  ) : (
+                    <Star className="w-5 h-5 text-yellow-600" />
+                  )}
+                  <span className="font-semibold text-sm">
+                    Currently {currentPromotionType === "boost" ? "Boosted" : "Featured"}
+                  </span>
+                </div>
+                <div className="text-sm space-y-1">
+                  <p>Expires: {currentExpiry ? format(currentExpiry, "PPP") : "N/A"}</p>
+                  <p className="font-medium">{daysRemaining} days remaining</p>
+                </div>
+              </div>
+            )}
+
+            {currentPromotionType === "none" && (
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+                <p className="text-sm text-slate-600">No active promotion. Select an option below to promote this ad.</p>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <Label>Promotion Type</Label>
+              <RadioGroup value={promotionType} onValueChange={(value) => setPromotionType(value as any)}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="none" id="none" />
+                  <Label htmlFor="none" className="font-normal cursor-pointer">
+                    No Promotion
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="boost" id="boost" />
+                  <Label htmlFor="boost" className="font-normal cursor-pointer flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-orange-600" />
+                    <span>Boost Ad</span>
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="featured" id="featured" />
+                  <Label htmlFor="featured" className="font-normal cursor-pointer flex items-center gap-2">
+                    <Star className="w-4 h-4 text-yellow-600" />
+                    <span>Featured Ad</span>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {promotionType !== "none" && (
+              <div className="space-y-3">
+                <Label>Duration</Label>
+                <Select value={duration} onValueChange={(value) => setDuration(value as any)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select duration" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1week">
+                      1 Week - Rs {promotionType === "boost" ? "1,500" : "1,000"}
+                    </SelectItem>
+                    <SelectItem value="2weeks">
+                      2 Weeks - Rs {promotionType === "boost" ? "2,500" : "1,500"}
+                    </SelectItem>
+                    <SelectItem value="1month">
+                      1 Month - Rs {promotionType === "boost" ? "4,000" : "2,500"}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {hasActiveBoost && promotionType !== "boost" && (
+              <div className="bg-orange-50 border border-orange-200 rounded-md p-3 text-sm text-orange-800">
+                ⚠️ Current boost will be removed
+              </div>
+            )}
+            {hasActiveFeatured && promotionType !== "featured" && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm text-yellow-800">
+                ⚠️ Current featured status will be removed
+              </div>
+            )}
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <div className="flex gap-2 flex-1">
+              <Button
+                onClick={() => setShowPromotionDialog(false)}
+                disabled={updatePromotionMutation.isPending}
+                className="flex-1 bg-white hover:bg-slate-100 border-1 text-slate-700"
+              >
+                Cancel
+              </Button>
+              {currentPromotionType !== "none" && (
+                <Button
+                  variant="outline"
+                  onClick={handleCancelPromotion}
+                  disabled={updatePromotionMutation.isPending}
+                  className="border-red-500 text-red-600 hover:bg-red-50 hover:text-red-600 flex-1"
+                >
+                  {updatePromotionMutation.isPending ? "Removing..." : "Remove Promotion"}
+                </Button>
+              )}
+            </div>
+            <Button
+              onClick={handlePromotion}
+              disabled={updatePromotionMutation.isPending}
+              className="bg-teal-800 text-white hover:bg-teal-700 border-0 flex-1"
+            >
+              {updatePromotionMutation.isPending ? "Updating..." : "Update Promotion"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

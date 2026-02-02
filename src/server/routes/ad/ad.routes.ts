@@ -239,6 +239,40 @@ export const reject = createRoute({
 
 export type RejectRoute = typeof reject;
 
+// --------- Update Boost/Featured Status ----------
+export const updatePromotion = createRoute({
+  tags,
+  summary: "Update ad promotion status",
+  description: "Update boost or featured status with expiry (admin only)",
+  path: "/{id}/promotion",
+  method: "patch",
+  middleware: [serverAuthMiddleware],
+  request: {
+    params: schemas.IdParamsSchema,
+    body: jsonContent(
+      z.object({
+        promotionType: z.enum(["boost", "featured", "none"]),
+        duration: z.enum(["1week", "2weeks", "1month"]).optional(),
+      }),
+      "Promotion details"
+    ),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(schemas.selectAdSchema, "The updated ad"),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      createMessageObjectSchema("Unauthorized"),
+      "Unauthorized"
+    ),
+    [HttpStatusCodes.FORBIDDEN]: jsonContent(
+      createMessageObjectSchema("Forbidden"),
+      "Admin access required"
+    ),
+    [HttpStatusCodes.NOT_FOUND]: jsonContent(notFoundSchema, "Ad not found"),
+  },
+});
+
+export type UpdatePromotionRoute = typeof updatePromotion;
+
 // --------- Bulk Create Ads ----------
 export const bulkCreate = createRoute({
   tags,

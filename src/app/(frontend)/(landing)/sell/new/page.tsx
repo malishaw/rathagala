@@ -20,7 +20,8 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Camera, ChevronRight, CheckCircle2, X, PlusCircle } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Loader2, Camera, ChevronRight, CheckCircle2, X, PlusCircle, Zap, Star } from "lucide-react";
 import { MediaGallery } from "@/modules/media/components/media-gallery";
 import type { MediaFile } from "@/modules/media/types";
 import { PendingAdModal } from "@/features/ads/components/pending-ad-modal";
@@ -36,13 +37,9 @@ export default function QuickAdCreatePage() {
   const [selectedImages, setSelectedImages] = useState<MediaFile[]>([]);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   
-  // Boost options
-  const boostOptions = [
-    { id: "bump_up", name: "Bump Up", price: 2000, description: "Boost your ad to the top" },
-    { id: "top_ad", name: "Top Ad", price: 1500, description: "Featured at the top of listings" },
-    { id: "featured", name: "Featured Ad", price: 2500, description: "Highlighted with badge" },
-    { id: "urgent", name: "Urgent", price: 1000, description: "Mark as urgent listing" }
-  ];
+  // Promotion state
+  const [promotionType, setPromotionType] = useState<"boost" | "featured" | "none">("none");
+  const [promotionDuration, setPromotionDuration] = useState<"1week" | "2weeks" | "1month">("1week");
   const [formData, setFormData] = useState({
     // Listing type
     listingType: "SELL",
@@ -86,9 +83,6 @@ export default function QuickAdCreatePage() {
     // Publication status
     published: true,
     isDraft: false,
-    
-    // Boost selection
-    boostType: "", // "bump_up" | "top_ad" | "featured" | "urgent" | ""
   });
 
   // Auto-fill user profile data
@@ -265,6 +259,38 @@ export default function QuickAdCreatePage() {
   
   // Handle form submission
   const handleSubmit = () => {
+    // Calculate boost/featured expiry dates based on selection
+    let boostExpiry: Date | undefined = undefined;
+    let featureExpiry: Date | undefined = undefined;
+    let boosted = false;
+    let featured = false;
+
+    if (promotionType !== "none") {
+      const now = new Date();
+      let expiryDate: Date;
+
+      switch (promotionDuration) {
+        case "1week":
+          expiryDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+          break;
+        case "2weeks":
+          expiryDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+          break;
+        case "1month":
+          expiryDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+          break;
+        default:
+          expiryDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      }
+
+      if (promotionType === "boost") {
+        boosted = true;
+        boostExpiry = expiryDate;
+      } else if (promotionType === "featured") {
+        featured = true;
+        featureExpiry = expiryDate;
+      }
+    }
     // Validate at least 1 image is selected
     // if (selectedImages.length === 0) {
     //   alert("Please upload at least 1 image for your ad");
@@ -339,8 +365,10 @@ export default function QuickAdCreatePage() {
       termsAndConditions: formData.termsAndConditions || undefined,
       published: formData.published,
       isDraft: formData.isDraft,
-      boosted: formData.boostType === "bump_up",
-      featured: formData.boostType === "featured"
+      boosted: boosted,
+      featured: featured,
+      boostExpiry: boostExpiry,
+      featureExpiry: featureExpiry
     };
     
     createAd(
@@ -1719,46 +1747,63 @@ export default function QuickAdCreatePage() {
               
               {/* Boost Ad Selection */}
               <div className="pt-4 border-t border-slate-200">
-                <label className="block text-sm font-medium mb-3">Boost Your Ad (Optional)</label>
-                <div className="space-y-2">
-                  {boostOptions.map((boost) => (
-                    <div
-                      key={boost.id}
-                      onClick={() => handleInputChange("boostType", formData.boostType === boost.id ? "" : boost.id)}
-                      className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                        formData.boostType === boost.id
-                          ? "border-teal-700 bg-teal-50"
-                          : "border-slate-200 bg-white hover:border-teal-300"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="font-semibold text-sm text-slate-800">{boost.name}</div>
-                          <div className="text-xs text-slate-500 mt-1">{boost.description}</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-bold text-teal-700">Rs. {boost.price.toLocaleString()}</div>
-                          <div className={`w-5 h-5 rounded-full border-2 ml-auto mt-2 ${
-                            formData.boostType === boost.id
-                              ? "border-teal-700 bg-teal-700"
-                              : "border-slate-300"
-                          }`}>
-                            {formData.boostType === boost.id && (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <div className="w-2 h-2 bg-white rounded-full"></div>
-                              </div>
-                            )}
+                <label className="block text-sm font-medium mb-3">Promote Your Ad (Optional)</label>
+                <Card className="border-amber-200">
+                  <div className="p-4">
+                    <div className="space-y-4">
+                      <div>
+                        <Label className="text-sm font-semibold mb-2 block">Promotion Type</Label>
+                        <RadioGroup value={promotionType} onValueChange={(value) => setPromotionType(value as any)}>
+                          <div className="flex items-center space-x-2 mb-2">
+                            <RadioGroupItem value="none" id="sell-promo-none" />
+                            <Label htmlFor="sell-promo-none" className="font-normal cursor-pointer text-sm">
+                              No Promotion
+                            </Label>
                           </div>
-                        </div>
+                          <div className="flex items-center space-x-2 mb-2">
+                            <RadioGroupItem value="boost" id="sell-promo-boost" />
+                            <Label htmlFor="sell-promo-boost" className="font-normal cursor-pointer flex items-center gap-2 text-sm">
+                              <Zap className="w-4 h-4 text-orange-600" />
+                              <span>Boost Ad</span>
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="featured" id="sell-promo-featured" />
+                            <Label htmlFor="sell-promo-featured" className="font-normal cursor-pointer flex items-center gap-2 text-sm">
+                              <Star className="w-4 h-4 text-yellow-600" />
+                              <span>Featured Ad</span>
+                            </Label>
+                          </div>
+                        </RadioGroup>
                       </div>
+
+                      {promotionType !== "none" && (
+                        <div>
+                          <Label className="text-sm font-semibold mb-2 block">Duration & Pricing</Label>
+                          <Select value={promotionDuration} onValueChange={(value) => setPromotionDuration(value as any)}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select duration" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1week">
+                                1 Week - Rs {promotionType === "boost" ? "1,500" : "1,000"}
+                              </SelectItem>
+                              <SelectItem value="2weeks">
+                                2 Weeks - Rs {promotionType === "boost" ? "2,500" : "1,500"}
+                              </SelectItem>
+                              <SelectItem value="1month">
+                                1 Month - Rs {promotionType === "boost" ? "4,000" : "2,500"}
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-                {formData.boostType && (
-                  <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
-                    ✓ Boost selected: {boostOptions.find(b => b.id === formData.boostType)?.name} - Rs. {boostOptions.find(b => b.id === formData.boostType)?.price.toLocaleString()}
                   </div>
-                )}
+                </Card>
+                <p className="text-xs text-slate-500 mt-2">
+                  Boost or feature your ad for better visibility
+                </p>
               </div>
               
               {/* Image Selection Section */}
@@ -1919,8 +1964,9 @@ export default function QuickAdCreatePage() {
             termsAndConditions: false,
             published: true,
             isDraft: false,
-            boostType: ""
           });
+          setPromotionType("none");
+          setPromotionDuration("1week");
         }}
       />
     </div>

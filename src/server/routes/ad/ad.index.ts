@@ -12,6 +12,7 @@ const router = createRouter()
   .openapi(routes.remove, handlers.remove)
   .openapi(routes.approve, handlers.approve)
   .openapi(routes.reject, handlers.reject)
+  .openapi(routes.updatePromotion, handlers.updatePromotion)
   .openapi(routes.bulkCreate, handlers.bulkCreate)
   .openapi(routes.incrementView, handlers.incrementView)
   .openapi(routes.trending, handlers.trending);

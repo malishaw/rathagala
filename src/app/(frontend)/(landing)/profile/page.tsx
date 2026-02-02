@@ -14,7 +14,7 @@ import { MediaGallery } from "@/modules/media/components/media-gallery";
 import type { MediaFile } from "@/modules/media/types";
 import { betterFetch } from "@better-fetch/fetch";
 import { format } from "date-fns";
-import { Building2, Car, CheckCircle, ChevronRight, CreditCard, Edit, Heart, Loader2, Lock, MapPin, MessageCircle, Phone, Shield, Trash2, Camera } from "lucide-react";
+import { Building2, Car, CheckCircle, ChevronRight, CreditCard, Edit, Heart, Loader2, Lock, MapPin, MessageCircle, Phone, Shield, Trash2, Camera, Zap, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -57,6 +57,10 @@ interface UserAd {
     }
   }>;
   views?: number;
+  boosted?: boolean;
+  featured?: boolean;
+  boostExpiry?: string | null;
+  featureExpiry?: string | null;
 }
 
 // Sri Lanka location data
@@ -1107,11 +1111,24 @@ export default function ProfilePage() {
                       </Button>
                     </div>
                   ) : (
-                    (Array.isArray(userAds) ? userAds : userAds.ads).map((ad: UserAd) => (
+                    (Array.isArray(userAds) ? userAds : userAds.ads).map((ad: UserAd) => {
+                      const now = new Date();
+                      const isBoosted = ad.boosted && ad.boostExpiry && new Date(ad.boostExpiry) > now;
+                      const isFeatured = ad.featured && ad.featureExpiry && new Date(ad.featureExpiry) > now;
+                      
+                      return (
                       <div
                         key={ad.id}
-                        className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-5 flex items-center hover:bg-white/70 hover:border-[#0D5C63]/30 transition-all duration-300 group"
+                        className={`rounded-xl border-2 p-5 flex items-center transition-all duration-300 group relative ${
+                          isBoosted
+                            ? "bg-blue-50/50 backdrop-blur-md border-blue-100 hover:border-blue-200"
+                            : isFeatured
+                            ? "bg-yellow-50/50 backdrop-blur-md border-yellow-100 hover:border-yellow-200"
+                            : "bg-white/60 backdrop-blur-md border-white/30 hover:bg-white/70 hover:border-[#0D5C63]/30"
+                        }`}
                       >
+
+
                         <div className="h-20 w-20 flex-shrink-0 mr-5 rounded-xl overflow-hidden border-2 border-white/50">
                           {getAdImage(ad) ? (
                             <img
@@ -1127,7 +1144,7 @@ export default function ProfilePage() {
                         </div>
 
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <div
                               className="font-semibold text-lg text-slate-800 hover:text-[#0D5C63] cursor-pointer transition-colors duration-300"
                               onClick={() => router.push(`/${ad.id}`)}
@@ -1135,6 +1152,32 @@ export default function ProfilePage() {
                               {ad.title}
                             </div>
                             {getStatusBadge(ad.status)}
+                            {/* Promotion Badges */}
+                            {(() => {
+                              const now = new Date();
+                              const isBoosted = ad.boosted && ad.boostExpiry && new Date(ad.boostExpiry) > now;
+                              const isFeatured = ad.featured && ad.featureExpiry && new Date(ad.featureExpiry) > now;
+                              
+                              if (isBoosted) {
+                                const daysLeft = Math.ceil((new Date(ad.boostExpiry!).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                                return (
+                                  <Badge className="bg-orange-100 text-orange-700 border border-orange-300 flex items-center gap-1">
+                                    <Zap className="w-3 h-3" />
+                                    Boosted ({daysLeft}d left)
+                                  </Badge>
+                                );
+                              }
+                              if (isFeatured) {
+                                const daysLeft = Math.ceil((new Date(ad.featureExpiry!).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                                return (
+                                  <Badge className="bg-yellow-100 text-yellow-700 border border-yellow-300 flex items-center gap-1">
+                                    <Star className="w-3 h-3" />
+                                    Featured ({daysLeft}d left)
+                                  </Badge>
+                                );
+                              }
+                              return null;
+                            })()}
                           </div>
                           <div className="text-base font-bold text-[#0D5C63] mt-1">Rs {formatPrice(ad.price)}</div>
                           <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-500 mt-2">
@@ -1172,7 +1215,8 @@ export default function ProfilePage() {
                           </Button>
                         </div>
                       </div>
-                    ))
+                    );
+                    })
                   )}
                 </div>
               </div>

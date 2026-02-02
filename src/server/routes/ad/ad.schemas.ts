@@ -84,6 +84,8 @@ export const createAdBaseSchema = z
     isDraft: z.boolean().default(true),
     boosted: z.boolean().default(false),
     featured: z.boolean().default(false),
+    boostExpiry: z.date().optional(),
+    featureExpiry: z.date().optional(),
 
     // SEO fields
     seoTitle: z.string().optional(),
