@@ -1207,7 +1207,7 @@ export default function ProfilePage() {
                             </span>
                             <span className="flex items-center gap-1">
                               <div className="h-1.5 w-1.5 rounded-full bg-slate-400"></div>
-                              {ad.views || 0} views
+                              {ad.analytics?.views || 0} views
                             </span>
                           </div>
                         </div>

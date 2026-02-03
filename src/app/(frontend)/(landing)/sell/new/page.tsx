@@ -1071,23 +1071,25 @@ export default function QuickAdCreatePage() {
             </p>
           </div>
           
-          <div>
-            <label className="block text-sm font-medium mb-1">Preferred Condition (optional)</label>
-            <Select 
-              value={formData.condition} 
-              onValueChange={(value) => handleInputChange("condition", value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Any condition" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="any">Any condition</SelectItem>
-                <SelectItem value="New">Brand New</SelectItem>
-                <SelectItem value="Reconditioned">Reconditioned</SelectItem>
-                <SelectItem value="Used">Used</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {(formData.listingType === "WANT" || formData.listingType === "RENT") && (
+            <div>
+              <label className="block text-sm font-medium mb-1">Preferred Condition (optional)</label>
+              <Select 
+                value={formData.condition} 
+                onValueChange={(value) => handleInputChange("condition", value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Any condition" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Any condition</SelectItem>
+                  <SelectItem value="New">Brand New</SelectItem>
+                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
+                  <SelectItem value="Used">Used</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </>
       );
     }

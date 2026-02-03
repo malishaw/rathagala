@@ -38,7 +38,7 @@ import { useApproveAd } from "@/features/ads/api/use-approve-ad";
 import { useRejectAd } from "@/features/ads/api/use-reject-ad";
 import { useDeleteAd } from "@/features/ads/api/use-delete-ad";
 import { useUpdatePromotion } from "@/features/ads/api/use-update-promotion";
-import { Check, X, Eye, Edit, Trash2, Zap, Star, Sparkles } from "lucide-react";
+import { Check, X, Eye, Edit, Trash2, Zap, Star, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -46,7 +46,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useRouter } from "next/navigation";
-import { FaMobileAlt, FaWhatsapp } from "react-icons/fa";
+import { FaInfoCircle, FaMobileAlt, FaWhatsapp } from "react-icons/fa";
 import { format } from "date-fns";
 
 // This type is used to define the shape of our data.
@@ -178,23 +178,36 @@ export const adminColumns: ColumnDef<AdType>[] = [
       const now = new Date();
       const status = ad.status;
       const rejectionDescription = ad.rejectionDescription;
+      const [showDetails, setShowDetails] = useState(false);
       
       return (
-        <div className="flex items-center gap-2">
-          {getStatusBadge(status)}
-          {status === "REJECTED" && rejectionDescription && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Eye className="w-4 h-4 text-red-500 cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs bg-teal-700 text-white border-red-600 text-sm">
-                  <p>{rejectionDescription}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-        </div>
+        <>
+          <div className="flex items-center gap-2">
+            <Button
+              size="default"
+              variant="ghost"
+              onClick={() => setShowDetails(true)}
+              className="p-1 h-auto text-slate-500 bg-blue-50 border-1 hover:text-blue-600 hover:bg-blue-50"
+              title="View Ad Details"
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
+            {getStatusBadge(status)}
+            {status === "REJECTED" && rejectionDescription && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <FaInfoCircle className="w-4 h-4 text-red-600 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs bg-teal-700 text-white border-red-600 text-sm">
+                    <p>{rejectionDescription}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
+          <AdDetailsModal ad={ad} open={showDetails} onOpenChange={setShowDetails} />
+        </>
       );
     }
   },
@@ -736,6 +749,207 @@ function PromotionButton({ ad, hasPromotion }: { ad: AdType; hasPromotion: boole
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+// Ad Details Modal Component
+function AdDetailsModal({ ad, open, onOpenChange }: { ad: AdType; open: boolean; onOpenChange: (open: boolean) => void }) {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const images = ad.media || [];
+  
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % (images.length || 1));
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + (images.length || 1)) % (images.length || 1));
+  };
+
+  const currentImage = images[currentImageIndex]?.media?.url;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Ad Details</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Image Slider */}
+          {images.length > 0 ? (
+            <div className="relative bg-slate-100 rounded-lg overflow-hidden aspect-video">
+              <img
+                src={currentImage || "/placeholder-image.jpg"}
+                alt="Ad"
+                className="w-full h-full object-cover"
+              />
+              
+              {images.length > 1 && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1"
+                    onClick={prevImage}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1"
+                    onClick={nextImage}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 text-white px-2 py-1 rounded text-xs">
+                    {currentImageIndex + 1} / {images.length}
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="w-full h-40 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500">
+              No images available
+            </div>
+          )}
+
+          {/* Vehicle Details Grid */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-semibold text-slate-600">Make</label>
+              <p className="text-sm text-slate-800">{ad.brand || "—"}</p>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-600">Model</label>
+              <p className="text-sm text-slate-800">{ad.model || "—"}</p>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-600">Year</label>
+              <p className="text-sm text-slate-800">{ad.manufacturedYear || "—"}</p>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-600">Type</label>
+              <p className="text-sm text-slate-800">{vehicleTypeLabels[ad.type] || ad.type || "—"}</p>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-600">Condition</label>
+              <p className="text-sm text-slate-800 capitalize">{ad.condition || "—"}</p>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-600">Mileage</label>
+              <p className="text-sm text-slate-800">{ad.mileage ? `${ad.mileage.toLocaleString()} km` : "—"}</p>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-600">Fuel Type</label>
+              <p className="text-sm text-slate-800">{ad.fuelType || "—"}</p>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-600">Transmission</label>
+              <p className="text-sm text-slate-800 capitalize">{ad.transmission || "—"}</p>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-600">Grade</label>
+              <p className="text-sm text-slate-800">{ad.grade || "—"}</p>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-600">Price</label>
+              <p className="text-sm font-semibold text-teal-700">
+                {ad.price ? `Rs. ${ad.price.toLocaleString()}` : "Price on request"}
+              </p>
+            </div>
+          </div>
+
+          {/* Location Details */}
+          <div className="border-t pt-4 grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-semibold text-slate-600">City</label>
+              <p className="text-sm text-slate-800">{ad.city || "—"}</p>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-600">District</label>
+              <p className="text-sm text-slate-800">{(ad as any).district || "—"}</p>
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs font-semibold text-slate-600">Location</label>
+              <p className="text-sm text-slate-800">{ad.location || "—"}</p>
+            </div>
+          </div>
+
+          {/* Title & Description */}
+          <div className="border-t pt-4 space-y-2">
+            <div>
+              <label className="text-xs font-semibold text-slate-600">Title</label>
+              <p className="text-sm text-slate-800">{ad.title || "—"}</p>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-600">Description</label>
+              <p className="text-sm text-slate-800 max-h-24 overflow-y-auto">{ad.description || "—"}</p>
+            </div>
+          </div>
+
+          {/* Seller Information */}
+          <div className="border-t pt-4">
+            <label className="text-xs font-semibold text-slate-600 block mb-2">Seller Information</label>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-slate-600">Name</p>
+                <p className="text-sm text-slate-800">{ad.creator?.name || ad.creator?.email || "Unknown"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-600">Seller Name (Form)</p>
+                <p className="text-sm text-slate-800">{ad.name || "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-600">Phone</p>
+                <p className="text-sm text-slate-800">{ad.phoneNumber || "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-600">WhatsApp</p>
+                <p className="text-sm text-slate-800">{ad.whatsappNumber || "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-600">Email</p>
+                <p className="text-sm text-slate-800 break-all">{ad.creator?.email || "—"}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Ad Status */}
+          <div className="border-t pt-4">
+            <label className="text-xs font-semibold text-slate-600 block mb-2">Ad Status</label>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-slate-600">Status</p>
+                <div className="mt-1">{getStatusBadge(ad.status)}</div>
+              </div>
+              <div>
+                <p className="text-xs text-slate-600">Created</p>
+                <p className="text-sm text-slate-800">{format(new Date(ad.createdAt), "PPP")}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-600">Boosted</p>
+                <p className={ad.boosted ? "text-sm bg-blue-300 text-blue-700 px-2 py-1 rounded inline-block font-medium" : "text-sm text-slate-800"}>
+                  {ad.boosted ? "Yes" : "No"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-600">Featured</p>
+                <p className={ad.featured ? "text-sm bg-yellow-300 text-yellow-700 px-2 py-1 rounded inline-block font-medium" : "text-sm text-slate-800"}>
+                  {ad.featured ? "Yes" : "No"}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Close
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
