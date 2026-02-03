@@ -50,8 +50,6 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
 
     const session = c.get("session");
     const user = c.get("user");
-
-    console.log("Session : ", session);
     // Convert to numbers and validate
     const pageNum = Math.max(1, parseInt(page));
     const limitNum = Math.max(1, Math.min(10000, parseInt(limit))); // Cap at 10000 items for export
@@ -109,10 +107,8 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     // Add listingType filtering if provided
     if (listingType && listingType.trim() !== "" && listingType.toLowerCase() !== "all") {
       const listingTypeValue = listingType.toUpperCase();
-      console.log("Filtering by listingType:", listingTypeValue);
       const validListingTypes = ["SELL", "WANT", "RENT", "HIRE"];
       if (!validListingTypes.includes(listingTypeValue)) {
-        console.log("Invalid listingType:", listingTypeValue);
         return c.json(
           { message: "Invalid listing type. Must be one of: SELL, WANT, RENT, HIRE" },
           400
@@ -130,12 +126,10 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     const model = typeof rawModel === "string" ? rawModel.trim() : null;
 
     if (brand) {
-      console.log("Filtering by brand (trimmed):", brand);
       andFilters.push({ brand: { equals: brand, mode: "insensitive" } });
     }
 
     if (model) {
-      console.log("Filtering by model (trimmed):", model);
       andFilters.push({ model: { equals: model, mode: "insensitive" } });
     }
 
@@ -173,9 +167,6 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       whereCondition = { AND: andFilters };
     }
 
-    // Debug: Log the final whereCondition before count query
-    console.log("[DEBUG] whereCondition before count:", JSON.stringify(whereCondition, null, 2));
-
     // Quick validation: Prisma does not allow nested AND/OR at the top level
     if (whereCondition && typeof whereCondition === "object") {
       const keys = Object.keys(whereCondition);
@@ -203,7 +194,6 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       totalAds = await prisma.ad.count({
         where: whereCondition,
       });
-      console.log("Total ads found:", totalAds);
     } catch (countError: any) {
       console.error("Error in count query:", countError);
       // Temporarily return error details to help debugging locally
@@ -230,7 +220,6 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
           analytics: true,
         },
       });
-      console.log("Ads query successful, found:", ads.length, "ads");
 
       // Manually fetch creators for ads that have valid createdBy
       const creatorIds = Array.from(new Set(ads.map((ad: any) => ad.createdBy).filter(Boolean)));

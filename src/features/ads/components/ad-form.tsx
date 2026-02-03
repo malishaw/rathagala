@@ -1661,7 +1661,7 @@ const [formData, setFormData] = useState({
                 <CardTitle>Vehicle Images</CardTitle>
                 <CardDescription>
                   Upload up to 6 images of your vehicle (First image will be the
-                  main image)
+                  main image). Images will be automatically optimized to 1000×1000px and compressed to ~500KB for faster loading.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">

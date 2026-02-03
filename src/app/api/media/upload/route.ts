@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { prisma } from '@/server/prisma/client';
 import crypto from 'crypto';
+import sharp from 'sharp';
 
 // Server-side S3 client
 const s3Client = new S3Client({
@@ -28,6 +29,105 @@ function getMediaType(fileType: string): 'IMAGE' | 'VIDEO' | 'PDF' | 'OTHER' {
   if (fileType.startsWith('video/')) return 'VIDEO';
   if (fileType === 'application/pdf') return 'PDF';
   return 'OTHER';
+}
+
+async function compressImage(buffer: Buffer, originalType: string): Promise<Buffer> {
+  const MAX_DIMENSION = 1000;
+  const TARGET_SIZE_KB = 500;
+  const DPI = 72;
+
+  try {
+    // Get image metadata
+    const metadata = await sharp(buffer).metadata();
+    const { width = 0, height = 0 } = metadata;
+
+    // Calculate new dimensions maintaining aspect ratio
+    let newWidth = width;
+    let newHeight = height;
+
+    if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+      const aspectRatio = width / height;
+      
+      if (width > height) {
+        newWidth = MAX_DIMENSION;
+        newHeight = Math.round(MAX_DIMENSION / aspectRatio);
+      } else {
+        newHeight = MAX_DIMENSION;
+        newWidth = Math.round(MAX_DIMENSION * aspectRatio);
+      }
+    }
+
+    // Start with quality 90 and adjust if needed
+    let quality = 90;
+    let compressedBuffer: Buffer;
+    
+    // Determine output format (preserve original or convert to JPEG for better compression)
+    const isJpeg = originalType === 'image/jpeg' || originalType === 'image/jpg';
+    const isPng = originalType === 'image/png';
+    const isWebp = originalType === 'image/webp';
+
+    // Initial compression
+    let sharpInstance = sharp(buffer)
+      .resize(newWidth, newHeight, {
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .withMetadata({ density: DPI }); // Set DPI to 72
+
+    if (isJpeg) {
+      compressedBuffer = await sharpInstance
+        .jpeg({ quality, mozjpeg: true })
+        .toBuffer();
+    } else if (isPng) {
+      compressedBuffer = await sharpInstance
+        .png({ quality, compressionLevel: 9 })
+        .toBuffer();
+    } else if (isWebp) {
+      compressedBuffer = await sharpInstance
+        .webp({ quality })
+        .toBuffer();
+    } else {
+      // For other formats, convert to JPEG
+      compressedBuffer = await sharpInstance
+        .jpeg({ quality, mozjpeg: true })
+        .toBuffer();
+    }
+
+    // If still too large, reduce quality iteratively
+    const targetSizeBytes = TARGET_SIZE_KB * 1024;
+    while (compressedBuffer.length > targetSizeBytes && quality > 60) {
+      quality -= 5;
+      
+      sharpInstance = sharp(buffer)
+        .resize(newWidth, newHeight, {
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
+        .withMetadata({ density: DPI });
+
+      if (isJpeg || !isPng && !isWebp) {
+        compressedBuffer = await sharpInstance
+          .jpeg({ quality, mozjpeg: true })
+          .toBuffer();
+      } else if (isPng) {
+        compressedBuffer = await sharpInstance
+          .png({ quality, compressionLevel: 9 })
+          .toBuffer();
+      } else if (isWebp) {
+        compressedBuffer = await sharpInstance
+          .webp({ quality })
+          .toBuffer();
+      }
+    }
+
+    console.log(`Image compressed: ${(buffer.length / 1024).toFixed(2)}KB → ${(compressedBuffer.length / 1024).toFixed(2)}KB (${newWidth}x${newHeight}, quality: ${quality})`);
+    
+    return compressedBuffer;
+  } catch (error) {
+    console.error('Image compression error:', error);
+    // If compression fails, return original buffer
+    return buffer;
+  }
 }
 
 export async function POST(req: Request) {
@@ -61,7 +161,24 @@ export async function POST(req: Request) {
 
     // Convert file to buffer
     const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    let buffer = Buffer.from(arrayBuffer);
+
+    // Compress image if it's an image file
+    const mediaType = getMediaType(file.type);
+    let finalContentType = file.type;
+    let finalSize = file.size;
+
+    if (mediaType === 'IMAGE') {
+      buffer = await compressImage(buffer, file.type);
+      finalSize = buffer.length;
+      
+      // Update content type if format was changed during compression
+      if (!file.type.startsWith('image/jpeg') && 
+          !file.type.startsWith('image/png') && 
+          !file.type.startsWith('image/webp')) {
+        finalContentType = 'image/jpeg';
+      }
+    }
 
     const bucket = process.env.AWS_S3_BUCKET;
     const region = process.env.AWS_REGION;
@@ -72,7 +189,7 @@ export async function POST(req: Request) {
         Bucket: bucket,
         Key: key,
         Body: buffer,
-        ContentType: file.type,
+        ContentType: finalContentType,
         
         CacheControl: 'max-age=31536000'
       })
@@ -86,9 +203,9 @@ export async function POST(req: Request) {
     const media = await prisma.media.create({
       data: {
         url,
-        type: getMediaType(file.type),
+        type: mediaType,
         filename,
-        size: file.size,
+        size: finalSize,
         uploaderId: session.user.id
       }
     });

@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
           .title { font-size: ${Math.floor(watermarkHeight * 0.45)}px; }
           .url { font-size: ${Math.floor(watermarkHeight * 0.25)}px; opacity: 0.8; }
         </style>
-        <text x="50%" y="45%" class="watermark-text title">රථගාල</text>
+        <text x="50%" y="45%" class="watermark-text title">Rathagala</text>
         <text x="50%" y="85%" class="watermark-text url">www.rathagala.lk</text>
       </svg>
     `;
