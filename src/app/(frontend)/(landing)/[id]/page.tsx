@@ -51,7 +51,7 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { authClient } from "@/lib/auth-client";
 import { FaFacebookSquare, FaWhatsappSquare, FaYoutubeSquare } from "react-icons/fa";
 import { FaSquareXTwitter, FaTelegram } from "react-icons/fa6";
@@ -68,6 +68,7 @@ export default function AdDetailPage() {
   const [reportDetails, setReportDetails] = useState("");
   const [isCopied, setIsCopied] = useState(false);
   const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
+  const [similarVehiclesPage, setSimilarVehiclesPage] = useState(1);
 
   // Get session to check if user is logged in
   const { data: session } = authClient.useSession();
@@ -76,10 +77,26 @@ export default function AdDetailPage() {
   const { data: ad, isLoading, isError } = useGetAdById({ adId: adId || "" });
   const { data: similarVehiclesData, isLoading: isLoadingSimilar } = useGetSimilarVehicles({
     adId: adId || "",
-    limit: 5,
+    limit: 24,
     enabled: !!adId
   });
   const { mutate: createReport, isPending: isSubmittingReport } = useCreateReport();
+
+  // Pagination: 6 ads per page (2 rows × 3 columns)
+  const itemsPerPage = 6;
+  const allSimilarVehicles = similarVehiclesData?.vehicles || [];
+  
+  // Filter similar vehicles to only show those with matching model
+  const modelFilteredVehicles = useMemo(() => {
+    if (!ad?.model) return allSimilarVehicles;
+    return allSimilarVehicles.filter(vehicle => 
+      vehicle.model && vehicle.model.toLowerCase() === ad.model.toLowerCase()
+    );
+  }, [allSimilarVehicles, ad?.model]);
+  
+  const totalPages = Math.ceil(modelFilteredVehicles.length / itemsPerPage);
+  const startIndex = (similarVehiclesPage - 1) * itemsPerPage;
+  const paginatedSimilarVehicles = modelFilteredVehicles.slice(startIndex, startIndex + itemsPerPage);
 
   // Handle report submission
   const handleSubmitReport = () => {
@@ -922,7 +939,7 @@ export default function AdDetailPage() {
 
             {/* Similar Vehicles (desktop/tablet) - hidden on mobile so we can show it last on small screens */}
             <div className="hidden sm:block">
-              {(similarVehicles.length > 0 || isLoadingSimilar) && (
+              {(modelFilteredVehicles.length > 0 || isLoadingSimilar) && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-[#024950]">Similar Vehicles</CardTitle>
@@ -933,39 +950,74 @@ export default function AdDetailPage() {
                         <div className="animate-spin w-6 h-6 border-4 border-[#024950] border-t-transparent rounded-full"></div>
                         <span className="ml-2 text-sm text-gray-500">Loading similar vehicles...</span>
                       </div>
-                    ) : similarVehicles.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        {similarVehicles.map((vehicle) => (
-                          <Card
-                            key={vehicle.id}
-                            className="hover:shadow-md transition-shadow cursor-pointer"
-                            onClick={() => router.push(`/${vehicle.id}`)}
-                          >
-                            <CardContent className="p-3">
-                              <img
-                                src={vehicle.image || "/placeholder.svg"}
-                                alt={vehicle.title}
-                                className="w-full h-24 object-cover rounded mb-2"
-                              />
-                              <h3 className="font-semibold text-xs mb-1 line-clamp-2">{vehicle.title}</h3>
-                              <div className="text-sm font-bold text-[#024950] mb-1">
-                                {formatPrice(vehicle.price || 0)}
-                              </div>
-                              <div className="flex items-center justify-between text-xs text-gray-500">
-                                <div className="flex items-center">
+                    ) : modelFilteredVehicles.length > 0 ? (
+                      <>
+                        <div className="grid grid-cols-3 gap-3 mb-4">
+                          {paginatedSimilarVehicles.map((vehicle) => (
+                            <Card
+                              key={vehicle.id}
+                              className="hover:shadow-md transition-shadow cursor-pointer"
+                              onClick={() => router.push(`/${vehicle.id}`)}
+                            >
+                              <CardContent className="p-3">
+                                <img
+                                  src={vehicle.image || "/placeholder.svg"}
+                                  alt={vehicle.title}
+                                  className="w-full h-24 object-cover rounded mb-2"
+                                />
+                                <h3 className="font-semibold text-xs mb-1 line-clamp-2">{vehicle.title}</h3>
+                                <div className="text-sm font-bold text-[#024950] mb-1">
+                                  {formatPrice(vehicle.price || 0)}
+                                </div>
+                                <div className="flex items-center text-xs text-gray-500">
                                   <MapPin className="w-3 h-3 mr-1" />
                                   <span className="truncate">{[vehicle.city, vehicle.district].filter(Boolean).join(", ") || vehicle.location || "N/A"}</span>
                                 </div>
-                              </div>
-                              {vehicle.mileage && (
-                                <div className="text-xs text-gray-500 mt-1">
-                                  {vehicle.mileage.toLocaleString()} km
-                                </div>
-                              )}
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
+                                {vehicle.mileage && (
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    {vehicle.mileage.toLocaleString()} km
+                                  </div>
+                                )}
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                        
+                        {/* Pagination Controls */}
+                        <div className="flex items-center justify-center gap-2 mt-4 pt-4 border-t">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSimilarVehiclesPage(prev => Math.max(1, prev - 1))}
+                            disabled={similarVehiclesPage === 1}
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </Button>
+                          
+                          <div className="flex items-center gap-1">
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                              <Button
+                                key={page}
+                                variant={similarVehiclesPage === page ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setSimilarVehiclesPage(page)}
+                                className={similarVehiclesPage === page ? "bg-[#024950]" : ""}
+                              >
+                                {page}
+                              </Button>
+                            ))}
+                          </div>
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSimilarVehiclesPage(prev => Math.min(totalPages, prev + 1))}
+                            disabled={similarVehiclesPage === totalPages}
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </>
                     ) : (
                       <p className="text-center text-gray-500 py-4">No similar vehicles found</p>
                     )}
@@ -1208,7 +1260,7 @@ export default function AdDetailPage() {
       </div>
 
       {/* Similar Vehicles (mobile: show last) */}
-      {(similarVehicles.length > 0 || isLoadingSimilar) && (
+      {(modelFilteredVehicles.length > 0 || isLoadingSimilar) && (
         <div className="max-w-6xl mx-auto px-4 py-6 sm:hidden">
           <Card>
             <CardHeader>
@@ -1220,39 +1272,74 @@ export default function AdDetailPage() {
                   <div className="animate-spin w-6 h-6 border-4 border-[#024950] border-t-transparent rounded-full"></div>
                   <span className="ml-2 text-sm text-gray-500">Loading similar vehicles...</span>
                 </div>
-              ) : similarVehicles.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {similarVehicles.map((vehicle) => (
-                    <Card
-                      key={vehicle.id}
-                      className="hover:shadow-md transition-shadow cursor-pointer"
-                      onClick={() => router.push(`/${vehicle.id}`)}
-                    >
-                      <CardContent className="p-3">
-                        <img
-                          src={vehicle.image || "/placeholder.svg"}
-                          alt={vehicle.title}
-                          className="w-full h-24 object-cover rounded mb-2"
-                        />
-                        <h3 className="font-semibold text-xs mb-1 line-clamp-2">{vehicle.title}</h3>
-                        <div className="text-sm font-bold text-[#024950] mb-1">
-                          {formatPrice(vehicle.price || 0)}
-                        </div>
-                        <div className="flex items-center justify-between text-xs text-gray-500">
-                          <div className="flex items-center">
+              ) : modelFilteredVehicles.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-3 gap-3 mb-4">
+                    {paginatedSimilarVehicles.map((vehicle) => (
+                      <Card
+                        key={vehicle.id}
+                        className="hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => router.push(`/${vehicle.id}`)}
+                      >
+                        <CardContent className="p-3">
+                          <img
+                            src={vehicle.image || "/placeholder.svg"}
+                            alt={vehicle.title}
+                            className="w-full h-24 object-cover rounded mb-2"
+                          />
+                          <h3 className="font-semibold text-xs mb-1 line-clamp-2">{vehicle.title}</h3>
+                          <div className="text-sm font-bold text-[#024950] mb-1">
+                            {formatPrice(vehicle.price || 0)}
+                          </div>
+                          <div className="flex items-center text-xs text-gray-500">
                             <MapPin className="w-3 h-3 mr-1" />
                             <span className="truncate">{[vehicle.city, vehicle.district].filter(Boolean).join(", ") || vehicle.location || "N/A"}</span>
                           </div>
-                        </div>
-                        {vehicle.mileage && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            {vehicle.mileage.toLocaleString()} km
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                          {vehicle.mileage && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              {vehicle.mileage.toLocaleString()} km
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                  
+                  {/* Pagination Controls */}
+                  <div className="flex items-center justify-center gap-2 mt-4 pt-4 border-t">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSimilarVehiclesPage(prev => Math.max(1, prev - 1))}
+                      disabled={similarVehiclesPage === 1}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <Button
+                          key={page}
+                          variant={similarVehiclesPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setSimilarVehiclesPage(page)}
+                          className={similarVehiclesPage === page ? "bg-[#024950]" : ""}
+                        >
+                          {page}
+                        </Button>
+                      ))}
+                    </div>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSimilarVehiclesPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={similarVehiclesPage === totalPages}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </>
               ) : (
                 <p className="text-center text-gray-500 py-4">No similar vehicles found</p>
               )}
