@@ -285,6 +285,11 @@ export default function SearchPage() {
       .filter(term => term.length > 0);
 
     return data.ads.filter((ad) => {
+      // Hide rejected ads completely
+      if ((ad as any).status && (ad as any).status.toUpperCase() === "REJECTED") {
+        return false;
+      }
+
       // Query filter - ALL search terms must match (AND logic)
       if (queryTerms.length > 0) {
         const matchesAllQueryTerms = queryTerms.every(term => {
