@@ -37,6 +37,11 @@ export default function ComparisonPage() {
     limit: 10000,
   });
 
+  // Use only active (published) and non-rejected ads for analysis
+  const trendAds = useMemo(() => {
+    return (allVehiclesForTrendAnalysis?.ads || []).filter((ad: any) => ad?.status === "ACTIVE");
+  }, [allVehiclesForTrendAnalysis]);
+
   const availableYears = useMemo(() => {
     const s = new Set<number>();
     const pushYears = (ads: any[] = []) => {
@@ -44,18 +49,18 @@ export default function ComparisonPage() {
         if (ad?.createdAt) s.add(new Date(ad.createdAt).getFullYear());
       });
     };
-    pushYears(allVehiclesForTrendAnalysis?.ads || []);
+    pushYears(trendAds);
     return Array.from(s).sort((a, b) => b - a);
-  }, [allVehiclesForTrendAnalysis]);
+  }, [trendAds]);
 
   // ... (rest of the hooks) ...
 
   // Get available brands for trend filter
   const availableTrendBrands = useMemo(() => {
-    if (!allVehiclesForTrendAnalysis?.ads) return [];
+    if (!trendAds) return [];
     const year = trendFilterYear ? parseInt(trendFilterYear) : null;
     const brands = new Set<string>();
-    allVehiclesForTrendAnalysis.ads.forEach((ad: any) => {
+    trendAds.forEach((ad: any) => {
       if (ad?.brand) {
         if (year) {
           if (ad?.createdAt && new Date(ad.createdAt).getFullYear() === year) {
@@ -67,14 +72,14 @@ export default function ComparisonPage() {
       }
     });
     return Array.from(brands).sort();
-  }, [trendFilterYear, allVehiclesForTrendAnalysis]);
+  }, [trendFilterYear, trendAds]);
 
   // Get available models for Brand 1
   const availableTrendModels1 = useMemo(() => {
-    if (!allVehiclesForTrendAnalysis?.ads || !trendFilterBrand1) return [];
+    if (!trendAds || !trendFilterBrand1) return [];
     const year = trendFilterYear ? parseInt(trendFilterYear) : null;
     const models = new Set<string>();
-    allVehiclesForTrendAnalysis.ads.forEach((ad: any) => {
+    trendAds.forEach((ad: any) => {
       if (ad?.model && ad?.brand === trendFilterBrand1) {
         if (year) {
           if (ad?.createdAt && new Date(ad.createdAt).getFullYear() === year) {
@@ -86,14 +91,14 @@ export default function ComparisonPage() {
       }
     });
     return Array.from(models).sort();
-  }, [trendFilterYear, trendFilterBrand1, allVehiclesForTrendAnalysis]);
+  }, [trendFilterYear, trendFilterBrand1, trendAds]);
 
   // Get available models for Brand 2
   const availableTrendModels2 = useMemo(() => {
-    if (!allVehiclesForTrendAnalysis?.ads || !trendFilterBrand2) return [];
+    if (!trendAds || !trendFilterBrand2) return [];
     const year = trendFilterYear ? parseInt(trendFilterYear) : null;
     const models = new Set<string>();
-    allVehiclesForTrendAnalysis.ads.forEach((ad: any) => {
+    trendAds.forEach((ad: any) => {
       if (ad?.model && ad?.brand === trendFilterBrand2) {
         if (year) {
           if (ad?.createdAt && new Date(ad.createdAt).getFullYear() === year) {
@@ -105,14 +110,14 @@ export default function ComparisonPage() {
       }
     });
     return Array.from(models).sort();
-  }, [trendFilterYear, trendFilterBrand2, allVehiclesForTrendAnalysis]);
+  }, [trendFilterYear, trendFilterBrand2, trendAds]);
 
   // Get available manufacture years for brand/model 1
   const availableTrendMfgYears1 = useMemo(() => {
-    if (!allVehiclesForTrendAnalysis?.ads || !trendFilterBrand1 || !trendFilterModel1) return [];
+    if (!trendAds || !trendFilterBrand1 || !trendFilterModel1) return [];
     const year = trendFilterYear ? parseInt(trendFilterYear) : null;
     const mfgYears = new Set<number>();
-    allVehiclesForTrendAnalysis.ads.forEach((ad: any) => {
+    trendAds.forEach((ad: any) => {
       if (ad?.model === trendFilterModel1 && ad?.brand === trendFilterBrand1 && ad?.manufacturedYear) {
         if (year) {
           if (ad?.createdAt && new Date(ad.createdAt).getFullYear() === year) {
@@ -124,14 +129,14 @@ export default function ComparisonPage() {
       }
     });
     return Array.from(mfgYears).sort((a, b) => b - a);
-  }, [trendFilterYear, trendFilterBrand1, trendFilterModel1, allVehiclesForTrendAnalysis]);
+  }, [trendFilterYear, trendFilterBrand1, trendFilterModel1, trendAds]);
 
   // Get available manufacture years for brand/model 2
   const availableTrendMfgYears2 = useMemo(() => {
-    if (!allVehiclesForTrendAnalysis?.ads || !trendFilterBrand2 || !trendFilterModel2) return [];
+    if (!trendAds || !trendFilterBrand2 || !trendFilterModel2) return [];
     const year = trendFilterYear ? parseInt(trendFilterYear) : null;
     const mfgYears = new Set<number>();
-    allVehiclesForTrendAnalysis.ads.forEach((ad: any) => {
+    trendAds.forEach((ad: any) => {
       if (ad?.model === trendFilterModel2 && ad?.brand === trendFilterBrand2 && ad?.manufacturedYear) {
         if (year) {
           if (ad?.createdAt && new Date(ad.createdAt).getFullYear() === year) {
@@ -143,10 +148,10 @@ export default function ComparisonPage() {
       }
     });
     return Array.from(mfgYears).sort((a, b) => b - a);
-  }, [trendFilterYear, trendFilterBrand2, trendFilterModel2, allVehiclesForTrendAnalysis]);
+  }, [trendFilterYear, trendFilterBrand2, trendFilterModel2, trendAds]);
 
   const priceTrendData = useMemo(() => {
-    if (!allVehiclesForTrendAnalysis?.ads || !trendFilterYear) return [];
+    if (!trendAds || !trendFilterYear) return [];
 
     const hasSelection1 = trendFilterBrand1 && trendFilterModel1;
     const hasSelection2 = trendFilterBrand2 && trendFilterModel2;
@@ -204,7 +209,7 @@ export default function ComparisonPage() {
     };
 
     // Filter for brand/model 1
-    const model1Ads = allVehiclesForTrendAnalysis.ads.filter((ad: any) => {
+    const model1Ads = trendAds.filter((ad: any) => {
       if (!ad?.createdAt) return false;
       const adYear = new Date(ad.createdAt).getFullYear();
       if (adYear !== year) return false;
@@ -214,7 +219,7 @@ export default function ComparisonPage() {
     });
 
     // Filter for brand/model 2
-    const model2Ads = allVehiclesForTrendAnalysis.ads.filter((ad: any) => {
+    const model2Ads = trendAds.filter((ad: any) => {
       if (!ad?.createdAt) return false;
       const adYear = new Date(ad.createdAt).getFullYear();
       if (adYear !== year) return false;
@@ -252,7 +257,7 @@ export default function ComparisonPage() {
     }
 
     return dataPoints;
-  }, [allVehiclesForTrendAnalysis, trendFilterYear, trendFilterBrand1, trendFilterModel1, trendFilterMfgYear1, trendFilterBrand2, trendFilterModel2, trendFilterMfgYear2]);
+  }, [trendAds, trendFilterYear, trendFilterBrand1, trendFilterModel1, trendFilterMfgYear1, trendFilterBrand2, trendFilterModel2, trendFilterMfgYear2]);
 
   const formatPrice = (price: number | null | undefined) => {
     if (!price) return "Price Negotiable";
