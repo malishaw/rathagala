@@ -4,7 +4,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -369,6 +369,20 @@ export default function AdDetailPage() {
     return (
       <div className="text-center py-8">
         <p className="text-destructive">Failed to load ad details</p>
+      </div>
+    );
+  }
+
+  // Hide rejected ads from public view
+  if (ad.status === "REJECTED") {
+    return (
+      <div className="min-h-screen  flex items-center justify-center px-4">
+        <div className="max-w-lg w-full text-center">
+            <h2 className="text-xl text-gray-900 mb-3">Sorry, This ad is not available.</h2>
+            <p className="text-gray-600">
+              The ad you are looking for is no longer accessible.
+            </p>
+        </div>
       </div>
     );
   }
