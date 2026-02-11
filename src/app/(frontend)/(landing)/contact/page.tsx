@@ -23,10 +23,16 @@ import {
   FormLabel,
   FormMessage
 } from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription
+} from "@/components/ui/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { toast } from "sonner";
 
 // Form validation schema
 const formSchema = z.object({
@@ -42,6 +48,7 @@ const formSchema = z.object({
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isMessageSent, setIsMessageSent] = useState(false);
 
   // Initialize form
   const form = useForm<z.infer<typeof formSchema>>({
@@ -61,7 +68,7 @@ export default function ContactPage() {
     // Simulate API call
     setTimeout(() => {
       console.log(values);
-      toast.success("Your message has been sent successfully!");
+      setIsMessageSent(true);
       form.reset();
       setIsSubmitting(false);
     }, 1500);
@@ -69,6 +76,44 @@ export default function ContactPage() {
 
   return (
     <div>
+      {/* Success Message Popup */}
+      <Dialog open={isMessageSent} onOpenChange={setIsMessageSent}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <div className="flex justify-center mb-4">
+              <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+                <svg
+                  className="h-6 w-6 text-green-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+            </div>
+            <DialogTitle className="text-center">Message Sent Successfully</DialogTitle>
+          </DialogHeader>
+          <DialogDescription className="text-center">
+            <p className="text-slate-600 mb-6">
+              Thank you for contacting us! We have received your message and our team will get back to you as soon as possible.
+            </p>
+          </DialogDescription>
+          <div className="flex justify-center">
+            <Button
+              onClick={() => setIsMessageSent(false)}
+              className="bg-teal-700 hover:bg-teal-600 text-white"
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       {/* Hero Section */}
       <section className="relative py-16 md:py-24 bg-gradient-to-r from-teal-900 via-teal-800 to-teal-700 text-white overflow-hidden">
         {/* Abstract shapes */}
