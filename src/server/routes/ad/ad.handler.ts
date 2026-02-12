@@ -9,6 +9,7 @@ import {
   GetOneRoute,
   UpdateRoute,
   RemoveRoute,
+  PermanentDeleteRoute,
   ApproveRoute,
   RejectRoute,
   UpdatePromotionRoute,
@@ -206,11 +207,15 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     // Main query with pagination
     let ads;
     try {
+      // When filtering by user (My Ads), fetch all ads first then filter and paginate
+      // This is necessary because we need to filter out deleted ads from metadata JSON field
+      const shouldFetchAll = query.filterByUser === true;
+      
       // Fetch without creator relation to avoid Prisma throwing when creator is deleted
       ads = await prisma.ad.findMany({
         where: whereCondition,
-        skip: offset,
-        take: limitNum,
+        skip: shouldFetchAll ? undefined : offset,
+        take: shouldFetchAll ? undefined : limitNum,
         orderBy: {
           createdAt: "desc",
         },
@@ -245,6 +250,20 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
         ...ad,
         creator: creatorsById[ad.createdBy] || null,
       }));
+
+      // Filter out user-deleted ads when filterByUser is true (for "My Ads" view)
+      if (query.filterByUser === true) {
+        ads = ads.filter((ad: any) => {
+          const metadata = ad.metadata || {};
+          return metadata.deletedByUser !== true;
+        });
+        
+        // Update total count to reflect filtered results
+        totalAds = ads.length;
+        
+        // Apply pagination manually after filtering
+        ads = ads.slice(offset, offset + limitNum);
+      }
     } catch (queryError) {
       console.error("Error in main query:", queryError);
       return c.json(
@@ -1053,6 +1072,8 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
 };
 
 // ---- Delete Ad Handler ----
+// For regular users, this soft-deletes (unpublishes) the ad
+// For permanent deletion, use the permanent delete endpoint (admin only)
 export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
   try {
     const adId = c.req.valid("param").id;
@@ -1077,14 +1098,91 @@ export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
       );
     }
 
-    // Verify user is the owner of the ad OR is an admin
-    const userRole = (user as any)?.role;
-    const isAdmin = userRole === "admin";
-
-    if (existingAd.createdBy !== user.id && !isAdmin) {
+    // Verify user is the owner of the ad
+    if (existingAd.createdBy !== user.id) {
       return c.json(
         { message: "You don't have permission to delete this ad" },
         HttpStatusCodes.FORBIDDEN
+      );
+    }
+
+    // Soft delete: unpublish the ad and mark it as deleted by user
+    const metadata = existingAd.metadata as any || {};
+    metadata.deletedByUser = true;
+    metadata.deletedAt = new Date().toISOString();
+
+    await prisma.ad.update({
+      where: { id: adId },
+      data: {
+        published: false,
+        metadata: metadata,
+      },
+    });
+
+    return c.json(
+      { message: "Ad deleted successfully" },
+      HttpStatusCodes.OK
+    );
+  } catch (error: any) {
+    console.error("[DELETE AD] Error:", error);
+
+    if (error.message && error.message.includes("Invalid")) {
+      return c.json(
+        {
+          error: {
+            issues: [
+              {
+                code: "validation_error",
+                path: ["id"],
+                message: error.message,
+              },
+            ],
+            name: "ValidationError",
+          },
+          success: false,
+        },
+        HttpStatusCodes.UNPROCESSABLE_ENTITY
+      );
+    }
+
+    return c.json(
+      { message: error.message || "Failed to delete ad" },
+      HttpStatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+};
+
+// ---- Permanent Delete Ad Handler (Admin Only) ----
+export const permanentDelete: AppRouteHandler<PermanentDeleteRoute> = async (c) => {
+  try {
+    const adId = c.req.valid("param").id;
+    const user = c.get("user");
+
+    if (!user) {
+      return c.json(
+        { message: HttpStatusPhrases.UNAUTHORIZED },
+        HttpStatusCodes.UNAUTHORIZED
+      );
+    }
+
+    // Check if user is admin
+    const userRole = (user as any)?.role;
+    if (userRole !== "admin") {
+      return c.json(
+        { message: "Admin access required" },
+        HttpStatusCodes.FORBIDDEN
+      );
+    }
+
+    // Check if ad exists
+    const existingAd = await prisma.ad.findUnique({
+      where: { id: adId },
+    });
+
+    if (!existingAd) {
+      return c.json(
+        { message: HttpStatusPhrases.NOT_FOUND },
+        HttpStatusCodes.NOT_FOUND
       );
     }
 
@@ -1093,7 +1191,6 @@ export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
       where: { adId },
     });
 
-    // Also delete any related records in analytics, GeoHeatmap, etc.
     await prisma.adAnalytics.deleteMany({
       where: { adId },
     });
@@ -1122,14 +1219,17 @@ export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
       where: { adId },
     });
 
-    // Now delete the ad itself
+    // Now permanently delete the ad itself
     await prisma.ad.delete({
       where: { id: adId },
     });
 
-    return c.body(null, HttpStatusCodes.NO_CONTENT);
+    return c.json(
+      { message: "Ad permanently deleted successfully" },
+      HttpStatusCodes.OK
+    );
   } catch (error: any) {
-    console.error("[DELETE AD] Error:", error);
+    console.error("[PERMANENT DELETE AD] Error:", error);
 
     if (error.message && error.message.includes("Invalid")) {
       return c.json(
@@ -1151,7 +1251,7 @@ export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
     }
 
     return c.json(
-      { message: error.message || "Failed to delete ad" },
+      { message: error.message || "Failed to permanently delete ad" },
       HttpStatusCodes.INTERNAL_SERVER_ERROR
     );
   }

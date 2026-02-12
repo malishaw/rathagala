@@ -12,7 +12,8 @@ import {
   UsersRoundIcon,
   NewspaperIcon,
   Users,
-  Flag
+  Flag,
+  Trash2
 } from "lucide-react";
 
 import { type Session } from "@/lib/auth";
@@ -69,6 +70,11 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
         title: "Ads Manage",
         url: "/dashboard/ads-manage",
         icon: NewspaperIcon
+      },
+      {
+        title: "User Deleted Ads",
+        url: "/dashboard/deleted-ads",
+        icon: Trash2
       },
       {
         title: "Organizations",

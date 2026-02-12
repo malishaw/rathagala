@@ -162,9 +162,10 @@ export const remove = createRoute({
     params: schemas.IdParamsSchema,
   },
   responses: {
-    [HttpStatusCodes.NO_CONTENT]: {
-      description: "Ad deleted successfully",
-    },
+    [HttpStatusCodes.OK]: jsonContent(
+      createMessageObjectSchema("Ad deleted successfully"),
+      "Ad unpublished successfully"
+    ),
     [HttpStatusCodes.NOT_FOUND]: jsonContent(notFoundSchema, "Ad not found"),
     [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
       createMessageObjectSchema("Unauthorized"),
@@ -178,6 +179,40 @@ export const remove = createRoute({
 });
 
 export type RemoveRoute = typeof remove;
+
+// --------- Permanent Delete Ad (Admin Only) ----------
+export const permanentDelete = createRoute({
+  tags,
+  summary: "Permanently delete an ad",
+  description: "Permanently delete an ad from the system (admin only)",
+  path: "/{id}/permanent",
+  method: "delete",
+  middleware: [serverAuthMiddleware],
+  request: {
+    params: schemas.IdParamsSchema,
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      createMessageObjectSchema("Ad permanently deleted successfully"),
+      "Ad permanently deleted"
+    ),
+    [HttpStatusCodes.NOT_FOUND]: jsonContent(notFoundSchema, "Ad not found"),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      createMessageObjectSchema("Unauthorized"),
+      "Unauthorized"
+    ),
+    [HttpStatusCodes.FORBIDDEN]: jsonContent(
+      createMessageObjectSchema("Forbidden"),
+      "Admin access required"
+    ),
+    [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
+      createErrorSchema(schemas.IdParamsSchema),
+      "Invalid Id param"
+    ),
+  },
+});
+
+export type PermanentDeleteRoute = typeof permanentDelete;
 
 // --------- Approve Ad ----------
 export const approve = createRoute({

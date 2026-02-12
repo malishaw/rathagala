@@ -36,6 +36,7 @@ export function useDeleteAd() {
     onSuccess: () => {
       toast.success("Ad deleted successfully", { id: toastId });
       queryClient.invalidateQueries({ queryKey: ["ads"] });
+      queryClient.invalidateQueries({ queryKey: ["userAds"] });
       queryClient.invalidateQueries({ queryKey: ["reports"] });
     },
     onError: (error: Error) => {
