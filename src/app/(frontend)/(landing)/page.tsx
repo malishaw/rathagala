@@ -114,6 +114,7 @@ export default function VehicleMarketplace() {
   const [cityQuery, setCityQuery] = useState("");
   const [showFilterSheet, setShowFilterSheet] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("default");
 
   // Check authentication
   const { data: session } = authClient.useSession();
@@ -358,6 +359,39 @@ export default function VehicleMarketplace() {
       return 0;
     });
   }, [allAds, activeFilters, searchQuery]);
+
+  // Apply sorting to filtered ads
+  const sortedAds = useMemo(() => {
+    if (!filteredAds || filteredAds.length === 0) return [];
+    
+    const ads = [...filteredAds];
+    const now = new Date();
+    
+    switch (sortBy) {
+      case "price-low":
+        return ads.sort((a, b) => (a.price || 0) - (b.price || 0));
+      case "price-high":
+        return ads.sort((a, b) => (b.price || 0) - (a.price || 0));
+      case "year":
+        return ads.sort((a, b) => (b.manufacturedYear || 0) - (a.manufacturedYear || 0));
+      case "default":
+        // Show boosted ads first, then rest by newest
+        return ads.sort((a, b) => {
+          const aIsBoosted = a.boosted && a.boostExpiry && new Date(a.boostExpiry) > now;
+          const bIsBoosted = b.boosted && b.boostExpiry && new Date(b.boostExpiry) > now;
+          
+          // If one is boosted and the other isn't, boosted comes first
+          if (aIsBoosted && !bIsBoosted) return -1;
+          if (!aIsBoosted && bIsBoosted) return 1;
+          
+          // Otherwise sort by newest
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+      case "newest":
+      default:
+        return ads.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
+  }, [filteredAds, sortBy]);
 
   // Handle filter changes - only updates pending filters
   const handleFilterChange = (
@@ -1099,11 +1133,12 @@ export default function VehicleMarketplace() {
                       ? `Showing 1-${data.ads.length} of ${data.pagination.total} results`
                       : "Loading results..."}
                   </span>
-                  <Select>
+                  <Select value={sortBy} onValueChange={setSortBy}>
                     <SelectTrigger className="w-full md:w-44 h-10 rounded-lg bg-white border-slate-200">
                       <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="default">Default</SelectItem>
                       <SelectItem value="newest">Newest First</SelectItem>
                       <SelectItem value="price-low">
                         Price: Low to High
@@ -1195,9 +1230,9 @@ export default function VehicleMarketplace() {
               )}
 
               {/* Vehicle Grid - Using Real Data */}
-              {filteredAds.length > 0 && !isLoading && (
+              {sortedAds.length > 0 && !isLoading && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {filteredAds.slice(0, visibleCount).map((vehicle) => {
+                  {sortedAds.slice(0, visibleCount).map((vehicle) => {
                     const now = new Date();
                     const isBoosted = vehicle.boosted && vehicle.boostExpiry && new Date(vehicle.boostExpiry) > now;
                     const isFeatured = vehicle.featured && vehicle.featureExpiry && new Date(vehicle.featureExpiry) > now;
@@ -1300,9 +1335,9 @@ export default function VehicleMarketplace() {
               )}
 
               {/* Load More */}
-              {filteredAds.length > 0 && (
+              {sortedAds.length > 0 && (
                 <div className="text-center mt-8">
-                  {visibleCount < filteredAds.length ? (
+                  {visibleCount < sortedAds.length ? (
                     <Button
                       size="lg"
                       variant="outline"
@@ -1311,7 +1346,7 @@ export default function VehicleMarketplace() {
                     >
                       Load More Vehicles
                     </Button>
-                  ) : filteredAds.length > 12 ? (
+                  ) : sortedAds.length > 12 ? (
                     <p className="text-slate-500 text-sm">No more vehicles to load</p>
                   ) : null}
                 </div>
