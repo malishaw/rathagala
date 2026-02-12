@@ -53,17 +53,15 @@ export default function AdComparisonPage() {
         }
     }, [searchParams]);
 
-    // Fetch vehicles for search
+    // Fetch vehicles for search - fetch all ads and filter client-side
     const { data: searchData1 } = useGetAds({
         page: 1,
-        limit: 10,
-        search: search1 || null,
+        limit: 200,
     });
 
     const { data: searchData2 } = useGetAds({
         page: 1,
-        limit: 10,
-        search: search2 || null,
+        limit: 200,
     });
 
     // Fetch selected vehicle details
@@ -109,6 +107,42 @@ export default function AdComparisonPage() {
         ].filter(Boolean);
         return parts.join(" ") || "Vehicle";
     };
+
+    const normalizeVehicleType = (ad: any) => {
+        const typeValue = (ad?.vehicleType || ad?.type) as string | undefined;
+        return typeof typeValue === "string" ? typeValue.toLowerCase() : null;
+    };
+
+    const isPublished = (ad: any) => {
+        return ad?.status === "ACTIVE" && ad?.published === true;
+    };
+
+    const matchesSearch = (ad: any, query: string) => {
+        if (!query || query.trim() === "") return true;
+        const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+        if (words.length === 0) return true;
+        const title = getVehicleTitle(ad).toLowerCase();
+        const price = formatPrice(ad.price);
+        const searchText = `${title} ${price}`.toLowerCase();
+        return words.every((word) => searchText.includes(word));
+    };
+
+    const filteredVehicles1 = vehicles1.filter((vehicle: any) => isPublished(vehicle) && matchesSearch(vehicle, search1));
+
+    const selectedVehicleType = normalizeVehicleType(vehicle1);
+    const searchFilteredVehicles2 = vehicles2.filter((vehicle: any) => isPublished(vehicle) && matchesSearch(vehicle, search2));
+    const filteredVehicles2 = selectedVehicleType
+        ? searchFilteredVehicles2.filter((vehicle: any) => normalizeVehicleType(vehicle) === selectedVehicleType)
+        : searchFilteredVehicles2;
+
+    useEffect(() => {
+        const type1 = normalizeVehicleType(vehicle1);
+        const type2 = normalizeVehicleType(vehicle2);
+
+        if (vehicle1Id && vehicle2Id && type1 && type2 && type1 !== type2) {
+            setVehicle2Id(null);
+        }
+    }, [vehicle1Id, vehicle2Id, vehicle1, vehicle2]);
 
     // Comparison data structure
     const comparisonFields = [
@@ -271,7 +305,7 @@ export default function AdComparisonPage() {
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-[400px] p-0" align="start">
-                                    <Command>
+                                    <Command shouldFilter={false}>
                                         <CommandInput
                                             placeholder="Search vehicles..."
                                             value={search1}
@@ -280,7 +314,7 @@ export default function AdComparisonPage() {
                                         <CommandList>
                                             <CommandEmpty>No vehicles found.</CommandEmpty>
                                             <CommandGroup>
-                                                {vehicles1.map((vehicle: any) => (
+                                                {filteredVehicles1.map((vehicle: any) => (
                                                     <CommandItem
                                                         key={vehicle.id}
                                                         value={vehicle.id}
@@ -305,11 +339,11 @@ export default function AdComparisonPage() {
                                                                     className="object-cover"
                                                                 />
                                                             </div>
-                                                            <div className="flex-1 min-w-0">
+                                                            <div className="flex-1 min-w-0 hover:text-white">
                                                                 <div className="font-medium truncate">
                                                                     {getVehicleTitle(vehicle)}
                                                                 </div>
-                                                                <div className="text-sm text-muted-foreground">
+                                                                <div className="text-sm  hover:text-white">
                                                                     {formatPrice(vehicle.price)}
                                                                 </div>
                                                             </div>
@@ -326,7 +360,7 @@ export default function AdComparisonPage() {
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="w-full mt-2 text-red-600 hover:text-red-700"
+                                    className="w-full mt-2 text-red-600 hover:text-red-600 hover:bg-red-50"
                                     onClick={() => {
                                         setVehicle1Id(null);
                                         setSearch1("");
@@ -372,7 +406,7 @@ export default function AdComparisonPage() {
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-[400px] p-0" align="start">
-                                    <Command>
+                                    <Command shouldFilter={false}>
                                         <CommandInput
                                             placeholder="Search vehicles..."
                                             value={search2}
@@ -381,7 +415,7 @@ export default function AdComparisonPage() {
                                         <CommandList>
                                             <CommandEmpty>No vehicles found.</CommandEmpty>
                                             <CommandGroup>
-                                                {vehicles2.map((vehicle: any) => (
+                                                    {filteredVehicles2.map((vehicle: any) => (
                                                     <CommandItem
                                                         key={vehicle.id}
                                                         value={vehicle.id}
@@ -407,10 +441,10 @@ export default function AdComparisonPage() {
                                                                 />
                                                             </div>
                                                             <div className="flex-1 min-w-0">
-                                                                <div className="font-medium truncate">
+                                                                <div className="font-medium truncate hover:text-white ">
                                                                     {getVehicleTitle(vehicle)}
                                                                 </div>
-                                                                <div className="text-sm text-muted-foreground">
+                                                                <div className="text-sm ">
                                                                     {formatPrice(vehicle.price)}
                                                                 </div>
                                                             </div>
@@ -427,7 +461,7 @@ export default function AdComparisonPage() {
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="w-full mt-2 text-red-600 hover:text-red-700"
+                                    className="w-full mt-2 text-red-600 hover:text-red-600 hover:bg-red-50"
                                     onClick={() => {
                                         setVehicle2Id(null);
                                         setSearch2("");
@@ -538,7 +572,7 @@ export default function AdComparisonPage() {
                                         return (
                                             <div
                                                 key={index}
-                                                className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 hover:bg-gray-50 transition-colors"
+                                                className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 hover:bg-green-50 transition-colors"
                                             >
                                                 <div className="col-span-2 md:col-span-1 flex items-center gap-2 font-semibold text-gray-700 text-xs md:text-base">
                                                     {Icon && <Icon className="w-4 h-4 md:w-5 md:h-5 text-[#024950]" />}

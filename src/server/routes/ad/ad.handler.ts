@@ -158,6 +158,8 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     // When filterByUser is true, show all ads (user wants to see their own ads with all statuses)
     else if (!isAdmin && !query.filterByUser) {
       andFilters.push({ status: AdStatus.ACTIVE });
+      // Also exclude soft-deleted ads (published = false, metadata.deletedByUser = true)
+      andFilters.push({ published: true });
     }
 
     // Compose final whereCondition

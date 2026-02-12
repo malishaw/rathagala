@@ -1223,7 +1223,7 @@ export default function AdDetailPage() {
                         View Analytics
                       </Button>
                       <Button
-                        onClick={() => router.push(`/comparison?vehicle1=${adId}`)}
+                        onClick={() => router.push(`/compare?vehicle1=${adId}`)}
                         variant="outline"
                         className="border-2 border-[#024950] text-[#024950] hover:bg-[#024950] hover:text-white px-6 py-6 text-lg w-full"
                         size="lg"
