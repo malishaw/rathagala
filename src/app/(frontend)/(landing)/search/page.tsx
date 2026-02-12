@@ -873,7 +873,7 @@ export default function SearchPage() {
                 {/* Row 6: Year Range */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
-                    Year Range
+                    Manufacture Year
                   </label>
                   <div className="grid grid-cols-2 gap-3">
                     <Select

@@ -672,7 +672,7 @@ export default function ProfilePage() {
                   <button
                     onClick={handleRemovePhoto}
                     disabled={isSavingPhoto}
-                    className="text-xs text-red-600 hover:text-red-700 mt-2 transition-colors"
+                    className="text-xs cursor-pointer text-red-600 hover:text-red-700 mt-2 transition-colors"
                   >
                     Remove photo
                   </button>
@@ -682,9 +682,9 @@ export default function ProfilePage() {
               {/* Navigation options */}
               <div className="space-y-1">
                 <button
-                  className={`w-full text-left py-3 px-4 rounded-xl transition-all duration-300 flex items-center gap-3 ${sidebarActive === "personal"
+                  className={`cursor-pointer hover:bg-gray-100 w-full text-left py-3 px-4 rounded-xl transition-all duration-300 flex items-center gap-3 ${sidebarActive === "personal"
                     ? "bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white font-semibold"
-                    : "text-slate-700 hover:bg-white/60 hover:backdrop-blur-md"
+                    : "text-slate-700  hover:backdrop-blur-md"
                     }`}
                   onClick={() => setSidebarActive("personal")}
                 >
@@ -693,9 +693,9 @@ export default function ProfilePage() {
                 </button>
 
                 <button
-                  className={`w-full text-left py-3 px-4 rounded-xl transition-all duration-300 flex items-center gap-3 ${sidebarActive === "security"
+                  className={`cursor-pointer w-full text-left py-3 px-4 rounded-xl transition-all duration-300 flex items-center gap-3 ${sidebarActive === "security"
                     ? "bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white font-semibold"
-                    : "text-slate-700 hover:bg-white/60 hover:backdrop-blur-md"
+                    : "text-slate-700 hover:bg-gray-100 hover:backdrop-blur-md"
                     }`}
                   onClick={() => setSidebarActive("security")}
                 >
@@ -704,9 +704,9 @@ export default function ProfilePage() {
                 </button>
 
                 <button
-                  className={`w-full text-left py-3 px-4 rounded-xl transition-all duration-300 flex items-center gap-3 ${sidebarActive === "ads"
+                  className={`w-full cursor-pointer text-left py-3 px-4 rounded-xl transition-all duration-300 flex items-center gap-3 ${sidebarActive === "ads"
                     ? "bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white font-semibold"
-                    : "text-slate-700 hover:bg-white/60 hover:backdrop-blur-md"
+                    : "text-slate-700 hover:bg-gray-100 hover:backdrop-blur-md"
                     }`}
                   onClick={() => setSidebarActive("ads")}
                 >
@@ -715,9 +715,9 @@ export default function ProfilePage() {
                 </button>
 
                 <button
-                  className={`w-full text-left py-3 px-4 rounded-xl transition-all duration-300 flex items-center gap-3 ${sidebarActive === "favorites"
+                  className={`w-full cursor-pointer text-left py-3 px-4 rounded-xl transition-all duration-300 flex items-center gap-3 ${sidebarActive === "favorites"
                     ? "bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white font-semibold"
-                    : "text-slate-700 hover:bg-white/60 hover:backdrop-blur-md"
+                    : "text-slate-700 hover:bg-gray-100 hover:backdrop-blur-md"
                     }`}
                   onClick={() => setSidebarActive("favorites")}
                 >
@@ -849,13 +849,13 @@ export default function ProfilePage() {
                       <div className="flex gap-3 pt-2">
                         <Button
                           variant="outline"
-                          className="flex-1 bg-white hover:bg-gray-100 text-black hover:text-black border-2 border-white/30"
+                          className="flex-1 cursor-pointer bg-white hover:bg-gray-100 text-black hover:text-black border-2 border-white/30"
                           onClick={() => setActiveSection(null)}
                         >
                           Cancel
                         </Button>
                         <Button
-                          className="flex-1 bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700 border-0"
+                          className="flex-1 cursor-pointer  bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700 border-0"
                           onClick={handleUpdateProfile}
                         >
                           {isSaving ? (
