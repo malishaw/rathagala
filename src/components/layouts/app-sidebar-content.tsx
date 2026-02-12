@@ -110,22 +110,18 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
         icon: GraduationCapIcon,
         roles: ["owner"] // owner -> agent manager
       }
-      // {
-      //   name: "Parents",
-      //   url: "/dashboard/parents",
-      //   icon: UsersIcon,
-      //   roles: ["admin", "owner"]
-      // }
+
     ],
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    getContents: (isAdmin: boolean) => [
-      {
-        title: "Ads",
-        url: "/dashboard/ads",
-        icon: NewspaperIcon,
-        roles: ["owner", "admin", "member"]
-      }
-    ]
+
+    // getContents: (isAdmin: boolean) => [
+    //   {
+    //     title: "Ads",
+    //     url: "/dashboard/ads",
+    //     icon: NewspaperIcon,
+    //     roles: ["owner", "admin", "member"]
+    //   }
+    // ]
   };
 
   return (
@@ -145,11 +141,11 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
       )}
 
       {/* Content navigation - available to organization members */}
-      <NavContent
+      {/* <NavContent
         items={data.getContents(
           activeMember?.role === "owner" || activeMember?.role === "admin"
         )}
-      />
+      /> */}
       {/* Settings section removed as requested */}
     </>
   );

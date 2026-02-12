@@ -615,7 +615,7 @@ function PromotionButton({ ad, hasPromotion }: { ad: AdType; hasPromotion: boole
         ) : hasActiveFeatured ? (
           <Star className="w-3 h-3 text-gray-700" />
         ) : (
-          <Sparkles className="w-3 h-3 text-gray-700" />
+          <Sparkles className="w-3 h-3 text-gray-200 hover:text-stone-800" />
         )}
       </Button>
 
