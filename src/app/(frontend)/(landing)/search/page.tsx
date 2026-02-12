@@ -57,7 +57,7 @@ const formatAdTitle = (ad: any): string => {
 
 // Vehicle makes
 const vehicleMakes = [
-  "Toyota", "Honda", "Nissan", "BMW", "Mercedes-Benz", "Audi", "Hyundai", "Kia",
+  "Toyota", "Honda", "Nissan","BYD", "BMW", "Mercedes-Benz", "Audi", "Hyundai", "Kia",
   "Volkswagen", "Ford", "Chevrolet", "Mazda", "Subaru", "Mitsubishi", "Suzuki",
   "Isuzu", "Bajaj", "Hero", "Yamaha", "Kawasaki", "KTM", "TVS", "Other"
 ];
@@ -257,10 +257,11 @@ export default function SearchPage() {
     );
   }, [brandSearch]);
 
-  // Fetch ads with current filters
+  // Fetch ads with current filters - fetch all ads to enable comprehensive search
+  // (pagination will be handled client-side after filtering)
   const { data, isLoading, error } = useGetAds({
-    page: filters.page,
-    limit: 20,
+    page: 1, // Always fetch from page 1
+    limit: 10000, // Fetch large number to get all ads for comprehensive search
     search: filters.query,
     listingType: filters.listingType,
     // Add other filter parameters as supported by your API
@@ -285,8 +286,8 @@ export default function SearchPage() {
       .filter(term => term.length > 0);
 
     return data.ads.filter((ad) => {
-      // Hide rejected ads completely
-      if ((ad as any).status && (ad as any).status.toUpperCase() === "REJECTED") {
+      // Only show published ads (status must be ACTIVE and published flag must be true)
+      if ((ad as any).status !== "ACTIVE" || (ad as any).published !== true) {
         return false;
       }
 

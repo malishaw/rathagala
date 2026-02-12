@@ -166,7 +166,7 @@ export default function VehicleMarketplace() {
   // Don't use backend search - we'll do comprehensive client-side search instead
   const { data, isLoading, error } = useGetAds({
     page: currentPage,
-    limit: 50, // Fetch more items to allow comprehensive client-side filtering
+    limit: 10000, // Fetch more items to allow comprehensive client-side filtering
   });
 
   // Accumulate ads when new data arrives
@@ -217,7 +217,7 @@ export default function VehicleMarketplace() {
 
     return allAds.filter((ad) => {
       // Only show ACTIVE ads on the landing page
-      if (ad.status !== "ACTIVE") {
+      if (ad.status !== "ACTIVE" || (ad as any).published !== true) {
         return false;
       }
 
@@ -1415,7 +1415,7 @@ export default function VehicleMarketplace() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {allAds
-                  .filter(ad => ad.status === "ACTIVE")
+                  .filter(ad => ad.status === "ACTIVE" && (ad as any).published === true)
                   .sort((a, b) => ((b as any).analytics?.views || 0) - ((a as any).analytics?.views || 0))
                   .slice(0, 6)
                   .map((vehicle) => (
