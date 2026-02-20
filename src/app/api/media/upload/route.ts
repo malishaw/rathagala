@@ -9,10 +9,10 @@ import sharp from 'sharp';
 
 // Server-side S3 client
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
+  region: process.env.AWS_REGION || process.env.NEXT_PUBLIC_AWS_REGION,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
+    accessKeyId: (process.env.AWS_ACCESS_KEY_ID || process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID)!,
+    secretAccessKey: (process.env.AWS_SECRET_ACCESS_KEY || process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY)!
   }
 });
 
@@ -47,7 +47,7 @@ async function compressImage(buffer: Buffer, originalType: string): Promise<Buff
 
     if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
       const aspectRatio = width / height;
-      
+
       if (width > height) {
         newWidth = MAX_DIMENSION;
         newHeight = Math.round(MAX_DIMENSION / aspectRatio);
@@ -60,7 +60,7 @@ async function compressImage(buffer: Buffer, originalType: string): Promise<Buff
     // Start with quality 90 and adjust if needed
     let quality = 90;
     let compressedBuffer: Buffer;
-    
+
     // Determine output format (preserve original or convert to JPEG for better compression)
     const isJpeg = originalType === 'image/jpeg' || originalType === 'image/jpg';
     const isPng = originalType === 'image/png';
@@ -97,7 +97,7 @@ async function compressImage(buffer: Buffer, originalType: string): Promise<Buff
     const targetSizeBytes = TARGET_SIZE_KB * 1024;
     while (compressedBuffer.length > targetSizeBytes && quality > 60) {
       quality -= 5;
-      
+
       sharpInstance = sharp(buffer)
         .resize(newWidth, newHeight, {
           fit: 'inside',
@@ -121,7 +121,7 @@ async function compressImage(buffer: Buffer, originalType: string): Promise<Buff
     }
 
     console.log(`Image compressed: ${(buffer.length / 1024).toFixed(2)}KB → ${(compressedBuffer.length / 1024).toFixed(2)}KB (${newWidth}x${newHeight}, quality: ${quality})`);
-    
+
     return compressedBuffer;
   } catch (error) {
     console.error('Image compression error:', error);
@@ -171,17 +171,17 @@ export async function POST(req: Request) {
     if (mediaType === 'IMAGE') {
       buffer = await compressImage(buffer, file.type);
       finalSize = buffer.length;
-      
+
       // Update content type if format was changed during compression
-      if (!file.type.startsWith('image/jpeg') && 
-          !file.type.startsWith('image/png') && 
-          !file.type.startsWith('image/webp')) {
+      if (!file.type.startsWith('image/jpeg') &&
+        !file.type.startsWith('image/png') &&
+        !file.type.startsWith('image/webp')) {
         finalContentType = 'image/jpeg';
       }
     }
 
-    const bucket = process.env.AWS_S3_BUCKET;
-    const region = process.env.AWS_REGION;
+    const bucket = process.env.AWS_S3_BUCKET || process.env.NEXT_PUBLIC_AWS_S3_BUCKET;
+    const region = process.env.AWS_REGION || process.env.NEXT_PUBLIC_AWS_REGION;
 
     // Upload to S3
     await s3Client.send(
@@ -190,7 +190,7 @@ export async function POST(req: Request) {
         Key: key,
         Body: buffer,
         ContentType: finalContentType,
-        
+
         CacheControl: 'max-age=31536000'
       })
     );

@@ -3,6 +3,20 @@ import sharp from "sharp";
 import { readFile } from "fs/promises";
 import { join } from "path";
 
+let fontCache: string | null = null;
+async function getSinhalaFont() {
+  if (fontCache) return fontCache;
+  try {
+    const fontPath = join(process.cwd(), "src/assets/fonts/NotoSansSinhala-Bold.ttf");
+    const fontBuffer = await readFile(fontPath);
+    fontCache = fontBuffer.toString('base64');
+    return fontCache;
+  } catch (e) {
+    console.error("Could not load font", e);
+    return null;
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -38,19 +52,29 @@ export async function GET(request: NextRequest) {
     // Generate dynamic SVG watermark
     // Line 1: රථගාල
     // Line 2: www.rathagala.lk
+    const base64Font = await getSinhalaFont();
+    const fontStyle = base64Font ? `
+      @font-face {
+        font-family: 'Noto Sans Sinhala';
+        src: url('data:font/truetype;charset=utf-8;base64,${base64Font}') format('truetype');
+        font-weight: bold;
+      }
+    ` : '';
+
     const svgWatermark = `
       <svg width="${watermarkWidth}" height="${watermarkHeight}" viewBox="0 0 ${watermarkWidth} ${watermarkHeight}" xmlns="http://www.w3.org/2000/svg">
         <style>
+          ${fontStyle}
           .watermark-text {
             fill: white;
-            font-family: sans-serif;
+            font-family: 'Noto Sans Sinhala', sans-serif;
             text-anchor: middle;
             font-weight: bold;
           }
           .title { font-size: ${Math.floor(watermarkHeight * 0.45)}px; }
-          .url { font-size: ${Math.floor(watermarkHeight * 0.25)}px; opacity: 0.8; }
+          .url { font-size: ${Math.floor(watermarkHeight * 0.25)}px; opacity: 0.8; font-family: sans-serif; }
         </style>
-        <text x="50%" y="45%" class="watermark-text title">Rathagala</text>
+        <text x="50%" y="45%" class="watermark-text title">රථගාල</text>
         <text x="50%" y="85%" class="watermark-text url">www.rathagala.lk</text>
       </svg>
     `;
@@ -68,7 +92,7 @@ export async function GET(request: NextRequest) {
       .toBuffer();
 
     // Return the watermarked image
-    return new NextResponse(watermarkedImage, {
+    return new NextResponse(new Uint8Array(watermarkedImage), {
       headers: {
         "Content-Type": "image/jpeg",
         "Cache-Control": "public, max-age=31536000, immutable",

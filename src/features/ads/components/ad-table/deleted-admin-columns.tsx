@@ -106,6 +106,7 @@ function AdDetailsModal({ ad, open, onOpenChange }: { ad: DeletedAdType; open: b
   const currentImage = images[currentImageIndex]?.media?.url;
   const metadata = (ad.metadata || {}) as Record<string, unknown>;
   const deletedAt = metadata.deletedAt as string | undefined;
+  const deletedReason = metadata.deletedReason as string | undefined;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -262,6 +263,10 @@ function AdDetailsModal({ ad, open, onOpenChange }: { ad: DeletedAdType; open: b
                 </p>
               </div>
               <div>
+                <p className="text-xs text-slate-600">Reason</p>
+                <p className="text-sm text-slate-800">{deletedReason || "—"}</p>
+              </div>
+              <div>
                 <p className="text-xs text-slate-600">Created At</p>
                 <p className="text-sm text-slate-800">{format(new Date(ad.createdAt), "PPP")}</p>
               </div>
@@ -389,6 +394,20 @@ export const createDeletedAdColumns = (onDelete: (id: string) => void): ColumnDe
         </div>
       );
     }
+  },
+  {
+    accessorKey: "deletedReason",
+    header: "Reason",
+    cell: ({ row }) => {
+      const metadata = (row.original.metadata || {}) as Record<string, unknown>;
+      const reason = metadata.deletedReason as string | undefined;
+
+      return reason ? (
+        <div className="text-sm text-slate-800 max-w-xs line-clamp-2">{reason}</div>
+      ) : (
+        <div className="text-sm text-slate-400">—</div>
+      );
+    },
   },
   {
     accessorKey: "price",

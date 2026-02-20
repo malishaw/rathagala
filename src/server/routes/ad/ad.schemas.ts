@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { DELETE_AD_REASONS } from "@/constants/delete-reasons";
 import { AdSchema, AdTypeSchema, AdStatusSchema } from "@/types/schema-types";
 
 export const IdParamsSchema = z.object({ id: z.string() });
@@ -366,6 +367,11 @@ export type UpdateAdSchema = z.infer<typeof updateAdSchema>;
 
 export const deleteAdSchema = IdParamsSchema;
 export type DeleteAdSchema = z.infer<typeof deleteAdSchema>;
+
+export const deleteAdBodySchema = z.object({
+  reason: z.enum(DELETE_AD_REASONS, { required_error: "Reason is required" }),
+});
+export type DeleteAdBodySchema = z.infer<typeof deleteAdBodySchema>;
 
 export const bulkCreateAdSchema = z.object({
   ads: z.array(createAdBaseSchema.extend({

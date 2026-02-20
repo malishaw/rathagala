@@ -10,12 +10,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -36,14 +36,14 @@ export default function QuickAdCreatePage() {
   const [showPendingModal, setShowPendingModal] = useState(false);
   const [selectedImages, setSelectedImages] = useState<MediaFile[]>([]);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
-  
+
   // Promotion state
   const [promotionType, setPromotionType] = useState<"boost" | "featured" | "none">("none");
   const [promotionDuration, setPromotionDuration] = useState<"1week" | "2weeks" | "1month">("1week");
   const [formData, setFormData] = useState({
     // Listing type
     listingType: "SELL",
-    
+
     // Basic info
     type: "CAR", // API enum value
     brand: "",
@@ -54,14 +54,14 @@ export default function QuickAdCreatePage() {
     isNegotiable: false,
     condition: "",
     description: "",
-    
+
     // Vehicle details based on type
     transmission: "",
     fuelType: "",
     mileage: "",
     engineCapacity: "",
     trimEdition: "",
-    
+
     // Type-specific fields
     bikeType: "",
     bodyType: "",
@@ -69,7 +69,7 @@ export default function QuickAdCreatePage() {
     partType: "",
     maintenanceType: "",
     vehicleType: "",
-    
+
     // Contact info
     name: "",
     phoneNumber: "",
@@ -79,7 +79,7 @@ export default function QuickAdCreatePage() {
     city: "",
     location: "",
     termsAndConditions: false,
-    
+
     // Publication status
     published: true,
     isDraft: false,
@@ -122,30 +122,30 @@ export default function QuickAdCreatePage() {
     { length: currentYear - 1969 },
     (_, i) => String(currentYear - i)
   );
-  
+
   // Vehicle makes list - same as your ad-form.tsx
   const vehicleMakes = [
     // Popular brands first
-    "Toyota", "Suzuki", "Honda", "Nissan", "Mitsubishi","BMW","Audi", "BYD",
+    "Toyota", "Suzuki", "Honda", "Nissan", "Mitsubishi", "BMW", "Audi", "BYD",
     // Rest alphabetically
-    "Acura", "Alfa-Romeo", "Aprilia", "Ashok-Leyland", "Aston", "Atco", "ATHER", 
-    "Austin", "Baic", "Bajaj", "Bentley", "Borgward",  
-    "Cadillac", "Cal", "CAT", "Ceygra", "Changan", "Chery", "Chevrolet", 
-    "Chrysler", "Citroen", "Corvette", "Daewoo", "Daido", "Daihatsu", "Datsun", 
-    "Demak", "Dfac", "DFSK", "Ducati", "Dyno", "Eicher", "FAW", "Ferrari", "Fiat", 
-    "Force", "Ford", "Foton", "Hero", "Hero-Honda", "Higer", "Hillman", "HINO", 
-    "Hitachi", "Holden", "Hummer", "Hyundai", "IHI", "Isuzu", "Iveco", 
-    "JAC", "Jaguar", "JCB", "Jeep", "JiaLing", "JMC", "John-Deere", "Jonway", 
-    "KAPLA", "Kawasaki", "Kia", "Kinetic", "KMC", "Kobelco", "Komatsu", "KTM", 
-    "Kubota", "Lamborghini", "Land-Rover", "Lexus", "Loncin", "Longjia", "Lotus", 
-    "Lti", "Mahindra", "Maserati", "Massey-Ferguson", "Mazda", "Mercedes-Benz", 
-    "Metrocab", "MG", "Mg-Rover", "Micro", "Mini", "Minnelli", 
-    "Morgan", "Morris", "New-Holland", "NWOW", "Opel", "Other", 
-    "Perodua", "Peugeot", "Piaggio", "Porsche", "Powertrac", "Proton", 
-    "Range-Rover", "Ranomoto", "Renault", "Reva", "REVOLT", "Rolls-Royce", "Saab", 
-    "Sakai", "Seat", "Senaro", "Singer", "Skoda", "Smart", "Sonalika", "Subaru", 
-    "Swaraj", "Syuk", "TAFE", "TAILG", "Tata", "Tesla", 
-    "Triumph", "TVS", "Vauxhall", "Vespa", "Volkswagen", "Volvo", "Wave", "Willys", 
+    "Acura", "Alfa-Romeo", "Aprilia", "Ashok-Leyland", "Aston", "Atco", "ATHER",
+    "Austin", "Baic", "Bajaj", "Bentley", "Borgward",
+    "Cadillac", "Cal", "CAT", "Ceygra", "Changan", "Chery", "Chevrolet",
+    "Chrysler", "Citroen", "Corvette", "Daewoo", "Daido", "Daihatsu", "Datsun",
+    "Demak", "Dfac", "DFSK", "Ducati", "Dyno", "Eicher", "FAW", "Ferrari", "Fiat",
+    "Force", "Ford", "Foton", "Hero", "Hero-Honda", "Higer", "Hillman", "HINO",
+    "Hitachi", "Holden", "Hummer", "Hyundai", "IHI", "Isuzu", "Iveco",
+    "JAC", "Jaguar", "JCB", "Jeep", "JiaLing", "JMC", "John-Deere", "Jonway",
+    "KAPLA", "Kawasaki", "Kia", "Kinetic", "KMC", "Kobelco", "Komatsu", "KTM",
+    "Kubota", "Lamborghini", "Land-Rover", "Lexus", "Loncin", "Longjia", "Lotus",
+    "Lti", "Mahindra", "Maserati", "Massey-Ferguson", "Mazda", "Mercedes-Benz",
+    "Metrocab", "MG", "Mg-Rover", "Micro", "Mini", "Minnelli",
+    "Morgan", "Morris", "New-Holland", "NWOW", "Opel", "Other",
+    "Perodua", "Peugeot", "Piaggio", "Porsche", "Powertrac", "Proton",
+    "Range-Rover", "Ranomoto", "Renault", "Reva", "REVOLT", "Rolls-Royce", "Saab",
+    "Sakai", "Seat", "Senaro", "Singer", "Skoda", "Smart", "Sonalika", "Subaru",
+    "Swaraj", "Syuk", "TAFE", "TAILG", "Tata", "Tesla",
+    "Triumph", "TVS", "Vauxhall", "Vespa", "Volkswagen", "Volvo", "Wave", "Willys",
     "Yadea", "Yamaha", "Yanmar", "Yuejin", "Zongshen", "Zotye"
   ];
 
@@ -164,7 +164,7 @@ export default function QuickAdCreatePage() {
     "MBK", "Romet", "Junak", "Bajaj Auto", "TVS Motor", "Hero MotoCorp", "Kymstone", "Zontes",
     "Voge", "Haojue", "Dayang", "Husaberg", "Alta Motors", "Buccaneer", "Mash", "Arch Motorcycle"
   ];
-  
+
   // Sri Lankan provinces, districts, and cities data
   const locationData = {
     "Western": {
@@ -229,7 +229,7 @@ export default function QuickAdCreatePage() {
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
-      
+
       // Reset dependent fields when province or district changes
       if (field === "province") {
         newData.district = "";
@@ -237,7 +237,7 @@ export default function QuickAdCreatePage() {
       } else if (field === "district") {
         newData.city = "";
       }
-      
+
       return newData;
     });
   };
@@ -256,7 +256,7 @@ export default function QuickAdCreatePage() {
   const removeMedia = (idToRemove: string) => {
     setSelectedImages(prev => prev.filter((media) => media.id !== idToRemove));
   };
-  
+
   // Handle form submission
   const handleSubmit = () => {
     // Calculate boost/featured expiry dates based on selection
@@ -296,23 +296,63 @@ export default function QuickAdCreatePage() {
     //   alert("Please upload at least 1 image for your ad");
     //   return;
     // }
-    
+
     // Auto-generate title from vehicle details
-    const titleParts = [
-      formData.condition,
+    // Vehicle type labels for title generation
+    const vehicleTypeLabels: Record<string, string> = {
+      CAR: "Car",
+      VAN: "Van",
+      SUV_JEEP: "SUV / Jeep",
+      MOTORCYCLE: "Motorbike",
+      CREW_CAB: "Crew Cab",
+      PICKUP_DOUBLE_CAB: "Pickup / Double Cab",
+      BUS: "Bus",
+      LORRY: "Lorry",
+      THREE_WHEEL: "Three Wheeler",
+      OTHER: "Other",
+      TRACTOR: "Tractor",
+      HEAVY_DUTY: "Heavy-Duty",
+      BICYCLE: "Bicycle",
+      AUTO_SERVICE: "Auto Service",
+      RENTAL: "Rental",
+      AUTO_PARTS: "Auto Parts",
+      MAINTENANCE: "Maintenance",
+      BOAT: "Boat"
+    };
+
+    const typeLabel = vehicleTypeLabels[formData.type] || formData.type;
+
+    const baseInfoParts = [
       formData.brand,
       formData.model,
       formData.manufacturedYear || formData.modelYear,
-      formData.trimEdition
+      typeLabel
     ].filter(Boolean);
-    
-    const title = titleParts.length > 0 ? titleParts.join(" ") : "Vehicle Ad";
-    
+
+    const vehicleInfo = baseInfoParts.join(" ");
+
+    let title = "Vehicle Ad";
+    if (formData.listingType === "WANT") {
+      title = `Want ${vehicleInfo}`;
+    } else if (formData.listingType === "RENT") {
+      title = `${vehicleInfo} for Rent`;
+    } else if (formData.listingType === "HIRE") {
+      title = `${vehicleInfo} for Hire`;
+    } else {
+      // SELL format: Condition Brand Model Year Type
+      const sellParts = [
+        formData.condition,
+        ...baseInfoParts,
+        formData.trimEdition
+      ].filter(Boolean);
+      title = sellParts.join(" ");
+    }
+
     // Format numeric fields
     const price = formData.isNegotiable ? undefined : (formData.price ? parseFloat(formData.price) : undefined);
     const mileage = formData.mileage ? parseFloat(formData.mileage) : undefined;
     const engineCapacity = formData.engineCapacity ? parseFloat(formData.engineCapacity) : undefined;
-    
+
     // Prepare ad data according to your updated schema
     const adData: CreateAdSchema = {
       title,
@@ -370,7 +410,7 @@ export default function QuickAdCreatePage() {
       boostExpiry: boostExpiry,
       featureExpiry: featureExpiry
     };
-    
+
     createAd(
       { values: adData },
       {
@@ -378,7 +418,7 @@ export default function QuickAdCreatePage() {
           // Check if user is admin
           const isAdmin = (session?.user as any)?.role === "admin";
           const isPublished = !adData.isDraft && adData.published;
-          
+
           // Show success modal first if ad is published (not admin)
           if (!isAdmin && isPublished) {
             setShowSuccessModal(true);
@@ -394,48 +434,48 @@ export default function QuickAdCreatePage() {
       }
     );
   };
-  
+
   // Check if required fields are filled based on step and vehicle type
   const canProceed = () => {
-    switch(currentStep) {
+    switch (currentStep) {
       case 1:
         // Basic vehicle info required - but relaxed for non-SELL types
         if (formData.listingType !== "SELL") {
           // For WANT, RENT, HIRE - only require listing type and vehicle type
           return formData.listingType && formData.type;
         }
-        
+
         // For SELL - require detailed information as before
         if (["AUTO_SERVICE", "RENTAL", "MAINTENANCE"].includes(formData.type)) {
           return formData.type;
         }
-        
+
         if (formData.type === "BICYCLE") {
           return formData.type && formData.brand;
         }
-        
+
         if (formData.type === "AUTO_PARTS") {
           return formData.type && formData.brand && formData.model;
         }
-        
+
         // For all vehicle types that need year
         const basicRequired = formData.type && formData.brand && formData.model;
         const yearRequired = (formData.type === "VAN") ? formData.modelYear : formData.manufacturedYear;
-        
+
         return basicRequired && yearRequired;
-        
+
       case 2:
         // Vehicle details required - but relaxed for non-SELL types
         if (formData.listingType !== "SELL") {
           // For WANT, RENT, HIRE - only require description
           return formData.description;
         }
-        
+
         // For SELL - require detailed information as before
         // Price is only required if NOT negotiable
         let priceRequired = formData.isNegotiable || formData.price;
         let detailsRequired = priceRequired && formData.condition && formData.description;
-        
+
         // Type-specific required fields for SELL
         if (formData.type === "CAR") {
           detailsRequired = detailsRequired && formData.fuelType && formData.transmission;
@@ -452,15 +492,15 @@ export default function QuickAdCreatePage() {
         } else if (["THREE_WHEEL", "BUS", "LORRY", "TRACTOR"].includes(formData.type)) {
           detailsRequired = detailsRequired && formData.fuelType;
         }
-        
+
         return detailsRequired;
-        
+
       case 3:
         // Contact info required for all listing types + at least 1 image
-        return formData.name && formData.phoneNumber && formData.province && formData.district && formData.city && formData.location && formData.termsAndConditions 
-        //  && selectedImages.length > 0
-        ;
-        
+        return formData.name && formData.phoneNumber && formData.province && formData.district && formData.city && formData.location && formData.termsAndConditions
+          //  && selectedImages.length > 0
+          ;
+
       default:
         return false;
     }
@@ -485,19 +525,33 @@ export default function QuickAdCreatePage() {
               </SelectContent>
             </Select>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium mb-1">Model (optional)</label>
-            <Input 
-              placeholder="Enter model" 
+            <Input
+              placeholder="Enter model"
               value={formData.model}
               onChange={(e) => handleInputChange("model", e.target.value)}
             />
           </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Manufacture Year (optional)</label>
+            <Select value={formData.manufacturedYear || formData.modelYear} onValueChange={(value) => handleInputChange(formData.type === "VAN" ? "modelYear" : "manufacturedYear", value)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select year" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[280px]">
+                {years.map(year => (
+                  <SelectItem key={year} value={year}>{year}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </>
       );
     }
-    
+
     // For SELL type, show full form based on vehicle type
     switch (formData.type) {
       case "CAR":
@@ -536,8 +590,8 @@ export default function QuickAdCreatePage() {
             {/* Model */}
             <div>
               <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
-              <Input 
-                placeholder="e.g., Camry" 
+              <Input
+                placeholder="e.g., Camry"
                 value={formData.model}
                 onChange={(e) => handleInputChange("model", e.target.value)}
               />
@@ -546,8 +600,8 @@ export default function QuickAdCreatePage() {
             {/* Trim/Edition */}
             <div>
               <label className="block text-sm font-medium mb-1">Trim / Edition</label>
-              <Input 
-                placeholder="e.g., Sport" 
+              <Input
+                placeholder="e.g., Sport"
                 value={formData.trimEdition}
                 onChange={(e) => handleInputChange("trimEdition", e.target.value)}
               />
@@ -606,8 +660,8 @@ export default function QuickAdCreatePage() {
             {/* Model */}
             <div>
               <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
-              <Input 
-                placeholder="e.g., Hiace" 
+              <Input
+                placeholder="e.g., Hiace"
                 value={formData.model}
                 onChange={(e) => handleInputChange("model", e.target.value)}
               />
@@ -616,8 +670,8 @@ export default function QuickAdCreatePage() {
             {/* Trim/Edition */}
             <div>
               <label className="block text-sm font-medium mb-1">Trim / Edition</label>
-              <Input 
-                placeholder="e.g., GL" 
+              <Input
+                placeholder="e.g., GL"
                 value={formData.trimEdition}
                 onChange={(e) => handleInputChange("trimEdition", e.target.value)}
               />
@@ -691,8 +745,8 @@ export default function QuickAdCreatePage() {
             {/* Model */}
             <div>
               <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
-              <Input 
-                placeholder="e.g., CBR 250R" 
+              <Input
+                placeholder="e.g., CBR 250R"
                 value={formData.model}
                 onChange={(e) => handleInputChange("model", e.target.value)}
               />
@@ -721,8 +775,8 @@ export default function QuickAdCreatePage() {
             {/* Brand */}
             <div>
               <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
-              <Input 
-                placeholder="e.g., Giant" 
+              <Input
+                placeholder="e.g., Giant"
                 value={formData.brand}
                 onChange={(e) => handleInputChange("brand", e.target.value)}
               />
@@ -780,8 +834,8 @@ export default function QuickAdCreatePage() {
             {/* Model */}
             <div>
               <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
-              <Input 
-                placeholder="e.g., Bajaj RE" 
+              <Input
+                placeholder="e.g., Bajaj RE"
                 value={formData.model}
                 onChange={(e) => handleInputChange("model", e.target.value)}
               />
@@ -842,7 +896,7 @@ export default function QuickAdCreatePage() {
             {/* Model */}
             <div>
               <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
-              <Input 
+              <Input
                 placeholder={formData.type === "BUS" ? "e.g., Rosa" : formData.type === "LORRY" ? "e.g., Canter" : "e.g., MF240"}
                 value={formData.model}
                 onChange={(e) => handleInputChange("model", e.target.value)}
@@ -922,8 +976,8 @@ export default function QuickAdCreatePage() {
             {/* Model */}
             <div>
               <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
-              <Input 
-                placeholder="e.g., PC200" 
+              <Input
+                placeholder="e.g., PC200"
                 value={formData.model}
                 onChange={(e) => handleInputChange("model", e.target.value)}
               />
@@ -953,7 +1007,7 @@ export default function QuickAdCreatePage() {
             {/* Service Type */}
             <div>
               <label className="block text-sm font-medium mb-1">Service Type<span className="text-red-500">*</span></label>
-              <Input 
+              <Input
                 placeholder={formData.type === "AUTO_SERVICE" ? "e.g., Car Wash, Repair" : "e.g., Car Rental, Van Rental"}
                 value={formData.serviceType}
                 onChange={(e) => handleInputChange("serviceType", e.target.value)}
@@ -982,8 +1036,8 @@ export default function QuickAdCreatePage() {
             {/* Part Type */}
             <div>
               <label className="block text-sm font-medium mb-1">Part or Accessory Type<span className="text-red-500">*</span></label>
-              <Input 
-                placeholder="e.g., Engine Parts, Tires" 
+              <Input
+                placeholder="e.g., Engine Parts, Tires"
                 value={formData.partType}
                 onChange={(e) => handleInputChange("partType", e.target.value)}
               />
@@ -992,8 +1046,8 @@ export default function QuickAdCreatePage() {
             {/* Brand */}
             <div>
               <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
-              <Input 
-                placeholder="e.g., Bosch" 
+              <Input
+                placeholder="e.g., Bosch"
                 value={formData.brand}
                 onChange={(e) => handleInputChange("brand", e.target.value)}
               />
@@ -1002,8 +1056,8 @@ export default function QuickAdCreatePage() {
             {/* Model */}
             <div>
               <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
-              <Input 
-                placeholder="e.g., Compatible model" 
+              <Input
+                placeholder="e.g., Compatible model"
                 value={formData.model}
                 onChange={(e) => handleInputChange("model", e.target.value)}
               />
@@ -1017,8 +1071,8 @@ export default function QuickAdCreatePage() {
             {/* Maintenance Type */}
             <div>
               <label className="block text-sm font-medium mb-1">Maintenance and Repair Type<span className="text-red-500">*</span></label>
-              <Input 
-                placeholder="e.g., Engine Repair, Body Work" 
+              <Input
+                placeholder="e.g., Engine Repair, Body Work"
                 value={formData.maintenanceType}
                 onChange={(e) => handleInputChange("maintenanceType", e.target.value)}
               />
@@ -1058,24 +1112,24 @@ export default function QuickAdCreatePage() {
         <>
           <div>
             <label className="block text-sm font-medium mb-1">Budget/Price Range (optional)</label>
-            <Input 
-              type="number" 
-              placeholder="e.g., 2500000" 
+            <Input
+              type="number"
+              placeholder="e.g., 2500000"
               value={formData.price}
               onChange={(e) => handleInputChange("price", e.target.value)}
             />
             <p className="text-xs text-muted-foreground mt-1">
-              {formData.listingType === "WANT" ? "Your budget range" : 
-               formData.listingType === "RENT" ? "Monthly rent amount" : 
-               "Expected price range"}
+              {formData.listingType === "WANT" ? "Your budget range" :
+                formData.listingType === "RENT" ? "Monthly rent amount" :
+                  "Expected price range"}
             </p>
           </div>
-          
+
           {(formData.listingType === "WANT" || formData.listingType === "RENT") && (
             <div>
               <label className="block text-sm font-medium mb-1">Preferred Condition (optional)</label>
-              <Select 
-                value={formData.condition} 
+              <Select
+                value={formData.condition}
                 onValueChange={(value) => handleInputChange("condition", value)}
               >
                 <SelectTrigger className="w-full">
@@ -1093,7 +1147,7 @@ export default function QuickAdCreatePage() {
         </>
       );
     }
-    
+
     // For SELL type, show full detailed form
     switch (formData.type) {
       case "CAR":
@@ -1129,22 +1183,22 @@ export default function QuickAdCreatePage() {
                 </Select>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium mb-1">Mileage (km)</label>
-                <Input 
-                  type="number" 
-                  placeholder="e.g., 45000" 
+                <Input
+                  type="number"
+                  placeholder="e.g., 45000"
                   value={formData.mileage}
                   onChange={(e) => handleInputChange("mileage", e.target.value)}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Engine (cc)</label>
-                <Input 
-                  type="number" 
-                  placeholder="e.g., 1500" 
+                <Input
+                  type="number"
+                  placeholder="e.g., 1500"
                   value={formData.engineCapacity}
                   onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
                 />
@@ -1173,18 +1227,18 @@ export default function QuickAdCreatePage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium mb-1">Mileage (km)</label>
-                <Input 
-                  type="number" 
-                  placeholder="e.g., 50000" 
+                <Input
+                  type="number"
+                  placeholder="e.g., 50000"
                   value={formData.mileage}
                   onChange={(e) => handleInputChange("mileage", e.target.value)}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Engine (cc)</label>
-                <Input 
-                  type="number" 
-                  placeholder="e.g., 2000" 
+                <Input
+                  type="number"
+                  placeholder="e.g., 2000"
                   value={formData.engineCapacity}
                   onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
                 />
@@ -1199,18 +1253,18 @@ export default function QuickAdCreatePage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium mb-1">Mileage (km)</label>
-                <Input 
-                  type="number" 
-                  placeholder="e.g., 15000" 
+                <Input
+                  type="number"
+                  placeholder="e.g., 15000"
                   value={formData.mileage}
                   onChange={(e) => handleInputChange("mileage", e.target.value)}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Engine (cc)<span className="text-red-500">*</span></label>
-                <Input 
-                  type="number" 
-                  placeholder="e.g., 150" 
+                <Input
+                  type="number"
+                  placeholder="e.g., 150"
                   value={formData.engineCapacity}
                   onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
                 />
@@ -1225,24 +1279,24 @@ export default function QuickAdCreatePage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium mb-1">Mileage (km)</label>
-                <Input 
-                  type="number" 
-                  placeholder="e.g., 25000" 
+                <Input
+                  type="number"
+                  placeholder="e.g., 25000"
                   value={formData.mileage}
                   onChange={(e) => handleInputChange("mileage", e.target.value)}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Engine (cc)</label>
-                <Input 
-                  type="number" 
-                  placeholder="e.g., 200" 
+                <Input
+                  type="number"
+                  placeholder="e.g., 200"
                   value={formData.engineCapacity}
                   onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
                 />
               </div>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium mb-1">Fuel Type<span className="text-red-500">*</span></label>
               <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
@@ -1266,24 +1320,24 @@ export default function QuickAdCreatePage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium mb-1">Mileage (km)</label>
-                <Input 
-                  type="number" 
-                  placeholder="e.g., 150000" 
+                <Input
+                  type="number"
+                  placeholder="e.g., 150000"
                   value={formData.mileage}
                   onChange={(e) => handleInputChange("mileage", e.target.value)}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Engine (cc)</label>
-                <Input 
-                  type="number" 
-                  placeholder="e.g., 4000" 
+                <Input
+                  type="number"
+                  placeholder="e.g., 4000"
                   value={formData.engineCapacity}
                   onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
                 />
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium mb-1">Fuel Type<span className="text-red-500">*</span></label>
@@ -1320,24 +1374,24 @@ export default function QuickAdCreatePage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium mb-1">Mileage (km)</label>
-                <Input 
-                  type="number" 
-                  placeholder="e.g., 200000" 
+                <Input
+                  type="number"
+                  placeholder="e.g., 200000"
                   value={formData.mileage}
                   onChange={(e) => handleInputChange("mileage", e.target.value)}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Engine (cc)</label>
-                <Input 
-                  type="number" 
-                  placeholder="e.g., 3000" 
+                <Input
+                  type="number"
+                  placeholder="e.g., 3000"
                   value={formData.engineCapacity}
                   onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
                 />
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium mb-1">Fuel Type<span className="text-red-500">*</span></label>
@@ -1372,9 +1426,9 @@ export default function QuickAdCreatePage() {
           <>
             <div>
               <label className="block text-sm font-medium mb-1">Operating Hours</label>
-              <Input 
-                type="number" 
-                placeholder="e.g., 5000" 
+              <Input
+                type="number"
+                placeholder="e.g., 5000"
                 value={formData.mileage}
                 onChange={(e) => handleInputChange("mileage", e.target.value)}
               />
@@ -1386,9 +1440,9 @@ export default function QuickAdCreatePage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium mb-1">Engine (cc)</label>
-                <Input 
-                  type="number" 
-                  placeholder="e.g., 6000" 
+                <Input
+                  type="number"
+                  placeholder="e.g., 6000"
                   value={formData.engineCapacity}
                   onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
                 />
@@ -1415,9 +1469,9 @@ export default function QuickAdCreatePage() {
           <>
             <div>
               <label className="block text-sm font-medium mb-1">Operating Hours</label>
-              <Input 
-                type="number" 
-                placeholder="e.g., 2000" 
+              <Input
+                type="number"
+                placeholder="e.g., 2000"
                 value={formData.mileage}
                 onChange={(e) => handleInputChange("mileage", e.target.value)}
               />
@@ -1429,9 +1483,9 @@ export default function QuickAdCreatePage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium mb-1">Engine (cc)</label>
-                <Input 
-                  type="number" 
-                  placeholder="e.g., 2500" 
+                <Input
+                  type="number"
+                  placeholder="e.g., 2500"
                   value={formData.engineCapacity}
                   onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
                 />
@@ -1469,7 +1523,7 @@ export default function QuickAdCreatePage() {
         return null;
     }
   };
-  
+
   return (
     <div className="bg-slate-50 min-h-screen py-10 px-4">
       <div className="max-w-md mx-auto">
@@ -1478,7 +1532,7 @@ export default function QuickAdCreatePage() {
             <h1 className="text-2xl font-bold text-center mb-1">Post Your Vehicle</h1>
             <p className="text-center text-slate-500">Quick and easy</p>
           </div>
-          
+
           {/* Progress steps */}
           <div className="flex mb-6 relative">
             <div className="w-1/3 text-center">
@@ -1495,14 +1549,14 @@ export default function QuickAdCreatePage() {
             </div>
             <div className="absolute top-4 left-[16.6%] w-[66.6%] h-[2px] bg-slate-200 -z-10"></div>
           </div>
-          
+
           {/* Step 1: Basic Vehicle Info */}
           {currentStep === 1 && (
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">What do you want to do?<span className="text-red-500">*</span></label>
-                <Select 
-                  value={formData.listingType} 
+                <Select
+                  value={formData.listingType}
                   onValueChange={(value) => handleInputChange("listingType", value)}
                 >
                   <SelectTrigger className="w-full">
@@ -1516,11 +1570,11 @@ export default function QuickAdCreatePage() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium mb-1">Vehicle Type<span className="text-red-500">*</span></label>
-                <Select 
-                  value={formData.type} 
+                <Select
+                  value={formData.type}
                   onValueChange={(value) => handleInputChange("type", value)}
                 >
                   <SelectTrigger className="w-full">
@@ -1544,18 +1598,18 @@ export default function QuickAdCreatePage() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               {/* Dynamic vehicle fields based on type */}
               {renderVehicleFields()}
-              
+
               {/* <div className="pt-2">
                 <div className="flex items-center bg-blue-50 p-2 rounded-md text-xs text-blue-700">
                   <CheckCircle2 className="h-4 w-4 mr-2 flex-shrink-0" />
                   <span>Title will be auto-generated from these details</span>
                 </div>
               </div> */}
-              
-              <Button 
+
+              <Button
                 className="w-full bg-teal-700 hover:bg-teal-800"
                 onClick={() => setCurrentStep(2)}
                 disabled={!canProceed()}
@@ -1564,24 +1618,24 @@ export default function QuickAdCreatePage() {
               </Button>
             </div>
           )}
-          
+
           {/* Step 2: Vehicle Details */}
           {currentStep === 2 && (
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Price (Rs)<span className="text-red-500">*</span></label>
-                <Input 
-                  type="number" 
-                  placeholder="e.g., 2500000" 
+                <Input
+                  type="number"
+                  placeholder="e.g., 2500000"
                   value={formData.price}
                   onChange={(e) => handleInputChange("price", e.target.value)}
                   disabled={formData.isNegotiable}
                 />
               </div>
-              
+
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="negotiable" 
+                <Checkbox
+                  id="negotiable"
                   checked={formData.isNegotiable}
                   onCheckedChange={(checked) => {
                     handleInputChange("isNegotiable", checked);
@@ -1594,7 +1648,7 @@ export default function QuickAdCreatePage() {
                   Price is Negotiable
                 </Label>
               </div>
-              
+
               {/* <div>
                 <label className="block text-sm font-medium mb-1">Condition<span className="text-red-500">*</span></label>
                 <Select 
@@ -1614,26 +1668,26 @@ export default function QuickAdCreatePage() {
 
               {/* Dynamic fields based on vehicle type */}
               {renderStep2Fields()}
-              
+
               <div>
                 <label className="block text-sm font-medium mb-1">Description<span className="text-red-500">*</span></label>
-                <Textarea 
-                  placeholder="Tell potential buyers about your vehicle..." 
+                <Textarea
+                  placeholder="Tell potential buyers about your vehicle..."
                   rows={3}
                   value={formData.description}
                   onChange={(e) => handleInputChange("description", e.target.value)}
                 />
               </div>
-              
+
               <div className="flex space-x-3">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-1/2"
                   onClick={() => setCurrentStep(1)}
                 >
                   Back
                 </Button>
-                <Button 
+                <Button
                   className="w-1/2 bg-teal-700 hover:bg-teal-800"
                   onClick={() => setCurrentStep(3)}
                   disabled={!canProceed()}
@@ -1643,40 +1697,40 @@ export default function QuickAdCreatePage() {
               </div>
             </div>
           )}
-          
+
           {/* Step 3: Contact Details */}
           {currentStep === 3 && (
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Your Name<span className="text-red-500">*</span></label>
-                <Input 
-                  placeholder="Enter your name" 
+                <Input
+                  placeholder="Enter your name"
                   value={formData.name}
                   onChange={(e) => handleInputChange("name", e.target.value)}
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium mb-1">Phone Number<span className="text-red-500">*</span></label>
-                <Input 
-                  placeholder="e.g., 0777123456" 
+                <Input
+                  placeholder="e.g., 0777123456"
                   value={formData.phoneNumber}
                   onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium mb-1">WhatsApp Number (optional)</label>
-                <Input 
-                  placeholder="e.g., 0777123456" 
+                <Input
+                  placeholder="e.g., 0777123456"
                   value={formData.whatsappNumber}
                   onChange={(e) => handleInputChange("whatsappNumber", e.target.value)}
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium mb-1">Province<span className="text-red-500">*</span></label>
-                <Select 
+                <Select
                   value={formData.province}
                   onValueChange={(value) => handleInputChange("province", value)}
                 >
@@ -1690,10 +1744,10 @@ export default function QuickAdCreatePage() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium mb-1">District<span className="text-red-500">*</span></label>
-                <Select 
+                <Select
                   value={formData.district}
                   onValueChange={(value) => handleInputChange("district", value)}
                   disabled={!formData.province}
@@ -1708,10 +1762,10 @@ export default function QuickAdCreatePage() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium mb-1">City<span className="text-red-500">*</span></label>
-                <Select 
+                <Select
                   value={formData.city}
                   onValueChange={(value) => handleInputChange("city", value)}
                   disabled={!formData.district}
@@ -1726,19 +1780,19 @@ export default function QuickAdCreatePage() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium mb-1">Location/Area<span className="text-red-500">*</span></label>
-                <Input 
-                  placeholder="e.g., Nugegoda" 
+                <Input
+                  placeholder="e.g., Nugegoda"
                   value={formData.location}
                   onChange={(e) => handleInputChange("location", e.target.value)}
                 />
               </div>
-              
+
               <div className="flex items-center space-x-2 mt-2">
-                <Switch 
-                  id="terms" 
+                <Switch
+                  id="terms"
                   checked={formData.termsAndConditions}
                   onCheckedChange={(checked) => handleInputChange("termsAndConditions", checked)}
                 />
@@ -1746,7 +1800,7 @@ export default function QuickAdCreatePage() {
                   I agree to the Terms & Conditions<span className="text-red-500">*</span>
                 </Label>
               </div>
-              
+
               {/* Boost Ad Selection */}
               <div className="pt-4 border-t border-slate-200">
                 <label className="block text-sm font-medium mb-3">Promote Your Ad (Optional)</label>
@@ -1807,14 +1861,14 @@ export default function QuickAdCreatePage() {
                   Boost or feature your ad for better visibility
                 </p>
               </div>
-              
+
               {/* Image Selection Section */}
               <div className="pt-2">
                 <label className="block text-sm font-medium mb-2">Vehicle Images<span className="ms-1 text-red-500">*</span></label>
                 <p className="text-xs text-slate-500 mb-3">
                   Select up to 6 images from your media gallery. First image will be the main photo.
                 </p>
-                
+
                 {/* Media Gallery Button */}
                 <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center mb-3">
                   <div className="flex flex-col items-center justify-center space-y-3">
@@ -1824,16 +1878,15 @@ export default function QuickAdCreatePage() {
                         {selectedImages.length === 0
                           ? "No images selected yet"
                           : selectedImages.length >= 6
-                          ? "Maximum images selected (6/6)"
-                          : `${selectedImages.length} image(s) selected, you can add ${
-                              6 - selectedImages.length
+                            ? "Maximum images selected (6/6)"
+                            : `${selectedImages.length} image(s) selected, you can add ${6 - selectedImages.length
                             } more`}
                       </p>
                       <p className="text-xs text-slate-500">
                         Select images from your media gallery
                       </p>
                     </div>
-                    
+
                     <MediaGallery
                       onMediaSelect={handleMediaSelect}
                       multiSelect={true}
@@ -1854,7 +1907,7 @@ export default function QuickAdCreatePage() {
                     </MediaGallery>
                   </div>
                 </div>
-                
+
                 {/* Image Preview Grid */}
                 {selectedImages.length > 0 && (
                   <div className="space-y-2">
@@ -1892,16 +1945,16 @@ export default function QuickAdCreatePage() {
                   </div>
                 )}
               </div>
-              
+
               <div className="flex space-x-3">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-1/2"
                   onClick={() => setCurrentStep(2)}
                 >
                   Back
                 </Button>
-                <Button 
+                <Button
                   className="w-1/2 bg-teal-700 hover:bg-teal-800"
                   onClick={handleSubmit}
                   disabled={isPending || !canProceed()}

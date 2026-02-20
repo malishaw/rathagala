@@ -48,6 +48,7 @@ import {
 import { useRouter } from "next/navigation";
 import { FaInfoCircle, FaMobileAlt, FaWhatsapp } from "react-icons/fa";
 import { format } from "date-fns";
+import { DELETE_AD_REASONS, type DeleteAdReason } from "@/constants/delete-reasons";
 
 // This type is used to define the shape of our data.
 export type AdType = Omit<Ad, "createdAt"> & {
@@ -361,6 +362,7 @@ function AdminActionsCell({ ad }: { ad: AdType }) {
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [rejectionDescription, setRejectionDescription] = useState("");
+  const [deleteReason, setDeleteReason] = useState<DeleteAdReason>(DELETE_AD_REASONS[0]);
   
   const approveMutation = useApproveAd();
   const rejectMutation = useRejectAd();
@@ -390,11 +392,14 @@ function AdminActionsCell({ ad }: { ad: AdType }) {
   };
 
   const handleDelete = () => {
-    deleteMutation.mutate(ad.id, {
-      onSuccess: () => {
-        setShowDeleteDialog(false);
-      },
-    });
+    deleteMutation.mutate(
+      { id: ad.id, reason: deleteReason, adTitle: ad.title },
+      {
+        onSuccess: () => {
+          setShowDeleteDialog(false);
+        },
+      }
+    );
   };
 
   const handleEdit = () => {
@@ -503,6 +508,21 @@ function AdminActionsCell({ ad }: { ad: AdType }) {
               Are you sure you want to delete this ad? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="space-y-2 py-2">
+            <Label className="text-sm font-medium text-slate-700">Reason for deletion</Label>
+            <Select value={deleteReason} onValueChange={(value) => setDeleteReason(value as DeleteAdReason)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select reason" />
+              </SelectTrigger>
+              <SelectContent>
+                {DELETE_AD_REASONS.map((reason) => (
+                  <SelectItem key={reason} value={reason}>
+                    {reason}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex gap-3">
             <AlertDialogCancel disabled={deleteMutation.isPending}>
               Cancel

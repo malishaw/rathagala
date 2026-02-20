@@ -160,6 +160,10 @@ export const remove = createRoute({
   middleware: [serverAuthMiddleware],
   request: {
     params: schemas.IdParamsSchema,
+    body: jsonContentRequired(
+      schemas.deleteAdBodySchema,
+      "Reason for deleting the ad"
+    ),
   },
   responses: {
     [HttpStatusCodes.OK]: jsonContent(

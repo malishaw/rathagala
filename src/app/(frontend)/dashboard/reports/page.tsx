@@ -52,6 +52,7 @@ import {
   CheckCheck,
   XCircle,
 } from "lucide-react";
+import { DELETE_AD_REASONS, type DeleteAdReason } from "@/constants/delete-reasons";
 
 interface Report {
   id: string;
@@ -82,6 +83,7 @@ export default function ReportsManagementPage() {
   const [updateDetails, setUpdateDetails] = useState<string>("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [unpublishReason, setUnpublishReason] = useState<string>("");
+  const [deleteReason, setDeleteReason] = useState<DeleteAdReason>(DELETE_AD_REASONS[0]);
 
   const { data, isLoading, refetch } = useGetReports({
     page,
@@ -148,13 +150,17 @@ export default function ReportsManagementPage() {
   const handleDeleteAd = () => {
     if (!selectedReport?.adId) return;
 
-    deleteAd(selectedReport.adId, {
-      onSuccess: () => {
-        setIsDeleteDialogOpen(false);
-        setIsDetailsOpen(false);
-        refetch();
-      },
-    });
+    deleteAd(
+      { id: selectedReport.adId, reason: deleteReason, adTitle: selectedReport.ad?.title },
+      {
+        onSuccess: () => {
+          setIsDeleteDialogOpen(false);
+          setIsDetailsOpen(false);
+          setDeleteReason(DELETE_AD_REASONS[0]);
+          refetch();
+        },
+      }
+    );
   };
 
   const getStatusBadge = (status: string) => {
@@ -552,6 +558,21 @@ export default function ReportsManagementPage() {
               Are you sure you want to permanently delete this ad? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
+          <div className="space-y-2 pt-2">
+            <Label className="text-sm font-medium text-slate-700">Reason for deletion</Label>
+            <Select value={deleteReason} onValueChange={(value) => setDeleteReason(value as DeleteAdReason)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select reason" />
+              </SelectTrigger>
+              <SelectContent>
+                {DELETE_AD_REASONS.map((reason) => (
+                  <SelectItem key={reason} value={reason}>
+                    {reason}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex justify-end gap-2 pt-4">
             <Button
               variant="outline"

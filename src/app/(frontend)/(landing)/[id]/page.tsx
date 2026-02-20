@@ -85,15 +85,15 @@ export default function AdDetailPage() {
   // Pagination: 6 ads per page (2 rows × 3 columns)
   const itemsPerPage = 6;
   const allSimilarVehicles = similarVehiclesData?.vehicles || [];
-  
+
   // Filter similar vehicles to only show those with matching model
   const modelFilteredVehicles = useMemo(() => {
     if (!ad?.model) return allSimilarVehicles;
-    return allSimilarVehicles.filter(vehicle => 
+    return allSimilarVehicles.filter(vehicle =>
       vehicle.model && vehicle.model.toLowerCase() === ad.model.toLowerCase()
     );
   }, [allSimilarVehicles, ad?.model]);
-  
+
   const totalPages = Math.ceil(modelFilteredVehicles.length / itemsPerPage);
   const startIndex = (similarVehiclesPage - 1) * itemsPerPage;
   const paginatedSimilarVehicles = modelFilteredVehicles.slice(startIndex, startIndex + itemsPerPage);
@@ -378,10 +378,10 @@ export default function AdDetailPage() {
     return (
       <div className="min-h-screen  flex items-center justify-center px-4">
         <div className="max-w-lg w-full text-center">
-            <h2 className="text-xl text-gray-900 mb-3">Sorry, This ad is not available.</h2>
-            <p className="text-gray-600">
-              The ad you are looking for is no longer accessible.
-            </p>
+          <h2 className="text-xl text-gray-900 mb-3">Sorry, This ad is not available.</h2>
+          <p className="text-gray-600">
+            The ad you are looking for is no longer accessible.
+          </p>
         </div>
       </div>
     );
@@ -401,7 +401,7 @@ export default function AdDetailPage() {
       return imageUrl;
     }
     // Return watermarked image URL via API
-    return `/api/watermark?url=${encodeURIComponent(imageUrl)}`;
+    return `/api/watermark?url=${encodeURIComponent(imageUrl)}&v=2`;
   };
 
   // Create watermarked image URLs
@@ -447,7 +447,7 @@ export default function AdDetailPage() {
     const vehicleTypeLabels: Record<string, string> = {
       CAR: "Car",
       VAN: "Van",
-      MOTORCYCLE: "Motorcycle",
+      MOTORCYCLE: "Motorbike",
       BICYCLE: "Bicycle",
       THREE_WHEEL: "Three Wheeler",
       BUS: "Bus",
@@ -464,7 +464,7 @@ export default function AdDetailPage() {
     // Build vehicle info with type at the end (brand model year [Type])
     const rawType = (ad.type ?? ad.vehicleType) as string | undefined;
     const typeLabel = rawType ? (vehicleTypeLabels[rawType] || String(rawType)) : undefined;
-    const vehicleInfo = [ad.brand, ad.model, ad.manufacturedYear, typeLabel]
+    const vehicleInfo = [ad.brand, ad.model, ad.manufacturedYear || ad.modelYear, typeLabel]
       .filter(Boolean)
       .join(' ');
 
@@ -996,7 +996,7 @@ export default function AdDetailPage() {
                             </Card>
                           ))}
                         </div>
-                        
+
                         {/* Pagination Controls */}
                         <div className="flex items-center justify-center gap-2 mt-4 pt-4 border-t">
                           <Button
@@ -1007,7 +1007,7 @@ export default function AdDetailPage() {
                           >
                             <ChevronLeft className="w-4 h-4" />
                           </Button>
-                          
+
                           <div className="flex items-center gap-1">
                             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                               <Button
@@ -1021,7 +1021,7 @@ export default function AdDetailPage() {
                               </Button>
                             ))}
                           </div>
-                          
+
                           <Button
                             variant="outline"
                             size="sm"
@@ -1318,7 +1318,7 @@ export default function AdDetailPage() {
                       </Card>
                     ))}
                   </div>
-                  
+
                   {/* Pagination Controls */}
                   <div className="flex items-center justify-center gap-2 mt-4 pt-4 border-t">
                     <Button
@@ -1329,7 +1329,7 @@ export default function AdDetailPage() {
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </Button>
-                    
+
                     <div className="flex items-center gap-1">
                       {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                         <Button
@@ -1343,7 +1343,7 @@ export default function AdDetailPage() {
                         </Button>
                       ))}
                     </div>
-                    
+
                     <Button
                       variant="outline"
                       size="sm"

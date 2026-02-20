@@ -1080,6 +1080,7 @@ export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
   try {
     const adId = c.req.valid("param").id;
     const user = c.get("user");
+    const body = c.req.valid("json");
 
     if (!user) {
       return c.json(
@@ -1109,9 +1110,10 @@ export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
     }
 
     // Soft delete: unpublish the ad and mark it as deleted by user
-    const metadata = existingAd.metadata as any || {};
+    const metadata = (existingAd.metadata as any) || {};
     metadata.deletedByUser = true;
     metadata.deletedAt = new Date().toISOString();
+    metadata.deletedReason = body?.reason;
 
     await prisma.ad.update({
       where: { id: adId },
@@ -1121,10 +1123,12 @@ export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
       },
     });
 
-    return c.json(
-      { message: "Ad deleted successfully" },
-      HttpStatusCodes.OK
-    );
+    const adTitle = existingAd.title?.trim();
+    const successMessage = adTitle
+      ? `Your ${adTitle} ad successfully deleted.`
+      : "Ad deleted successfully";
+
+    return c.json({ message: successMessage }, HttpStatusCodes.OK);
   } catch (error: any) {
     console.error("[DELETE AD] Error:", error);
 

@@ -38,6 +38,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import * as XLSX from "xlsx";
 import { client } from "@/lib/rpc";
+import { DELETE_AD_REASONS, type DeleteAdReason } from "@/constants/delete-reasons";
+import { Label } from "@/components/ui/label";
 
 // Vehicle type labels for title generation
 const vehicleTypeLabels: Record<string, string> = {
@@ -83,6 +85,7 @@ export default function AdsManagePage() {
 
   const [selectedRows, setSelectedRows] = useState<AdType[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteReason, setDeleteReason] = useState<DeleteAdReason>(DELETE_AD_REASONS[0]);
   const bulkApproveMutation = useBulkApproveAds();
   const bulkDeleteMutation = useBulkDeleteAds();
 
@@ -183,10 +186,11 @@ export default function AdsManagePage() {
     if (selectedRows.length === 0) return;
 
     const ids = selectedRows.map((ad) => ad.id);
-    bulkDeleteMutation.mutate(ids, {
+    bulkDeleteMutation.mutate({ ids, reason: deleteReason }, {
       onSuccess: () => {
         setSelectedRows([]); // Clear selection after successful deletion
         setShowDeleteDialog(false);
+        setDeleteReason(DELETE_AD_REASONS[0]);
       },
     });
   };
@@ -322,6 +326,21 @@ export default function AdsManagePage() {
               This action cannot be undone. This will permanently delete {selectedRows.length} ad(s).
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="space-y-2 py-2">
+            <Label className="text-sm font-medium text-slate-700">Reason for deletion</Label>
+            <Select value={deleteReason} onValueChange={(value) => setDeleteReason(value as DeleteAdReason)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select reason" />
+              </SelectTrigger>
+              <SelectContent>
+                {DELETE_AD_REASONS.map((reason) => (
+                  <SelectItem key={reason} value={reason}>
+                    {reason}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction

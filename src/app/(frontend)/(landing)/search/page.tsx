@@ -44,7 +44,7 @@ const formatAdTitle = (ad: any): string => {
   const vehicleInfo = [ad.brand, ad.model, ad.manufacturedYear, vehicleTypeLabels[ad.type] || ad.type]
     .filter(Boolean)
     .join(' ');
-  
+
   if (ad.listingType === 'WANT') {
     return `Want ${vehicleInfo}`;
   } else if (ad.listingType === 'RENT') {
@@ -57,7 +57,7 @@ const formatAdTitle = (ad: any): string => {
 
 // Vehicle makes
 const vehicleMakes = [
-  "Toyota", "Honda", "Nissan","BYD", "BMW", "Mercedes-Benz", "Audi", "Hyundai", "Kia",
+  "Toyota", "Honda", "Nissan", "BYD", "BMW", "Mercedes-Benz", "Audi", "Hyundai", "Kia",
   "Volkswagen", "Ford", "Chevrolet", "Mazda", "Subaru", "Mitsubishi", "Suzuki",
   "Isuzu", "Bajaj", "Hero", "Yamaha", "Kawasaki", "KTM", "TVS", "Other"
 ];
@@ -436,19 +436,19 @@ export default function SearchPage() {
       const now = new Date();
       const aIsBoosted = a.boosted && a.boostExpiry && new Date(a.boostExpiry) > now;
       const bIsBoosted = b.boosted && b.boostExpiry && new Date(b.boostExpiry) > now;
-      
+
       if (aIsBoosted && !bIsBoosted) return -1;
       if (!aIsBoosted && bIsBoosted) return 1;
-      
+
       // If both are boosted or both are not, maintain original order
       return 0;
     });
   }, [data?.ads, filters.query, filters.vehicleType, filters.brand, filters.model, filters.condition, filters.grade, filters.minPrice, filters.maxPrice, filters.minYear, filters.maxYear, filters.fuelType, filters.transmission, filters.district, filters.city, filters.globalSearch, filters.seller]);
 
   // Handle filter changes
-  const handleFilterChange = (key: keyof SearchFilters, value: string) => {
+  const handleFilterChange = (key: keyof SearchFilters, value: any) => {
     setFilters(prev => {
-      const newFilters = { ...prev, [key]: value, page: 1 };
+      const newFilters = { ...prev, [key]: value, page: key === 'page' ? (value as number) : 1 };
 
       // Auto-correct Year Range logic
       if (key === 'minYear' && value !== 'any') {
@@ -516,6 +516,17 @@ export default function SearchPage() {
     const minYearValue = parseInt(filters.minYear);
     return years.filter(year => year >= minYearValue);
   }, [years, filters.minYear]);
+
+  // Pagination logic
+  const limit = 20;
+  const totalPages = Math.ceil(filteredAds.length / limit);
+  // Ensure we don't go to page 0, and don't go past total pages unless filteredAds is empty
+  const currentPage = Math.max(1, Math.min(filters.page, Math.max(1, totalPages)));
+
+  const paginatedAds = useMemo(() => {
+    const startIndex = (currentPage - 1) * limit;
+    return filteredAds.slice(startIndex, startIndex + limit);
+  }, [filteredAds, currentPage, limit]);
 
   // Validate price range
   const isPriceRangeInvalid = useMemo(() => {
@@ -996,103 +1007,102 @@ export default function SearchPage() {
             )}
 
             {/* Results Grid */}
-            {!isLoading && !error && filteredAds.length > 0 ? (
+            {!isLoading && !error && paginatedAds.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredAds.map((vehicle) => {
+                {paginatedAds.map((vehicle) => {
                   const now = new Date();
                   const isBoosted = vehicle.boosted && vehicle.boostExpiry && new Date(vehicle.boostExpiry) > now;
                   const isFeatured = vehicle.featured && vehicle.featureExpiry && new Date(vehicle.featureExpiry) > now;
-                  
+
                   return (
-                  <div
-                    key={vehicle.id}
-                    className={`rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative ${
-                      isBoosted
-                        ? "bg-blue-50/80 border-blue-200 hover:border-blue-300"
-                        : isFeatured 
-                        ? "bg-yellow-50/80 border-yellow-200 hover:border-yellow-300" 
-                        : "bg-white border-slate-200 hover:border-slate-300"
-                    }`}
-                    onClick={() => router.push(`/${vehicle.id}`)}
-                  >
-                    {/* Boosted Label */}
-                    {isBoosted && (
-                      <div className="absolute z-20">
-                        <div className="bg-orange-500 text-white px-2 font-semibold text-xs flex rounded-full items-center gap-1">
-                          <Zap className="h-3 w-3" />
-                          Boosted
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Featured Label */}
-                    {isFeatured && (
-                      <div className="absolute z-20">
-                        <div className="bg-yellow-500 text-white px-2 font-semibold text-xs flex rounded-full items-center gap-1">
-                          <Star className="h-3 w-3" />
-                          Featured
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Favorite Button */}
-                    <div className="absolute top-2 right-2 z-10">
-                      <FavoriteButton adId={vehicle.id} />
-                    </div>
-
-                    <div className="p-3">
-                      {/* Vehicle Title - Centered */}
-                      <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
-                        {formatAdTitle(vehicle)}
-                      </h3>
-
-                      <div className="flex">
-                        {/* Vehicle Image */}
-                        <div className="w-32 h-20 flex-shrink-0">
-                          {vehicle?.media && vehicle.media.length > 0 && vehicle.media[0]?.media?.url ? (
-                            <img
-                              src={vehicle.media[0].media.url}
-                              alt={vehicle.title || 'Vehicle'}
-                              className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
-                            />
-                          ) : (
-                            <img
-                              src="/placeholder-image.jpg"
-                              alt={vehicle.title || 'Vehicle'}
-                              className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
-                            />
-                          )}
-                        </div>
-
-                        {/* Vehicle Details */}
-                        <div className="flex-1 pl-3 flex flex-col justify-between">
-                          <div>
-                            <div className="text-xs text-slate-600 mb-1 line-clamp-1">
-                              {vehicle.city || vehicle.location || ""}
-                            </div>
-
-                            <div className="text-sm font-semibold text-teal-700 mb-1">
-                              {formatPrice(vehicle.price)}
-                            </div>
-
-                            <div className="text-xs text-slate-500">
-                              {vehicle.condition || vehicle.type}
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between mt-1">
-                            <div className="text-xs text-slate-400">
-                              {format(new Date(vehicle.createdAt), "MMM d, yyyy")}
-                            </div>
-                            <div className="text-xs text-slate-400 flex items-center gap-1">
-                              <Eye className="h-3 w-3" />
-                              {(vehicle as any).analytics?.views || 0}
-                            </div>
+                    <div
+                      key={vehicle.id}
+                      className={`rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative ${isBoosted
+                          ? "bg-blue-50/80 border-blue-200 hover:border-blue-300"
+                          : isFeatured
+                            ? "bg-yellow-50/80 border-yellow-200 hover:border-yellow-300"
+                            : "bg-white border-slate-200 hover:border-slate-300"
+                        }`}
+                      onClick={() => router.push(`/${vehicle.id}`)}
+                    >
+                      {/* Boosted Label */}
+                      {isBoosted && (
+                        <div className="absolute z-20">
+                          <div className="bg-orange-500 text-white px-2 font-semibold text-xs flex rounded-full items-center gap-1">
+                            <Zap className="h-3 w-3" />
+                            Boosted
                           </div>
                         </div>
+                      )}
+
+                      {/* Featured Label */}
+                      {isFeatured && (
+                        <div className="absolute z-20">
+                          <div className="bg-yellow-500 text-white px-2 font-semibold text-xs flex rounded-full items-center gap-1">
+                            <Star className="h-3 w-3" />
+                            Featured
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Favorite Button */}
+                      <div className="absolute top-2 right-2 z-10">
+                        <FavoriteButton adId={vehicle.id} />
+                      </div>
+
+                      <div className="p-3">
+                        {/* Vehicle Title - Centered */}
+                        <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
+                          {formatAdTitle(vehicle)}
+                        </h3>
+
+                        <div className="flex">
+                          {/* Vehicle Image */}
+                          <div className="w-32 h-20 flex-shrink-0">
+                            {vehicle?.media && vehicle.media.length > 0 && vehicle.media[0]?.media?.url ? (
+                              <img
+                                src={vehicle.media[0].media.url}
+                                alt={vehicle.title || 'Vehicle'}
+                                className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                              />
+                            ) : (
+                              <img
+                                src="/placeholder-image.jpg"
+                                alt={vehicle.title || 'Vehicle'}
+                                className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                              />
+                            )}
+                          </div>
+
+                          {/* Vehicle Details */}
+                          <div className="flex-1 pl-3 flex flex-col justify-between">
+                            <div>
+                              <div className="text-xs text-slate-600 mb-1 line-clamp-1">
+                                {vehicle.city || vehicle.location || ""}
+                              </div>
+
+                              <div className="text-sm font-semibold text-teal-700 mb-1">
+                                {formatPrice(vehicle.price)}
+                              </div>
+
+                              <div className="text-xs text-slate-500">
+                                {vehicle.condition || vehicle.type}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between mt-1">
+                              <div className="text-xs text-slate-400">
+                                {format(new Date(vehicle.createdAt), "MMM d, yyyy")}
+                              </div>
+                              <div className="text-xs text-slate-400 flex items-center gap-1">
+                                <Eye className="h-3 w-3" />
+                                {(vehicle as any).analytics?.views || 0}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
                   );
                 })}
               </div>
@@ -1108,10 +1118,32 @@ export default function SearchPage() {
             )}
 
             {/* Pagination */}
-            {!isLoading && filteredAds.length >= 20 && (
-              <div className="flex justify-center mt-10">
-                <Button className="bg-[#024950] hover:bg-[#024950]/90 px-8 py-6 rounded-xl text-md">
-                  Load More Vehicles
+            {!isLoading && totalPages > 1 && (
+              <div className="flex justify-center items-center gap-4 mt-10">
+                <Button
+                  variant="outline"
+                  disabled={currentPage === 1}
+                  onClick={() => {
+                    handleFilterChange('page', currentPage - 1);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="px-6"
+                >
+                  Previous
+                </Button>
+                <div className="text-sm font-medium text-slate-600">
+                  Page {currentPage} of {totalPages}
+                </div>
+                <Button
+                  variant="outline"
+                  disabled={currentPage === totalPages}
+                  onClick={() => {
+                    handleFilterChange('page', currentPage + 1);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="px-6"
+                >
+                  Next
                 </Button>
               </div>
             )}

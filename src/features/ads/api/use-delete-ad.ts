@@ -3,15 +3,23 @@ import { useId } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { client } from "@/lib/rpc";
+import { DeleteAdReason } from "@/constants/delete-reasons";
+
+type DeleteAdInput = {
+  id: string;
+  reason: DeleteAdReason;
+  adTitle?: string;
+};
 
 export function useDeleteAd() {
   const queryClient = useQueryClient();
   const toastId = useId();
 
   const mutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async ({ id, reason }: DeleteAdInput) => {
       const res = await client.api.ad[":id"].$delete({
         param: { id },
+        json: { reason },
       });
 
       if (!res.ok) {
@@ -28,13 +36,24 @@ export function useDeleteAd() {
         throw new Error(message);
       }
 
-      return id;
+      let parsed: any = null;
+
+      try {
+        parsed = await res.json();
+      } catch (e) {
+        // ignore json parse errors
+      }
+
+      return { id, serverMessage: parsed?.message as string | undefined };
     },
     onMutate: () => {
       toast.loading("Deleting ad...", { id: toastId });
     },
-    onSuccess: () => {
-      toast.success("Ad deleted successfully", { id: toastId });
+    onSuccess: (data, variables) => {
+      const message = data?.serverMessage?.trim()
+        || (variables?.adTitle?.trim() ? `Your ${variables.adTitle.trim()} ad successfully deleted.` : "Ad deleted successfully");
+
+      toast.success(message, { id: toastId });
       queryClient.invalidateQueries({ queryKey: ["ads"] });
       queryClient.invalidateQueries({ queryKey: ["userAds"] });
       queryClient.invalidateQueries({ queryKey: ["reports"] });

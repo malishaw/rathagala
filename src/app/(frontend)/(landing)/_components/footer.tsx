@@ -33,6 +33,11 @@ export function Footer() {
                   Profile
                 </a>
               </li>
+              <li>
+                <a href="/boost" className="hover:text-white transition-colors">
+                  Boost
+                </a>
+              </li>
             </ul>
           </div>
           <div className="col-span-1 md:col-span-1">

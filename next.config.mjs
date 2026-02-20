@@ -18,6 +18,11 @@ const nextConfig = {
         hostname: 'sumudu-s3-test.s3.us-east-1.amazonaws.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'myunivrs-s3-storage.s3.eu-west-2.amazonaws.com',
+        pathname: '/**',
+      },
     ]
   },
 

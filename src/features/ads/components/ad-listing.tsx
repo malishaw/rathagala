@@ -16,7 +16,7 @@ const vehicleTypeLabels: Record<string, string> = {
   CAR: "Car",
   VAN: "Van",
   SUV_JEEP: "SUV / Jeep",
-  MOTORCYCLE: "Motorcycle",
+  MOTORCYCLE: "Motorbike",
   CREW_CAB: "Crew Cab",
   PICKUP_DOUBLE_CAB: "Pickup / Double Cab",
   BUS: "Bus",
@@ -25,7 +25,12 @@ const vehicleTypeLabels: Record<string, string> = {
   OTHER: "Other",
   TRACTOR: "Tractor",
   HEAVY_DUTY: "Heavy-Duty",
-  BICYCLE: "Bicycle"
+  BICYCLE: "Bicycle",
+  AUTO_SERVICE: "Auto Service",
+  RENTAL: "Rental",
+  AUTO_PARTS: "Auto Parts",
+  MAINTENANCE: "Maintenance",
+  BOAT: "Boat"
 };
 
 export function AdsTable() {
@@ -49,9 +54,19 @@ export function AdsTable() {
   // Transform the data to convert string dates to Date objects and ensure proper title format
   const formattedAds = data.ads.map((ad) => {
     // Generate the standardized title format
-    const generatedTitle = [ad.brand, ad.model, ad.manufacturedYear, vehicleTypeLabels[ad.type] || ad.type]
+    const typeLabel = vehicleTypeLabels[ad.type] || ad.type;
+    const vehicleInfo = [ad.brand, ad.model, ad.manufacturedYear || ad.modelYear, typeLabel]
       .filter(Boolean)
       .join(' ');
+
+    let generatedTitle = vehicleInfo;
+    if (ad.listingType === 'WANT') {
+      generatedTitle = `Want ${vehicleInfo}`;
+    } else if (ad.listingType === 'RENT') {
+      generatedTitle = `${vehicleInfo} for Rent`;
+    } else if (ad.listingType === 'HIRE') {
+      generatedTitle = `${vehicleInfo} for Hire`;
+    }
 
     return {
       ...ad,

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DELETE_AD_REASONS, type DeleteAdReason } from "@/constants/delete-reasons";
 import { useGetUserAds } from "@/features/ads/api/use-get-user-ads";
 import { SignoutButton } from "@/features/auth/components/signout-button";
 import { useGetFavorites } from "@/features/saved-ads/api/use-get-favorites";
@@ -113,6 +114,7 @@ const locationData: Record<string, Record<string, string[]>> = {
 export default function ProfilePage() {
   // State for delete dialog
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; ad: UserAd | null }>({ open: false, ad: null });
+  const [deleteReason, setDeleteReason] = useState<DeleteAdReason>(DELETE_AD_REASONS[0]);
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -405,13 +407,17 @@ export default function ProfilePage() {
   const handleDeleteAd = async (ad: UserAd) => {
     setIsDeleting(true);
     try {
-      const { error } = await betterFetch(`/api/ad/${ad.id}`, { method: "DELETE" });
+      const { data, error } = await betterFetch<{ message?: string }>(`/api/ad/${ad.id}`, {
+        method: "DELETE",
+        body: { reason: deleteReason },
+      });
       if (error) {
         throw new Error(error.message || "Failed to delete ad");
       }
       userAdsQuery.refetch();
-      toast.success("Ad deleted successfully");
+      toast.success(data?.message || `Your ${ad.title} ad successfully deleted.`);
       setDeleteDialog({ open: false, ad: null });
+      setDeleteReason(DELETE_AD_REASONS[0]);
     } catch (error) {
       console.error("Error deleting ad:", error);
       toast.error("Failed to delete ad");
@@ -597,6 +603,21 @@ export default function ProfilePage() {
                 This action cannot be undone. This will permanently delete the advertisement "{deleteDialog.ad?.title}" and remove its data from our servers.
               </AlertDialogDescription>
             </AlertDialogHeader>
+            <div className="space-y-2 py-2">
+              <label className="text-sm font-medium text-slate-700">Reason for deletion</label>
+              <Select value={deleteReason} onValueChange={value => setDeleteReason(value as DeleteAdReason)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select reason" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DELETE_AD_REASONS.map(reason => (
+                    <SelectItem key={reason} value={reason}>
+                      {reason}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={isDeleting} className="bg-white/50 hover:bg-white/70 backdrop-blur-md border border-white/30">Cancel</AlertDialogCancel>
               <AlertDialogAction

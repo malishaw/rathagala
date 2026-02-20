@@ -70,26 +70,26 @@ export type AdFormProps = {
   submitButtonText: string;
 };
 
-const FormField = ({ 
-    label, 
-    children, 
-    required = false 
-  }: { 
-    label: string, 
-    children: React.ReactNode, 
-    required?: boolean 
-  }) => {
-    return (
-      <div className="flex items-center mb-4">
-        <div className="w-48 text-right pr-4 text-gray-600">
-          {label}{required && <span className="text-red-500">*</span>}
-        </div>
-        <div className="flex-1">
-          {children}
-        </div>
+const FormField = ({
+  label,
+  children,
+  required = false
+}: {
+  label: string,
+  children: React.ReactNode,
+  required?: boolean
+}) => {
+  return (
+    <div className="flex items-center mb-4">
+      <div className="w-48 text-right pr-4 text-gray-600">
+        {label}{required && <span className="text-red-500">*</span>}
       </div>
-    );
-  };
+      <div className="flex-1">
+        {children}
+      </div>
+    </div>
+  );
+};
 
 export function AdForm({
   initialData,
@@ -137,170 +137,172 @@ export function AdForm({
   const [imageTitle, setImageTitle] = useState("");
   const [imageAlt, setImageAlt] = useState("");
 
-  
 
-const [formData, setFormData] = useState({
-  title: "",
-  description: "",
-  type: "",
-  published: false,
-  isDraft: true,
-  boosted: false,
-  featured: false,
-  seoTitle: "",
-  seoDescription: "",
-  categoryId: "",
-  tags: [] as string[],
-  options: [] as string[],
-  price: "",
-  discountPrice: "",
-  
-  // Common vehicle fields
-  condition: "",
-  brand: "",
-  model: "",
-  trimEdition: "",
-  
-  // Year fields
-  manufacturedYear: "",
-  modelYear: "",
-  
-  // Performance fields
-  mileage: "",
-  engineCapacity: "",
-  
-  // Type-specific fields
-  fuelType: "",
-  transmission: "",
-  bodyType: "",
-  bikeType: "",
-  vehicleType: "",
-  serviceType: "",
-  partType: "",
-  maintenanceType: "",
-  
-  // Contact & location fields (keep existing)
-  name: "",
-  phoneNumber: "",
-  whatsappNumber: "",
-  termsAndConditions: false,
-  location: "",
-  address: "",
-  province: "",
-  district: "",
-  city: "",
-  specialNote: "",
-  metadata: {}
-});
+
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    type: "",
+    published: false,
+    isDraft: true,
+    boosted: false,
+    featured: false,
+    seoTitle: "",
+    seoDescription: "",
+    categoryId: "",
+    tags: [] as string[],
+    options: [] as string[],
+    price: "",
+    discountPrice: "",
+
+    // Common vehicle fields
+    condition: "",
+    brand: "",
+    model: "",
+    trimEdition: "",
+
+    // Year fields
+    manufacturedYear: "",
+    modelYear: "",
+
+    // Performance fields
+    mileage: "",
+    engineCapacity: "",
+
+    // Type-specific fields
+    fuelType: "",
+    transmission: "",
+    bodyType: "",
+    bikeType: "",
+    vehicleType: "",
+    serviceType: "",
+    partType: "",
+    maintenanceType: "",
+
+    // Contact & location fields (keep existing)
+    name: "",
+    phoneNumber: "",
+    whatsappNumber: "",
+    termsAndConditions: false,
+    location: "",
+    address: "",
+    province: "",
+    district: "",
+    city: "",
+    specialNote: "",
+    listingType: "SELL" as "SELL" | "WANT" | "RENT" | "HIRE",
+    metadata: {}
+  });
 
   // Update form data if initialData changes (for edit form)
   useEffect(() => {
-  if (initialData) {
-    setFormData({
-      title: initialData.title || "",
-      description: initialData.description || "",
-      type: initialData.type || "CAR",
-      published: initialData.published || false,
-      isDraft: initialData.isDraft ?? true,
-      boosted: initialData.boosted || false,
-      featured: initialData.featured || false,
-      seoTitle: initialData.seoTitle || "",
-      seoDescription: initialData.seoDescription || "",
-      categoryId: initialData.categoryId || "",
-      tags: initialData.tags || [],
-      options: initialData.options || [],
-      price: initialData.price ? String(initialData.price) : "",
-      discountPrice: initialData.discountPrice
-        ? String(initialData.discountPrice)
-        : "",
-      
-      // Common vehicle fields
-      condition: initialData.condition || "",
-      brand: initialData.brand || "",
-      model: initialData.model || "",
-      trimEdition: initialData.trimEdition || "",
-      
-      // Year fields
-      manufacturedYear: initialData.manufacturedYear || "",
-      modelYear: initialData.modelYear || "",
-      
-      // Performance fields
-      mileage: initialData.mileage ? String(initialData.mileage) : "",
-      engineCapacity: initialData.engineCapacity
-        ? String(initialData.engineCapacity)
-        : "",
-      
-      // Type-specific fields - ADD THESE NEW FIELDS
-      fuelType: initialData.fuelType || "",
-      transmission: initialData.transmission || "",
-      bodyType: initialData.bodyType || "",
-      bikeType: initialData.bikeType || "",
-      vehicleType: initialData.vehicleType || "",
-      serviceType: initialData.serviceType || "",
-      partType: initialData.partType || "",
-      maintenanceType: initialData.maintenanceType || "",
-      
-      // Contact & location fields
-      name: initialData.name || "",
-      phoneNumber: initialData.phoneNumber || "",
-      whatsappNumber: initialData.whatsappNumber || "",
-      termsAndConditions: initialData.termsAndConditions || false,
-      location: initialData.location || "",
-      address: initialData.address || "",
-      province: initialData.province || "",
-      district: initialData.district || "",
-      city: initialData.city || "",
-      specialNote: initialData.specialNote || "",
-      metadata: initialData.metadata || {}
-    });
+    if (initialData) {
+      setFormData({
+        title: initialData.title || "",
+        description: initialData.description || "",
+        type: initialData.type || "CAR",
+        published: initialData.published || false,
+        isDraft: initialData.isDraft ?? true,
+        boosted: initialData.boosted || false,
+        featured: initialData.featured || false,
+        seoTitle: initialData.seoTitle || "",
+        seoDescription: initialData.seoDescription || "",
+        categoryId: initialData.categoryId || "",
+        tags: initialData.tags || [],
+        options: initialData.options || [],
+        price: initialData.price ? String(initialData.price) : "",
+        discountPrice: initialData.discountPrice
+          ? String(initialData.discountPrice)
+          : "",
 
-    // Initialize promotion state from initialData
-    const now = new Date();
-    if (initialData.boosted && initialData.boostExpiry && new Date(initialData.boostExpiry) > now) {
-      setPromotionType("boost");
-      // Estimate duration based on days remaining
-      const daysRemaining = Math.ceil((new Date(initialData.boostExpiry).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      if (daysRemaining >= 25) {
-        setPromotionDuration("1month");
-      } else if (daysRemaining >= 12) {
-        setPromotionDuration("2weeks");
+        // Common vehicle fields
+        condition: initialData.condition || "",
+        brand: initialData.brand || "",
+        model: initialData.model || "",
+        trimEdition: initialData.trimEdition || "",
+
+        // Year fields
+        manufacturedYear: initialData.manufacturedYear || "",
+        modelYear: initialData.modelYear || "",
+
+        // Performance fields
+        mileage: initialData.mileage ? String(initialData.mileage) : "",
+        engineCapacity: initialData.engineCapacity
+          ? String(initialData.engineCapacity)
+          : "",
+
+        // Type-specific fields - ADD THESE NEW FIELDS
+        fuelType: initialData.fuelType || "",
+        transmission: initialData.transmission || "",
+        bodyType: initialData.bodyType || "",
+        bikeType: initialData.bikeType || "",
+        vehicleType: initialData.vehicleType || "",
+        serviceType: initialData.serviceType || "",
+        partType: initialData.partType || "",
+        maintenanceType: initialData.maintenanceType || "",
+
+        // Contact & location fields
+        name: initialData.name || "",
+        phoneNumber: initialData.phoneNumber || "",
+        whatsappNumber: initialData.whatsappNumber || "",
+        termsAndConditions: initialData.termsAndConditions || false,
+        location: initialData.location || "",
+        address: initialData.address || "",
+        province: initialData.province || "",
+        district: initialData.district || "",
+        city: initialData.city || "",
+        specialNote: initialData.specialNote || "",
+        listingType: initialData.listingType || "SELL",
+        metadata: initialData.metadata || {}
+      });
+
+      // Initialize promotion state from initialData
+      const now = new Date();
+      if (initialData.boosted && initialData.boostExpiry && new Date(initialData.boostExpiry) > now) {
+        setPromotionType("boost");
+        // Estimate duration based on days remaining
+        const daysRemaining = Math.ceil((new Date(initialData.boostExpiry).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysRemaining >= 25) {
+          setPromotionDuration("1month");
+        } else if (daysRemaining >= 12) {
+          setPromotionDuration("2weeks");
+        } else {
+          setPromotionDuration("1week");
+        }
+      } else if (initialData.featured && initialData.featureExpiry && new Date(initialData.featureExpiry) > now) {
+        setPromotionType("featured");
+        // Estimate duration based on days remaining
+        const daysRemaining = Math.ceil((new Date(initialData.featureExpiry).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysRemaining >= 25) {
+          setPromotionDuration("1month");
+        } else if (daysRemaining >= 12) {
+          setPromotionDuration("2weeks");
+        } else {
+          setPromotionDuration("1week");
+        }
       } else {
+        setPromotionType("none");
         setPromotionDuration("1week");
       }
-    } else if (initialData.featured && initialData.featureExpiry && new Date(initialData.featureExpiry) > now) {
-      setPromotionType("featured");
-      // Estimate duration based on days remaining
-      const daysRemaining = Math.ceil((new Date(initialData.featureExpiry).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      if (daysRemaining >= 25) {
-        setPromotionDuration("1month");
-      } else if (daysRemaining >= 12) {
-        setPromotionDuration("2weeks");
-      } else {
-        setPromotionDuration("1week");
-      }
-    } else {
-      setPromotionType("none");
-      setPromotionDuration("1week");
-    }
 
-    // Load images from initialData if available
-    if (initialData.media && Array.isArray(initialData.media)) {
-      // Convert to MediaFile format
-      setSelectedMedia(
-        initialData.media.map((media: any) => ({
-          id: media.id,
-          url: media.url,
-          type: "IMAGE", // Default to image type
-          filename: media.title || "image",
-          size: 0, // Size may not be available from initialData
-          createdAt: new Date(),
-          title: media.title || "",
-          alt: media.alt || ""
-        }))
-      );
+      // Load images from initialData if available
+      if (initialData.media && Array.isArray(initialData.media)) {
+        // Convert to MediaFile format
+        setSelectedMedia(
+          initialData.media.map((media: any) => ({
+            id: media.id,
+            url: media.url,
+            type: "IMAGE", // Default to image type
+            filename: media.title || "image",
+            size: 0, // Size may not be available from initialData
+            createdAt: new Date(),
+            title: media.title || "",
+            alt: media.alt || ""
+          }))
+        );
+      }
     }
-  }
-}, [initialData]);
+  }, [initialData]);
 
   const [newTag, setNewTag] = useState("");
   const [newOption, setNewOption] = useState("");
@@ -432,165 +434,161 @@ const [formData, setFormData] = useState({
   };
 
   const handleSubmit = (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  // Calculate boost/featured expiry dates based on user selection
-  let boostExpiry: Date | undefined = undefined;
-  let featureExpiry: Date | undefined = undefined;
-  let boosted = false;
-  let featured = false;
+    // Calculate boost/featured expiry dates based on user selection
+    let boostExpiry: Date | undefined = undefined;
+    let featureExpiry: Date | undefined = undefined;
+    let boosted = false;
+    let featured = false;
 
-  if (promotionType !== "none") {
-    const now = new Date();
-    let expiryDate: Date;
+    if (promotionType !== "none") {
+      const now = new Date();
+      let expiryDate: Date;
 
-    switch (promotionDuration) {
-      case "1week":
-        expiryDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-        break;
-      case "2weeks":
-        expiryDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
-        break;
-      case "1month":
-        expiryDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-        break;
-      default:
-        expiryDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      switch (promotionDuration) {
+        case "1week":
+          expiryDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+          break;
+        case "2weeks":
+          expiryDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+          break;
+        case "1month":
+          expiryDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+          break;
+        default:
+          expiryDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      }
+
+      if (promotionType === "boost") {
+        boosted = true;
+        boostExpiry = expiryDate;
+      } else if (promotionType === "featured") {
+        featured = true;
+        featureExpiry = expiryDate;
+      }
     }
 
-    if (promotionType === "boost") {
-      boosted = true;
-      boostExpiry = expiryDate;
-    } else if (promotionType === "featured") {
-      featured = true;
-      featureExpiry = expiryDate;
+    // Vehicle type labels for title generation
+    const vehicleTypeLabels: Record<string, string> = {
+      CAR: "Car",
+      VAN: "Van",
+      SUV_JEEP: "SUV / Jeep",
+      MOTORCYCLE: "Motorbike",
+      CREW_CAB: "Crew Cab",
+      PICKUP_DOUBLE_CAB: "Pickup / Double Cab",
+      BUS: "Bus",
+      LORRY: "Lorry",
+      THREE_WHEEL: "Three Wheeler",
+      OTHER: "Other",
+      TRACTOR: "Tractor",
+      HEAVY_DUTY: "Heavy-Duty",
+      BICYCLE: "Bicycle",
+      AUTO_SERVICE: "Auto Service",
+      RENTAL: "Rental",
+      AUTO_PARTS: "Auto Parts",
+      MAINTENANCE: "Maintenance",
+      BOAT: "Boat"
+    };
+
+    const typeLabel = vehicleTypeLabels[formData.type] || formData.type;
+
+    const baseInfoParts = [
+      formData.brand,
+      formData.model,
+      formData.manufacturedYear || formData.modelYear,
+      typeLabel
+    ].filter(Boolean);
+
+    const vehicleInfo = baseInfoParts.join(" ");
+
+    let autoTitle = "Vehicle Ad";
+    if (formData.listingType === "WANT") {
+      autoTitle = `Want ${vehicleInfo}`;
+    } else if (formData.listingType === "RENT") {
+      autoTitle = `${vehicleInfo} for Rent`;
+    } else if (formData.listingType === "HIRE") {
+      autoTitle = `${vehicleInfo} for Hire`;
+    } else {
+      // SELL format: Condition Brand Model Year Type
+      const sellParts = [
+        formData.condition,
+        ...baseInfoParts,
+        formData.trimEdition
+      ].filter(Boolean);
+      autoTitle = sellParts.length > 0 ? sellParts.join(" ") : "Vehicle Ad";
     }
-  }
 
-  // Generate title based on ad type and available data
-  let autoTitle = "";
-  
-  switch(formData.type) {
-    case "CAR":
-      const carTitleParts = [
-        formData.condition,
-        formData.brand,
-        formData.model, 
-        formData.manufacturedYear,
-        formData.trimEdition
-      ].filter(Boolean);
-      autoTitle = carTitleParts.length > 0 ? carTitleParts.join(" ") : "Car Ad";
-      break;
-      
-    case "VAN":
-      const vanTitleParts = [
-        formData.condition,
-        formData.brand,
-        formData.model,
-        formData.modelYear,
-        formData.trimEdition
-      ].filter(Boolean);
-      autoTitle = vanTitleParts.length > 0 ? vanTitleParts.join(" ") : "Van Ad";
-      break;
+    // Normalize critical fields and build the ad data object
+    const resolvedType = formData.type && formData.type !== "" ? formData.type : (initialData?.type ?? "CAR");
 
-    case "MOTORCYCLE":
-      const bikeTitleParts = [
-        formData.condition,
-        formData.brand,
-        formData.model,
-        formData.manufacturedYear,
-        formData.bikeType
-      ].filter(Boolean);
-      autoTitle = bikeTitleParts.length > 0 ? bikeTitleParts.join(" ") : "Motorcycle Ad";
-      break;
-      
-    case "AUTO_SERVICE":
-      autoTitle = formData.serviceType ? `${formData.serviceType} Service` : "Auto Service";
-      break;
-      
-    case "AUTO_PARTS":
-      const partTitleParts = [
-        formData.condition,
-        formData.brand,
-        formData.partType
-      ].filter(Boolean);
-      autoTitle = partTitleParts.length > 0 ? partTitleParts.join(" ") : "Auto Parts";
-      break;
-      
-    default:
-      autoTitle = formData.title || "Vehicle Ad";
-  }
+    const adData = {
+      title: autoTitle,
+      description: formData.description,
+      type: resolvedType as any,
+      listingType: formData.listingType,
+      price: formData.price ? parseFloat(formData.price) : undefined,
 
-  // Normalize critical fields and build the ad data object
-  const resolvedType = formData.type && formData.type !== "" ? formData.type : (initialData?.type ?? "CAR");
+      // Include all the dynamic fields
+      condition: formData.condition || undefined,
+      brand: formData.brand || undefined,
+      model: formData.model || undefined,
+      trimEdition: formData.trimEdition || undefined,
+      manufacturedYear: formData.manufacturedYear || undefined,
+      modelYear: formData.modelYear || undefined,
+      mileage: formData.mileage ? parseFloat(formData.mileage) : undefined,
+      engineCapacity: formData.engineCapacity ? parseFloat(formData.engineCapacity) : undefined,
+      fuelType: (formData.fuelType as "PETROL" | "DIESEL" | "HYBRID" | "ELECTRIC" | "GAS") || undefined,
+      transmission: (formData.transmission as "MANUAL" | "AUTOMATIC" | "CVT") || undefined,
+      bodyType: (formData.bodyType as "SALOON" | "HATCHBACK" | "STATION_WAGON") || undefined,
+      bikeType: (formData.bikeType as "SCOOTER" | "E_BIKE" | "MOTORBIKES" | "QUADRICYCLES") || undefined,
+      vehicleType: (formData.vehicleType as "BED_TRAILER" | "BOWSER" | "BULLDOZER" | "CRANE" | "DUMP_TRUCK" | "EXCAVATOR" | "LOADER" | "OTHER" | undefined) || undefined,
+      serviceType: formData.serviceType || undefined,
+      partType: formData.partType || undefined,
+      maintenanceType: formData.maintenanceType || undefined,
 
-  const adData = {
-    title: autoTitle,
-    description: formData.description,
-    type: resolvedType as any,
-    listingType: "SELL" as const, // Default to SELL
-    price: formData.price ? parseFloat(formData.price) : undefined,
-    
-    // Include all the dynamic fields
-    condition: formData.condition || undefined,
-    brand: formData.brand || undefined,
-    model: formData.model || undefined,
-    trimEdition: formData.trimEdition || undefined,
-    manufacturedYear: formData.manufacturedYear || undefined,
-    modelYear: formData.modelYear || undefined,
-    mileage: formData.mileage ? parseFloat(formData.mileage) : undefined,
-    engineCapacity: formData.engineCapacity ? parseFloat(formData.engineCapacity) : undefined,
-    fuelType: (formData.fuelType as "PETROL" | "DIESEL" | "HYBRID" | "ELECTRIC" | "GAS") || undefined,
-    transmission: (formData.transmission as "MANUAL" | "AUTOMATIC" | "CVT") || undefined,
-    bodyType: (formData.bodyType as "SALOON" | "HATCHBACK" | "STATION_WAGON") || undefined,
-    bikeType: (formData.bikeType as "SCOOTER" | "E_BIKE" | "MOTORBIKES" | "QUADRICYCLES") || undefined,
-    vehicleType: (formData.vehicleType as "BED_TRAILER" | "BOWSER" | "BULLDOZER" | "CRANE" | "DUMP_TRUCK" | "EXCAVATOR" | "LOADER" | "OTHER" | undefined) || undefined,
-    serviceType: formData.serviceType || undefined,
-    partType: formData.partType || undefined,
-    maintenanceType: formData.maintenanceType || undefined,
-    
-    // Keep all your existing fields
-    published: formData.published,
-    isDraft: formData.isDraft,
-    boosted: boosted,
-    featured: featured,
-    boostExpiry: boostExpiry,
-    featureExpiry: featureExpiry,
-    name: formData.name || undefined,
-    phoneNumber: formData.phoneNumber || undefined,
-    whatsappNumber: formData.whatsappNumber || undefined,
-    termsAndConditions: formData.termsAndConditions || undefined,
-    location: formData.location || undefined,
-    address: formData.address || undefined,
-    province: formData.province || undefined,
-    district: formData.district || undefined,
-    city: formData.city || undefined,
-    specialNote: formData.specialNote || undefined,
-    mediaIds: selectedMedia.length > 0 ? selectedMedia.map((media) => media.id) : undefined
+      // Keep all your existing fields
+      published: formData.published,
+      isDraft: formData.isDraft,
+      boosted: boosted,
+      featured: featured,
+      boostExpiry: boostExpiry,
+      featureExpiry: featureExpiry,
+      name: formData.name || undefined,
+      phoneNumber: formData.phoneNumber || undefined,
+      whatsappNumber: formData.whatsappNumber || undefined,
+      termsAndConditions: formData.termsAndConditions || undefined,
+      location: formData.location || undefined,
+      address: formData.address || undefined,
+      province: formData.province || undefined,
+      district: formData.district || undefined,
+      city: formData.city || undefined,
+      specialNote: formData.specialNote || undefined,
+      mediaIds: selectedMedia.length > 0 ? selectedMedia.map((media) => media.id) : undefined
+    };
+
+    onSubmit(adData);
   };
 
-  onSubmit(adData);
-};
-
   const vehicleMakes = [
-    "Acura", "Alfa-Romeo", "Aprilia", "Ashok-Leyland", "Aston", "Atco", "ATHER", 
-    "Audi", "Austin", "Baic", "Bajaj", "Bentley", "BMW", "Borgward", "BYD", 
-    "Cadillac", "Cal", "CAT", "Ceygra", "Changan", "Chery", "Chevrolet", 
-    "Chrysler", "Citroen", "Corvette", "Daewoo", "Daido", "Daihatsu", "Datsun", 
-    "Demak", "Dfac", "DFSK", "Ducati", "Dyno", "Eicher", "FAW", "Ferrari", "Fiat", 
-    "Force", "Ford", "Foton", "Hero", "Hero-Honda", "Higer", "Hillman", "HINO", 
-    "Hitachi", "Holden", "Honda", "Hummer", "Hyundai", "IHI", "Isuzu", "Iveco", 
-    "JAC", "Jaguar", "JCB", "Jeep", "JiaLing", "JMC", "John-Deere", "Jonway", 
-    "KAPLA", "Kawasaki", "Kia", "Kinetic", "KMC", "Kobelco", "Komatsu", "KTM", 
-    "Kubota", "Lamborghini", "Land-Rover", "Lexus", "Loncin", "Longjia", "Lotus", 
-    "Lti", "Mahindra", "Maserati", "Massey-Ferguson", "Mazda", "Mercedes-Benz", 
-    "Metrocab", "MG", "Mg-Rover", "Micro", "Mini", "Minnelli", "Mitsubishi", 
-    "Morgan", "Morris", "New-Holland", "Nissan", "NWOW", "Opel", "Other", 
-    "Perodua", "Peugeot", "Piaggio", "Porsche", "Powertrac", "Proton", 
-    "Range-Rover", "Ranomoto", "Renault", "Reva", "REVOLT", "Rolls-Royce", "Saab", 
-    "Sakai", "Seat", "Senaro", "Singer", "Skoda", "Smart", "Sonalika", "Subaru", 
-    "Suzuki", "Swaraj", "Syuk", "TAFE", "TAILG", "Tata", "Tesla", "Toyota", 
-    "Triumph", "TVS", "Vauxhall", "Vespa", "Volkswagen", "Volvo", "Wave", "Willys", 
+    "Acura", "Alfa-Romeo", "Aprilia", "Ashok-Leyland", "Aston", "Atco", "ATHER",
+    "Audi", "Austin", "Baic", "Bajaj", "Bentley", "BMW", "Borgward", "BYD",
+    "Cadillac", "Cal", "CAT", "Ceygra", "Changan", "Chery", "Chevrolet",
+    "Chrysler", "Citroen", "Corvette", "Daewoo", "Daido", "Daihatsu", "Datsun",
+    "Demak", "Dfac", "DFSK", "Ducati", "Dyno", "Eicher", "FAW", "Ferrari", "Fiat",
+    "Force", "Ford", "Foton", "Hero", "Hero-Honda", "Higer", "Hillman", "HINO",
+    "Hitachi", "Holden", "Honda", "Hummer", "Hyundai", "IHI", "Isuzu", "Iveco",
+    "JAC", "Jaguar", "JCB", "Jeep", "JiaLing", "JMC", "John-Deere", "Jonway",
+    "KAPLA", "Kawasaki", "Kia", "Kinetic", "KMC", "Kobelco", "Komatsu", "KTM",
+    "Kubota", "Lamborghini", "Land-Rover", "Lexus", "Loncin", "Longjia", "Lotus",
+    "Lti", "Mahindra", "Maserati", "Massey-Ferguson", "Mazda", "Mercedes-Benz",
+    "Metrocab", "MG", "Mg-Rover", "Micro", "Mini", "Minnelli", "Mitsubishi",
+    "Morgan", "Morris", "New-Holland", "Nissan", "NWOW", "Opel", "Other",
+    "Perodua", "Peugeot", "Piaggio", "Porsche", "Powertrac", "Proton",
+    "Range-Rover", "Ranomoto", "Renault", "Reva", "REVOLT", "Rolls-Royce", "Saab",
+    "Sakai", "Seat", "Senaro", "Singer", "Skoda", "Smart", "Sonalika", "Subaru",
+    "Suzuki", "Swaraj", "Syuk", "TAFE", "TAILG", "Tata", "Tesla", "Toyota",
+    "Triumph", "TVS", "Vauxhall", "Vespa", "Volkswagen", "Volvo", "Wave", "Willys",
     "Yadea", "Yamaha", "Yanmar", "Yuejin", "Zongshen", "Zotye"
   ];
 
@@ -659,7 +657,24 @@ const [formData, setFormData] = useState({
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {/* Ad Type Selection */}
+                  {/* Listing Type Selection */}
+                  <FormField label="Listing Type" required>
+                    <Select
+                      value={formData.listingType}
+                      onValueChange={(value) => handleInputChange("listingType", value)}
+                    >
+                      <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                        <SelectValue placeholder="Select listing type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="SELL">Sell</SelectItem>
+                        <SelectItem value="WANT">Want to Buy</SelectItem>
+                        <SelectItem value="RENT">Rent Out</SelectItem>
+                        <SelectItem value="HIRE">Hire</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormField>
+
                   <FormField label="Ad Type" required>
                     <Select
                       value={formData.type}
@@ -693,20 +708,22 @@ const [formData, setFormData] = useState({
                       case "CAR":
                         return (
                           <>
-                            <FormField label="Condition" required>
-                              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
-                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
-                                  <SelectValue placeholder="Select Condition" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="New">Brand New</SelectItem>
-                                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
-                                  <SelectItem value="Used">Used</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormField>
-                            
-                            <FormField label="Brand" required>
+                            {formData.listingType !== "HIRE" && (
+                              <FormField label={formData.listingType === "SELL" ? "Condition" : "Preferred Condition"} required={formData.listingType === "SELL"}>
+                                <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                                  <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                    <SelectValue placeholder="Select Condition" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="New">Brand New</SelectItem>
+                                    <SelectItem value="Reconditioned">Reconditioned</SelectItem>
+                                    <SelectItem value="Used">Used</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </FormField>
+                            )}
+
+                            <FormField label="Brand" required={formData.listingType === "SELL"}>
                               <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
                                   <SelectValue placeholder="Select Make" />
@@ -718,26 +735,26 @@ const [formData, setFormData] = useState({
                                 </SelectContent>
                               </Select>
                             </FormField>
-                            
-                            <FormField label="Model" required>
+
+                            <FormField label="Model" required={formData.listingType === "SELL"}>
                               <Input
-                                placeholder="e.g., Camry" 
-                                value={formData.model || ""} 
+                                placeholder="e.g., Camry"
+                                value={formData.model || ""}
                                 onChange={(e) => handleInputChange("model", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
 
                             <FormField label="Trim / Edition">
-                              <Input 
-                                placeholder="e.g., Sport" 
-                                value={formData.trimEdition || ""} 
+                              <Input
+                                placeholder="e.g., Sport"
+                                value={formData.trimEdition || ""}
                                 onChange={(e) => handleInputChange("trimEdition", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
-                            
-                            <FormField label="Year of Manufacture" required>
+
+                            <FormField label="Year of Manufacture" required={formData.listingType === "SELL"}>
                               <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
                                   <SelectValue placeholder="Select Year" />
@@ -749,27 +766,27 @@ const [formData, setFormData] = useState({
                                 </SelectContent>
                               </Select>
                             </FormField>
-                            
+
                             <FormField label="Mileage (km)">
-                              <Input 
-                                type="number" 
-                                placeholder="50000" 
-                                value={formData.mileage || ""} 
+                              <Input
+                                type="number"
+                                placeholder="50000"
+                                value={formData.mileage || ""}
                                 onChange={(e) => handleInputChange("mileage", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
 
                             <FormField label="Engine Capacity (cc)">
-                              <Input 
-                                type="number" 
-                                placeholder="2000" 
-                                value={formData.engineCapacity || ""} 
+                              <Input
+                                type="number"
+                                placeholder="2000"
+                                value={formData.engineCapacity || ""}
                                 onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
-                            
+
                             <FormField label="Fuel Type" required>
                               <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
@@ -784,7 +801,7 @@ const [formData, setFormData] = useState({
                                 </SelectContent>
                               </Select>
                             </FormField>
-                            
+
                             <FormField label="Transmission" required>
                               <Select value={formData.transmission} onValueChange={(value) => handleInputChange("transmission", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
@@ -797,7 +814,7 @@ const [formData, setFormData] = useState({
                                 </SelectContent>
                               </Select>
                             </FormField>
-                            
+
                             <FormField label="Body Type">
                               <Select value={formData.bodyType} onValueChange={(value) => handleInputChange("bodyType", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
@@ -816,20 +833,22 @@ const [formData, setFormData] = useState({
                       case "VAN":
                         return (
                           <>
-                            <FormField label="Condition" required>
-                              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
-                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
-                                  <SelectValue placeholder="Select Condition" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="New">Brand New</SelectItem>
-                                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
-                                  <SelectItem value="Used">Used</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormField>
-                            
-                            <FormField label="Brand" required>
+                            {formData.listingType !== "HIRE" && (
+                              <FormField label={formData.listingType === "SELL" ? "Condition" : "Preferred Condition"} required={formData.listingType === "SELL"}>
+                                <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                                  <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                    <SelectValue placeholder="Select Condition" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="New">Brand New</SelectItem>
+                                    <SelectItem value="Reconditioned">Reconditioned</SelectItem>
+                                    <SelectItem value="Used">Used</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </FormField>
+                            )}
+
+                            <FormField label="Brand" required={formData.listingType === "SELL"}>
                               <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
                                   <SelectValue placeholder="Select Brand" />
@@ -841,26 +860,26 @@ const [formData, setFormData] = useState({
                                 </SelectContent>
                               </Select>
                             </FormField>
-                            
-                            <FormField label="Model" required>
-                              <Input 
-                                placeholder="e.g., Hiace" 
-                                value={formData.model || ""} 
+
+                            <FormField label="Model" required={formData.listingType === "SELL"}>
+                              <Input
+                                placeholder="e.g., Hiace"
+                                value={formData.model || ""}
                                 onChange={(e) => handleInputChange("model", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
 
                             <FormField label="Trim / Edition">
-                              <Input 
-                                placeholder="e.g., GL" 
-                                value={formData.trimEdition || ""} 
+                              <Input
+                                placeholder="e.g., GL"
+                                value={formData.trimEdition || ""}
                                 onChange={(e) => handleInputChange("trimEdition", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
-                            
-                            <FormField label="Model Year" required>
+
+                            <FormField label="Model Year" required={formData.listingType === "SELL"}>
                               <Select value={formData.modelYear} onValueChange={(value) => handleInputChange("modelYear", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
                                   <SelectValue placeholder="Select Year" />
@@ -872,24 +891,24 @@ const [formData, setFormData] = useState({
                                 </SelectContent>
                               </Select>
                             </FormField>
-                            
+
                             <FormField label="Mileage (km)">
-                              <Input 
-                                type="number" 
-                                placeholder="50000" 
-                                value={formData.mileage || ""} 
+                              <Input
+                                type="number"
+                                placeholder="50000"
+                                value={formData.mileage || ""}
                                 onChange={(e) => handleInputChange("mileage", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
 
                             <FormField label="Engine Capacity (cc)">
-                              <Input 
-                                type="number" 
-                                placeholder="2000" 
-                                value={formData.engineCapacity || ""} 
+                              <Input
+                                type="number"
+                                placeholder="2000"
+                                value={formData.engineCapacity || ""}
                                 onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
                           </>
@@ -898,18 +917,20 @@ const [formData, setFormData] = useState({
                       case "MOTORCYCLE":
                         return (
                           <>
-                            <FormField label="Condition" required>
-                              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
-                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
-                                  <SelectValue placeholder="Select Condition" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="New">Brand New</SelectItem>
-                                  <SelectItem value="Used">Used</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormField>
-                            
+                            {formData.listingType !== "HIRE" && (
+                              <FormField label={formData.listingType === "SELL" ? "Condition" : "Preferred Condition"} required={formData.listingType === "SELL"}>
+                                <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                                  <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                    <SelectValue placeholder="Select Condition" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="New">Brand New</SelectItem>
+                                    <SelectItem value="Used">Used</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </FormField>
+                            )}
+
                             <FormField label="Bike Type" required>
                               <Select value={formData.bikeType} onValueChange={(value) => handleInputChange("bikeType", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
@@ -923,8 +944,8 @@ const [formData, setFormData] = useState({
                                 </SelectContent>
                               </Select>
                             </FormField>
-                            
-                            <FormField label="Brand" required>
+
+                            <FormField label="Brand" required={formData.listingType === "SELL"}>
                               <Select value={formData.brand || ""} onValueChange={(value) => handleInputChange("brand", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
                                   <SelectValue placeholder="Select brand" />
@@ -937,25 +958,25 @@ const [formData, setFormData] = useState({
                               </Select>
                             </FormField>
 
-                            <FormField label="Model" required>
-                              <Input 
-                                placeholder="e.g., CBR 250R" 
-                                value={formData.model || ""} 
+                            <FormField label="Model" required={formData.listingType === "SELL"}>
+                              <Input
+                                placeholder="e.g., CBR 250R"
+                                value={formData.model || ""}
                                 onChange={(e) => handleInputChange("model", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
 
                             <FormField label="Trim / Edition">
-                              <Input 
-                                placeholder="e.g., Special Edition" 
-                                value={formData.trimEdition || ""} 
+                              <Input
+                                placeholder="e.g., Special Edition"
+                                value={formData.trimEdition || ""}
                                 onChange={(e) => handleInputChange("trimEdition", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
-                            
-                            <FormField label="Year of Manufacture" required>
+
+                            <FormField label="Year of Manufacture" required={formData.listingType === "SELL"}>
                               <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
                                   <SelectValue placeholder="Select Year" />
@@ -967,24 +988,24 @@ const [formData, setFormData] = useState({
                                 </SelectContent>
                               </Select>
                             </FormField>
-                            
+
                             <FormField label="Mileage (km)">
-                              <Input 
-                                type="number" 
-                                placeholder="50000" 
-                                value={formData.mileage || ""} 
+                              <Input
+                                type="number"
+                                placeholder="50000"
+                                value={formData.mileage || ""}
                                 onChange={(e) => handleInputChange("mileage", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
 
                             <FormField label="Engine Capacity (cc)">
-                              <Input 
-                                type="number" 
+                              <Input
+                                type="number"
                                 placeholder="150"
-                                value={formData.engineCapacity || ""} 
+                                value={formData.engineCapacity || ""}
                                 onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
                           </>
@@ -993,26 +1014,28 @@ const [formData, setFormData] = useState({
                       case "BICYCLE":
                         return (
                           <>
-                            <FormField label="Brand" required>
-                              <Input 
-                                placeholder="e.g., Giant" 
-                                value={formData.brand || ""} 
+                            <FormField label="Brand" required={formData.listingType === "SELL"}>
+                              <Input
+                                placeholder="e.g., Giant"
+                                value={formData.brand || ""}
                                 onChange={(e) => handleInputChange("brand", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
-                            
-                            <FormField label="Condition" required>
-                              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
-                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
-                                  <SelectValue placeholder="Select Condition" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="New">Brand New</SelectItem>
-                                  <SelectItem value="Used">Used</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormField>
+
+                            {formData.listingType !== "HIRE" && (
+                              <FormField label={formData.listingType === "SELL" ? "Condition" : "Preferred Condition"} required={formData.listingType === "SELL"}>
+                                <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                                  <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                    <SelectValue placeholder="Select Condition" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="New">Brand New</SelectItem>
+                                    <SelectItem value="Used">Used</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </FormField>
+                            )}
                           </>
                         );
 
@@ -1020,11 +1043,11 @@ const [formData, setFormData] = useState({
                         return (
                           <>
                             <FormField label="Service Type" required>
-                              <Input 
-                                placeholder="e.g., Car Wash, Repair" 
-                                value={formData.serviceType || ""} 
+                              <Input
+                                placeholder="e.g., Car Wash, Repair"
+                                value={formData.serviceType || ""}
                                 onChange={(e) => handleInputChange("serviceType", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
                           </>
@@ -1034,11 +1057,11 @@ const [formData, setFormData] = useState({
                         return (
                           <>
                             <FormField label="Service Type" required>
-                              <Input 
-                                placeholder="e.g., Car Rental, Van Rental" 
-                                value={formData.serviceType || ""} 
+                              <Input
+                                placeholder="e.g., Car Rental, Van Rental"
+                                value={formData.serviceType || ""}
                                 onChange={(e) => handleInputChange("serviceType", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
                           </>
@@ -1047,42 +1070,44 @@ const [formData, setFormData] = useState({
                       case "AUTO_PARTS":
                         return (
                           <>
-                            <FormField label="Condition" required>
-                              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
-                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
-                                  <SelectValue placeholder="Select Condition" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="New">Brand New</SelectItem>
-                                  <SelectItem value="Used">Used</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormField>
-                            
+                            {formData.listingType !== "HIRE" && (
+                              <FormField label={formData.listingType === "SELL" ? "Condition" : "Preferred Condition"} required={formData.listingType === "SELL"}>
+                                <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                                  <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                    <SelectValue placeholder="Select Condition" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="New">Brand New</SelectItem>
+                                    <SelectItem value="Used">Used</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </FormField>
+                            )}
+
                             <FormField label="Part or Accessory Type" required>
-                              <Input 
-                                placeholder="e.g., Engine Parts, Tires" 
-                                value={formData.partType || ""} 
+                              <Input
+                                placeholder="e.g., Engine Parts, Tires"
+                                value={formData.partType || ""}
                                 onChange={(e) => handleInputChange("partType", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
 
-                            <FormField label="Brand" required>
-                              <Input 
-                                placeholder="e.g., Bosch" 
-                                value={formData.brand || ""} 
+                            <FormField label="Brand" required={formData.listingType === "SELL"}>
+                              <Input
+                                placeholder="e.g., Bosch"
+                                value={formData.brand || ""}
                                 onChange={(e) => handleInputChange("brand", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
 
-                            <FormField label="Model" required>
-                              <Input 
-                                placeholder="e.g., Compatible model" 
-                                value={formData.model || ""} 
+                            <FormField label="Model" required={formData.listingType === "SELL"}>
+                              <Input
+                                placeholder="e.g., Compatible model"
+                                value={formData.model || ""}
                                 onChange={(e) => handleInputChange("model", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
                           </>
@@ -1092,11 +1117,11 @@ const [formData, setFormData] = useState({
                         return (
                           <>
                             <FormField label="Maintenance and Repair Type" required>
-                              <Input 
-                                placeholder="e.g., Engine Repair, Body Work" 
-                                value={formData.maintenanceType || ""} 
+                              <Input
+                                placeholder="e.g., Engine Repair, Body Work"
+                                value={formData.maintenanceType || ""}
                                 onChange={(e) => handleInputChange("maintenanceType", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
                           </>
@@ -1105,37 +1130,41 @@ const [formData, setFormData] = useState({
                       case "BOAT":
                         return (
                           <>
-                            <FormField label="Condition" required>
-                              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
-                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
-                                  <SelectValue placeholder="Select Condition" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="New">Brand New</SelectItem>
-                                  <SelectItem value="Used">Used</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormField>
+                            {formData.listingType !== "HIRE" && (
+                              <FormField label={formData.listingType === "SELL" ? "Condition" : "Preferred Condition"} required={formData.listingType === "SELL"}>
+                                <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                                  <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                    <SelectValue placeholder="Select Condition" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="New">Brand New</SelectItem>
+                                    <SelectItem value="Used">Used</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </FormField>
+                            )}
                           </>
                         );
 
                       case "THREE_WHEEL":
                         return (
                           <>
-                            <FormField label="Condition" required>
-                              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
-                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
-                                  <SelectValue placeholder="Select Condition" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="New">Brand New</SelectItem>
-                                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
-                                  <SelectItem value="Used">Used</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormField>
-                            
-                            <FormField label="Brand" required>
+                            {formData.listingType !== "HIRE" && (
+                              <FormField label={formData.listingType === "SELL" ? "Condition" : "Preferred Condition"} required={formData.listingType === "SELL"}>
+                                <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                                  <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                    <SelectValue placeholder="Select Condition" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="New">Brand New</SelectItem>
+                                    <SelectItem value="Reconditioned">Reconditioned</SelectItem>
+                                    <SelectItem value="Used">Used</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </FormField>
+                            )}
+
+                            <FormField label="Brand" required={formData.listingType === "SELL"}>
                               <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
                                   <SelectValue placeholder="Select Brand" />
@@ -1147,17 +1176,17 @@ const [formData, setFormData] = useState({
                                 </SelectContent>
                               </Select>
                             </FormField>
-                            
-                            <FormField label="Model" required>
-                              <Input 
-                                placeholder="e.g., Bajaj RE" 
-                                value={formData.model || ""} 
+
+                            <FormField label="Model" required={formData.listingType === "SELL"}>
+                              <Input
+                                placeholder="e.g., Bajaj RE"
+                                value={formData.model || ""}
                                 onChange={(e) => handleInputChange("model", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
 
-                            <FormField label="Year of Manufacture" required>
+                            <FormField label="Year of Manufacture" required={formData.listingType === "SELL"}>
                               <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
                                   <SelectValue placeholder="Select Year" />
@@ -1169,27 +1198,27 @@ const [formData, setFormData] = useState({
                                 </SelectContent>
                               </Select>
                             </FormField>
-                            
+
                             <FormField label="Mileage (km)">
-                              <Input 
-                                type="number" 
-                                placeholder="25000" 
-                                value={formData.mileage || ""} 
+                              <Input
+                                type="number"
+                                placeholder="25000"
+                                value={formData.mileage || ""}
                                 onChange={(e) => handleInputChange("mileage", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
 
                             <FormField label="Engine Capacity (cc)">
-                              <Input 
-                                type="number" 
-                                placeholder="200" 
-                                value={formData.engineCapacity || ""} 
+                              <Input
+                                type="number"
+                                placeholder="200"
+                                value={formData.engineCapacity || ""}
                                 onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
-                            
+
                             <FormField label="Fuel Type" required>
                               <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
@@ -1209,20 +1238,22 @@ const [formData, setFormData] = useState({
                       case "BUS":
                         return (
                           <>
-                            <FormField label="Condition" required>
-                              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
-                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
-                                  <SelectValue placeholder="Select Condition" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="New">Brand New</SelectItem>
-                                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
-                                  <SelectItem value="Used">Used</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormField>
-                            
-                            <FormField label="Brand" required>
+                            {formData.listingType !== "HIRE" && (
+                              <FormField label={formData.listingType === "SELL" ? "Condition" : "Preferred Condition"} required={formData.listingType === "SELL"}>
+                                <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                                  <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                    <SelectValue placeholder="Select Condition" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="New">Brand New</SelectItem>
+                                    <SelectItem value="Reconditioned">Reconditioned</SelectItem>
+                                    <SelectItem value="Used">Used</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </FormField>
+                            )}
+
+                            <FormField label="Brand" required={formData.listingType === "SELL"}>
                               <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
                                   <SelectValue placeholder="Select Brand" />
@@ -1234,17 +1265,17 @@ const [formData, setFormData] = useState({
                                 </SelectContent>
                               </Select>
                             </FormField>
-                            
-                            <FormField label="Model" required>
-                              <Input 
-                                placeholder="e.g., Rosa" 
-                                value={formData.model || ""} 
+
+                            <FormField label="Model" required={formData.listingType === "SELL"}>
+                              <Input
+                                placeholder="e.g., Rosa"
+                                value={formData.model || ""}
                                 onChange={(e) => handleInputChange("model", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
 
-                            <FormField label="Year of Manufacture" required>
+                            <FormField label="Year of Manufacture" required={formData.listingType === "SELL"}>
                               <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
                                   <SelectValue placeholder="Select Year" />
@@ -1256,27 +1287,27 @@ const [formData, setFormData] = useState({
                                 </SelectContent>
                               </Select>
                             </FormField>
-                            
+
                             <FormField label="Mileage (km)">
-                              <Input 
-                                type="number" 
-                                placeholder="150000" 
-                                value={formData.mileage || ""} 
+                              <Input
+                                type="number"
+                                placeholder="150000"
+                                value={formData.mileage || ""}
                                 onChange={(e) => handleInputChange("mileage", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
 
                             <FormField label="Engine Capacity (cc)">
-                              <Input 
-                                type="number" 
-                                placeholder="4000" 
-                                value={formData.engineCapacity || ""} 
+                              <Input
+                                type="number"
+                                placeholder="4000"
+                                value={formData.engineCapacity || ""}
                                 onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
-                            
+
                             <FormField label="Fuel Type" required>
                               <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
@@ -1289,7 +1320,7 @@ const [formData, setFormData] = useState({
                                 </SelectContent>
                               </Select>
                             </FormField>
-                            
+
                             <FormField label="Transmission" required>
                               <Select value={formData.transmission} onValueChange={(value) => handleInputChange("transmission", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
@@ -1307,20 +1338,22 @@ const [formData, setFormData] = useState({
                       case "LORRY":
                         return (
                           <>
-                            <FormField label="Condition" required>
-                              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
-                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
-                                  <SelectValue placeholder="Select Condition" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="New">Brand New</SelectItem>
-                                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
-                                  <SelectItem value="Used">Used</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormField>
-                            
-                            <FormField label="Brand" required>
+                            {formData.listingType !== "HIRE" && (
+                              <FormField label={formData.listingType === "SELL" ? "Condition" : "Preferred Condition"} required={formData.listingType === "SELL"}>
+                                <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                                  <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                    <SelectValue placeholder="Select Condition" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="New">Brand New</SelectItem>
+                                    <SelectItem value="Reconditioned">Reconditioned</SelectItem>
+                                    <SelectItem value="Used">Used</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </FormField>
+                            )}
+
+                            <FormField label="Brand" required={formData.listingType === "SELL"}>
                               <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
                                   <SelectValue placeholder="Select Brand" />
@@ -1332,17 +1365,17 @@ const [formData, setFormData] = useState({
                                 </SelectContent>
                               </Select>
                             </FormField>
-                            
-                            <FormField label="Model" required>
-                              <Input 
-                                placeholder="e.g., Canter" 
-                                value={formData.model || ""} 
+
+                            <FormField label="Model" required={formData.listingType === "SELL"}>
+                              <Input
+                                placeholder="e.g., Canter"
+                                value={formData.model || ""}
                                 onChange={(e) => handleInputChange("model", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
 
-                            <FormField label="Year of Manufacture" required>
+                            <FormField label="Year of Manufacture" required={formData.listingType === "SELL"}>
                               <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
                                   <SelectValue placeholder="Select Year" />
@@ -1354,27 +1387,27 @@ const [formData, setFormData] = useState({
                                 </SelectContent>
                               </Select>
                             </FormField>
-                            
+
                             <FormField label="Mileage (km)">
-                              <Input 
-                                type="number" 
-                                placeholder="200000" 
-                                value={formData.mileage || ""} 
+                              <Input
+                                type="number"
+                                placeholder="200000"
+                                value={formData.mileage || ""}
                                 onChange={(e) => handleInputChange("mileage", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
 
                             <FormField label="Engine Capacity (cc)">
-                              <Input 
-                                type="number" 
-                                placeholder="3000" 
-                                value={formData.engineCapacity || ""} 
+                              <Input
+                                type="number"
+                                placeholder="3000"
+                                value={formData.engineCapacity || ""}
                                 onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
-                            
+
                             <FormField label="Fuel Type" required>
                               <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
@@ -1386,7 +1419,7 @@ const [formData, setFormData] = useState({
                                 </SelectContent>
                               </Select>
                             </FormField>
-                            
+
                             <FormField label="Transmission" required>
                               <Select value={formData.transmission} onValueChange={(value) => handleInputChange("transmission", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
@@ -1404,19 +1437,21 @@ const [formData, setFormData] = useState({
                       case "HEAVY_DUTY":
                         return (
                           <>
-                            <FormField label="Condition" required>
-                              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
-                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
-                                  <SelectValue placeholder="Select Condition" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="New">Brand New</SelectItem>
-                                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
-                                  <SelectItem value="Used">Used</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormField>
-                            
+                            {formData.listingType !== "HIRE" && (
+                              <FormField label={formData.listingType === "SELL" ? "Condition" : "Preferred Condition"} required={formData.listingType === "SELL"}>
+                                <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                                  <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                    <SelectValue placeholder="Select Condition" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="New">Brand New</SelectItem>
+                                    <SelectItem value="Reconditioned">Reconditioned</SelectItem>
+                                    <SelectItem value="Used">Used</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </FormField>
+                            )}
+
                             <FormField label="Vehicle Type" required>
                               <Select value={formData.vehicleType} onValueChange={(value) => handleInputChange("vehicleType", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
@@ -1434,8 +1469,8 @@ const [formData, setFormData] = useState({
                                 </SelectContent>
                               </Select>
                             </FormField>
-                            
-                            <FormField label="Brand" required>
+
+                            <FormField label="Brand" required={formData.listingType === "SELL"}>
                               <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
                                   <SelectValue placeholder="Select Brand" />
@@ -1447,17 +1482,17 @@ const [formData, setFormData] = useState({
                                 </SelectContent>
                               </Select>
                             </FormField>
-                            
-                            <FormField label="Model" required>
-                              <Input 
-                                placeholder="e.g., PC200" 
-                                value={formData.model || ""} 
+
+                            <FormField label="Model" required={formData.listingType === "SELL"}>
+                              <Input
+                                placeholder="e.g., PC200"
+                                value={formData.model || ""}
                                 onChange={(e) => handleInputChange("model", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
 
-                            <FormField label="Year of Manufacture" required>
+                            <FormField label="Year of Manufacture" required={formData.listingType === "SELL"}>
                               <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
                                   <SelectValue placeholder="Select Year" />
@@ -1469,14 +1504,14 @@ const [formData, setFormData] = useState({
                                 </SelectContent>
                               </Select>
                             </FormField>
-                            
+
                             <FormField label="Operating Hours">
-                              <Input 
-                                type="number" 
-                                placeholder="5000" 
-                                value={formData.mileage || ""} 
+                              <Input
+                                type="number"
+                                placeholder="5000"
+                                value={formData.mileage || ""}
                                 onChange={(e) => handleInputChange("mileage", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                               <p className="text-xs text-muted-foreground mt-1">
                                 Total operating hours for the machinery
@@ -1484,15 +1519,15 @@ const [formData, setFormData] = useState({
                             </FormField>
 
                             <FormField label="Engine Capacity (cc)">
-                              <Input 
-                                type="number" 
-                                placeholder="6000" 
-                                value={formData.engineCapacity || ""} 
+                              <Input
+                                type="number"
+                                placeholder="6000"
+                                value={formData.engineCapacity || ""}
                                 onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
-                            
+
                             <FormField label="Fuel Type" required>
                               <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
@@ -1511,7 +1546,7 @@ const [formData, setFormData] = useState({
                       case "TRACTOR":
                         return (
                           <>
-                            <FormField label="Condition" required>
+                            <FormField label={formData.listingType === "SELL" ? "Condition" : "Preferred Condition"} required={formData.listingType === "SELL"}>
                               <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
                                   <SelectValue placeholder="Select Condition" />
@@ -1523,8 +1558,8 @@ const [formData, setFormData] = useState({
                                 </SelectContent>
                               </Select>
                             </FormField>
-                            
-                            <FormField label="Brand" required>
+
+                            <FormField label="Brand" required={formData.listingType === "SELL"}>
                               <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
                                   <SelectValue placeholder="Select Brand" />
@@ -1536,17 +1571,17 @@ const [formData, setFormData] = useState({
                                 </SelectContent>
                               </Select>
                             </FormField>
-                            
-                            <FormField label="Model" required>
-                              <Input 
-                                placeholder="e.g., MF240" 
-                                value={formData.model || ""} 
+
+                            <FormField label="Model" required={formData.listingType === "SELL"}>
+                              <Input
+                                placeholder="e.g., MF240"
+                                value={formData.model || ""}
                                 onChange={(e) => handleInputChange("model", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
 
-                            <FormField label="Year of Manufacture" required>
+                            <FormField label="Year of Manufacture" required={formData.listingType === "SELL"}>
                               <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
                                   <SelectValue placeholder="Select Year" />
@@ -1558,14 +1593,14 @@ const [formData, setFormData] = useState({
                                 </SelectContent>
                               </Select>
                             </FormField>
-                            
+
                             <FormField label="Operating Hours">
-                              <Input 
-                                type="number" 
-                                placeholder="2000" 
-                                value={formData.mileage || ""} 
+                              <Input
+                                type="number"
+                                placeholder="2000"
+                                value={formData.mileage || ""}
                                 onChange={(e) => handleInputChange("mileage", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                               <p className="text-xs text-muted-foreground mt-1">
                                 Total operating hours for the tractor
@@ -1573,15 +1608,15 @@ const [formData, setFormData] = useState({
                             </FormField>
 
                             <FormField label="Engine Capacity (cc)">
-                              <Input 
-                                type="number" 
-                                placeholder="2500" 
-                                value={formData.engineCapacity || ""} 
+                              <Input
+                                type="number"
+                                placeholder="2500"
+                                value={formData.engineCapacity || ""}
                                 onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none" 
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
-                            
+
                             <FormField label="Fuel Type" required>
                               <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
@@ -1593,7 +1628,7 @@ const [formData, setFormData] = useState({
                                 </SelectContent>
                               </Select>
                             </FormField>
-                            
+
                             <FormField label="Transmission" required>
                               <Select value={formData.transmission} onValueChange={(value) => handleInputChange("transmission", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
@@ -1677,11 +1712,9 @@ const [formData, setFormData] = useState({
                         {selectedMedia.length === 0
                           ? "No images selected yet"
                           : selectedMedia.length >= 6
-                          ? "Maximum number of images selected (6/6)"
-                          : `${
-                              selectedMedia.length
-                            } image(s) selected, you can add ${
-                              6 - selectedMedia.length
+                            ? "Maximum number of images selected (6/6)"
+                            : `${selectedMedia.length
+                            } image(s) selected, you can add ${6 - selectedMedia.length
                             } more`}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -1730,15 +1763,13 @@ const [formData, setFormData] = useState({
                             key={media.id}
                             className={`
                               relative group aspect-video border rounded-md overflow-hidden cursor-move
-                              ${
-                                index === 0
-                                  ? "border-[#024950] border-2"
-                                  : "border-gray-200"
+                              ${index === 0
+                                ? "border-[#024950] border-2"
+                                : "border-gray-200"
                               }
-                              ${
-                                draggedIndex === index
-                                  ? "opacity-50"
-                                  : "opacity-100"
+                              ${draggedIndex === index
+                                ? "opacity-50"
+                                : "opacity-100"
                               }
                             `}
                             // draggable
@@ -1858,7 +1889,7 @@ const [formData, setFormData] = useState({
                       />
                     </div>
                   </div>
-                  
+
                   {/* Price */}
                   <div className="flex items-center">
                     <div className="w-48 text-right pr-4 text-gray-600">
@@ -2034,7 +2065,7 @@ const [formData, setFormData] = useState({
                       Province<span className="text-red-500">*</span>
                     </div>
                     <div className="flex-1">
-                      <Select 
+                      <Select
                         value={formData.province}
                         onValueChange={(value) => handleInputChange("province", value)}
                       >
@@ -2056,7 +2087,7 @@ const [formData, setFormData] = useState({
                       District<span className="text-red-500">*</span>
                     </div>
                     <div className="flex-1">
-                      <Select 
+                      <Select
                         value={formData.district}
                         onValueChange={(value) => handleInputChange("district", value)}
                         disabled={!formData.province}
@@ -2079,7 +2110,7 @@ const [formData, setFormData] = useState({
                       City<span className="text-red-500">*</span>
                     </div>
                     <div className="flex-1">
-                      <Select 
+                      <Select
                         value={formData.city}
                         onValueChange={(value) => handleInputChange("city", value)}
                         disabled={!formData.district}
@@ -2243,11 +2274,10 @@ const [formData, setFormData] = useState({
                     <div className="flex-1">
                       {/* Show current promotion status if editing an ad with active promotion */}
                       {initialData && (promotionType === "boost" || promotionType === "featured") && (
-                        <div className={`mb-4 rounded-lg p-4 border-2 ${
-                          promotionType === "boost" 
-                            ? "bg-orange-50 border-orange-300" 
-                            : "bg-yellow-50 border-yellow-300"
-                        }`}>
+                        <div className={`mb-4 rounded-lg p-4 border-2 ${promotionType === "boost"
+                          ? "bg-orange-50 border-orange-300"
+                          : "bg-yellow-50 border-yellow-300"
+                          }`}>
                           <div className="flex items-center gap-2 mb-2">
                             {promotionType === "boost" ? (
                               <Zap className="w-5 h-5 text-orange-600" />
@@ -2260,13 +2290,13 @@ const [formData, setFormData] = useState({
                           </div>
                           {initialData.boostExpiry && promotionType === "boost" && (
                             <p className="text-sm text-orange-700">
-                              Expires: {new Date(initialData.boostExpiry).toLocaleDateString()} 
+                              Expires: {new Date(initialData.boostExpiry).toLocaleDateString()}
                               ({Math.ceil((new Date(initialData.boostExpiry).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days remaining)
                             </p>
                           )}
                           {initialData.featureExpiry && promotionType === "featured" && (
                             <p className="text-sm text-yellow-700">
-                              Expires: {new Date(initialData.featureExpiry).toLocaleDateString()} 
+                              Expires: {new Date(initialData.featureExpiry).toLocaleDateString()}
                               ({Math.ceil((new Date(initialData.featureExpiry).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days remaining)
                             </p>
                           )}
@@ -2350,9 +2380,9 @@ const [formData, setFormData] = useState({
                             "Sale in",
                             location
                           ].filter(Boolean).join(' ');
-                          
+
                           const autoDescription = `Buy ${formData.brand} ${formData.model} ${formData.manufacturedYear} ${formData.vehicleType} at best price on Rathagala.lk - the largest Vehicle Marketplace in Sri Lanka. Discover more ${formData.brand} ${formData.model} ${formData.vehicleType}s for sale.`;
-                          
+
                           handleInputChange("seoTitle", autoTitle);
                           handleInputChange("seoDescription", autoDescription);
                         }}
@@ -2385,7 +2415,7 @@ const [formData, setFormData] = useState({
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* SEO Description */}
                   <div className="flex items-center">
                     <div className="w-48 text-right pr-4 text-gray-600 pt-2">
