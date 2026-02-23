@@ -51,6 +51,8 @@ import {
   Trash2,
   CheckCheck,
   XCircle,
+  Search,
+  X,
 } from "lucide-react";
 import { DELETE_AD_REASONS, type DeleteAdReason } from "@/constants/delete-reasons";
 
@@ -77,6 +79,7 @@ interface Report {
 export default function ReportsManagementPage() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<string>("");
@@ -201,6 +204,36 @@ export default function ReportsManagementPage() {
     });
   };
 
+  // Filter reports based on search query
+  const filteredReports = data?.reports.filter((report) => {
+    if (!searchQuery.trim()) return true;
+
+    const query = searchQuery.toLowerCase().trim();
+    const searchWords = query.split(/\s+/); // Split by whitespace
+
+    // Search in reporter name and email
+    const reporterName = (report.reporter?.name || "").toLowerCase();
+    const reporterEmail = (report.reporter?.email || "").toLowerCase();
+    
+    // Search in ad title
+    const adTitle = (report.ad?.title || "").toLowerCase();
+    
+    // Search in reason
+    const reason = report.reason.toLowerCase();
+
+    // Check if all search words are present in any of the fields
+    const matchesSearch = searchWords.every((word) => {
+      return (
+        reporterName.includes(word) ||
+        reporterEmail.includes(word) ||
+        adTitle.includes(word) ||
+        reason.includes(word)
+      );
+    });
+
+    return matchesSearch;
+  }) || [];
+
   return (
     <div className="space-y-6 p-10">
       {/* Header */}
@@ -217,7 +250,7 @@ export default function ReportsManagementPage() {
           <CardHeader className="pb-3">
             <CardDescription>Total Reports</CardDescription>
             <CardTitle className="text-2xl">
-              {data?.pagination.total || 0}
+              {filteredReports.length}
             </CardTitle>
           </CardHeader>
         </Card>
@@ -225,7 +258,7 @@ export default function ReportsManagementPage() {
           <CardHeader className="pb-3">
             <CardDescription>Pending</CardDescription>
             <CardTitle className="text-2xl text-yellow-600">
-              {data?.reports.filter((r) => r.status === "PENDING").length || 0}
+              {filteredReports.filter((r) => r.status === "PENDING").length}
             </CardTitle>
           </CardHeader>
         </Card>
@@ -233,7 +266,7 @@ export default function ReportsManagementPage() {
           <CardHeader className="pb-3">
             <CardDescription>Reviewed</CardDescription>
             <CardTitle className="text-2xl text-blue-600">
-              {data?.reports.filter((r) => r.status === "REVIEWED").length || 0}
+              {filteredReports.filter((r) => r.status === "REVIEWED").length}
             </CardTitle>
           </CardHeader>
         </Card>
@@ -241,7 +274,7 @@ export default function ReportsManagementPage() {
           <CardHeader className="pb-3">
             <CardDescription>Resolved</CardDescription>
             <CardTitle className="text-2xl text-green-600">
-              {data?.reports.filter((r) => r.status === "RESOLVED").length || 0}
+              {filteredReports.filter((r) => r.status === "RESOLVED").length}
             </CardTitle>
           </CardHeader>
         </Card>
@@ -252,9 +285,27 @@ export default function ReportsManagementPage() {
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <CardTitle>Reports List</CardTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <Input
+                  placeholder="Search reporter, ad title, or reason..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 pr-9"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    aria-label="Clear search"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-full sm:w-40">
                   <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
@@ -283,10 +334,21 @@ export default function ReportsManagementPage() {
                 <Skeleton key={i} className="h-16 w-full" />
               ))}
             </div>
-          ) : !data || data.reports.length === 0 ? (
+          ) : !data || filteredReports.length === 0 ? (
             <div className="text-center py-12">
               <AlertCircle className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-500">No reports found</p>
+              <p className="text-gray-500">
+                {searchQuery ? "No reports match your search" : "No reports found"}
+              </p>
+              {searchQuery && (
+                <Button
+                  variant="link"
+                  onClick={() => setSearchQuery("")}
+                  className="mt-2"
+                >
+                  Clear search
+                </Button>
+              )}
             </div>
           ) : (
             <>
@@ -303,7 +365,7 @@ export default function ReportsManagementPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.reports.map((report) => (
+                    {filteredReports.map((report) => (
                       <TableRow key={report.id}>
                         <TableCell>
                           <div>
@@ -357,7 +419,15 @@ export default function ReportsManagementPage() {
               {data.pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between mt-4">
                   <div className="text-sm text-gray-500">
-                    Page {data.pagination.page} of {data.pagination.totalPages}
+                    {searchQuery ? (
+                      <>
+                        Showing {filteredReports.length} of {data.pagination.total} reports (Page {data.pagination.page} of {data.pagination.totalPages})
+                      </>
+                    ) : (
+                      <>
+                        Page {data.pagination.page} of {data.pagination.totalPages}
+                      </>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <Button
