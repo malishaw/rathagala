@@ -512,6 +512,9 @@ export default function AdDetailPage() {
                   onClick={() => {
                     if (session?.user) {
                       setIsReportDialogOpen(true);
+                    } else {
+                      // Redirect to login page for guest users
+                      router.push('/signin?redirect=' + encodeURIComponent(window.location.pathname));
                     }
                   }}
                   aria-label="Report Ad"
@@ -520,7 +523,7 @@ export default function AdDetailPage() {
                 </Button>
                 {!session?.user && (
                   <span className="absolute top-full left-1/2 -translate-x-1/2 mt-1 text-xs text-white/70 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity  bg-black/70 px-2 py-1 rounded">
-                    Please login to report
+                    Click to login
                   </span>
                 )}
               </div>
