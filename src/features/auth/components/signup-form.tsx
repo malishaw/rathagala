@@ -32,9 +32,10 @@ import { GoogleAuthButton } from "./google-auth-button";
 
 type Props = {
   className?: string;
+  redirectTo?: string;
 };
 
-export function SignupForm({ className }: Props) {
+export function SignupForm({ className, redirectTo }: Props) {
   const [isPending, setIsPending] = useState<boolean>(false);
   const toastId = useId();
   const router = useRouter();
@@ -90,6 +91,12 @@ export function SignupForm({ className }: Props) {
               sessionStorage.setItem("verifyPassword", formData.password);
               if (formData.registerAsOrganization) {
                 sessionStorage.setItem("setupOrganization", "true");
+              }
+              // Preserve the post-auth redirect destination across the verify-email flow
+              if (redirectTo) {
+                sessionStorage.setItem("postAuthRedirect", redirectTo);
+              } else {
+                sessionStorage.removeItem("postAuthRedirect");
               }
               router.push("/verify-email");
             } else {

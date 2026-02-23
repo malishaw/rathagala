@@ -12,6 +12,7 @@ import { ChevronDown, ChevronUp, MapPin, TrendingUp, Sparkles, Loader2, Car, Sea
 import { format } from "date-fns";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
+import { authClient } from "@/lib/auth-client";
 
 // Vehicle type labels
 const vehicleTypeLabels: Record<string, string> = {
@@ -163,6 +164,7 @@ interface SearchFilters {
 export default function SearchPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session } = authClient.useSession();
 
   // Initialize filters from URL params
   const [filters, setFilters] = useState<SearchFilters>({
@@ -1166,7 +1168,7 @@ export default function SearchPage() {
                 <div className="relative z-10">
                   <h4 className="font-bold text-lg mb-2">Sell Faster!</h4>
                   <p className="text-xs text-teal-100 mb-4 leading-relaxed">Boost your vehicle reach to thousands of potential buyers instantly.</p>
-                  <Button onClick={() => router.push('/sell/new')} className="w-full bg-white text-teal-900 hover:bg-teal-50 font-bold border-none">
+                  <Button onClick={() => session?.user ? router.push('/sell/new') : router.push('/signin?redirect=/sell/new')} className="w-full bg-white text-teal-900 hover:bg-teal-50 font-bold border-none">
                     Post Free Ad Now
                   </Button>
                 </div>

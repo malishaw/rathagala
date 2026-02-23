@@ -33,6 +33,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 
 // Form validation schema
 const formSchema = z.object({
@@ -52,6 +53,15 @@ const formSchema = z.object({
 export default function SellPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  const { data: session } = authClient.useSession();
+
+  const handlePostFreeAd = () => {
+    if (!session?.user) {
+      router.push("/signin?redirect=/sell/new");
+      return;
+    }
+    router.push("/sell/new");
+  };
 
   // Initialize form
   const form = useForm<z.infer<typeof formSchema>>({
@@ -103,7 +113,7 @@ export default function SellPage() {
 
             <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-8">
               <Button
-                onClick={() => router.push('/sell/new')}
+                onClick={handlePostFreeAd}
                 size="lg"
                 className="relative w-full sm:w-auto bg-yellow-400 hover:bg-yellow-300 text-teal-900 font-bold text-lg px-8 py-6 shadow-lg hover:shadow-xl transform transition-all duration-300 hover:-translate-y-1 border-b-4 border-yellow-500 hover:border-yellow-400 rounded-xl animate-pulse"
               >
@@ -253,7 +263,7 @@ export default function SellPage() {
 
       <div className="flex justify-center w-full my-8">
         <Button
-          onClick={() => router.push('/sell/new')}
+          onClick={handlePostFreeAd}
           size="lg"
           className="relative w-full sm:w-auto bg-yellow-400 hover:bg-yellow-300 text-teal-900 font-bold text-lg px-8 py-6 shadow-lg hover:shadow-xl transform transition-all duration-300 hover:-translate-y-1 border-b-4 border-yellow-500 hover:border-yellow-400 rounded-xl animate-pulse"
         >

@@ -3,7 +3,13 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SignupForm } from "@/features/auth/components/signup-form";
 
-export default function SignupPage() {
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ redirect?: string }>;
+}) {
+  const { redirect } = await searchParams;
+
   return (
     <div className="space-y-2 flex flex-col items-center w-full">
 
@@ -18,7 +24,7 @@ export default function SignupPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="pb-2.5 pt-1.5">
-          <SignupForm />
+          <SignupForm redirectTo={redirect} />
 
           {/* Terms and Privacy Policy */}
           <div className="pt-2 mt-1 border-t border-teal-100">

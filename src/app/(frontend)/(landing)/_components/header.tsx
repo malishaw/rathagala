@@ -240,7 +240,7 @@ export function Header() {
               </Link>
             )}
 
-            <Link href={user ? "/sell/new" : "/signup"}>
+            <Link href={user ? "/sell/new" : "/signin?redirect=/sell/new"}>
               <Button
                 className="bg-white text-teal-900 hover:bg-teal-50 hover:shadow-md font-medium transition-all duration-200 cursor-pointer"
               >
@@ -419,7 +419,7 @@ export function Header() {
                       asChild
                       className="w-full justify-center bg-white hover:text-white border-1 hover:border-white text-teal-900 hover:bg-teal-900 rounded-md shadow-sm py-5 font-bold"
                     >
-                      <Link href={user ? "/sell/new" : "/signup"}>Post Free Ad</Link>
+                      <Link href={user ? "/sell/new" : "/signin?redirect=/sell/new"}>Post Free Ad</Link>
                     </Button>
                   </div>
                 </nav>

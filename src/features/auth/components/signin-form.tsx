@@ -31,9 +31,10 @@ import { GoogleAuthButton } from "./google-auth-button";
 
 type Props = {
   className?: string;
+  redirectTo?: string;
 };
 
-export function SigninForm({ className }: Props) {
+export function SigninForm({ className, redirectTo }: Props) {
   const [isPending, setIsPending] = useState<boolean>(false);
   const toastId = useId();
   const router = useRouter();
@@ -53,7 +54,7 @@ export function SigninForm({ className }: Props) {
       {
         email: formData.email,
         password: formData.password,
-        callbackURL: "/",
+        callbackURL: redirectTo || "/",
       },
       {
         onRequest() {
@@ -86,6 +87,12 @@ export function SigninForm({ className }: Props) {
               }
             }
             
+            // If a redirect target was specified (e.g. from Post Free Ad), use it
+            if (redirectTo) {
+              router.replace(redirectTo);
+              return;
+            }
+
             // Users with organizations should be redirected to dashboard
             if (organizationId) {
               router.replace("/dashboard");
@@ -114,6 +121,10 @@ export function SigninForm({ className }: Props) {
     sessionStorage.setItem("verifyEmail", formData.email);
     sessionStorage.setItem("verifyName", formData.email.split("@")[0]);
     sessionStorage.setItem("verifyPassword", formData.password);
+    // Preserve the post-auth redirect across email verification
+    if (redirectTo) {
+      sessionStorage.setItem("postAuthRedirect", redirectTo);
+    }
 
     toast.info("Email not verified", {
       id: toastId,
@@ -192,7 +203,7 @@ export function SigninForm({ className }: Props) {
       {/* Option texts */}
       <div className="flex text-center items-center justify-center gap-3 text-sm">
         <Button asChild variant={"link"} className="p-0 h-auto text-teal-700 hover:text-teal-900 whitespace-nowrap">
-          <Link href={"/signup"}>Need an account? <span className="font-semibold ml-1">Sign Up</span></Link>
+          <Link href={redirectTo ? `/signup?redirect=${encodeURIComponent(redirectTo)}` : "/signup"}>Need an account? <span className="font-semibold ml-1">Sign Up</span></Link>
         </Button>
         
       </div>

@@ -3,7 +3,13 @@ import { Logo } from "@/components/logo";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SigninForm } from "@/features/auth/components/signin-form";
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ redirect?: string }>;
+}) {
+  const { redirect } = await searchParams;
+
   return (
     <div className="flex items-center justify-center w-full px-4 pt-0 pb-8">
       <div className="w-full max-w-md space-y-6 flex flex-col items-center">
@@ -23,7 +29,7 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="px-4 sm:px-6 pb-6">
-            <SigninForm />
+            <SigninForm redirectTo={redirect} />
           </CardContent>
         </Card>
 
