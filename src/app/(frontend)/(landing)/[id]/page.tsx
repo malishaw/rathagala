@@ -415,15 +415,20 @@ export default function AdDetailPage() {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
-  const formatPrice = (price: number | null | undefined) => {
+  const formatPrice = (price: number | null | undefined, isNegotiable = false) => {
+    if (!price && isNegotiable) return "Negotiable";
     if (!price) return "Price Negotiable";
-    return new Intl.NumberFormat("en-LK", {
+    const formatted = new Intl.NumberFormat("en-LK", {
       style: "currency",
       currency: "LKR",
       minimumFractionDigits: 0
     })
       .format(price)
       .replace("LKR", "Rs.");
+    if (isNegotiable) {
+      return <>{formatted}<div className="text-lg font-normal opacity-70"> Negotiable</div></>;
+    }
+    return formatted;
   };
 
   const formatDate = (dateString: string | null | undefined) => {
@@ -999,7 +1004,7 @@ export default function AdDetailPage() {
                                 />
                                 <h3 className="font-semibold text-xs mb-1 line-clamp-2">{vehicle.title}</h3>
                                 <div className="text-sm font-bold text-[#024950] mb-1">
-                                  {formatPrice(vehicle.price || 0)}
+                                  {formatPrice(vehicle.price || 0, (vehicle as any).metadata?.isNegotiable)}
                                 </div>
                                 <div className="flex items-center text-xs text-gray-500">
                                   <MapPin className="w-3 h-3 mr-1" />
@@ -1066,14 +1071,14 @@ export default function AdDetailPage() {
               <CardContent className="p-6">
                 <div className="text-3xl font-bold text-[#024950] mb-2">
                   {(ad as any).discountPrice
-                    ? formatPrice((ad as any).discountPrice)
-                    : formatPrice(ad.price)}
+                    ? formatPrice((ad as any).discountPrice, (ad as any).metadata?.isNegotiable)
+                    : formatPrice(ad.price, (ad as any).metadata?.isNegotiable)}
                 </div>
                 {(ad as any).discountPrice &&
                   ad.price &&
                   (ad as any).discountPrice < ad.price && (
                     <div className="text-xl line-through text-gray-400 mb-2">
-                      {formatPrice(ad.price)}
+                      {formatPrice(ad.price, (ad as any).metadata?.isNegotiable)}
                     </div>
                   )}
                 {/* Location Display - show city/district or fallback to location field */}
@@ -1356,7 +1361,7 @@ export default function AdDetailPage() {
                           />
                           <h3 className="font-semibold text-xs mb-1 line-clamp-2">{vehicle.title}</h3>
                           <div className="text-sm font-bold text-[#024950] mb-1">
-                            {formatPrice(vehicle.price || 0)}
+                            {formatPrice(vehicle.price || 0, (vehicle as any).metadata?.isNegotiable)}
                           </div>
                           <div className="flex items-center text-xs text-gray-500">
                             <MapPin className="w-3 h-3 mr-1" />

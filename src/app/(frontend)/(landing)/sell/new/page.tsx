@@ -349,7 +349,7 @@ export default function QuickAdCreatePage() {
     }
 
     // Format numeric fields
-    const price = formData.isNegotiable ? undefined : (formData.price ? parseFloat(formData.price) : undefined);
+    const price = formData.price ? parseFloat(formData.price) : undefined;
     const mileage = formData.mileage ? parseFloat(formData.mileage) : undefined;
     const engineCapacity = formData.engineCapacity ? parseFloat(formData.engineCapacity) : undefined;
 
@@ -408,7 +408,8 @@ export default function QuickAdCreatePage() {
       boosted: boosted,
       featured: featured,
       boostExpiry: boostExpiry,
-      featureExpiry: featureExpiry
+      featureExpiry: featureExpiry,
+      metadata: { isNegotiable: formData.isNegotiable },
     };
 
     createAd(
@@ -1623,13 +1624,12 @@ export default function QuickAdCreatePage() {
           {currentStep === 2 && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Price (Rs)<span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium mb-1">Price (Rs)</label>
                 <Input
                   type="number"
                   placeholder="e.g., 2500000"
                   value={formData.price}
                   onChange={(e) => handleInputChange("price", e.target.value)}
-                  disabled={formData.isNegotiable}
                 />
               </div>
 
@@ -1639,9 +1639,6 @@ export default function QuickAdCreatePage() {
                   checked={formData.isNegotiable}
                   onCheckedChange={(checked) => {
                     handleInputChange("isNegotiable", checked);
-                    if (checked) {
-                      handleInputChange("price", "");
-                    }
                   }}
                 />
                 <Label htmlFor="negotiable" className="text-sm cursor-pointer font-medium">

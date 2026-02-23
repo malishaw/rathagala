@@ -875,7 +875,9 @@ function AdDetailsModal({ ad, open, onOpenChange }: { ad: AdType; open: boolean;
             <div>
               <label className="text-xs font-semibold text-slate-600">Price</label>
               <p className="text-sm font-semibold text-teal-700">
-                {ad.price ? `Rs. ${ad.price.toLocaleString()}` : "Price on request"}
+                {ad.price
+                  ? <>{`Rs. ${ad.price.toLocaleString()}`}{(ad as any).metadata?.isNegotiable && <div className="text-lg font-normal opacity-70"> Negotiable</div>}</>
+                  : ((ad as any).metadata?.isNegotiable ? "Negotiable" : "Price on request")}
               </p>
             </div>
           </div>

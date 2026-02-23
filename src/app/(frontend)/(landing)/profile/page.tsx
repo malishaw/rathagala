@@ -387,9 +387,14 @@ export default function ProfilePage() {
   };
 
   // Format price to display with commas
-  const formatPrice = (price: number | null) => {
+  const formatPrice = (price: number | null, isNegotiable = false) => {
+    if (price === null && isNegotiable) return "Negotiable";
     if (price === null) return "Price on request";
-    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    const formatted = price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    if (isNegotiable) {
+      return <>{formatted}<div className="text-lg font-normal opacity-70"> Negotiable</div></>;
+    }
+    return formatted;
   };
 
   // Get phone verification badge
@@ -1266,7 +1271,7 @@ export default function ProfilePage() {
                                 return null;
                               })()}
                             </div>
-                            <div className="text-base font-bold text-[#0D5C63] mt-1">Rs {formatPrice(ad.price)}</div>
+                            <div className="text-base font-bold text-[#0D5C63] mt-1">Rs {formatPrice(ad.price, (ad as any).metadata?.isNegotiable)}</div>
                             <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-500 mt-2">
                               <span className="flex items-center gap-1">
                                 <div className="h-1.5 w-1.5 rounded-full bg-slate-400"></div>
@@ -1393,7 +1398,9 @@ export default function ProfilePage() {
                                   </div>
 
                                   <div className="text-sm font-semibold text-teal-700 mb-1">
-                                    Rs. {ad.price ? ad.price.toLocaleString() : "N/A"}
+                                    {ad.price
+                                      ? <>{`Rs. ${ad.price.toLocaleString()}`}{(ad as any).metadata?.isNegotiable && <div className="text-lg font-normal opacity-70"> Negotiable</div>}</>
+                                      : ((ad as any).metadata?.isNegotiable ? "Negotiable" : "N/A")}
                                   </div>
 
                                   <div className="text-xs text-slate-500">

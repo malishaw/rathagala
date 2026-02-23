@@ -231,7 +231,11 @@ export default function DashboardPage() {
                                   <div className="text-xs text-slate-500 truncate">{ad.city ?? ad.province ?? "Location not specified"} • {ad.listingType}</div>
                                 </div>
                                 <div className="text-right flex-shrink-0">
-                                  <div className="text-teal-700 font-bold text-sm group-hover:text-teal-600 transition-colors">{ad.price ? `LKR ${Number(ad.price).toLocaleString()}` : "Negotiable"}</div>
+                                  <div className="text-teal-700 font-bold text-sm group-hover:text-teal-600 transition-colors">
+                                    {ad.price
+                                      ? <>{`LKR ${Number(ad.price).toLocaleString()}`}{(ad as any).metadata?.isNegotiable && <div className="text-lg font-normal opacity-70"> Negotiable</div>}</>
+                                      : ((ad as any).metadata?.isNegotiable ? "Negotiable" : "Price on request")}
+                                  </div>
                                   <div className="text-[10px] text-slate-400">{ad.updatedAt ? format(new Date(ad.updatedAt), "MMM d, yyyy") : "—"}</div>
                                 </div>
                               </div>

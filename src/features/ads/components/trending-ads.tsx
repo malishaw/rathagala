@@ -57,7 +57,11 @@ export function TrendingAds() {
                   {ad.title}
                 </h4>
                 <div className="flex items-center gap-2 text-xs text-slate-500">
-                  <span>{ad.price ? `Rs. ${ad.price.toLocaleString()}` : 'Price on request'}</span>
+                  <span>
+                    {ad.price
+                      ? <>{`Rs. ${ad.price.toLocaleString()}`}{(ad as any).metadata?.isNegotiable && <div className="text-lg font-normal opacity-70"> Negotiable</div>}</>
+                      : ((ad as any).metadata?.isNegotiable ? 'Negotiable' : 'Price on request')}
+                  </span>
                   <div className="flex items-center gap-1">
                     <Eye className="h-3 w-3" />
                     <span>{ad.analytics?.views || 0}</span>

@@ -444,9 +444,14 @@ export default function VehicleMarketplace() {
   };
 
   // Format price for display
-  const formatPrice = (price: number | null) => {
+  const formatPrice = (price: number | null, isNegotiable = false) => {
+    if (price === null && isNegotiable) return "Negotiable";
     if (price === null) return "Price on request";
-    return `Rs. ${price.toLocaleString()}`;
+    const formatted = `Rs. ${price.toLocaleString()}`;
+    if (isNegotiable) {
+      return <>{formatted}<div className="text-sm font-normal opacity-70"> Negotiable</div></>;
+    }
+    return formatted;
   };
 
   // Generate year options
@@ -1308,7 +1313,7 @@ export default function VehicleMarketplace() {
                               </div>
 
                               <div className="text-sm font-semibold text-teal-700 mb-1">
-                                {formatPrice(vehicle.price)}
+                                {formatPrice(vehicle.price, (vehicle as any).metadata?.isNegotiable)}
                               </div>
 
                               <div className="text-xs text-slate-500">
@@ -1458,7 +1463,7 @@ export default function VehicleMarketplace() {
                         <div className="text-xs text-slate-600 mb-2">{vehicle.city || vehicle.location || ""}</div>
 
                         <div className="text-sm font-semibold text-teal-700">
-                          {formatPrice(vehicle.price)}
+                          {formatPrice(vehicle.price, (vehicle as any).metadata?.isNegotiable)}
                         </div>
                       </div>
                     </div>

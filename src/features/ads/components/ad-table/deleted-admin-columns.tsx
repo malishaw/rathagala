@@ -196,7 +196,9 @@ function AdDetailsModal({ ad, open, onOpenChange }: { ad: DeletedAdType; open: b
             <div>
               <label className="text-xs font-semibold text-slate-600">Price</label>
               <p className="text-sm font-semibold text-teal-700">
-                {ad.price ? `Rs. ${ad.price.toLocaleString()}` : "Price on request"}
+                {ad.price
+                  ? <>{`Rs. ${ad.price.toLocaleString()}`}{(ad as any).metadata?.isNegotiable && <div className="text-lg font-normal opacity-70"> Negotiable</div>}</>
+                  : ((ad as any).metadata?.isNegotiable ? "Negotiable" : "Price on request")}
               </p>
             </div>
           </div>
@@ -415,9 +417,16 @@ export const createDeletedAdColumns = (onDelete: (id: string) => void): ColumnDe
     cell: ({ row }) => {
       const price = row.original.price;
       return price ? (
-        <div className="font-medium">Rs. {price.toLocaleString()}</div>
+        <div className="font-medium">
+          Rs. {price.toLocaleString()}
+          {(row.original.metadata as any)?.isNegotiable && (
+            <span className="ml-1 text-xs text-teal-600 font-normal">(Negotiable)</span>
+          )}
+        </div>
       ) : (
-        <span className="text-muted-foreground">—</span>
+        <span className="text-muted-foreground">
+          {(row.original.metadata as any)?.isNegotiable ? "Negotiable" : "—"}
+        </span>
       );
     },
   },

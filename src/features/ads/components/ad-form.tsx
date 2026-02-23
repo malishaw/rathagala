@@ -39,6 +39,7 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -154,6 +155,7 @@ export function AdForm({
     options: [] as string[],
     price: "",
     discountPrice: "",
+    isNegotiable: false,
 
     // Common vehicle fields
     condition: "",
@@ -253,7 +255,8 @@ export function AdForm({
         city: initialData.city || "",
         specialNote: initialData.specialNote || "",
         listingType: initialData.listingType || "SELL",
-        metadata: initialData.metadata || {}
+        metadata: initialData.metadata || {},
+        isNegotiable: (initialData.metadata as any)?.isNegotiable ?? false,
       });
 
       // Initialize promotion state from initialData
@@ -564,7 +567,8 @@ export function AdForm({
       district: formData.district || undefined,
       city: formData.city || undefined,
       specialNote: formData.specialNote || undefined,
-      mediaIds: selectedMedia.length > 0 ? selectedMedia.map((media) => media.id) : undefined
+      mediaIds: selectedMedia.length > 0 ? selectedMedia.map((media) => media.id) : undefined,
+      metadata: { ...((formData.metadata as any) || {}), isNegotiable: formData.isNegotiable },
     };
 
     onSubmit(adData);
@@ -1893,7 +1897,7 @@ export function AdForm({
                   {/* Price */}
                   <div className="flex items-center">
                     <div className="w-48 text-right pr-4 text-gray-600">
-                      Price<span className="text-red-500">*</span>
+                      Price
                     </div>
                     <div className="flex-1">
                       <Input
@@ -1902,9 +1906,25 @@ export function AdForm({
                         placeholder="25000"
                         value={formData.price}
                         onChange={(e) => handleInputChange("price", e.target.value)}
-                        required
                         className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                       />
+                    </div>
+                  </div>
+
+                  {/* Price is Negotiable */}
+                  <div className="flex items-center">
+                    <div className="w-48 text-right pr-4 text-gray-600">
+                      &nbsp;
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="isNegotiable"
+                        checked={formData.isNegotiable}
+                        onCheckedChange={(checked) => handleInputChange("isNegotiable", !!checked)}
+                      />
+                      <Label htmlFor="isNegotiable" className="text-sm cursor-pointer font-medium text-gray-600">
+                        Price is Negotiable
+                      </Label>
                     </div>
                   </div>
 
