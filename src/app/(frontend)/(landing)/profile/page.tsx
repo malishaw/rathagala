@@ -62,6 +62,11 @@ interface UserAd {
   featured?: boolean;
   boostExpiry?: string | null;
   featureExpiry?: string | null;
+  brand?: string | null;
+  model?: string | null;
+  manufacturedYear?: string | null;
+  type?: string | null;
+  analytics?: { views?: number } | null;
 }
 
 // Sri Lanka location data
@@ -116,6 +121,7 @@ export default function ProfilePage() {
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; ad: UserAd | null }>({ open: false, ad: null });
   const [deleteReason, setDeleteReason] = useState<DeleteAdReason>(DELETE_AD_REASONS[0]);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteSuccessDialog, setDeleteSuccessDialog] = useState<{ open: boolean; message: string }>({ open: false, message: "" });
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -403,6 +409,15 @@ export default function ProfilePage() {
     }
   };
 
+  // Format vehicle type for display
+  const formatVehicleType = (type?: string | null) => {
+    if (!type) return "";
+    return type
+      .replace(/_/g, " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
   // Handle delete ad
   const handleDeleteAd = async (ad: UserAd) => {
     setIsDeleting(true);
@@ -415,7 +430,20 @@ export default function ProfilePage() {
         throw new Error(error.message || "Failed to delete ad");
       }
       userAdsQuery.refetch();
-      toast.success(data?.message || `Your ${ad.title} ad successfully deleted.`);
+
+      // Build descriptive message: brand + model + year + vehicle type
+      const parts = [
+        ad.brand,
+        ad.model,
+        ad.manufacturedYear,
+        formatVehicleType(ad.type),
+      ].filter(Boolean);
+      const adDescription = parts.length > 0 ? parts.join(" ") : ad.title;
+      setDeleteSuccessDialog({
+        open: true,
+        message: `Your ${adDescription} ad successfully deleted.`,
+      });
+
       setDeleteDialog({ open: false, ad: null });
       setDeleteReason(DELETE_AD_REASONS[0]);
     } catch (error) {
@@ -630,6 +658,29 @@ export default function ProfilePage() {
                 <Button variant="destructive" disabled={isDeleting} className="bg-gradient-to-r from-red-500 to-red-600">
                   {isDeleting ? "Deleting..." : "Delete"}
                 </Button>
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Delete Success Popup */}
+        <AlertDialog open={deleteSuccessDialog.open} onOpenChange={open => { if (!open) setDeleteSuccessDialog({ open: false, message: "" }); }}>
+          <AlertDialogContent className="bg-white/95 backdrop-blur-xl border-2 border-emerald-200 max-w-md">
+            <AlertDialogHeader className="text-center">
+              <div className="mx-auto mb-3 h-16 w-16 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
+                <CheckCircle className="h-8 w-8 text-white" />
+              </div>
+              <AlertDialogTitle className="text-xl font-bold text-slate-800">Ad Deleted</AlertDialogTitle>
+              <AlertDialogDescription className="text-base text-slate-600 pt-2">
+                {deleteSuccessDialog.message}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="justify-center sm:justify-center">
+              <AlertDialogAction
+                className="bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700 border-0 px-8"
+                onClick={() => setDeleteSuccessDialog({ open: false, message: "" })}
+              >
+                OK
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -1157,10 +1208,10 @@ export default function ProfilePage() {
                         <div
                           key={ad.id}
                           className={`rounded-xl border-2 p-5 flex items-center transition-all duration-300 group relative ${isBoosted
-                              ? "bg-blue-50/50 backdrop-blur-md border-blue-100 hover:border-blue-200"
-                              : isFeatured
-                                ? "bg-yellow-50/50 backdrop-blur-md border-yellow-100 hover:border-yellow-200"
-                                : "bg-white/60 backdrop-blur-md border-white/30 hover:bg-white/70 hover:border-[#0D5C63]/30"
+                            ? "bg-blue-50/50 backdrop-blur-md border-blue-100 hover:border-blue-200"
+                            : isFeatured
+                              ? "bg-yellow-50/50 backdrop-blur-md border-yellow-100 hover:border-yellow-200"
+                              : "bg-white/60 backdrop-blur-md border-white/30 hover:bg-white/70 hover:border-[#0D5C63]/30"
                             }`}
                         >
 
