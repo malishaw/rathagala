@@ -826,11 +826,26 @@ export default function AdDetailPage() {
                     {/* WhatsApp */}
                     <button
                       onClick={() => {
-                        const url = typeof window !== 'undefined' ? window.location.href : '';
-                        const text = `Rathagala.lk Check out this vehicle: ${[ad.brand, ad.model, ad.manufacturedYear].filter(Boolean).join(" ")}`;
-                        const shareUrl = `https://wa.me/?text=${encodeURIComponent(text + " " + url)}`;
-                        window.open(shareUrl, '_blank', 'noopener');
-                        setIsShareMenuOpen(false);
+                        try {
+                          const url = typeof window !== 'undefined' ? window.location.href : '';
+                          const text = `Check out this vehicle: ${[ad.brand, ad.model, ad.manufacturedYear].filter(Boolean).join(" ")}`;
+                          const shareUrl = `https://wa.me/?text=${encodeURIComponent(text + " " + url)}`;
+                          
+                          // Detect mobile device
+                          const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                          
+                          if (isMobile) {
+                            window.location.href = shareUrl;
+                          } else {
+                            const newWindow = window.open(shareUrl, '_blank', 'noopener,noreferrer');
+                            if (!newWindow) {
+                              window.location.href = shareUrl;
+                            }
+                          }
+                          setIsShareMenuOpen(false);
+                        } catch (error) {
+                          console.error("Error sharing on WhatsApp:", error);
+                        }
                       }}
                       className="p-1 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
                       title="Share on WhatsApp"
@@ -1090,25 +1105,60 @@ export default function AdDetailPage() {
                       </div>
                     </div>
                   )}
-                  <a
-                    href={
-                      ad.whatsappNumber
-                        ? `https://wa.me/${ad.whatsappNumber.replace(/\D/g, "")}`
-                        : `sms:${ad.phoneNumber || ""}`
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full inline-block"
+                  <Button
+                    variant="outline"
+                    className="w-full border-[#024950] text-[#024950] hover:bg-[#024950] hover:text-white"
+                    disabled={!ad.whatsappNumber && !ad.phoneNumber}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      try {
+                        const vehicleInfo = [ad.brand, ad.model, ad.manufacturedYear].filter(Boolean).join(" ");
+                        const message = `Hi, I'm interested in this vehicle: ${vehicleInfo}. Could you please share more details`;
+                        
+                        if (ad.whatsappNumber) {
+                          // Clean phone number - remove all non-digits
+                          let phoneNumber = ad.whatsappNumber.replace(/\D/g, "");
+                          
+                          // Add Sri Lanka country code if not present
+                          if (!phoneNumber.startsWith("94")) {
+                            // Remove leading 0 if present
+                            phoneNumber = phoneNumber.replace(/^0+/, "");
+                            phoneNumber = "94" + phoneNumber;
+                          }
+                          
+                          console.log("Opening WhatsApp for number:", phoneNumber);
+                          
+                          // Detect mobile device
+                          const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                          
+                          // Build WhatsApp URL
+                          const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                          
+                          if (isMobile) {
+                            // On mobile, use direct navigation for better app opening
+                            window.location.href = whatsappUrl;
+                          } else {
+                            // On desktop, open in new tab
+                            const newWindow = window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+                            if (!newWindow) {
+                              console.warn("Popup blocked, trying direct navigation");
+                              window.location.href = whatsappUrl;
+                            }
+                          }
+                        } else if (ad.phoneNumber) {
+                          // Fallback to SMS if no WhatsApp number
+                          const smsUrl = `sms:${ad.phoneNumber}${/iPhone|iPad|iPod/i.test(navigator.userAgent) ? '&' : '?'}body=${encodeURIComponent(message)}`;
+                          window.location.href = smsUrl;
+                        }
+                      } catch (error) {
+                        console.error("Error opening WhatsApp:", error);
+                        alert("Unable to open WhatsApp. Please try copying the number and messaging directly.");
+                      }
+                    }}
                   >
-                    <Button
-                      variant="outline"
-                      className="w-full border-[#024950] text-[#024950] hover:bg-[#024950] hover:text-white"
-                      disabled={!ad.whatsappNumber}
-                    >
-                      <MessageCircle className="w-4 h-4 mr-2" />
-                      {ad.whatsappNumber ? "WhatsApp" : "Message"}
-                    </Button>
-                  </a>
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    {ad.whatsappNumber ? "WhatsApp" : "Message"}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
