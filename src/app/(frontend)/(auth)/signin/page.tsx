@@ -5,13 +5,13 @@ import { SigninForm } from "@/features/auth/components/signin-form";
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center w-full px-4 py-8">
+    <div className="flex items-center justify-center w-full px-4 pt-0 pb-8">
       <div className="w-full max-w-md space-y-6 flex flex-col items-center">
         {/* Logo with enhanced styling */}
         <div className="mb-2">
           <Logo />
         </div>
-        
+
         {/* Card container for the form */}
         <Card className="w-full border-teal-700/20 bg-white shadow-lg">
           <CardHeader className="space-y-1 text-center pb-4 px-4 sm:px-6">
@@ -26,7 +26,7 @@ export default function LoginPage() {
             <SigninForm />
           </CardContent>
         </Card>
-        
+
         {/* Footer text */}
         <p className="text-xs sm:text-sm text-white/70 text-center">
           Secure authentication powered by Rathagala

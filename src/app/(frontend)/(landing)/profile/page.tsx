@@ -166,9 +166,9 @@ export default function ProfilePage() {
         // Fetch full user data to get organization info and phoneVerified
         try {
           const { data: meData } = await betterFetch<any>("/api/users/me");
-          
+
           console.log("meData from /api/users/me:", meData);
-          
+
           // Merge session user with full user data from API
           const fullUser = {
             ...session.user,
@@ -181,8 +181,8 @@ export default function ProfilePage() {
             district: meData?.district || session.user.district,
             city: meData?.city || session.user.city,
             location: meData?.location || session.user.location
-          };  
-          
+          };
+
           console.log("fullUser after merge:", fullUser);
           setUser(fullUser);
 
@@ -202,10 +202,10 @@ export default function ProfilePage() {
           });
         } catch (meError) {
           console.error("Error fetching full user data:", meError);
-          
+
           // Fallback to session data if /api/users/me fails
           setUser(session.user);
-          
+
           setFormData({
             name: session.user.name || "",
             email: session.user.email || "",
@@ -293,9 +293,9 @@ export default function ProfilePage() {
       // Check if response has error or missing user data (validation error)
       if (!response.data?.user) {
         // Try to extract error message from various possible paths
-        const message = 
+        const message =
           (response.error as any)?.message ||
-          (response.data as any)?.message || 
+          (response.data as any)?.message ||
           "This phone number already in use. Add another";
         setErrorMessage(message);
         setTimeout(() => setErrorMessage(null), 5000);
@@ -326,12 +326,12 @@ export default function ProfilePage() {
     } catch (error: any) {
       console.error("Error updating profile:", error);
       // Extract error message from betterFetch thrown error - try multiple paths
-      const message = 
-        error?.error?.message || 
-        error?.data?.message || 
+      const message =
+        error?.error?.message ||
+        error?.data?.message ||
         error?.body?.message ||
         error?.response?.data?.message ||
-        error?.message || 
+        error?.message ||
         "This phone number already in use. Add another";
       setErrorMessage(message);
       setTimeout(() => setErrorMessage(null), 5000);
@@ -391,7 +391,7 @@ export default function ProfilePage() {
     if (!status) {
       return <Badge variant="outline" className="text-gray-500 text-xs">Not Verified</Badge>;
     }
-    
+
     switch (status) {
       case "verified":
         return <Badge className="bg-green-100 text-green-800 hover:bg-green-100 text-xs">Verified</Badge>;
@@ -429,10 +429,10 @@ export default function ProfilePage() {
   // Handle profile photo selection
   const handlePhotoSelect = async (media: MediaFile[]) => {
     if (media.length === 0) return;
-    
+
     const selectedPhoto = media[0];
     setIsSavingPhoto(true);
-    
+
     try {
       // Include all profile fields to avoid validation errors
       const response = await betterFetch("/api/user/profile", {
@@ -450,9 +450,9 @@ export default function ProfilePage() {
       });
 
       if (!response.data?.user) {
-        const errorMsg = (response.error as any)?.message || 
-                         (response.data as any)?.message || 
-                         "Failed to update profile photo";
+        const errorMsg = (response.error as any)?.message ||
+          (response.data as any)?.message ||
+          "Failed to update profile photo";
         throw new Error(errorMsg);
       }
 
@@ -478,7 +478,7 @@ export default function ProfilePage() {
   // Handle remove profile photo
   const handleRemovePhoto = async () => {
     setIsSavingPhoto(true);
-    
+
     try {
       // Include all profile fields to avoid validation errors
       const response = await betterFetch("/api/user/profile", {
@@ -496,9 +496,9 @@ export default function ProfilePage() {
       });
 
       if (!response.data?.user) {
-        const errorMsg = (response.error as any)?.message || 
-                         (response.data as any)?.message || 
-                         "Failed to remove profile photo";
+        const errorMsg = (response.error as any)?.message ||
+          (response.data as any)?.message ||
+          "Failed to remove profile photo";
         throw new Error(errorMsg);
       }
 
@@ -562,15 +562,15 @@ export default function ProfilePage() {
   const userAds = useMemo(() => {
     const rawUserAds = userAdsQuery.data || [];
     const adsArray = Array.isArray(rawUserAds) ? rawUserAds : rawUserAds.ads || [];
-    
+
     return [...adsArray].sort((a, b) => {
       const now = new Date();
       const aIsBoosted = a.boosted && a.boostExpiry && new Date(a.boostExpiry) > now;
       const bIsBoosted = b.boosted && b.boostExpiry && new Date(b.boostExpiry) > now;
-      
+
       if (aIsBoosted && !bIsBoosted) return -1;
       if (!aIsBoosted && bIsBoosted) return 1;
-      
+
       return 0;
     });
   }, [userAdsQuery.data]);
@@ -775,7 +775,7 @@ export default function ProfilePage() {
                   {activeSection === "personal" ? (
                     <div className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-6 space-y-4">
                       <div>
-                         <label className="block text-sm font-semibold text-slate-700 mb-2">Name</label>
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">Name</label>
                         <Input
                           name="name"
                           value={formData.name}
@@ -1152,107 +1152,114 @@ export default function ProfilePage() {
                       const now = new Date();
                       const isBoosted = ad.boosted && ad.boostExpiry && new Date(ad.boostExpiry) > now;
                       const isFeatured = ad.featured && ad.featureExpiry && new Date(ad.featureExpiry) > now;
-                      
+
                       return (
-                      <div
-                        key={ad.id}
-                        className={`rounded-xl border-2 p-5 flex items-center transition-all duration-300 group relative ${
-                          isBoosted
-                            ? "bg-blue-50/50 backdrop-blur-md border-blue-100 hover:border-blue-200"
-                            : isFeatured
-                            ? "bg-yellow-50/50 backdrop-blur-md border-yellow-100 hover:border-yellow-200"
-                            : "bg-white/60 backdrop-blur-md border-white/30 hover:bg-white/70 hover:border-[#0D5C63]/30"
-                        }`}
-                      >
+                        <div
+                          key={ad.id}
+                          className={`rounded-xl border-2 p-5 flex items-center transition-all duration-300 group relative ${isBoosted
+                              ? "bg-blue-50/50 backdrop-blur-md border-blue-100 hover:border-blue-200"
+                              : isFeatured
+                                ? "bg-yellow-50/50 backdrop-blur-md border-yellow-100 hover:border-yellow-200"
+                                : "bg-white/60 backdrop-blur-md border-white/30 hover:bg-white/70 hover:border-[#0D5C63]/30"
+                            }`}
+                        >
 
 
-                        <div className="h-20 w-20 flex-shrink-0 mr-5 rounded-xl overflow-hidden border-2 border-white/50">
-                          {getAdImage(ad) ? (
-                            <img
-                              src={getAdImage(ad)}
-                              alt={ad.title}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex items-center justify-center h-full bg-gradient-to-br from-slate-100 to-slate-200">
-                              <Car className="h-10 w-10 text-slate-400" />
+                          <div className="h-20 w-20 flex-shrink-0 mr-5 rounded-xl overflow-hidden border-2 border-white/50">
+                            {getAdImage(ad) ? (
+                              <img
+                                src={getAdImage(ad)}
+                                alt={ad.title}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex items-center justify-center h-full bg-gradient-to-br from-slate-100 to-slate-200">
+                                <Car className="h-10 w-10 text-slate-400" />
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <div
+                                className="font-semibold text-lg text-slate-800 hover:text-[#0D5C63] cursor-pointer transition-colors duration-300"
+                                onClick={() => router.push(`/${ad.id}`)}
+                              >
+                                {ad.title}
+                              </div>
+                              {getStatusBadge(ad.status)}
+                              {/* Promotion Badges */}
+                              {(() => {
+                                const now = new Date();
+                                const isBoosted = ad.boosted && ad.boostExpiry && new Date(ad.boostExpiry) > now;
+                                const isFeatured = ad.featured && ad.featureExpiry && new Date(ad.featureExpiry) > now;
+
+                                if (isBoosted) {
+                                  const daysLeft = Math.ceil((new Date(ad.boostExpiry!).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                                  return (
+                                    <Badge className="bg-orange-100 text-orange-700 border border-orange-300 flex items-center gap-1">
+                                      <Zap className="w-3 h-3" />
+                                      Boosted ({daysLeft}d left)
+                                    </Badge>
+                                  );
+                                }
+                                if (isFeatured) {
+                                  const daysLeft = Math.ceil((new Date(ad.featureExpiry!).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                                  return (
+                                    <Badge className="bg-yellow-100 text-yellow-700 border border-yellow-300 flex items-center gap-1">
+                                      <Star className="w-3 h-3" />
+                                      Featured ({daysLeft}d left)
+                                    </Badge>
+                                  );
+                                }
+                                return null;
+                              })()}
                             </div>
-                          )}
-                        </div>
+                            <div className="text-base font-bold text-[#0D5C63] mt-1">Rs {formatPrice(ad.price)}</div>
+                            <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-500 mt-2">
+                              <span className="flex items-center gap-1">
+                                <div className="h-1.5 w-1.5 rounded-full bg-slate-400"></div>
+                                {ad.location || "No location"}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <div className="h-1.5 w-1.5 rounded-full bg-slate-400"></div>
+                                {formatDate(ad.createdAt)}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <div className="h-1.5 w-1.5 rounded-full bg-slate-400"></div>
+                                {ad.analytics?.views || 0} views
+                              </span>
+                            </div>
+                            {ad.status === "PENDING_REVIEW" && (
+                              <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                <p className="text-sm text-amber-800">
+                                  <span className="font-semibold">To publish your ad</span> please send Your Name via SMS or WhatsApp through the provided mobile number to{" "}
+                                  <a href="https://wa.me/94766220170" target="_blank" rel="noopener noreferrer" className="font-bold text-[#0D5C63] hover:underline">0766220170</a>.
+                                </p>
+                              </div>
+                            )}
+                          </div>
 
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <div
-                              className="font-semibold text-lg text-slate-800 hover:text-[#0D5C63] cursor-pointer transition-colors duration-300"
-                              onClick={() => router.push(`/${ad.id}`)}
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-10 w-10 p-0 rounded-lg bg-white/50 hover:bg-gradient-to-r from-[#0D5C63] to-teal-600 text-slate-600 hover:text-white transition-all duration-300"
+                              onClick={() => router.push(`/edit-ad/${ad.id}`)}
                             >
-                              {ad.title}
-                            </div>
-                            {getStatusBadge(ad.status)}
-                            {/* Promotion Badges */}
-                            {(() => {
-                              const now = new Date();
-                              const isBoosted = ad.boosted && ad.boostExpiry && new Date(ad.boostExpiry) > now;
-                              const isFeatured = ad.featured && ad.featureExpiry && new Date(ad.featureExpiry) > now;
-                              
-                              if (isBoosted) {
-                                const daysLeft = Math.ceil((new Date(ad.boostExpiry!).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                                return (
-                                  <Badge className="bg-orange-100 text-orange-700 border border-orange-300 flex items-center gap-1">
-                                    <Zap className="w-3 h-3" />
-                                    Boosted ({daysLeft}d left)
-                                  </Badge>
-                                );
-                              }
-                              if (isFeatured) {
-                                const daysLeft = Math.ceil((new Date(ad.featureExpiry!).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                                return (
-                                  <Badge className="bg-yellow-100 text-yellow-700 border border-yellow-300 flex items-center gap-1">
-                                    <Star className="w-3 h-3" />
-                                    Featured ({daysLeft}d left)
-                                  </Badge>
-                                );
-                              }
-                              return null;
-                            })()}
-                          </div>
-                          <div className="text-base font-bold text-[#0D5C63] mt-1">Rs {formatPrice(ad.price)}</div>
-                          <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-500 mt-2">
-                            <span className="flex items-center gap-1">
-                              <div className="h-1.5 w-1.5 rounded-full bg-slate-400"></div>
-                              {ad.location || "No location"}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <div className="h-1.5 w-1.5 rounded-full bg-slate-400"></div>
-                              {formatDate(ad.createdAt)}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <div className="h-1.5 w-1.5 rounded-full bg-slate-400"></div>
-                              {ad.analytics?.views || 0} views
-                            </span>
+                              <Edit className="h-5 w-5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-10 w-10 p-0 rounded-lg bg-white/50 hover:bg-gradient-to-r from-red-500 to-red-600 text-slate-600 hover:text-white transition-all duration-300"
+                              onClick={() => setDeleteDialog({ open: true, ad })}
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </Button>
                           </div>
                         </div>
-
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-10 w-10 p-0 rounded-lg bg-white/50 hover:bg-gradient-to-r from-[#0D5C63] to-teal-600 text-slate-600 hover:text-white transition-all duration-300"
-                            onClick={() => router.push(`/edit-ad/${ad.id}`)}
-                          >
-                            <Edit className="h-5 w-5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-10 w-10 p-0 rounded-lg bg-white/50 hover:bg-gradient-to-r from-red-500 to-red-600 text-slate-600 hover:text-white transition-all duration-300"
-                            onClick={() => setDeleteDialog({ open: true, ad })}
-                          >
-                            <Trash2 className="h-5 w-5" />
-                          </Button>
-                        </div>
-                      </div>
-                    );
+                      );
                     })
                   )}
                 </div>
