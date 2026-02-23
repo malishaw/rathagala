@@ -266,6 +266,16 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
         // Apply pagination manually after filtering
         ads = ads.slice(offset, offset + limitNum);
       }
+
+      // For admin view: exclude soft-deleted ads unless explicitly requested (deleted-ads page)
+      // The deleted-ads page passes includeDeleted=true to fetch them specifically
+      const includeDeleted = query.includeDeleted === "true";
+      if (isAdmin && !query.filterByUser && !includeDeleted) {
+        ads = ads.filter((ad: any) => {
+          const metadata = ad.metadata || {};
+          return metadata.deletedByUser !== true;
+        });
+      }
     } catch (queryError) {
       console.error("Error in main query:", queryError);
       return c.json(
@@ -1101,8 +1111,9 @@ export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
       );
     }
 
-    // Verify user is the owner of the ad
-    if (existingAd.createdBy !== user.id) {
+    // Verify user is the owner of the ad (admins can delete any ad)
+    const isAdmin = (user as any)?.role === "admin";
+    if (existingAd.createdBy !== user.id && !isAdmin) {
       return c.json(
         { message: "You don't have permission to delete this ad" },
         HttpStatusCodes.FORBIDDEN

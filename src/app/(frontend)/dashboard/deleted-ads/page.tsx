@@ -54,6 +54,7 @@ export default function DeletedAdsPage() {
           page: "1",
           limit: "10000", // Fetch all ads
           search: searchQuery || "",
+          includeDeleted: "true", // Include soft-deleted ads for this view
         }
       });
 

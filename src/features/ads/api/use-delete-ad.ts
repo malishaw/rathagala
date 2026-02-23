@@ -57,6 +57,9 @@ export function useDeleteAd() {
       queryClient.invalidateQueries({ queryKey: ["ads"] });
       queryClient.invalidateQueries({ queryKey: ["userAds"] });
       queryClient.invalidateQueries({ queryKey: ["reports"] });
+      queryClient.invalidateQueries({ queryKey: ["deleted-ads"] });
+      queryClient.refetchQueries({ queryKey: ["ads"] });
+      queryClient.refetchQueries({ queryKey: ["deleted-ads"] });
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to delete ad", { id: toastId });

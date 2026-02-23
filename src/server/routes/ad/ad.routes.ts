@@ -33,6 +33,7 @@ export const list = createRoute({
         .optional()
         .transform((val) => val === "true")
         .pipe(z.boolean().default(false)),
+      includeDeleted: z.string().optional(),
     }),
   },
   responses: {
