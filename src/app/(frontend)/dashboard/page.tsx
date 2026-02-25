@@ -84,7 +84,7 @@ export default function DashboardPage() {
             {/* Admin Stats Cards - Show for admin users */}
             {isAdmin && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 duration-200">
+                <Link href="/dashboard/ads-manage" className="bg-white p-6 rounded-2xl border border-slate-200 duration-200 hover:border-blue-300 hover:shadow-md hover:bg-blue-50 transition-all cursor-pointer">
                   <div className="flex items-center justify-between mb-4">
                     <div className="p-3 bg-blue-100 rounded-xl">
                       <TrendingUp className="w-6 h-6 text-blue-600" />
@@ -92,9 +92,9 @@ export default function DashboardPage() {
                   </div>
                   <div className="text-sm font-medium text-slate-500 mb-1">Total Ads</div>
                   <div className="text-3xl font-bold text-slate-800">{data?.pagination?.total ?? "—"}</div>
-                </div>
+                </Link>
 
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 duration-200">
+                 <Link href="/dashboard/ads-manage?status=ACTIVE" className="bg-white p-6 rounded-2xl border border-slate-200 duration-200 hover:border-green-300 hover:shadow-md hover:bg-green-50 transition-all cursor-pointer">
                   <div className="flex items-center justify-between mb-4">
                     <div className="p-3 bg-green-100 rounded-xl">
                       <Star className="w-6 h-6 text-green-600" />
@@ -102,17 +102,17 @@ export default function DashboardPage() {
                   </div>
                   <div className="text-sm font-medium text-slate-500 mb-1">Approved Ads</div>
                   <div className="text-3xl font-bold text-slate-800">{ads.filter(a => a.status === "ACTIVE").length}</div>
-                </div>
+                </Link>
 
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 duration-200">
-                  <div className="flex items-center justify-between mb-4">
+                <Link href="/dashboard/ads-manage?status=PENDING_REVIEW" className="bg-white p-6 rounded-2xl border border-slate-200 duration-200 hover:border-yellow-300 hover:shadow-md hover:bg-yellow-50 transition-all cursor-pointer">
+                  <div className=" flex items-center justify-between mb-4">
                     <div className="p-3 bg-yellow-100 rounded-xl">
                       <Clock className="w-6 h-6 text-yellow-600" />
                     </div>
                   </div>
                   <div className="text-sm font-medium text-slate-500 mb-1">Pending Ads</div>
                   <div className="text-3xl font-bold text-slate-800">{ads.filter(a => a.status === "PENDING_REVIEW").length}</div>
-                </div>
+                </Link>
 
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 duration-200">
                   <div className="flex items-center justify-between mb-4">
