@@ -76,11 +76,13 @@ export default function AdsManagePage() {
     parseAsString.withDefault("all")
   );
 
+  const isPromoFilter = statusFilter === "BOOSTED" || statusFilter === "FEATURED";
+
   const { data, error, isPending } = useGetAds({
-    limit: limit || 10,
-    page: page || 1,
+    limit: isPromoFilter ? 10000 : limit || 10,
+    page: isPromoFilter ? 1 : page || 1,
     search: searchQuery || "",
-    status: statusFilter && statusFilter !== "all" ? statusFilter : null,
+    status: statusFilter && statusFilter !== "all" && !isPromoFilter ? statusFilter : null,
   });
 
   const [selectedRows, setSelectedRows] = useState<AdType[]>([]);
@@ -245,6 +247,26 @@ export default function AdsManagePage() {
     };
   });
 
+  // Client-side filter for BOOSTED / FEATURED (not real Ad status values)
+  // Only show ads whose promotion is currently active (expiry in the future)
+  const now = new Date();
+  const filteredAds =
+    statusFilter === "BOOSTED"
+      ? formattedAds.filter(
+          (ad) =>
+            (ad as Record<string, unknown>).boosted === true &&
+            ad.boostExpiry instanceof Date &&
+            ad.boostExpiry > now
+        )
+      : statusFilter === "FEATURED"
+      ? formattedAds.filter(
+          (ad) =>
+            (ad as Record<string, unknown>).featured === true &&
+            ad.featureExpiry instanceof Date &&
+            ad.featureExpiry > now
+        )
+      : formattedAds;
+
   return (
     <PageContainer scrollable={false}>
       <div className="flex flex-1 flex-col space-y-4">
@@ -280,6 +302,8 @@ export default function AdsManagePage() {
                 <SelectItem value="ACTIVE">Active</SelectItem>
                 <SelectItem value="PENDING_REVIEW">Pending</SelectItem>
                 <SelectItem value="REJECTED">Rejected</SelectItem>
+                <SelectItem value="BOOSTED">Boosted</SelectItem>
+                <SelectItem value="FEATURED">Featured</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -310,7 +334,7 @@ export default function AdsManagePage() {
         </div>
         <DataTable
           columns={adminColumns}
-          data={formattedAds}
+          data={filteredAds}
           totalItems={data.pagination.total}
           enableRowSelection={true}
           onRowSelectionChange={setSelectedRows}

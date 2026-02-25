@@ -4,6 +4,7 @@
 import React, { useEffect } from "react";
 import {
   AudioWaveform,
+  Clock,
   Command,
   GalleryVerticalEnd,
   GraduationCapIcon,
@@ -70,6 +71,11 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
         title: "Ads Manage",
         url: "/dashboard/ads-manage",
         icon: NewspaperIcon
+      },
+      {
+        title: "Expired Ads",
+        url: "/dashboard/expired-ads",
+        icon: Clock
       },
       {
         title: "User Deleted Ads",

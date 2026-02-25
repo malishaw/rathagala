@@ -160,6 +160,17 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       andFilters.push({ status: AdStatus.ACTIVE });
       // Also exclude soft-deleted ads (published = false, metadata.deletedByUser = true)
       andFilters.push({ published: true });
+      // Exclude ads older than 60 days UNLESS they still have an active promotion
+      const sixtyDaysAgo = new Date();
+      sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+      const now = new Date();
+      andFilters.push({
+        OR: [
+          { createdAt: { gte: sixtyDaysAgo } },
+          { boosted: true, boostExpiry: { gt: now } },
+          { featured: true, featureExpiry: { gt: now } },
+        ],
+      });
     }
 
     // Compose final whereCondition
@@ -168,27 +179,6 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       whereCondition = andFilters[0];
     } else if (andFilters.length > 1) {
       whereCondition = { AND: andFilters };
-    }
-
-    // Quick validation: Prisma does not allow nested AND/OR at the top level
-    if (whereCondition && typeof whereCondition === "object") {
-      const keys = Object.keys(whereCondition);
-      if (keys.length === 1 && ["AND", "OR"].includes(keys[0]) && Array.isArray(whereCondition[keys[0]])) {
-        // Check for nested AND/OR inside another AND/OR
-        const arr = whereCondition[keys[0]];
-        for (const cond of arr) {
-          if (cond && typeof cond === "object") {
-            const innerKeys = Object.keys(cond);
-            if (innerKeys.length === 1 && ["AND", "OR"].includes(innerKeys[0]) && Array.isArray(cond[innerKeys[0]])) {
-              console.error("[ERROR] Nested AND/OR detected in whereCondition. Prisma does not support this structure.");
-              return c.json(
-                { message: "Invalid filter structure: Nested AND/OR detected. Please check filter logic." },
-                400
-              );
-            }
-          }
-        }
-      }
     }
 
     // Count query for total number of records
