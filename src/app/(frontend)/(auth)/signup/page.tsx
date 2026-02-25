@@ -41,6 +41,9 @@ export default async function SignupPage({
           </div>
         </CardContent>
       </Card>
+      <p className="text-sm mt-2 text-white/70 text-center">
+        Secure authentication powered by Rathagala
+      </p>
     </div>
   );
 }
