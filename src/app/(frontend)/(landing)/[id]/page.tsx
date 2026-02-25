@@ -1083,11 +1083,17 @@ export default function AdDetailPage() {
                   )}
                 {/* Location Display - show city/district or fallback to location field */}
                 {(ad.city || ad.district || ad.location) && (
-                  <div className="flex items-center text-gray-600 mb-4">
-                    <MapPin className="w-4 h-4 mr-1" />
-                    <span>
-                      {[ad.city, ad.district].filter(Boolean).join(", ") || ad.location}
-                    </span>
+                    <div className="flex flex-col gap-4 mb-0">
+                      <div className="flex items-center text-gray-600">
+                        <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span className="break-words">{[ad.city, ad.district].filter(Boolean).join(", ") || ad.location}</span>
+                      </div>
+                    </div>
+                  
+                )}
+                {ad.location && (
+                  <div className="flex items-center text-gray-600">
+                    <span className="text-xs mb-4">{ad.location}</span>
                   </div>
                 )}
 

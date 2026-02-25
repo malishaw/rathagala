@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
 import { authClient } from "@/lib/auth-client";
+import { locationData, getAllCities, getAllDistricts } from "@/lib/location-data";
 
 // Vehicle type labels
 const vehicleTypeLabels: Record<string, string> = {
@@ -63,81 +64,8 @@ const vehicleMakes = [
   "Isuzu", "Bajaj", "Hero", "Yamaha", "Kawasaki", "KTM", "TVS", "Other"
 ];
 
-// Sri Lankan provinces, districts, and cities data (Copied from sell page for consistency)
-const locationData = {
-  "Western": {
-    "Colombo": ["Colombo", "Dehiwala-Mount Lavinia", "Moratuwa", "Sri Jayawardenepura Kotte", "Maharagama", "Kesbewa", "Kaduwela", "Kotikawatta", "Kolonnawa", "Nugegoda", "Rajagiriya", "Battaramulla"],
-    "Gampaha": ["Gampaha", "Negombo", "Katunayake", "Minuwangoda", "Wattala", "Kelaniya", "Peliyagoda", "Ja-Ela", "Kandana", "Divulapitiya"],
-    "Kalutara": ["Kalutara", "Panadura", "Horana", "Beruwala", "Aluthgama", "Matugama", "Bandaragama", "Ingiriya"]
-  },
-  "Central": {
-    "Kandy": ["Kandy", "Gampola", "Nawalapitiya", "Wattegama", "Harispattuwa", "Pathadumbara", "Akurana", "Delthota"],
-    "Matale": ["Matale", "Dambulla", "Sigiriya", "Galewela", "Ukuwela", "Rattota"],
-    "Nuwara Eliya": ["Nuwara Eliya", "Hatton", "Talawakelle", "Ginigathena", "Kotagala", "Maskeliya", "Bogawantalawa"]
-  },
-  "Southern": {
-    "Galle": ["Galle", "Hikkaduwa", "Ambalangoda", "Elpitiya", "Bentota", "Baddegama", "Yakkalamulla"],
-    "Matara": ["Matara", "Weligama", "Mirissa", "Dikwella", "Hakmana", "Akuressa", "Denipitiya"],
-    "Hambantota": ["Hambantota", "Tangalle", "Tissamaharama", "Ambalantota", "Beliatta", "Weeraketiya"]
-  },
-  "Northern": {
-    "Jaffna": ["Jaffna", "Nallur", "Chavakachcheri", "Point Pedro", "Karainagar", "Velanai"],
-    "Kilinochchi": ["Kilinochchi", "Pallai", "Paranthan"],
-    "Mannar": ["Mannar", "Nanattan", "Murunkan"],
-    "Vavuniya": ["Vavuniya", "Nedunkeni", "Settikulam"],
-    "Mullaitivu": ["Mullaitivu", "Oddusuddan", "Puthukudiyiruppu"]
-  },
-  "Eastern": {
-    "Trincomalee": ["Trincomalee", "Kinniya", "Mutur", "Kuchchaveli"],
-    "Batticaloa": ["Batticaloa", "Kaluwanchikudy", "Valachchenai", "Eravur"],
-    "Ampara": ["Ampara", "Akkaraipattu", "Kalmunai", "Sainthamaruthu", "Pottuvil"]
-  },
-  "North Western": {
-    "Kurunegala": ["Kurunegala", "Kuliyapitiya", "Narammala", "Wariyapola", "Pannala", "Melsiripura"],
-    "Puttalam": ["Puttalam", "Chilaw", "Nattandiya", "Wennappuwa", "Marawila", "Dankotuwa"]
-  },
-  "North Central": {
-    "Anuradhapura": ["Anuradhapura", "Kekirawa", "Thambuttegama", "Eppawala", "Medawachchiya"],
-    "Polonnaruwa": ["Polonnaruwa", "Kaduruwela", "Medirigiriya", "Hingurakgoda"]
-  },
-  "Uva": {
-    "Badulla": ["Badulla", "Bandarawela", "Haputale", "Welimada", "Mahiyanganaya", "Passara"],
-    "Monaragala": ["Monaragala", "Bibile", "Wellawaya", "Kataragama", "Buttala"]
-  },
-  "Sabaragamuwa": {
-    "Ratnapura": ["Ratnapura", "Embilipitiya", "Balangoda", "Pelmadulla", "Eheliyagoda", "Kuruwita"],
-    "Kegalle": ["Kegalle", "Mawanella", "Warakapola", "Rambukkana", "Galigamuwa", "Yatiyantota"]
-  }
-};
-
-// Flatten cities for default view and create district map
-const getAllCities = () => {
-  const cities = new Set<string>();
-  Object.values(locationData).forEach(province => {
-    Object.values(province).forEach(districtCities => {
-      districtCities.forEach(city => cities.add(city));
-    });
-  });
-  return Array.from(cities).sort();
-};
-
 const sriLankanCities = getAllCities();
-
-// Sri Lankan districts
-const sriLankanDistricts = [
-  "Ampara", "Anuradhapura", "Badulla", "Batticaloa", "Colombo",
-  "Galle", "Gampaha", "Hambantota", "Jaffna", "Kalutara",
-  "Kandy", "Kegalle", "Kilinochchi", "Kurunegala", "Mannar",
-  "Matale", "Matara", "Monaragala", "Mullaitivu", "Nuwara Eliya",
-  "Polonnaruwa", "Puttalam", "Ratnapura", "Trincomalee", "Vavuniya"
-];
-
-// Sri Lankan locations
-const sriLankanLocations = [
-  "Colombo", "Kandy", "Galle", "Jaffna", "Negombo", "Batticaloa", "Trincomalee",
-  "Anuradhapura", "Ratnapura", "Kotte", "Moratuwa", "Nuwara Eliya", "Gampaha",
-  "Matara", "Kurunegala", "Badulla", "Hambantota", "Kalmunai", "Vavuniya"
-];
+const sriLankanDistricts = getAllDistricts();
 
 // Search filter interface
 interface SearchFilters {

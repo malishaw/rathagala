@@ -19,6 +19,8 @@ import { Building2, Car, CheckCircle, ChevronRight, CreditCard, Edit, Heart, Loa
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
+import { locationData } from "@/lib/location-data";
+import { CitySearchDropdown } from "@/components/ui/city-search-dropdown";
 
 // User type from auth
 interface User {
@@ -68,53 +70,6 @@ interface UserAd {
   type?: string | null;
   analytics?: { views?: number } | null;
 }
-
-// Sri Lanka location data
-const locationData: Record<string, Record<string, string[]>> = {
-  "Western": {
-    "Colombo": ["Colombo 1", "Colombo 2", "Colombo 3", "Colombo 4", "Colombo 5", "Colombo 6", "Colombo 7", "Colombo 8", "Colombo 9", "Colombo 10", "Colombo 11", "Colombo 12", "Colombo 13", "Colombo 14", "Colombo 15"],
-    "Gampaha": ["Gampaha", "Negombo", "Katunayake", "Wattala", "Kelaniya", "Ja-Ela", "Minuwangoda", "Kadawatha", "Ragama", "Divulapitiya"],
-    "Kalutara": ["Kalutara", "Panadura", "Horana", "Beruwala", "Aluthgama", "Matugama", "Wadduwa", "Bandaragama"]
-  },
-  "Central": {
-    "Kandy": ["Kandy", "Katugastota", "Gampola", "Nawalapitiya", "Peradeniya", "Akurana", "Kadugannawa"],
-    "Matale": ["Matale", "Dambulla", "Sigiriya", "Galewela", "Ukuwela", "Rattota"],
-    "Nuwara Eliya": ["Nuwara Eliya", "Hatton", "Nandikadal", "Talawakelle", "Bandarawela", "Haputale"]
-  },
-  "Southern": {
-    "Galle": ["Galle", "Hikkaduwa", "Ambalangoda", "Bentota", "Elpitiya", "Baddegama"],
-    "Matara": ["Matara", "Weligama", "Mirissa", "Dikwella", "Akuressa", "Hakmana"],
-    "Hambantota": ["Hambantota", "Tangalle", "Tissamaharama", "Ambalantota", "Beliatta"]
-  },
-  "Northern": {
-    "Jaffna": ["Jaffna", "Nallur", "Chavakachcheri", "Point Pedro", "Karainagar"],
-    "Kilinochchi": ["Kilinochchi", "Pallai", "Paranthan"],
-    "Mannar": ["Mannar", "Nanattan", "Madhu"],
-    "Vavuniya": ["Vavuniya", "Nedunkeni", "Omanthai"],
-    "Mullaitivu": ["Mullaitivu", "Pudukudiyiruppu", "Oddusuddan"]
-  },
-  "Eastern": {
-    "Trincomalee": ["Trincomalee", "Kinniya", "Mutur", "Kantale"],
-    "Batticaloa": ["Batticaloa", "Kattankudy", "Eravur", "Valachchenai"],
-    "Ampara": ["Ampara", "Kalmunai", "Sainthamaruthu", "Akkaraipattu", "Pottuvil"]
-  },
-  "North Western": {
-    "Kurunegala": ["Kurunegala", "Kuliyapitiya", "Narammala", "Wariyapola", "Pannala", "Mawathagama"],
-    "Puttalam": ["Puttalam", "Chilaw", "Wennappuwa", "Nattandiya", "Dankotuwa", "Anamaduwa"]
-  },
-  "North Central": {
-    "Anuradhapura": ["Anuradhapura", "Kekirawa", "Tambuttegama", "Eppawala", "Medawachchiya"],
-    "Polonnaruwa": ["Polonnaruwa", "Kaduruwela", "Medirigiriya", "Hingurakgoda"]
-  },
-  "Uva": {
-    "Badulla": ["Badulla", "Bandarawela", "Haputale", "Welimada", "Mahiyanganaya", "Hali Ela"],
-    "Monaragala": ["Monaragala", "Bibile", "Wellawaya", "Buttala"]
-  },
-  "Sabaragamuwa": {
-    "Ratnapura": ["Ratnapura", "Embilipitiya", "Balangoda", "Pelmadulla", "Eheliyagoda", "Kuruwita"],
-    "Kegalle": ["Kegalle", "Mawanella", "Warakapola", "Rambukkana", "Galigamuwa"]
-  }
-};
 
 export default function ProfilePage() {
   // State for delete dialog
@@ -898,20 +853,15 @@ export default function ProfilePage() {
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-2">City</label>
-                        <Select
+                        <CitySearchDropdown
+                          cities={getCitiesForDistrict(formData.province, formData.district)}
                           value={formData.city}
-                          onValueChange={(value) => handleFilterChange("city", value)}
+                          onChange={(value) => handleFilterChange("city", value)}
                           disabled={!formData.district}
-                        >
-                          <SelectTrigger className="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 focus:border-[#0D5C63] focus:bg-white/80 transition-all duration-300 rounded-xl h-12 text-slate-800">
-                            <SelectValue placeholder={formData.district ? "Select city" : "Select district first"} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {getCitiesForDistrict(formData.province, formData.district).map((city) => (
-                              <SelectItem key={city} value={city}>{city}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          placeholder="Select city"
+                          disabledPlaceholder="Select district first"
+                          triggerClassName="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 rounded-xl h-12 text-slate-800"
+                        />
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-2">Location</label>

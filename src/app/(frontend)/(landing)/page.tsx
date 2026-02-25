@@ -66,31 +66,10 @@ const vehicleMakes = [
   "Volvo", "Yamaha"
 ];
 
-// Sri Lankan provinces, districts, and cities data (Copied from sell page for consistency)
-// Sri Lankan provinces, districts, and cities data (Imported from shared location)
-import { locationData } from "@/lib/location-data";
-
-// Flatten cities for default view and create district map
-const getAllCities = () => {
-  const cities = new Set<string>();
-  Object.values(locationData).forEach(province => {
-    Object.values(province).forEach(districtCities => {
-      districtCities.forEach(city => cities.add(city));
-    });
-  });
-  return Array.from(cities).sort();
-};
+import { locationData, getAllCities, getAllDistricts } from "@/lib/location-data";
 
 const sriLankanCities = getAllCities();
-
-// Sri Lankan districts
-const sriLankanDistricts = [
-  "Ampara", "Anuradhapura", "Badulla", "Batticaloa", "Colombo",
-  "Galle", "Gampaha", "Hambantota", "Jaffna", "Kalutara",
-  "Kandy", "Kegalle", "Kilinochchi", "Kurunegala", "Mannar",
-  "Matale", "Matara", "Monaragala", "Mullaitivu", "Nuwara Eliya",
-  "Polonnaruwa", "Puttalam", "Ratnapura", "Trincomalee", "Vavuniya"
-];
+const sriLankanDistricts = getAllDistricts();
 
 // Define filter state interface with updated fields
 interface FilterState {

@@ -61,6 +61,7 @@ import type { MediaFile } from "@/modules/media/types";
 import { CreateAdSchema } from "@/server/routes/ad/ad.schemas";
 import { authClient } from "@/lib/auth-client";
 import { locationData } from "@/lib/location-data";
+import { CitySearchDropdown } from "@/components/ui/city-search-dropdown";
 
 export type AdFormProps = {
   initialData?: any;
@@ -2130,20 +2131,14 @@ export function AdForm({
                       City<span className="text-red-500">*</span>
                     </div>
                     <div className="flex-1">
-                      <Select
+                      <CitySearchDropdown
+                        cities={formData.province && formData.district ? (locationData[formData.province]?.[formData.district] || []) : []}
                         value={formData.city}
-                        onValueChange={(value) => handleInputChange("city", value)}
+                        onChange={(value) => handleInputChange("city", value)}
                         disabled={!formData.district}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder={formData.district ? "Select city" : "Select district first"} />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-[280px]">
-                          {formData.province && formData.district && (locationData[formData.province]?.[formData.district] || []).map(city => (
-                            <SelectItem key={city} value={city}>{city}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        placeholder="Select city"
+                        disabledPlaceholder="Select district first"
+                      />
                     </div>
                   </div>
 

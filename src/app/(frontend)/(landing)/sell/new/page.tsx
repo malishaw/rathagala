@@ -26,6 +26,8 @@ import { MediaGallery } from "@/modules/media/components/media-gallery";
 import type { MediaFile } from "@/modules/media/types";
 import { PendingAdModal } from "@/features/ads/components/pending-ad-modal";
 import { AdSubmissionSuccessModal } from "@/features/ads/components/ad-submission-success-modal";
+import { locationData } from "@/lib/location-data";
+import { CitySearchDropdown } from "@/components/ui/city-search-dropdown";
 
 export default function QuickAdCreatePage() {
   const router = useRouter();
@@ -165,64 +167,17 @@ export default function QuickAdCreatePage() {
     "Voge", "Haojue", "Dayang", "Husaberg", "Alta Motors", "Buccaneer", "Mash", "Arch Motorcycle"
   ];
 
-  // Sri Lankan provinces, districts, and cities data
-  const locationData = {
-    "Western": {
-      "Colombo": ["Colombo", "Dehiwala-Mount Lavinia", "Moratuwa", "Sri Jayawardenepura Kotte", "Maharagama", "Kesbewa", "Kaduwela", "Kotikawatta", "Kolonnawa", "Nugegoda", "Rajagiriya", "Battaramulla"],
-      "Gampaha": ["Gampaha", "Negombo", "Katunayake", "Minuwangoda", "Wattala", "Kelaniya", "Peliyagoda", "Ja-Ela", "Kandana", "Divulapitiya"],
-      "Kalutara": ["Kalutara", "Panadura", "Horana", "Beruwala", "Aluthgama", "Matugama", "Bandaragama", "Ingiriya"]
-    },
-    "Central": {
-      "Kandy": ["Kandy", "Gampola", "Nawalapitiya", "Wattegama", "Harispattuwa", "Pathadumbara", "Akurana", "Delthota"],
-      "Matale": ["Matale", "Dambulla", "Sigiriya", "Galewela", "Ukuwela", "Rattota"],
-      "Nuwara Eliya": ["Nuwara Eliya", "Hatton", "Talawakelle", "Ginigathena", "Kotagala", "Maskeliya", "Bogawantalawa"]
-    },
-    "Southern": {
-      "Galle": ["Galle", "Hikkaduwa", "Ambalangoda", "Elpitiya", "Bentota", "Baddegama", "Yakkalamulla"],
-      "Matara": ["Matara", "Weligama", "Mirissa", "Dikwella", "Hakmana", "Akuressa", "Denipitiya"],
-      "Hambantota": ["Hambantota", "Tangalle", "Tissamaharama", "Ambalantota", "Beliatta", "Weeraketiya"]
-    },
-    "Northern": {
-      "Jaffna": ["Jaffna", "Nallur", "Chavakachcheri", "Point Pedro", "Karainagar", "Velanai"],
-      "Kilinochchi": ["Kilinochchi", "Pallai", "Paranthan"],
-      "Mannar": ["Mannar", "Nanattan", "Murunkan"],
-      "Vavuniya": ["Vavuniya", "Nedunkeni", "Settikulam"],
-      "Mullaitivu": ["Mullaitivu", "Oddusuddan", "Puthukudiyiruppu"]
-    },
-    "Eastern": {
-      "Trincomalee": ["Trincomalee", "Kinniya", "Mutur", "Kuchchaveli"],
-      "Batticaloa": ["Batticaloa", "Kaluwanchikudy", "Valachchenai", "Eravur"],
-      "Ampara": ["Ampara", "Akkaraipattu", "Kalmunai", "Sainthamaruthu", "Pottuvil"]
-    },
-    "North Western": {
-      "Kurunegala": ["Kurunegala", "Kuliyapitiya", "Narammala", "Wariyapola", "Pannala", "Melsiripura"],
-      "Puttalam": ["Puttalam", "Chilaw", "Nattandiya", "Wennappuwa", "Marawila", "Dankotuwa"]
-    },
-    "North Central": {
-      "Anuradhapura": ["Anuradhapura", "Kekirawa", "Thambuttegama", "Eppawala", "Medawachchiya"],
-      "Polonnaruwa": ["Polonnaruwa", "Kaduruwela", "Medirigiriya", "Hingurakgoda"]
-    },
-    "Uva": {
-      "Badulla": ["Badulla", "Bandarawela", "Haputale", "Welimada", "Mahiyanganaya", "Passara"],
-      "Monaragala": ["Monaragala", "Bibile", "Wellawaya", "Kataragama", "Buttala"]
-    },
-    "Sabaragamuwa": {
-      "Ratnapura": ["Ratnapura", "Embilipitiya", "Balangoda", "Pelmadulla", "Eheliyagoda", "Kuruwita"],
-      "Kegalle": ["Kegalle", "Mawanella", "Warakapola", "Rambukkana", "Galigamuwa", "Yatiyantota"]
-    }
-  };
-
   // Get available districts based on selected province
   const getAvailableDistricts = () => {
     if (!formData.province) return [];
-    return Object.keys(locationData[formData.province as keyof typeof locationData] || {});
+    return Object.keys(locationData[formData.province] || {});
   };
 
   // Get available cities based on selected district
   const getAvailableCities = () => {
     if (!formData.province || !formData.district) return [];
-    const provinceData = locationData[formData.province as keyof typeof locationData];
-    return provinceData?.[formData.district as keyof typeof provinceData] || [];
+    const provinceData = locationData[formData.province];
+    return provinceData?.[formData.district] || [];
   };
 
   // Simple form field change handler
@@ -1762,20 +1717,14 @@ export default function QuickAdCreatePage() {
 
               <div>
                 <label className="block text-sm font-medium mb-1">City<span className="text-red-500">*</span></label>
-                <Select
+                <CitySearchDropdown
+                  cities={getAvailableCities()}
                   value={formData.city}
-                  onValueChange={(value) => handleInputChange("city", value)}
+                  onChange={(value) => handleInputChange("city", value)}
                   disabled={!formData.district}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={formData.district ? "Select city" : "Select district first"} />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[280px]">
-                    {getAvailableCities().map(city => (
-                      <SelectItem key={city} value={city}>{city}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  placeholder="Select city"
+                  disabledPlaceholder="Select district first"
+                />
               </div>
 
               <div>

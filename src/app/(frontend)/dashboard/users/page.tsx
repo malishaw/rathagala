@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useGetUsers } from "@/features/users/api/use-get-users";
 import { useGetOrganizations } from "@/features/organizations/api/use-get-orgs";
 import { locationData } from "@/lib/location-data";
+import { CitySearchDropdown } from "@/components/ui/city-search-dropdown";
 import {
   Card,
   CardContent,
@@ -1331,33 +1332,14 @@ export default function UsersPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="editCity">City</Label>
-                    <Select
+                    <CitySearchDropdown
+                      cities={editData.province && editData.district ? (locationData[editData.province]?.[editData.district] || []) : []}
                       value={editData.city}
-                      onValueChange={(value) =>
-                        setEditData((prev) => ({
-                          ...prev,
-                          city: value,
-                        }))
-                      }
+                      onChange={(value) => setEditData((prev) => ({ ...prev, city: value }))}
                       disabled={!editData.district}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select City" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {editData.province &&
-                          editData.district &&
-                          locationData[editData.province]?.[editData.district]
-                          ? locationData[editData.province][editData.district].map(
-                            (city) => (
-                              <SelectItem key={city} value={city}>
-                                {city}
-                              </SelectItem>
-                            )
-                          )
-                          : null}
-                      </SelectContent>
-                    </Select>
+                      placeholder="Select City"
+                      disabledPlaceholder="Select district first"
+                    />
                   </div>
                 </div>
 
