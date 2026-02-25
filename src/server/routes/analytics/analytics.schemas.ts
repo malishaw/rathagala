@@ -155,6 +155,20 @@ export const entityHistoryQuerySchema = z.object({
   period: z.enum(["daily", "monthly", "range"]).optional().default("monthly"),
 });
 
+export const adViewsQuerySchema = z.object({
+  period: z.enum(["daily", "monthly", "yearly"]).optional().default("daily"),
+});
+
+export const adViewsDataSchema = z.object({
+  date: z.string(),
+  adsViewed: z.number(),
+  totalViews: z.number(),
+});
+
+export const adViewsResponseSchema = z.object({
+  data: z.array(adViewsDataSchema),
+});
+
 export const entityHistoryResponseSchema = z.object({
   history: z.array(
     z.object({

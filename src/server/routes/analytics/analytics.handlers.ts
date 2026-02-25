@@ -32,6 +32,78 @@ const getDateRangeFilter = (startDate?: string, endDate?: string) => {
   return Object.keys(filter).length > 0 ? filter : undefined;
 };
 
+export const getAdViewsReport = async (c: any) => {
+  try {
+    const { period } = c.req.query();
+    const now = new Date();
+    let startDate: Date;
+
+    if (period === "monthly") {
+      // Past 12 months
+      startDate = new Date(now);
+      startDate.setMonth(startDate.getMonth() - 11);
+      startDate.setDate(1);
+      startDate.setHours(0, 0, 0, 0);
+    } else if (period === "yearly") {
+      // All time (or past 10 years)
+      startDate = new Date(now.getFullYear() - 9, 0, 1);
+    } else {
+      // daily – past 30 days
+      startDate = new Date(now);
+      startDate.setDate(startDate.getDate() - 29);
+      startDate.setHours(0, 0, 0, 0);
+    }
+
+    const analyticsRecords = await prisma.adAnalytics.findMany({
+      where: { updatedAt: { gte: startDate, lte: now } },
+      select: { updatedAt: true, views: true },
+    });
+
+    const dataMap = new Map<string, { count: number; views: number }>();
+
+    // Pre-fill all buckets with zeros
+    if (period === "daily") {
+      for (let i = 0; i < 30; i++) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - (29 - i));
+        const key = d.toISOString().split("T")[0];
+        dataMap.set(key, { count: 0, views: 0 });
+      }
+    } else if (period === "monthly") {
+      for (let i = 0; i < 12; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        dataMap.set(key, { count: 0, views: 0 });
+      }
+    }
+
+    analyticsRecords.forEach((r) => {
+      let key: string;
+      if (period === "monthly") {
+        key = `${r.updatedAt.getFullYear()}-${String(r.updatedAt.getMonth() + 1).padStart(2, "0")}`;
+      } else if (period === "yearly") {
+        key = String(r.updatedAt.getFullYear());
+      } else {
+        key = r.updatedAt.toISOString().split("T")[0];
+      }
+      const existing = dataMap.get(key) || { count: 0, views: 0 };
+      dataMap.set(key, { count: existing.count + 1, views: existing.views + r.views });
+    });
+
+    const data = Array.from(dataMap.entries())
+      .map(([date, { count, views }]) => ({ date, adsViewed: count, totalViews: views }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    return c.json({ data }, HttpStatusCodes.OK);
+  } catch (error) {
+    console.error("Error fetching ad views report:", error);
+    return c.json(
+      { message: "Failed to fetch ad views report" },
+      HttpStatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+};
+
 export const getAdSummary = async (c: any) => {
   try {
     const [totalAds, approvedAds, pendingAds, draftAds] = await Promise.all([

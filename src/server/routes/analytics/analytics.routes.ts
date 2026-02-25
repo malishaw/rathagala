@@ -6,6 +6,29 @@ const analyticsRoutes = createRouter()
   .openapi(
     {
       method: "get",
+      path: "/ad-views",
+      summary: "Get ad views report",
+      description: "Get ad view activity grouped by daily, monthly, or yearly periods",
+      tags: ["Analytics"],
+      request: {
+        query: schemas.adViewsQuerySchema,
+      },
+      responses: {
+        200: {
+          description: "Ad views report",
+          content: {
+            "application/json": {
+              schema: schemas.adViewsResponseSchema,
+            },
+          },
+        },
+      },
+    },
+    handlers.getAdViewsReport
+  )
+  .openapi(
+    {
+      method: "get",
       path: "/summary",
       summary: "Get ad summary report",
       description: "Get total ads, approved ads, pending ads, and draft ads",

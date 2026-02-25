@@ -41,6 +41,7 @@ import {
   useGetUserSummary,
   useSearchAnalyticsUsers,
   useGetEntityHistory,
+  useGetAdViewsReport,
 } from "@/features/report/api/use-get-analytics";
 import { cn } from "@/lib/utils";
 
@@ -50,6 +51,9 @@ export default function ReportPage() {
   const [period, setPeriod] = useState<"daily" | "monthly" | "range">("monthly");
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
+
+  // Ad Views chart – independent filter
+  const [viewsPeriod, setViewsPeriod] = useState<"daily" | "monthly" | "yearly">("daily");
 
   // Use Analytics State
   const [userSearchQuery, setUserSearchQuery] = useState("");
@@ -80,6 +84,7 @@ export default function ReportPage() {
   });
   const { data: adByEntity, isLoading: loadingEntity } = useGetAdCreationByEntity();
   const { data: advancedSummary, isLoading: loadingAdvanced, error: advancedError } = useGetAdAdvancedSummary(vehicleTypeFilter === "ALL" ? undefined : vehicleTypeFilter);
+  const { data: adViews, isLoading: loadingAdViews } = useGetAdViewsReport(viewsPeriod);
   const { data: userSummary, isLoading: loadingUsers } = useGetUserSummary();
   const { data: searchResults, isLoading: loadingSearch } = useSearchAnalyticsUsers(debouncedSearchQuery);
 
@@ -415,6 +420,70 @@ export default function ReportPage() {
                     <Legend />
                     <Line type="monotone" dataKey="count" stroke="#8884d8" name="Ads Created" />
                   </LineChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Ad Views Chart */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div>
+                  <CardTitle>Ad Views</CardTitle>
+                  <CardDescription>
+                    {viewsPeriod === "daily"
+                      ? "Ads viewed per day – past 30 days"
+                      : viewsPeriod === "monthly"
+                      ? "Ads viewed per month – past 12 months"
+                      : "Ads viewed per year"}
+                  </CardDescription>
+                </div>
+                <Select
+                  value={viewsPeriod}
+                  onValueChange={(v: "daily" | "monthly" | "yearly") => setViewsPeriod(v)}
+                >
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="yearly">Yearly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loadingAdViews ? (
+                <div className="h-[400px] flex items-center justify-center">
+                  <p className="text-muted-foreground">Loading...</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={400}>
+                  <BarChart data={adViews?.data || []}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 11 }}
+                      interval={viewsPeriod === "daily" ? 4 : 0}
+                    />
+                    <YAxis />
+                    <Tooltip
+                      formatter={(value: number, name: string) =>
+                        name === "adsViewed"
+                          ? [value, "Ads Viewed"]
+                          : [value, "Total Views"]
+                      }
+                    />
+                    <Legend
+                      formatter={(value) =>
+                        value === "adsViewed" ? "Ads Viewed" : "Total Views"
+                      }
+                    />
+                    <Bar dataKey="adsViewed" name="adsViewed" fill="#8884d8" />
+                    <Bar dataKey="totalViews" name="totalViews" fill="#00C49F" />
+                  </BarChart>
                 </ResponsiveContainer>
               )}
             </CardContent>

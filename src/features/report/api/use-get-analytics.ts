@@ -1,6 +1,21 @@
 import { client } from "@/lib/rpc";
 import { useQuery } from "@tanstack/react-query";
 
+export const useGetAdViewsReport = (period: "daily" | "monthly" | "yearly" = "daily") => {
+  return useQuery({
+    queryKey: ["analytics", "ad-views", period],
+    queryFn: async () => {
+      const response = await client.api.analytics["ad-views"].$get({
+        query: { period },
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch ad views report");
+      }
+      return response.json();
+    },
+  });
+};
+
 export const useGetAdSummary = () => {
   return useQuery({
     queryKey: ["analytics", "ad-summary"],
