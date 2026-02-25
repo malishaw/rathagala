@@ -8,6 +8,7 @@ import {
   Command,
   GalleryVerticalEnd,
   GraduationCapIcon,
+  ImageIcon,
   LayoutDashboard,
   ShieldIcon,
   UsersRoundIcon,
@@ -101,6 +102,11 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
         title: "Reports",
         url: "/dashboard/report",
         icon: NewspaperIcon
+      },
+      {
+        title: "Gallery",
+        url: "/dashboard/media",
+        icon: ImageIcon
       }
     ],
     agentManagement: [
