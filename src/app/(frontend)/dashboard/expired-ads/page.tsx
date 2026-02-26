@@ -1,9 +1,20 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import PageContainer from "@/components/layouts/page-container";
 import { AppPageShell } from "@/components/layouts/page-shell";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { DataTable } from "@/components/table/data-table";
 import { DataTableSkeleton } from "@/components/table/data-table-skeleton";
 import DataTableError from "@/components/table/data-table-error";
@@ -12,6 +23,8 @@ import { useQueryState, parseAsString, parseAsInteger } from "nuqs";
 import { client } from "@/lib/rpc";
 import { useQuery } from "@tanstack/react-query";
 import { expiredAdColumns, type ExpiredAdType } from "@/features/ads/components/ad-table/expired-admin-columns";
+import { useBulkPermanentDeleteAds } from "@/features/ads/api/use-bulk-permanent-delete-ads";
+import { Trash2 } from "lucide-react";
 
 // 60-day expiry threshold
 const AD_EXPIRY_DAYS = 60;
@@ -40,6 +53,26 @@ export default function ExpiredAdsPage() {
   );
   const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
   const [limit] = useQueryState("limit", parseAsInteger.withDefault(10));
+  
+  // Selection and bulk delete state
+  const [selectedRows, setSelectedRows] = useState<ExpiredAdType[]>([]);
+  const [bulkDeleteDialog, setBulkDeleteDialog] = useState(false);
+  const [tableKey, setTableKey] = useState(0); // Force table re-render to clear selections
+  const bulkDeleteMutation = useBulkPermanentDeleteAds();
+
+  const handleBulkDelete = () => {
+    const adIds = selectedRows.map(row => row.id);
+    bulkDeleteMutation.mutate(adIds);
+    setBulkDeleteDialog(false);
+  };
+
+  // Clear selected rows after successful bulk delete
+  useEffect(() => {
+    if (bulkDeleteMutation.isSuccess && selectedRows.length > 0) {
+      setSelectedRows([]);
+      setTableKey(prev => prev + 1); // Force table re-render to reset row selection
+    }
+  }, [bulkDeleteMutation.isSuccess, selectedRows.length]);
   // Fetch all ads and filter client-side for ads older than 60 days
   const { data, error, isPending } = useQuery({
     queryKey: ["expired-ads", page, limit, searchQuery],
@@ -158,20 +191,66 @@ export default function ExpiredAdsPage() {
         />
         <Separator />
 
-        <div className="flex items-center gap-4 mb-4">
+        <div className="flex items-center justify-between gap-4 mb-4">
           <DataTableSearch
             searchKey="Mobile number, User Name or Model"
             searchQuery={searchQuery || ""}
             setSearchQuery={setSearchQuery}
             setPage={setPage}
           />
+          {selectedRows.length > 0 && (
+            <Button 
+              onClick={() => setBulkDeleteDialog(true)}
+              disabled={bulkDeleteMutation.isPending}
+              className="gap-2 bg-red-600 hover:bg-red-700 text-white"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete Selected ({selectedRows.length})
+            </Button>
+          )}
         </div>
 
         <DataTable
+          key={tableKey}
           columns={expiredAdColumns}
           data={formattedAds}
           totalItems={data.pagination.total}
+          enableRowSelection={true}
+          onRowSelectionChange={setSelectedRows}
         />
+
+        {/* Bulk Delete Confirmation Dialog */}
+        <AlertDialog open={bulkDeleteDialog} onOpenChange={setBulkDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Selected Ads</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to permanently delete {selectedRows.length} selected ad{selectedRows.length > 1 ? 's' : ''}? 
+                This action cannot be undone. All associated data including images will be completely removed.
+                {selectedRows.length <= 3 && (
+                  <div className="mt-2">
+                    <strong>Ads to be deleted:</strong>
+                    <ul className="mt-1 list-disc list-inside text-sm">
+                      {selectedRows.map((ad) => (
+                        <li key={ad.id}>{ad.title}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleBulkDelete}
+                className="bg-red-600 hover:bg-red-700 text-white"
+                disabled={bulkDeleteMutation.isPending}
+              >
+                {bulkDeleteMutation.isPending ? "Deleting..." : `Delete ${selectedRows.length} Ad${selectedRows.length > 1 ? 's' : ''} Permanently`}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </PageContainer>
   );

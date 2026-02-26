@@ -10,6 +10,7 @@ import {
   UpdateRoute,
   RemoveRoute,
   PermanentDeleteRoute,
+  BulkPermanentDeleteRoute,
   ApproveRoute,
   RejectRoute,
   UpdatePromotionRoute,
@@ -1253,6 +1254,110 @@ export const permanentDelete: AppRouteHandler<PermanentDeleteRoute> = async (c) 
 
     return c.json(
       { message: error.message || "Failed to permanently delete ad" },
+      HttpStatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+};
+
+
+// ---- Bulk Permanent Delete Ad Handler (Admin Only) ----
+export const bulkPermanentDelete: AppRouteHandler<BulkPermanentDeleteRoute> = async (c) => {
+  try {
+    const { adIds } = c.req.valid("json");
+    const user = c.get("user");
+
+    if (!user) {
+      return c.json(
+        { message: HttpStatusPhrases.UNAUTHORIZED },
+        HttpStatusCodes.UNAUTHORIZED
+      );
+    }
+
+    // Check if user is admin
+    const userRole = (user as any)?.role;
+    if (userRole !== "admin") {
+      return c.json(
+        { message: "Admin access required" },
+        HttpStatusCodes.FORBIDDEN
+      );
+    }
+
+    if (!Array.isArray(adIds) || adIds.length === 0) {
+      return c.json(
+        { message: "At least one ad ID is required" },
+        HttpStatusCodes.BAD_REQUEST
+      );
+    }
+
+    // Check if ads exist
+    const existingAds = await prisma.ad.findMany({
+      where: { id: { in: adIds } },
+    });
+
+    if (existingAds.length === 0) {
+      return c.json(
+        { message: "No ads found to delete" },
+        HttpStatusCodes.NOT_FOUND
+      );
+    }
+
+    const existingAdIds = existingAds.map(ad => ad.id);
+
+    // Delete related records for all ads to avoid foreign key constraints
+    await prisma.adMedia.deleteMany({
+      where: { adId: { in: existingAdIds } },
+    });
+
+    await prisma.adAnalytics.deleteMany({
+      where: { adId: { in: existingAdIds } },
+    });
+
+    await prisma.geoHeatmap.deleteMany({
+      where: { adId: { in: existingAdIds } },
+    });
+
+    await prisma.shareEvent.deleteMany({
+      where: { adId: { in: existingAdIds } },
+    });
+
+    await prisma.adRevision.deleteMany({
+      where: { adId: { in: existingAdIds } },
+    });
+
+    await prisma.favorite.deleteMany({
+      where: { adId: { in: existingAdIds } },
+    });
+
+    await prisma.payment.deleteMany({
+      where: { adId: { in: existingAdIds } },
+    });
+
+    await prisma.report.deleteMany({
+      where: { adId: { in: existingAdIds } },
+    });
+
+    // Now permanently delete all ads
+    await prisma.ad.deleteMany({
+      where: { id: { in: existingAdIds } },
+    });
+
+    const deletedCount = existingAdIds.length;
+    const notFoundCount = adIds.length - deletedCount;
+    
+    let message = `${deletedCount} ad(s) permanently deleted successfully`;
+    if (notFoundCount > 0) {
+      message += `. ${notFoundCount} ad(s) were not found.`;
+    }
+
+    return c.json(
+      { message },
+      HttpStatusCodes.OK
+    );
+  } catch (error: any) {
+    console.error("[BULK PERMANENT DELETE ADS] Error:", error);
+
+    return c.json(
+      { message: error.message || "Failed to permanently delete ads" },
       HttpStatusCodes.INTERNAL_SERVER_ERROR
     );
   }

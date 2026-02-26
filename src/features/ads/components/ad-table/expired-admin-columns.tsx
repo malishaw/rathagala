@@ -5,6 +5,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import type { Ad } from "@/types/schema-types/index";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -12,9 +13,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Eye, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { FaMobileAlt, FaWhatsapp } from "react-icons/fa";
-import { format } from "date-fns";
+import { usePermanentDeleteAd } from "../../api/use-permanent-delete-ad";
 
 // This type is used to define the shape of our data.
 export type ExpiredAdType = Omit<Ad, "createdAt" | "boostExpiry" | "featureExpiry" | "expiryDate"> & {
@@ -51,24 +62,6 @@ const vehicleTypeLabels: Record<string, string> = {
   BICYCLE: "Bicycle"
 };
 
-// Status badge colors
-const getStatusBadge = (status: string) => {
-  switch (status) {
-    case "ACTIVE":
-      return <Badge className="bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white border-0">Active</Badge>;
-    case "PENDING_REVIEW":
-      return <Badge className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white border-0">Pending</Badge>;
-    case "REJECTED":
-      return <Badge className="bg-gradient-to-r from-red-500 to-red-600 text-white border-0">Rejected</Badge>;
-    case "DRAFT":
-      return <Badge className="bg-gradient-to-r from-slate-400 to-slate-500 text-white border-0">Draft</Badge>;
-    case "EXPIRED":
-      return <Badge className="bg-gradient-to-r from-slate-400 to-slate-500 text-white border-0">Expired</Badge>;
-    default:
-      return <Badge className="bg-gradient-to-r from-slate-400 to-slate-500 text-white border-0">{status}</Badge>;
-  }
-};
-
 // Helper function to generate ad title from components
 const generateAdTitle = (ad: ExpiredAdType): string => {
   return [ad.brand, ad.model, ad.manufacturedYear, vehicleTypeLabels[ad.type] || ad.type]
@@ -77,6 +70,30 @@ const generateAdTitle = (ad: ExpiredAdType): string => {
 };
 
 export const expiredAdColumns: ColumnDef<ExpiredAdType>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+        className="translate-y-[2px]"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+        className="translate-y-[2px]"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
   {
     accessorKey: "title",
     header: "Ad Title",
@@ -93,11 +110,6 @@ export const expiredAdColumns: ColumnDef<ExpiredAdType>[] = [
         </div>
       );
     },
-  },
-  {
-    id: "view",
-    header: "View",
-    cell: ({ row }) => <ExpiredViewCell ad={row.original} />,
   },
   {
     accessorKey: "createdBy",
@@ -156,6 +168,16 @@ export const expiredAdColumns: ColumnDef<ExpiredAdType>[] = [
       );
     },
   },
+  {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => (
+      <div className="flex items-center gap-2">
+        <ExpiredViewCell ad={row.original} />
+        <ExpiredDeleteCell ad={row.original} />
+      </div>
+    ),
+  },
 ];
 
 // View cell — single "View Ad" button that opens the details modal
@@ -173,6 +195,57 @@ function ExpiredViewCell({ ad }: { ad: ExpiredAdType }) {
         View Ad
       </Button>
       <AdDetailsModal ad={ad} open={open} onOpenChange={setOpen} />
+    </>
+  );
+}
+
+// Delete cell — single "Delete" button with confirmation
+function ExpiredDeleteCell({ ad }: { ad: ExpiredAdType }) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const deleteMutation = usePermanentDeleteAd();
+
+  const handleDelete = () => {
+    deleteMutation.mutate(ad.id);
+    setConfirmOpen(false);
+  };
+
+  return (
+    <>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => setConfirmOpen(true)}
+        className="h-8 gap-1 border-red-400 text-red-600 hover:bg-red-50 hover:text-red-700"
+        disabled={deleteMutation.isPending}
+      >
+        <Trash2 className="w-4 h-4" />
+        Delete
+      </Button>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Ad Permanently</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete this ad? This action cannot be undone.
+              All associated data including images will be completely removed.
+              <br />
+              <br />
+              <strong>Ad:</strong> {generateAdTitle(ad)}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete Permanently"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

@@ -223,6 +223,44 @@ export const permanentDelete = createRoute({
 
 export type PermanentDeleteRoute = typeof permanentDelete;
 
+// --------- Bulk Permanent Delete Ad (Admin Only) ----------
+export const bulkPermanentDelete = createRoute({
+  tags,
+  summary: "Bulk permanently delete ads",
+  description: "Permanently delete multiple ads from the system (admin only)",
+  path: "/bulk-permanent-delete",
+  method: "post",
+  middleware: [serverAuthMiddleware],
+  request: {
+    body: jsonContentRequired(
+      z.object({
+        adIds: z.array(z.string()).min(1, "At least one ad ID is required")
+      }),
+      "Array of ad IDs to delete"
+    ),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      createMessageObjectSchema("Ads permanently deleted successfully"),
+      "Ads permanently deleted"
+    ),
+    [HttpStatusCodes.BAD_REQUEST]: jsonContent(
+      createMessageObjectSchema("Invalid request"),
+      "Invalid request"
+    ),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      createMessageObjectSchema("Unauthorized"),
+      "Unauthorized"
+    ),
+    [HttpStatusCodes.FORBIDDEN]: jsonContent(
+      createMessageObjectSchema("Forbidden"),
+      "Admin access required"
+    ),
+  },
+});
+
+export type BulkPermanentDeleteRoute = typeof bulkPermanentDelete;
+
 // --------- Approve Ad ----------
 export const approve = createRoute({
   tags,
