@@ -1290,23 +1290,35 @@ export default function ProfilePage() {
                             )}
                           </div>
 
-                          <div className="flex gap-2">
+                          <div className="flex flex-col gap-2 items-end shrink-0">
                             <Button
-                              variant="ghost"
                               size="sm"
-                              className="h-10 w-10 p-0 rounded-lg bg-white/50 hover:bg-gradient-to-r from-[#0D5C63] to-teal-600 text-slate-600 hover:text-white transition-all duration-300"
-                              onClick={() => router.push(`/edit-ad/${ad.id}`)}
+                              className={`text-xs px-3 h-8 border-0 ${isBoosted || isFeatured
+                                ? "bg-orange-500 text-white hover:bg-orange-600"
+                                : "bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700"
+                                }`}
+                              onClick={() => router.push("/payments")}
                             >
-                              <Edit className="h-5 w-5" />
+                              {isBoosted || isFeatured ? "Pay Now" : "Promote Ad"}
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-10 w-10 p-0 rounded-lg bg-white/50 hover:bg-gradient-to-r from-red-500 to-red-600 text-slate-600 hover:text-white transition-all duration-300"
-                              onClick={() => setDeleteDialog({ open: true, ad })}
-                            >
-                              <Trash2 className="h-5 w-5" />
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-10 w-10 p-0 rounded-lg bg-white/50 hover:bg-gradient-to-r from-[#0D5C63] to-teal-600 text-slate-600 hover:text-white transition-all duration-300"
+                                onClick={() => router.push(`/edit-ad/${ad.id}`)}
+                              >
+                                <Edit className="h-5 w-5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-10 w-10 p-0 rounded-lg bg-white/50 hover:bg-gradient-to-r from-red-500 to-red-600 text-slate-600 hover:text-white transition-all duration-300"
+                                onClick={() => setDeleteDialog({ open: true, ad })}
+                              >
+                                <Trash2 className="h-5 w-5" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       );
@@ -1320,12 +1332,14 @@ export default function ProfilePage() {
             {sidebarActive === "favorites" && (
               <div className="bg-white/80 backdrop-blur-xl border-2 border-white/20 rounded-2xl p-8 space-y-6">
                 <div className="border-b border-white/30 pb-4">
-                  <h2 className="text-2xl font-bold bg-gradient-to-r from-[#0D5C63] to-teal-600 bg-clip-text text-transparent mb-2">
+                  <div id="saved-ads">
+                    <h2 className="text-2xl font-bold bg-gradient-to-r from-[#0D5C63] to-teal-600 bg-clip-text text-transparent mb-2">
                     Saved Ads
                   </h2>
                   <p className="text-sm text-slate-600">
                     Your favorite advertisements
                   </p>
+                  </div>
                 </div>
 
                 {isFavoritesLoading ? (

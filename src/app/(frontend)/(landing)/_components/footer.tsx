@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CarIcon, Facebook, Instagram, Twitter, Youtube } from "lucide-react";
 
 export function Footer() {
@@ -19,24 +20,24 @@ export function Footer() {
             <h4 className="font-semibold mb-3 md:mb-6 text-lg">Quick Links</h4>
             <ul className="space-y-2 md:space-y-3 text-slate-300">
               <li>
-                <a href="/signin" className="hover:text-white transition-colors">
+                <Link href="/signin" className="hover:text-white transition-colors">
                   Login
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/signup" className="hover:text-white transition-colors">
+                <Link href="/signup" className="hover:text-white transition-colors">
                   Register
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/dashboard" className="hover:text-white transition-colors">
+                <Link href="/dashboard" className="hover:text-white transition-colors">
                   Profile
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/boost" className="hover:text-white transition-colors">
+                <Link href="/boost" className="hover:text-white transition-colors">
                   Boost
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -44,19 +45,19 @@ export function Footer() {
             <h4 className="font-semibold mb-3 md:mb-6 text-lg">Features</h4>
             <ul className="space-y-2 md:space-y-3 text-slate-300">
               <li>
-                <a href="/compare" className="hover:text-white transition-colors">
+                <Link href="/compare" className="hover:text-white transition-colors">
                   Compare Vehicle
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/analyse" className="hover:text-white transition-colors">
+                <Link href="/analyse" className="hover:text-white transition-colors">
                   Analyze Trend
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/profile" className="hover:text-white transition-colors">
+                <Link href="/profile#saved-ads" className="hover:text-white transition-colors">
                   Saved Ads
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -64,25 +65,25 @@ export function Footer() {
             <h4 className="font-semibold mb-3 md:mb-6 text-lg">Support</h4>
             <ul className="space-y-2 md:space-y-3 text-slate-300">
               <li>
-                <a href="/about" className="hover:text-white transition-colors">
+                <Link href="/about" className="hover:text-white transition-colors">
                   About Us
-                </a>
+                </Link>
               </li>
 
               <li>
-                <a href="/contact" className="hover:text-white transition-colors">
+                <Link href="/contact" className="hover:text-white transition-colors">
                   Contact Us
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/terms" className="hover:text-white transition-colors">
+                <Link href="/terms" className="hover:text-white transition-colors">
                   Terms of Service
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/privacy" className="hover:text-white transition-colors">
+                <Link href="/privacy" className="hover:text-white transition-colors">
                   Privacy Policy
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

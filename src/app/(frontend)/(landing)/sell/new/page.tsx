@@ -1792,13 +1792,13 @@ export default function QuickAdCreatePage() {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="1week">
-                                1 Week - Rs {promotionType === "boost" ? "1,500" : "1,000"}
+                                1 Week - Rs {promotionType === "boost" ? "1,500" : "2,000"}
                               </SelectItem>
                               <SelectItem value="2weeks">
-                                2 Weeks - Rs {promotionType === "boost" ? "2,500" : "1,500"}
+                                2 Weeks - Rs {promotionType === "boost" ? "2,500" : "3,000"}
                               </SelectItem>
                               <SelectItem value="1month">
-                                1 Month - Rs {promotionType === "boost" ? "4,000" : "2,500"}
+                                1 Month - Rs {promotionType === "boost" ? "3,500" : "4,000"}
                               </SelectItem>
                             </SelectContent>
                           </Select>
