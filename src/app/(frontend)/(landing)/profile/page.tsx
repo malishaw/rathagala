@@ -86,6 +86,7 @@ export default function ProfilePage() {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [sidebarActive, setSidebarActive] = useState("personal");
   const [isSavingPhoto, setIsSavingPhoto] = useState(false);
+  const [adsFilter, setAdsFilter] = useState<string>("all");
 
   // Fetch user ads with the new hook
   const userAdsQuery = useGetUserAds();
@@ -347,7 +348,7 @@ export default function ProfilePage() {
     if (price === null) return "Price on request";
     const formatted = price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     if (isNegotiable) {
-      return <>{formatted}<div className="text-lg font-normal opacity-70"> Negotiable</div></>;
+      return <>{formatted}<span className="text-sm font-normal opacity-70"> Negotiable</span></>;
     }
     return formatted;
   };
@@ -562,6 +563,18 @@ export default function ProfilePage() {
       return 0;
     });
   }, [userAdsQuery.data]);
+
+  // Filter ads based on selected filter
+  const filteredAds = useMemo(() => {
+    const now = new Date();
+    if (adsFilter === "boosted") {
+      return userAds.filter((ad) => ad.boosted && ad.boostExpiry && new Date(ad.boostExpiry) > now);
+    }
+    if (adsFilter === "featured") {
+      return userAds.filter((ad) => ad.featured && ad.featureExpiry && new Date(ad.featureExpiry) > now);
+    }
+    return userAds;
+  }, [userAds, adsFilter]);
 
   // Loading state for the entire page
   if (isLoading) {
@@ -1135,26 +1148,57 @@ export default function ProfilePage() {
                   </Button>
                 </div>
 
+                {/* Filter dropdown */}
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-slate-600">Filter:</span>
+                  <Select value={adsFilter} onValueChange={setAdsFilter}>
+                    <SelectTrigger className="w-48 bg-white/60 border-2 border-white/30 rounded-xl h-9 text-sm text-slate-700">
+                      <SelectValue placeholder="All Ads" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Ads</SelectItem>
+                      <SelectItem value="boosted">Boosted Ads</SelectItem>
+                      <SelectItem value="featured">Featured Ads</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {adsFilter !== "all" && (
+                    <button
+                      onClick={() => setAdsFilter("all")}
+                      className="text-xs text-slate-500 hover:text-slate-700 underline cursor-pointer transition-colors"
+                    >
+                      Clear filter
+                    </button>
+                  )}
+                </div>
+
                 <div className="space-y-4">
                   {isAdsLoading ? (
                     <div className="p-12 flex justify-center">
                       <Loader2 className="h-10 w-10 animate-spin text-[#0D5C63]" />
                     </div>
-                  ) : userAds.length === 0 ? (
+                  ) : filteredAds.length === 0 ? (
                     <div className="p-12 text-center">
                       <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 mx-auto flex items-center justify-center mb-4">
                         <Car className="h-10 w-10 text-slate-400" />
                       </div>
-                      <p className="text-slate-600 mb-5 text-lg font-medium">You haven't posted any ads yet</p>
-                      <Button
-                        className="bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700 border-0 px-8"
-                        onClick={() => router.push("/sell/new")}
-                      >
-                        Post Your First Ad
-                      </Button>
+                      {userAds.length === 0 ? (
+                        <>
+                          <p className="text-slate-600 mb-5 text-lg font-medium">You haven't posted any ads yet</p>
+                          <Button
+                            className="bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700 border-0 px-8"
+                            onClick={() => router.push("/sell/new")}
+                          >
+                            Post Your First Ad
+                          </Button>
+                        </>
+                      ) : (
+                        <p className="text-slate-600 text-lg font-medium">
+                          No {adsFilter === "boosted" ? "boosted" : "featured"} ads found
+                        </p>
+                      )}
                     </div>
                   ) : (
-                    userAds.map((ad: UserAd) => {
+                    filteredAds.map((ad: UserAd) => {
                       const now = new Date();
                       const isBoosted = ad.boosted && ad.boostExpiry && new Date(ad.boostExpiry) > now;
                       const isFeatured = ad.featured && ad.featureExpiry && new Date(ad.featureExpiry) > now;
@@ -1349,7 +1393,7 @@ export default function ProfilePage() {
 
                                   <div className="text-sm font-semibold text-teal-700 mb-1">
                                     {ad.price
-                                      ? <>{`Rs. ${ad.price.toLocaleString()}`}{(ad as any).metadata?.isNegotiable && <div className="text-lg font-normal opacity-70"> Negotiable</div>}</>
+                                      ? <>{`Rs. ${ad.price.toLocaleString()}`}{(ad as any).metadata?.isNegotiable && <span className="text-sm font-normal opacity-70"> Negotiable</span>}</>
                                       : ((ad as any).metadata?.isNegotiable ? "Negotiable" : "N/A")}
                                   </div>
 
