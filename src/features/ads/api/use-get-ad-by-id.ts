@@ -25,7 +25,8 @@ export const useGetAdById = (params: Params) => {
       const data = await response.json();
 
       return data;
-    }
+    },
+    enabled: !!adId,
   });
 
   return query;

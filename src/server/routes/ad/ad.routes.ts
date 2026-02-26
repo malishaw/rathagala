@@ -34,6 +34,10 @@ export const list = createRoute({
         .transform((val) => val === "true")
         .pipe(z.boolean().default(false)),
       includeDeleted: z.string().optional(),
+      includeExpired: z.string().optional(),
+      status: z.string().optional(),
+      brand: z.string().optional(),
+      model: z.string().optional(),
     }),
   },
   responses: {

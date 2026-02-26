@@ -13,6 +13,7 @@ interface FilterParams {
   brand?: string | null;
   model?: string | null;
   status?: string | null;
+  includeExpired?: boolean;
 }
 
 interface QueryOptions {
@@ -31,10 +32,11 @@ export const useGetAds = (params: FilterParams, options?: QueryOptions) => {
     brand,
     model,
     status,
+    includeExpired,
   } = params;
 
   const query = useQuery({
-    queryKey: ["ads", { page, limit, search, listingType, minPrice, maxPrice, location, brand, model, status }],
+    queryKey: ["ads", { page, limit, search, listingType, minPrice, maxPrice, location, brand, model, status, includeExpired }],
     queryFn: async () => {
       const queryParams = {
         page: page.toString(),
@@ -47,6 +49,7 @@ export const useGetAds = (params: FilterParams, options?: QueryOptions) => {
         ...(brand && { brand }),
         ...(model && { model }),
         ...(status && status !== "all" && { status }),
+        ...(includeExpired && { includeExpired: "true" }),
       };
 
       const response = await client.api.ad.$get({

@@ -157,20 +157,44 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     // - Authenticated non-admin users (isAdmin is false)
     // When filterByUser is true, show all ads (user wants to see their own ads with all statuses)
     else if (!isAdmin && !query.filterByUser) {
-      andFilters.push({ status: AdStatus.ACTIVE });
-      // Also exclude soft-deleted ads (published = false, metadata.deletedByUser = true)
-      andFilters.push({ published: true });
-      // Exclude ads older than 60 days UNLESS they still have an active promotion
+      // includeExpired=true allows compare page (and similar) to show EXPIRED ads alongside ACTIVE ones
+      const includeExpired = query.includeExpired === "true" || query.includeExpired === true;
       const sixtyDaysAgo = new Date();
       sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
       const now = new Date();
-      andFilters.push({
-        OR: [
-          { createdAt: { gte: sixtyDaysAgo } },
-          { boosted: true, boostExpiry: { gt: now } },
-          { featured: true, featureExpiry: { gt: now } },
-        ],
-      });
+      if (includeExpired) {
+        // EXPIRED ads bypass published & 60-day filters; ACTIVE ads keep all normal restrictions
+        andFilters.push({
+          OR: [
+            {
+              AND: [
+                { status: AdStatus.ACTIVE },
+                { published: true },
+                {
+                  OR: [
+                    { createdAt: { gte: sixtyDaysAgo } },
+                    { boosted: true, boostExpiry: { gt: now } },
+                    { featured: true, featureExpiry: { gt: now } },
+                  ],
+                },
+              ],
+            },
+            { status: AdStatus.EXPIRED },
+          ],
+        });
+      } else {
+        andFilters.push({ status: AdStatus.ACTIVE });
+        // Also exclude soft-deleted ads (published = false, metadata.deletedByUser = true)
+        andFilters.push({ published: true });
+        // Exclude ads older than 60 days UNLESS they still have an active promotion
+        andFilters.push({
+          OR: [
+            { createdAt: { gte: sixtyDaysAgo } },
+            { boosted: true, boostExpiry: { gt: now } },
+            { featured: true, featureExpiry: { gt: now } },
+          ],
+        });
+      }
     }
 
     // Compose final whereCondition
@@ -624,93 +648,63 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
     const adId = c.req.valid("param").id;
 
     let ad: any;
+
+    // Full includes for the ideal case
+    const fullIncludes = {
+      media: true,
+      category: true,
+      creator: {
+        select: { id: true, name: true, email: true, image: true },
+      },
+      analytics: true,
+      org: {
+        select: { id: true, name: true, slug: true, logo: true },
+      },
+      favorites: { select: { userId: true } },
+      reports: { select: { id: true, reason: true, status: true } },
+      shareEvents: { select: { platform: true, sharedAt: true } },
+    };
+
+    // Minimal includes that avoid broken org/creator relations
+    const safeIncludes = {
+      media: true,
+      category: true,
+      analytics: true,
+      favorites: { select: { userId: true } },
+      reports: { select: { id: true, reason: true, status: true } },
+      shareEvents: { select: { platform: true, sharedAt: true } },
+    };
+
     try {
-      // Do not include nested Media to tolerate orphaned relations; hydrate manually below
       ad = await prisma.ad.findUnique({
         where: { id: adId },
-        include: {
-          media: true,
-          category: true,
-          creator: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-            },
-          },
-          analytics: true,
-          org: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-              logo: true,
-            },
-          },
-          favorites: {
-            select: {
-              userId: true,
-            },
-          },
-          reports: {
-            select: {
-              id: true,
-              reason: true,
-              status: true,
-            },
-          },
-          shareEvents: {
-            select: {
-              platform: true,
-              sharedAt: true,
-            },
-          },
-        },
+        include: fullIncludes,
       });
     } catch (findError: any) {
-      // Handle Prisma inconsistent query when a required relation is missing in DB (e.g., org)
-      const msg = String(findError?.message || "");
-      if (msg.includes("Field org is required to return data")) {
-        console.warn("[GET AD] Org relation missing for ad, retrying without org include", adId);
-        // Retry without org include to return the ad even when org is missing
+      // Handle Prisma errors when required relations (org, creator) are missing in DB
+      console.warn("[GET AD] Full include failed for ad, retrying with safe includes", adId, String(findError?.message || "").slice(0, 200));
+      try {
         ad = await prisma.ad.findUnique({
           where: { id: adId },
-          include: {
-            media: true,
-            category: true,
-            creator: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                image: true,
-              },
-            },
-            analytics: true,
-            // org omitted intentionally
-            favorites: {
-              select: {
-                userId: true,
-              },
-            },
-            reports: {
-              select: {
-                id: true,
-                reason: true,
-                status: true,
-              },
-            },
-            shareEvents: {
-              select: {
-                platform: true,
-                sharedAt: true,
-              },
-            },
-          },
+          include: safeIncludes,
         });
-      } else {
-        throw findError;
+        // Manually hydrate creator if the ad was found
+        if (ad && ad.createdBy) {
+          try {
+            const creator = await prisma.user.findUnique({
+              where: { id: ad.createdBy },
+              select: { id: true, name: true, email: true, image: true },
+            });
+            ad = { ...ad, creator: creator || null };
+          } catch {
+            ad = { ...ad, creator: null };
+          }
+        } else if (ad) {
+          ad = { ...ad, creator: null };
+        }
+      } catch (retryError: any) {
+        console.error("[GET AD] Safe include also failed for ad", adId, retryError);
+        throw retryError;
       }
     }
 

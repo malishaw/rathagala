@@ -25,11 +25,12 @@ import {
     MapPin,
     Sparkles,
     X,
+    AlertCircle,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function AdComparisonPage() {
     const router = useRouter();
@@ -57,25 +58,44 @@ export default function AdComparisonPage() {
     const { data: searchData1 } = useGetAds({
         page: 1,
         limit: 200,
+        includeExpired: true,
     });
 
     const { data: searchData2 } = useGetAds({
         page: 1,
         limit: 200,
+        includeExpired: true,
     });
 
     // Fetch selected vehicle details
-    const { data: vehicle1, isLoading: loading1 } = useGetAdById({
+    const { data: vehicle1Data, isLoading: loading1 } = useGetAdById({
         adId: vehicle1Id || "",
     });
 
-    const { data: vehicle2, isLoading: loading2 } = useGetAdById({
+    const { data: vehicle2Data, isLoading: loading2 } = useGetAdById({
         adId: vehicle2Id || "",
     });
 
     // Get vehicles list from search results
     const vehicles1 = searchData1?.ads || [];
     const vehicles2 = searchData2?.ads || [];
+
+    // Resolve vehicle data: prefer getAdById response, fallback to list data for expired/broken ads
+    const vehicle1 = useMemo(() => {
+        if (vehicle1Data) return vehicle1Data;
+        if (vehicle1Id && vehicles1.length > 0) {
+            return vehicles1.find((v: any) => v.id === vehicle1Id) || null;
+        }
+        return null;
+    }, [vehicle1Data, vehicle1Id, vehicles1]);
+
+    const vehicle2 = useMemo(() => {
+        if (vehicle2Data) return vehicle2Data;
+        if (vehicle2Id && vehicles2.length > 0) {
+            return vehicles2.find((v: any) => v.id === vehicle2Id) || null;
+        }
+        return null;
+    }, [vehicle2Data, vehicle2Id, vehicles2]);
 
     const formatPrice = (price: number | null | undefined) => {
         if (!price) return "Price Negotiable";
@@ -98,24 +118,58 @@ export default function AdComparisonPage() {
         return "/placeholder.svg?height=300&width=400&text=No+Image";
     };
 
+    const vehicleTypeLabels: Record<string, string> = {
+        CAR: "Car",
+        VAN: "Van",
+        SUV_JEEP: "SUV / Jeep",
+        MOTORCYCLE: "Motorcycle",
+        CREW_CAB: "Crew Cab",
+        PICKUP_DOUBLE_CAB: "Pickup / Double Cab",
+        BUS: "Bus",
+        LORRY: "Lorry",
+        THREE_WHEEL: "Three Wheeler",
+        TRACTOR: "Tractor",
+        HEAVY_DUTY: "Heavy Duty",
+        BICYCLE: "Bicycle",
+        AUTO_SERVICE: "Auto Service",
+        RENTAL: "Rental",
+        AUTO_PARTS: "Auto Parts",
+        MAINTENANCE: "Maintenance",
+        BOAT: "Boat",
+        OTHER: "Other",
+    };
+
+    const formatVehicleType = (ad: any): string | null => {
+        const type = ad?.type as string | undefined;
+        if (!type) return null;
+        return vehicleTypeLabels[type] ?? type.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+    };
+
     const getVehicleTitle = (ad: any) => {
+        const typeLabel = formatVehicleType(ad);
         const parts = [
             ad?.brand,
             ad?.model,
             ad?.manufacturedYear || ad?.modelYear,
-            ad?.vehicleType,
+            typeLabel,
         ].filter(Boolean);
         return parts.join(" ") || "Vehicle";
     };
 
     const normalizeVehicleType = (ad: any) => {
-        const typeValue = (ad?.vehicleType || ad?.type) as string | undefined;
+        const typeValue = ad?.type as string | undefined;
         return typeof typeValue === "string" ? typeValue.toLowerCase() : null;
     };
 
     const isPublished = (ad: any) => {
         return ad?.status === "ACTIVE" && ad?.published === true;
     };
+
+    const isExpired = (ad: any) => {
+        return ad?.status === "EXPIRED";
+    };
+
+    const isVisibleForCompare = (ad: any) => isPublished(ad) || isExpired(ad);
 
     const matchesSearch = (ad: any, query: string) => {
         if (!query || query.trim() === "") return true;
@@ -127,10 +181,10 @@ export default function AdComparisonPage() {
         return words.every((word) => searchText.includes(word));
     };
 
-    const filteredVehicles1 = vehicles1.filter((vehicle: any) => isPublished(vehicle) && matchesSearch(vehicle, search1));
+    const filteredVehicles1 = vehicles1.filter((vehicle: any) => isVisibleForCompare(vehicle) && matchesSearch(vehicle, search1));
 
     const selectedVehicleType = normalizeVehicleType(vehicle1);
-    const searchFilteredVehicles2 = vehicles2.filter((vehicle: any) => isPublished(vehicle) && matchesSearch(vehicle, search2));
+    const searchFilteredVehicles2 = vehicles2.filter((vehicle: any) => isVisibleForCompare(vehicle) && matchesSearch(vehicle, search2));
     const filteredVehicles2 = selectedVehicleType
         ? searchFilteredVehicles2.filter((vehicle: any) => normalizeVehicleType(vehicle) === selectedVehicleType)
         : searchFilteredVehicles2;
@@ -340,10 +394,13 @@ export default function AdComparisonPage() {
                                                                 />
                                                             </div>
                                                             <div className="flex-1 min-w-0 hover:text-white">
-                                                                <div className="font-medium truncate">
+                                                                <div className="font-medium truncate flex items-center gap-1">
                                                                     {getVehicleTitle(vehicle)}
+                                                                    {isExpired(vehicle) && (
+                                                                        <Badge className="bg-orange-100 text-orange-700 text-[10px] px-1 py-0 ml-1 shrink-0">Expired</Badge>
+                                                                    )}
                                                                 </div>
-                                                                <div className="text-sm  hover:text-white">
+                                                                <div className="text-sm hover:text-white">
                                                                     {formatPrice(vehicle.price)}
                                                                 </div>
                                                             </div>
@@ -441,10 +498,13 @@ export default function AdComparisonPage() {
                                                                 />
                                                             </div>
                                                             <div className="flex-1 min-w-0">
-                                                                <div className="font-medium truncate hover:text-white ">
+                                                                <div className="font-medium truncate hover:text-white flex items-center gap-1">
                                                                     {getVehicleTitle(vehicle)}
+                                                                    {isExpired(vehicle) && (
+                                                                        <Badge className="bg-orange-100 text-orange-700 text-[10px] px-1 py-0 ml-1 shrink-0">Expired</Badge>
+                                                                    )}
                                                                 </div>
-                                                                <div className="text-sm ">
+                                                                <div className="text-sm">
                                                                     {formatPrice(vehicle.price)}
                                                                 </div>
                                                             </div>
@@ -483,7 +543,7 @@ export default function AdComparisonPage() {
                             <div className="hidden md:block"></div>
                             <Card className="border-2 border-[#024950] bg-gradient-to-br from-[#024950] to-teal-700 text-white">
                                 <CardContent className="p-3 md:p-6">
-                                    {loading1 ? (
+                                    {loading1 && !vehicle1 ? (
                                         <div className="text-center py-8">
                                             <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full mx-auto"></div>
                                         </div>
@@ -500,17 +560,25 @@ export default function AdComparisonPage() {
                                             <h3 className="text-sm md:text-xl font-bold mb-1 md:mb-2 line-clamp-2 min-h-[2.5em] md:min-h-0">
                                                 {getVehicleTitle(vehicle1)}
                                             </h3>
+                                            {isExpired(vehicle1) && (
+                                                <div className="flex items-center gap-1 mb-2 bg-orange-500/30 border border-orange-400/50 rounded-md px-2 py-1">
+                                                    <AlertCircle className="w-3 h-3 text-orange-200 shrink-0" />
+                                                    <span className="text-xs text-orange-200 font-medium">Expired Ad</span>
+                                                </div>
+                                            )}
                                             <div className="text-sm md:text-2xl font-bold mb-1 md:mb-2">
                                                 {formatPrice(vehicle1.price)}
                                             </div>
-                                            <Link href={`/${vehicle1Id}`}>
-                                                <Button
-                                                    variant="outline"
-                                                    className="w-full mt-2 md:mt-4 h-8 md:h-10 text-xs md:text-sm bg-white/10 border-white/30 text-white hover:bg-white/20"
-                                                >
-                                                    View Details
-                                                </Button>
-                                            </Link>
+                                            {!isExpired(vehicle1) && (
+                                                <Link href={`/${vehicle1Id}`}>
+                                                    <Button
+                                                        variant="outline"
+                                                        className="w-full mt-2 md:mt-4 h-8 md:h-10 text-xs md:text-sm bg-white/10 border-white/30 text-white hover:bg-white/20"
+                                                    >
+                                                        View Details
+                                                    </Button>
+                                                </Link>
+                                            )}
                                         </>
                                     ) : (
                                         <div className="text-center py-8">Vehicle not found</div>
@@ -520,7 +588,7 @@ export default function AdComparisonPage() {
 
                             <Card className="border-2 border-teal-600 bg-gradient-to-br from-teal-600 to-teal-700 text-white">
                                 <CardContent className="p-3 md:p-6">
-                                    {loading2 ? (
+                                    {loading2 && !vehicle2 ? (
                                         <div className="text-center py-8">
                                             <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full mx-auto"></div>
                                         </div>
@@ -537,17 +605,25 @@ export default function AdComparisonPage() {
                                             <h3 className="text-sm md:text-xl font-bold mb-1 md:mb-2 line-clamp-2 min-h-[2.5em] md:min-h-0">
                                                 {getVehicleTitle(vehicle2)}
                                             </h3>
+                                            {isExpired(vehicle2) && (
+                                                <div className="flex items-center gap-1 mb-2 bg-orange-500/30 border border-orange-400/50 rounded-md px-2 py-1">
+                                                    <AlertCircle className="w-3 h-3 text-orange-200 shrink-0" />
+                                                    <span className="text-xs text-orange-200 font-medium">Expired Ad</span>
+                                                </div>
+                                            )}
                                             <div className="text-sm md:text-2xl font-bold mb-1 md:mb-2">
                                                 {formatPrice(vehicle2.price)}
                                             </div>
-                                            <Link href={`/${vehicle2Id}`}>
-                                                <Button
-                                                    variant="outline"
-                                                    className="w-full mt-2 md:mt-4 h-8 md:h-10 text-xs md:text-sm bg-white/10 border-white/30 text-white hover:bg-white/20"
-                                                >
-                                                    View Details
-                                                </Button>
-                                            </Link>
+                                            {!isExpired(vehicle2) && (
+                                                <Link href={`/${vehicle2Id}`}>
+                                                    <Button
+                                                        variant="outline"
+                                                        className="w-full mt-2 md:mt-4 h-8 md:h-10 text-xs md:text-sm bg-white/10 border-white/30 text-white hover:bg-white/20"
+                                                    >
+                                                        View Details
+                                                    </Button>
+                                                </Link>
+                                            )}
                                         </>
                                     ) : (
                                         <div className="text-center py-8">Vehicle not found</div>
