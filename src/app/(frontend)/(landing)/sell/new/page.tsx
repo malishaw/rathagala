@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSetupAd } from "@/features/ads/api/use-setup-ad";
 import { useRouter } from "next/navigation";
 import { CreateAdSchema } from "@/server/routes/ad/ad.schemas";
@@ -38,6 +38,10 @@ export default function QuickAdCreatePage() {
   const [showPendingModal, setShowPendingModal] = useState(false);
   const [selectedImages, setSelectedImages] = useState<MediaFile[]>([]);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+
+  // Ref to track whether "Create Another" was chosen in pending modal
+  // (prevents redirect to profile when user wants to stay and create again)
+  const pendingModalActionRef = useRef<"createAnother" | "none">("none");
 
   // Promotion state
   const [promotionType, setPromotionType] = useState<"boost" | "featured" | "none">("none");
@@ -1927,10 +1931,21 @@ export default function QuickAdCreatePage() {
       />
       <PendingAdModal
         open={showPendingModal}
-        onOpenChange={setShowPendingModal}
-        onGoBack={() => router.push('/')}
+        onOpenChange={(open) => {
+          setShowPendingModal(open);
+          if (!open) {
+            if (pendingModalActionRef.current !== "createAnother") {
+              // Redirect to My Ads for Go Back / X / backdrop close
+              router.push("/profile#my-ads");
+            }
+            pendingModalActionRef.current = "none";
+          }
+        }}
+        onGoBack={() => {
+          // onOpenChange will handle the redirect — nothing extra needed here
+        }}
         onCreateAnother={() => {
-          setShowPendingModal(false);
+          pendingModalActionRef.current = "createAnother";
           // Reset form and go to step 1
           setCurrentStep(1);
           setFormData({
@@ -1966,6 +1981,7 @@ export default function QuickAdCreatePage() {
             published: true,
             isDraft: false,
           });
+          setSelectedImages([]);
           setPromotionType("none");
           setPromotionDuration("1week");
         }}
