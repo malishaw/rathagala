@@ -35,7 +35,7 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/boost" className="hover:text-white transition-colors">
+                <Link href="/payments" className="hover:text-white transition-colors">
                   Boost
                 </Link>
               </li>
