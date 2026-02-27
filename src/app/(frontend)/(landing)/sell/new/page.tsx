@@ -91,7 +91,9 @@ export default function QuickAdCreatePage() {
     isDraft: false,
   });
 
-  // Auto-fill user profile data
+  // Auto-fill user profile data - only when form is first loaded
+  const [hasAutoFilled, setHasAutoFilled] = useState(false);
+  
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -99,16 +101,19 @@ export default function QuickAdCreatePage() {
         if (response.ok) {
           const userData = await response.json();
           console.log("Fetched user data:", userData);
+          
+          // Only auto-fill empty fields to avoid overwriting user input
           setFormData(prev => ({
             ...prev,
-            name: userData.name || "",
-            phoneNumber: userData.phone || "",
-            whatsappNumber: userData.whatsappNumber || "",
-            province: userData.province || "",
-            district: userData.district || "",
-            city: userData.city || "",
-            location: userData.location || "",
+            name: prev.name || userData.name || "",
+            phoneNumber: prev.phoneNumber || userData.phone || "",
+            whatsappNumber: prev.whatsappNumber || userData.whatsappNumber || "",
+            province: prev.province || userData.province || "",
+            district: prev.district || userData.district || "",
+            city: prev.city || userData.city || "",
+            location: prev.location || userData.location || "",
           }));
+          setHasAutoFilled(true);
         } else {
           console.error("Failed to fetch user profile, status:", response.status);
         }
@@ -117,10 +122,10 @@ export default function QuickAdCreatePage() {
       }
     };
 
-    if (session?.user) {
+    if (session?.user && !hasAutoFilled) {
       fetchUserProfile();
     }
-  }, [session]);
+  }, [session, hasAutoFilled]);
 
   // Generate available years (current year down to 1970)
   const currentYear = new Date().getFullYear();
