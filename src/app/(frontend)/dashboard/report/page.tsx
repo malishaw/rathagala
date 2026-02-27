@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -43,6 +43,7 @@ import {
   useGetEntityHistory,
   useGetAdViewsReport,
 } from "@/features/report/api/use-get-analytics";
+import { useGetAds } from "@/features/ads/api/use-get-ads";
 import { cn } from "@/lib/utils";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8", "#82ca9d", "#ffc658", "#ff7c7c", "#8dd1e1", "#d084d0"];
@@ -85,7 +86,17 @@ export default function ReportPage() {
   const { data: adByEntity, isLoading: loadingEntity } = useGetAdCreationByEntity();
   const { data: advancedSummary, isLoading: loadingAdvanced, error: advancedError } = useGetAdAdvancedSummary(vehicleTypeFilter === "ALL" ? undefined : vehicleTypeFilter);
   const { data: adViews, isLoading: loadingAdViews } = useGetAdViewsReport(viewsPeriod);
+  const { data: allAdsData, isLoading: loadingAllAds } = useGetAds({ limit: 10000, page: 1 });
   const { data: userSummary, isLoading: loadingUsers } = useGetUserSummary();
+
+  // Compute trending ads using same logic as home page
+  const trendingAds = useMemo(() => {
+    const ads = (allAdsData?.ads ?? []) as any[];
+    return ads
+      .filter((ad) => ad.status === "ACTIVE" && ad.published === true)
+      .sort((a, b) => (b.analytics?.views || 0) - (a.analytics?.views || 0))
+      .slice(0, 10);
+  }, [allAdsData]);
   const { data: searchResults, isLoading: loadingSearch } = useSearchAnalyticsUsers(debouncedSearchQuery);
 
   const { data: entityHistory, isLoading: loadingHistory } = useGetEntityHistory({
@@ -485,6 +496,86 @@ export default function ReportPage() {
                     <Bar dataKey="totalViews" name="totalViews" fill="#00C49F" />
                   </BarChart>
                 </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Top 10 Most Viewed Ads */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-[#024950]" />
+                Top 10 Most Viewed Ads
+              </CardTitle>
+              <CardDescription>Active published ads ranked by total view count. Click a row to view the ad.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              {loadingAllAds ? (
+                <div className="h-[200px] flex items-center justify-center">
+                  <p className="text-muted-foreground">Loading...</p>
+                </div>
+              ) : !trendingAds.length ? (
+                <div className="h-[100px] flex items-center justify-center">
+                  <p className="text-muted-foreground">No trending ads available.</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-10">#</TableHead>
+                      <TableHead>Ad</TableHead>
+                      <TableHead className="hidden md:table-cell">Brand / Model</TableHead>
+                      <TableHead className="hidden md:table-cell">Year</TableHead>
+                      <TableHead className="hidden md:table-cell">Price</TableHead>
+                      <TableHead className="text-right">Views</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {trendingAds.map((ad: any, idx: number) => {
+                      const imageUrl = ad.media?.[0]?.url ?? ad.media?.[0]?.media?.url ?? null;
+                      const title = ad.title || [ad.brand, ad.model].filter(Boolean).join(" ") || "Untitled Ad";
+                      const price = ad.price ?? null;
+                      const views = ad.analytics?.views ?? 0;
+                      return (
+                        <TableRow
+                          key={ad.id}
+                          className="cursor-pointer hover:bg-muted/60"
+                          onClick={() => window.open(`/${ad.id}`, "_blank")}
+                        >
+                          <TableCell className="font-bold text-muted-foreground">{idx + 1}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              {imageUrl ? (
+                                <img
+                                  src={imageUrl}
+                                  alt={title}
+                                  className="w-12 h-9 object-cover rounded shrink-0"
+                                />
+                              ) : (
+                                <div className="w-12 h-9 bg-muted rounded shrink-0 flex items-center justify-center text-muted-foreground text-xs">N/A</div>
+                              )}
+                              <span className="font-medium line-clamp-2 text-sm">{title}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                            {[ad.brand, ad.model].filter(Boolean).join(" ") || "—"}
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                            {ad.manufacturedYear ?? ad.modelYear ?? "—"}
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell text-sm">
+                            {price
+                              ? new Intl.NumberFormat("en-LK", { style: "currency", currency: "LKR", minimumFractionDigits: 0 }).format(price).replace("LKR", "Rs.")
+                              : "Negotiable"}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Badge variant="secondary" className="font-bold">{views.toLocaleString()}</Badge>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
               )}
             </CardContent>
           </Card>
