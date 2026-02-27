@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,7 @@ export function AdSubmissionSuccessModal({
   onOpenChange,
   onClose,
 }: AdSubmissionSuccessModalProps) {
+  const router = useRouter();
   const phoneNumber = "0766220170";
   const displayPhoneNumber = "0766 220 170";
   const whatsappNumber = "766220170"; // Without leading 0 for WhatsApp
@@ -33,6 +35,11 @@ export function AdSubmissionSuccessModal({
     if (!isOpen) {
       onClose();
     }
+  };
+
+  const handleDone = () => {
+    handleOpenChange(false);
+    router.push("/profile#my-ads");
   };
 
   return (
@@ -87,6 +94,12 @@ export function AdSubmissionSuccessModal({
           >
             <MessageCircle className="w-4 h-4" />
             WhatsApp
+          </Button>
+          <Button
+            onClick={handleDone}
+            className="w-full sm:w-auto"
+          >
+            Done
           </Button>
         </DialogFooter>
       </DialogContent>
