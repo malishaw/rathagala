@@ -58,3 +58,23 @@ export function getAllCities(): string[] {
   });
   return Array.from(cities).sort();
 }
+
+/**
+ * Manufacture years loaded from NEXT_PUBLIC_MANUFACTURE_YEARS env variable.
+ * Returns years in descending order (newest first).
+ * Falls back to the last 30 years if the env variable is not set.
+ */
+export function getManufactureYears(): string[] {
+  const raw = process.env.NEXT_PUBLIC_MANUFACTURE_YEARS;
+  if (!raw) {
+    const current = new Date().getFullYear();
+    return Array.from({ length: current - 1969 }, (_, i) => String(current - i));
+  }
+  try {
+    return JSON.parse(raw) as string[];
+  } catch (e) {
+    console.error("Failed to parse NEXT_PUBLIC_MANUFACTURE_YEARS:", e);
+    const current = new Date().getFullYear();
+    return Array.from({ length: current - 1969 }, (_, i) => String(current - i));
+  }
+}

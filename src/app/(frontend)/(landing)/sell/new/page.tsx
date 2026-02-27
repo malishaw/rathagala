@@ -26,7 +26,7 @@ import { MediaGallery } from "@/modules/media/components/media-gallery";
 import type { MediaFile } from "@/modules/media/types";
 import { PendingAdModal } from "@/features/ads/components/pending-ad-modal";
 import { AdSubmissionSuccessModal } from "@/features/ads/components/ad-submission-success-modal";
-import { locationData } from "@/lib/location-data";
+import { locationData, getManufactureYears } from "@/lib/location-data";
 import { CitySearchDropdown } from "@/components/ui/city-search-dropdown";
 
 export default function QuickAdCreatePage() {
@@ -127,12 +127,8 @@ export default function QuickAdCreatePage() {
     }
   }, [session, hasAutoFilled]);
 
-  // Generate available years (current year down to 1970)
-  const currentYear = new Date().getFullYear();
-  const years = Array.from(
-    { length: currentYear - 1969 },
-    (_, i) => String(currentYear - i)
-  );
+  // Manufacture years loaded from env (NEXT_PUBLIC_MANUFACTURE_YEARS)
+  const years = getManufactureYears();
 
   // Vehicle makes list - same as your ad-form.tsx
   const vehicleMakes = [

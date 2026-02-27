@@ -60,7 +60,7 @@ import { MediaGallery } from "@/modules/media/components/media-gallery";
 import type { MediaFile } from "@/modules/media/types";
 import { CreateAdSchema } from "@/server/routes/ad/ad.schemas";
 import { authClient } from "@/lib/auth-client";
-import { locationData } from "@/lib/location-data";
+import { locationData, getManufactureYears } from "@/lib/location-data";
 import { CitySearchDropdown } from "@/components/ui/city-search-dropdown";
 
 export type AdFormProps = {
@@ -765,8 +765,8 @@ export function AdForm({
                                   <SelectValue placeholder="Select Year" />
                                 </SelectTrigger>
                                 <SelectContent className="max-h-[200px] overflow-y-auto">
-                                  {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                                  {getManufactureYears().map(year => (
+                                    <SelectItem key={year} value={year}>{year}</SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
@@ -890,8 +890,8 @@ export function AdForm({
                                   <SelectValue placeholder="Select Year" />
                                 </SelectTrigger>
                                 <SelectContent className="max-h-[200px] overflow-y-auto">
-                                  {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                                  {getManufactureYears().map(year => (
+                                    <SelectItem key={year} value={year}>{year}</SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
@@ -987,8 +987,8 @@ export function AdForm({
                                   <SelectValue placeholder="Select Year" />
                                 </SelectTrigger>
                                 <SelectContent className="max-h-[200px] overflow-y-auto">
-                                  {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                                  {getManufactureYears().map(year => (
+                                    <SelectItem key={year} value={year}>{year}</SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
@@ -1197,8 +1197,8 @@ export function AdForm({
                                   <SelectValue placeholder="Select Year" />
                                 </SelectTrigger>
                                 <SelectContent className="max-h-[200px] overflow-y-auto">
-                                  {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                                  {getManufactureYears().map(year => (
+                                    <SelectItem key={year} value={year}>{year}</SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
@@ -1286,8 +1286,8 @@ export function AdForm({
                                   <SelectValue placeholder="Select Year" />
                                 </SelectTrigger>
                                 <SelectContent className="max-h-[200px] overflow-y-auto">
-                                  {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                                  {getManufactureYears().map(year => (
+                                    <SelectItem key={year} value={year}>{year}</SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
@@ -1386,8 +1386,8 @@ export function AdForm({
                                   <SelectValue placeholder="Select Year" />
                                 </SelectTrigger>
                                 <SelectContent className="max-h-[200px] overflow-y-auto">
-                                  {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                                  {getManufactureYears().map(year => (
+                                    <SelectItem key={year} value={year}>{year}</SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
@@ -1503,8 +1503,8 @@ export function AdForm({
                                   <SelectValue placeholder="Select Year" />
                                 </SelectTrigger>
                                 <SelectContent className="max-h-[200px] overflow-y-auto">
-                                  {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                                  {getManufactureYears().map(year => (
+                                    <SelectItem key={year} value={year}>{year}</SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
@@ -1592,8 +1592,8 @@ export function AdForm({
                                   <SelectValue placeholder="Select Year" />
                                 </SelectTrigger>
                                 <SelectContent className="max-h-[200px] overflow-y-auto">
-                                  {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                                  {getManufactureYears().map(year => (
+                                    <SelectItem key={year} value={year}>{year}</SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>

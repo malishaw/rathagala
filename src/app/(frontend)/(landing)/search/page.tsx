@@ -432,7 +432,7 @@ export default function SearchPage() {
     if (!price) return "Negotiable";
     const formatted = `Rs. ${price.toLocaleString()}`;
     if (isNegotiable) {
-      return <>{formatted}<div className="text-lg font-normal opacity-70"> Negotiable</div></>;
+      return <>{formatted}<div className="text-sm font-normal opacity-70"> Negotiable</div></>;
     }
     return formatted;
   };
