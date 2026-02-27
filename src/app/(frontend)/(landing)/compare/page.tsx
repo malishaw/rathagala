@@ -325,7 +325,7 @@ export default function AdComparisonPage() {
 
             <div className="max-w-7xl mx-auto px-4 py-8">
                 {/* Vehicle Selection */}
-                <div className="grid grid-cols-2 gap-3 md:gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6 mb-8">
                     {/* Vehicle 1 Selection */}
                     <Card className="border-2 border-dashed border-[#024950]/30">
                         <CardHeader>
@@ -539,7 +539,7 @@ export default function AdComparisonPage() {
                 {vehicle1Id && vehicle2Id && (
                     <div className="space-y-6">
                         {/* Vehicle Headers */}
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4" id="vehicle-headers">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4" id="vehicle-headers">
                             <div className="hidden md:block"></div>
                             <Card className="border-2 border-[#024950] bg-gradient-to-br from-[#024950] to-teal-700 text-white">
                                 <CardContent className="p-3 md:p-6">
@@ -660,12 +660,12 @@ export default function AdComparisonPage() {
                                                         : "bg-gray-50"
                                                         }`}
                                                 >
-                                                    <div className="flex items-center justify-between">
+                                                    <div className="flex flex-wrap items-center gap-1">
                                                         <span className="font-medium text-sm md:text-base">
                                                             {field.format(value1)}
                                                         </span>
                                                         {winner === 1 && (
-                                                            <Badge className="bg-green-500 text-white">
+                                                            <Badge className="bg-green-500 text-white shrink-0">
                                                                 Winner
                                                             </Badge>
                                                         )}
@@ -677,12 +677,12 @@ export default function AdComparisonPage() {
                                                         : "bg-gray-50"
                                                         }`}
                                                 >
-                                                    <div className="flex items-center justify-between">
+                                                    <div className="flex flex-wrap items-center gap-1">
                                                         <span className="font-medium text-sm md:text-base">
                                                             {field.format(value2)}
                                                         </span>
                                                         {winner === 2 && (
-                                                            <Badge className="bg-green-500 text-white">
+                                                            <Badge className="bg-green-500 text-white shrink-0">
                                                                 Winner
                                                             </Badge>
                                                         )}
