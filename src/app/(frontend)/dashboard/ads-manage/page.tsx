@@ -85,6 +85,14 @@ export default function AdsManagePage() {
     status: statusFilter && statusFilter !== "all" && !isPromoFilter ? statusFilter : null,
   });
 
+  // Separate fetch for always-accurate stat counts (ignores current filter/page)
+  const { data: statsData } = useGetAds({
+    limit: 10000,
+    page: 1,
+    search: "",
+    status: null,
+  });
+
   const [selectedRows, setSelectedRows] = useState<AdType[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteReason, setDeleteReason] = useState<DeleteAdReason>(DELETE_AD_REASONS[0]);
@@ -247,6 +255,17 @@ export default function AdsManagePage() {
     };
   });
 
+  // Compute stat counts from full dataset (independent of current filter/page)
+  const statsNow = new Date();
+  const statsAds: AdType[] = (statsData?.ads ?? []) as AdType[];
+  const activeCount = statsAds.filter((ad) => ad.status === "ACTIVE").length;
+  const boostedCount = statsAds.filter((ad) =>
+    ad.boosted && ad.boostExpiry && new Date(ad.boostExpiry) > statsNow
+  ).length;
+  const featuredCount = statsAds.filter((ad) =>
+    ad.featured && ad.featureExpiry && new Date(ad.featureExpiry) > statsNow
+  ).length;
+
   // Client-side filter for BOOSTED / FEATURED (not real Ad status values)
   // Only show ads whose promotion is currently active (expiry in the future)
   const now = new Date();
@@ -282,8 +301,8 @@ export default function AdsManagePage() {
           </Button>
         </div>
         <Separator />
-        <div className="flex items-center justify-between gap-4 mb-4">
-          <div className="flex items-center gap-4 flex-1">
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
             <DataTableSearch
               searchKey="Mobile number, User Name or Model"
               searchQuery={searchQuery || ""}
@@ -294,7 +313,7 @@ export default function AdsManagePage() {
               setStatusFilter(value);
               setPage(1);
             }}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[160px] shrink-0">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -306,6 +325,21 @@ export default function AdsManagePage() {
                 <SelectItem value="FEATURED">Featured</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          {/* Stat mini cards - inline on desktop, new row on mobile */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-50 border border-teal-200 cursor-pointer hover:bg-teal-100 transition-colors" onClick={() => { setStatusFilter("ACTIVE"); setPage(1); }}>
+              <span className="text-xs font-medium text-teal-600">Active</span>
+              <span className="text-sm font-bold text-teal-700">{activeCount}</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-200 cursor-pointer hover:bg-blue-100 transition-colors" onClick={() => { setStatusFilter("BOOSTED"); setPage(1); }}>
+              <span className="text-xs font-medium text-blue-600">Boosted</span>
+              <span className="text-sm font-bold text-blue-700">{boostedCount}</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-yellow-50 border border-yellow-200 cursor-pointer hover:bg-yellow-100 transition-colors" onClick={() => { setStatusFilter("FEATURED"); setPage(1); }}>
+              <span className="text-xs font-medium text-yellow-600">Featured</span>
+              <span className="text-sm font-bold text-yellow-700">{featuredCount}</span>
+            </div>
           </div>
           {selectedRows.length > 0 && (
             <div className="flex items-center gap-2">
