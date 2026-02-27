@@ -201,6 +201,11 @@ export default function ProfilePage() {
     }
   }, []);
 
+  // Silently check and send 2-week ad notification emails (fires once per page load, non-blocking)
+  useEffect(() => {
+    fetch("/api/check-ad-notifications", { method: "POST" }).catch(() => {});
+  }, []);
+
   // Handle input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

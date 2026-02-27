@@ -145,7 +145,7 @@ export async function sendPasswordResetEmail({ email, name, url }: SendPasswordR
                 <p>We received a request to reset your password for your Rathagala account.</p>
                 <p>Click the button below to reset your password:</p>
                 <p style="text-align: center;">
-                  <a href="${url}" class="button">Reset Password</a>
+                  <a href="${url}" class="button" style="display: inline-block; background-color: #024950; color: #ffffff !important; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold;">Reset Password</a>
                 </p>
                 <p>Or copy and paste this link into your browser:</p>
                 <p style="word-break: break-all; color: #024950;">${url}</p>
@@ -217,7 +217,7 @@ export async function sendOrganizationInvite({ email, inviteLink }: SendOrganiza
                 <p>You have been invited to join an organization on Rathagala.</p>
                 <p>Click the button below to accept the invitation:</p>
                 <p style="text-align: center;">
-                  <a href="${inviteLink}" class="button">Accept Invitation</a>
+                  <a href="${inviteLink}" class="button" style="display: inline-block; background-color: #024950; color: #ffffff !important; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold;">Accept Invitation</a>
                 </p>
                 <p>Or copy and paste this link into your browser:</p>
                 <p style="word-break: break-all; color: #024950;">${inviteLink}</p>
@@ -307,7 +307,7 @@ export async function sendWelcomeEmail({ email, name }: SendWelcomeEmailParams) 
                 </div>
                 
                 <div style="text-align: center; margin-top: 30px;">
-                  <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://rathagala.lk"}" class="button">Start Exploring</a>
+                  <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://rathagala.lk"}" class="button" style="display: inline-block; background-color: #024950; color: #ffffff !important; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold;">Start Exploring</a>
                 </div>
                 
                 <p style="margin-top: 30px;">If you have any questions or need assistance, our support team is here to help!</p>
@@ -359,11 +359,15 @@ Need help? Contact us at support@rathagala.lk
 }
 
 export async function sendAdPostedEmail({ email, name, adTitle }: { email: string; name: string; adTitle: string }) {
+  const phoneNumber = "0766220170";
+  const displayPhoneNumber = "0766 220 170";
+  const whatsappNumber = "94766220170";
+
   try {
     await transporter.sendMail({
       from: `"Rathagala Support" <${process.env.EMAIL_FROM || "support@rathagala.lk"}>`,
       to: email,
-      subject: "Ad Posted Successfully - Pending Approval",
+      subject: "Ad Submitted Successfully - Pending Approval",
       html: `
         <!DOCTYPE html>
         <html>
@@ -373,18 +377,25 @@ export async function sendAdPostedEmail({ email, name, adTitle }: { email: strin
               .container { max-width: 600px; margin: 0 auto; padding: 20px; }
               .header { background-color: #024950; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
               .content { background-color: #f9f9f9; padding: 30px; border-radius: 0 0 5px 5px; }
+              .button { display: inline-block; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 5px; font-weight: bold; font-size: 14px; }
+              .whatsapp-btn { background-color: #25D366; color: white; }
+              .phone-btn { background-color: #024950; color: white; }
               .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
             </style>
           </head>
           <body>
             <div class="container">
               <div class="header">
-                <h1>Ad Posted Successfully!</h1>
+                <h1>Ad Submitted Successfully!</h1>
               </div>
               <div class="content">
                 <p>Hello ${name},</p>
-                <p>Your ad "<strong>${adTitle}</strong>" has been posted successfully.</p>
-                <p>Please wait for admin approval. Once approved, your ad will be visible to everyone.</p>
+                <p>Your ad "<strong>${adTitle}</strong>" has been submitted successfully.</p>
+                <p>To publish your ad please send <strong>Your Name</strong> via SMS or WhatsApp through the provided mobile number to <strong>${displayPhoneNumber}</strong>. The ad will be successfully published after the mobile number verification.</p>
+                <p style="text-align: center; margin: 25px 0;">
+                  <a href="https://wa.me/${whatsappNumber}" class="button whatsapp-btn" style="display: inline-block; background-color: #25D366; color: #ffffff !important; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 5px; font-weight: bold; font-size: 14px;">💬 WhatsApp</a>
+                  <a href="tel:${phoneNumber}" class="button phone-btn" style="display: inline-block; background-color: #024950; color: #ffffff !important; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 5px; font-weight: bold; font-size: 14px;">📞 ${displayPhoneNumber}</a>
+                </p>
                 <p>Best regards,<br>The Rathagala Team</p>
               </div>
               <div class="footer">
@@ -398,8 +409,12 @@ export async function sendAdPostedEmail({ email, name, adTitle }: { email: strin
       text: `
 Hello ${name},
 
-Your ad "${adTitle}" has been posted successfully.
-Please wait for admin approval. Once approved, your ad will be visible to everyone.
+Your ad "${adTitle}" has been submitted successfully.
+
+To publish your ad please send Your Name via SMS or WhatsApp through the provided mobile number to ${displayPhoneNumber}. The ad will be successfully published after the mobile number verification.
+
+WhatsApp: https://wa.me/${whatsappNumber}
+Call: ${phoneNumber}
 
 Best regards,
 The Rathagala Team
@@ -425,6 +440,8 @@ interface SendAdApprovalEmailParams {
 }
 
 export async function sendAdApprovalEmail({ email, name, adTitle, adId }: SendAdApprovalEmailParams) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://rathagala.lk";
+
   try {
     await transporter.sendMail({
       from: `"Rathagala Support" <${process.env.EMAIL_FROM || "support@rathagala.lk"}>`,
@@ -441,7 +458,10 @@ export async function sendAdApprovalEmail({ email, name, adTitle, adId }: SendAd
               .content { background-color: #f9f9f9; padding: 30px; border-radius: 0 0 5px 5px; }
               .success-badge { background-color: #10b981; color: white; font-size: 16px; font-weight: bold; text-align: center; padding: 15px; border-radius: 5px; margin: 20px 0; }
               .ad-title { background-color: #e0f2f1; padding: 15px; border-left: 4px solid #024950; margin: 20px 0; font-size: 18px; font-weight: bold; color: #024950; }
-              .cta-button { display: inline-block; background-color: #024950; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }
+              .cta-button { display: inline-block; background-color: #024950; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 10px 0; font-weight: bold; }
+              .link-list { margin: 20px 0; }
+              .link-list a { color: #024950; text-decoration: none; font-weight: bold; }
+              .link-list a:hover { text-decoration: underline; }
               .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
             </style>
           </head>
@@ -457,14 +477,13 @@ export async function sendAdApprovalEmail({ email, name, adTitle, adId }: SendAd
                 <div class="ad-title">${adTitle}</div>
                 <p>Your ad is now live and visible to all users on Rathagala. Potential buyers can now view and contact you about your listing.</p>
                 <p style="text-align: center;">
-                  <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://rathagala.lk"}/${adId}" class="cta-button">View My Ads</a>
+                  <a href="${appUrl}/${adId}" class="cta-button" style="display: inline-block; background-color: #024950; color: #ffffff !important; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 10px 0; font-weight: bold;">View Ad</a>
                 </p>
-                <p><strong>What's Next?</strong></p>
-                <ul>
-                  <li>Respond promptly to inquiries from potential buyers</li>
-                  <li>Keep your ad information up to date</li>
-                  <li>Consider boosting your ad for more visibility</li>
-                </ul>
+                <div class="link-list">
+                  <p>📋 <a href="${appUrl}/profile#my-ads" style="color: #024950 !important; text-decoration: none; font-weight: bold;">View My Ads</a></p>
+                  <p>🚀 <a href="${appUrl}/profile#my-ads" style="color: #024950 !important; text-decoration: none; font-weight: bold;">Boost Your Ad</a></p>
+                  <p>➕ <a href="${appUrl}/sell/new" style="color: #024950 !important; text-decoration: none; font-weight: bold;">Post Another Ad</a></p>
+                </div>
                 <p>Thank you for using Rathagala!</p>
                 <p>Best regards,<br>The Rathagala Team</p>
               </div>
@@ -487,10 +506,10 @@ Ad Title: ${adTitle}
 
 Your ad is now live and visible to all users on Rathagala. Potential buyers can now view and contact you about your listing.
 
-What's Next?
-- Respond promptly to inquiries from potential buyers
-- Keep your ad information up to date
-- Consider boosting your ad for more visibility
+View Ad: ${appUrl}/${adId}
+View My Ads: ${appUrl}/profile#my-ads
+Boost Your Ad: ${appUrl}/profile#my-ads
+Post Another Ad: ${appUrl}/sell/new
 
 Thank you for using Rathagala!
 
@@ -565,7 +584,7 @@ export async function sendAdRejectionEmail({ email, name, adTitle, rejectionReas
                 </ul>
                 
                 <p style="text-align: center;">
-                  <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://rathagala.lk"}/profile#my-ads" class="cta-button">View My Ads</a>
+                  <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://rathagala.lk"}/profile#my-ads" class="cta-button" style="display: inline-block; background-color: #024950; color: #ffffff !important; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold;">View My Ads</a>
                 </p>
                 
                 <p>If you believe this rejection was made in error or need further clarification, please contact our support team at support@rathagala.lk</p>
@@ -609,6 +628,109 @@ If you have any questions, contact us at support@rathagala.lk
     return { success: true };
   } catch (error) {
     console.error("Failed to send ad rejection email:", error);
+    throw error;
+  }
+}
+
+// Send 2-week ad notification
+interface SendAdTwoWeekNotificationParams {
+  email: string;
+  name: string;
+  adTitle: string;
+  adId: string;
+}
+
+export async function sendAdTwoWeekNotification({ email, name, adTitle, adId }: SendAdTwoWeekNotificationParams) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://rathagala.lk";
+
+  try {
+    await transporter.sendMail({
+      from: `"Rathagala Support" <${process.env.EMAIL_FROM || "support@rathagala.lk"}>`,
+      to: email,
+      subject: `Your ad ${adTitle} has been live for 2 weeks! - Rathagala`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background-color: #024950; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+              .content { background-color: #f9f9f9; padding: 30px; border-radius: 0 0 5px 5px; }
+              .ad-title { background-color: #e0f2f1; padding: 15px; border-left: 4px solid #024950; margin: 20px 0; font-size: 18px; font-weight: bold; color: #024950; }
+              .action-box { background-color: white; padding: 15px; margin: 15px 0; border-radius: 5px; border: 1px solid #e0e0e0; }
+              .action-box a { color: #024950; font-weight: bold; text-decoration: none; }
+              .action-box a:hover { text-decoration: underline; }
+              .tips-list { margin: 20px 0; }
+              .tips-list li { margin: 10px 0; }
+              .tips-list a { color: #024950; font-weight: bold; text-decoration: none; }
+              .tips-list a:hover { text-decoration: underline; }
+              .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>⏰ 2-Week Ad Update</h1>
+              </div>
+              <div class="content">
+                <p>Hello ${name},</p>
+                <p>Two weeks have passed since you posted your ad:</p>
+                <div class="ad-title">${adTitle}</div>
+                
+                <p><strong>Is your ad still valid?</strong></p>
+                <div class="action-box">
+                  <p>🗑️ If not, <a href="${appUrl}/profile#my-ads">click here to remove your ad</a></p>
+                  <p>✏️ Or <a href="${appUrl}/${adId}/edit">click here to edit your ad</a></p>
+                </div>
+                <p>You can also manage your ads from your account's <a href="${appUrl}/profile#my-ads" style="color: #024950; font-weight: bold; text-decoration: none;">My Ads</a> page.</p>
+                
+                <p><strong>If you want to get more responses to your ad, here are some tips:</strong></p>
+                <ol class="tips-list">
+                  <li>🚀 <a href="${appUrl}/payments">Boost your ad</a> and make it stand out</li>
+                  <li>💰 Rethink the price</li>
+                  <li>📸 Add good-quality, original photos</li>
+                  <li>📝 Add more details to the description</li>
+                </ol>
+                
+                <p>Best regards,<br>The Rathagala Team</p>
+              </div>
+              <div class="footer">
+                <p>© ${new Date().getFullYear()} Rathagala. All rights reserved.</p>
+                <p>If you have any questions, contact us at support@rathagala.lk</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+      text: `
+Hello ${name},
+
+Two weeks have passed since you posted your ad "${adTitle}".
+
+Is your ad still valid?
+- If not, click here to remove your ad: ${appUrl}/profile#my-ads
+- Or click here to edit your ad: ${appUrl}/${adId}/edit
+
+You can also manage your ads from your account's My Ads page: ${appUrl}/profile#my-ads
+
+If you want to get more responses to your ad, here are some tips:
+1. Boost your ad and make it stand out: ${appUrl}/payments
+2. Rethink the price.
+3. Add good-quality, original photos.
+4. Add more details to the description.
+
+Best regards,
+The Rathagala Team
+
+© ${new Date().getFullYear()} Rathagala. All rights reserved.
+If you have any questions, contact us at support@rathagala.lk
+      `,
+    });
+    console.log("Ad 2-week notification email sent successfully to:", email);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send ad 2-week notification email:", error);
     throw error;
   }
 }
