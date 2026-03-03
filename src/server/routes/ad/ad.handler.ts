@@ -357,7 +357,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
         | "GAS"
         | null,
       transmission: ad.transmission as "MANUAL" | "AUTOMATIC" | "CVT" | null,
-      bodyType: ad.bodyType as "SALOON" | "HATCHBACK" | "STATION_WAGON" | null,
+      bodyType: ad.bodyType as "SALOON" | "HATCHBACK" | "STATION_WAGON" | "SUV" | null,
       bikeType: ad.bikeType as
         | "SCOOTER"
         | "E_BIKE"
@@ -773,7 +773,7 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
         | "GAS"
         | null,
       transmission: ad.transmission as "MANUAL" | "AUTOMATIC" | "CVT" | null,
-      bodyType: ad.bodyType as "SALOON" | "HATCHBACK" | "STATION_WAGON" | null,
+      bodyType: ad.bodyType as "SALOON" | "HATCHBACK" | "STATION_WAGON" | "SUV" | null,
       bikeType: ad.bikeType as
         | "SCOOTER"
         | "E_BIKE"

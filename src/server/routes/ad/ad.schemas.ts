@@ -113,7 +113,7 @@ export const createAdBaseSchema = z
       .enum(["PETROL", "DIESEL", "HYBRID", "ELECTRIC", "GAS"])
       .optional(),
     transmission: z.enum(["MANUAL", "AUTOMATIC", "CVT"]).optional(),
-    bodyType: z.enum(["SALOON", "HATCHBACK", "STATION_WAGON"]).optional(),
+    bodyType: z.enum(["SALOON", "HATCHBACK", "STATION_WAGON", "SUV"]).optional(),
 
     // Motor Bike specific fields
     bikeType: z

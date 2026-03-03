@@ -190,6 +190,10 @@ function AdDetailsModal({ ad, open, onOpenChange }: { ad: DeletedAdType; open: b
               <p className="text-sm text-slate-800 capitalize">{ad.transmission || "—"}</p>
             </div>
             <div>
+              <label className="text-xs font-semibold text-slate-600">Body Type</label>
+              <p className="text-sm text-slate-800">{ad.bodyType || "—"}</p>
+            </div>
+            <div>
               <label className="text-xs font-semibold text-slate-600">Grade</label>
               <p className="text-sm text-slate-800">{ad.grade || "—"}</p>
             </div>

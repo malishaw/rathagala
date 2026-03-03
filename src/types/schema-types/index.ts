@@ -154,7 +154,7 @@ export const TransmissionSchema = z.enum(['MANUAL','AUTOMATIC','CVT']);
 
 export type TransmissionType = `${z.infer<typeof TransmissionSchema>}`
 
-export const BodyTypeSchema = z.enum(['SALOON','HATCHBACK','STATION_WAGON']);
+export const BodyTypeSchema = z.enum(['SALOON','HATCHBACK','STATION_WAGON','SUV']);
 
 export type BodyTypeType = `${z.infer<typeof BodyTypeSchema>}`
 

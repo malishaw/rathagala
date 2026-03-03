@@ -105,6 +105,7 @@ enum BodyType {
   SALOON
   HATCHBACK
   STATION_WAGON
+  SUV
 }
 
 enum BikeType {

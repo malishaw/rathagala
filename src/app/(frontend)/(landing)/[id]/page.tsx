@@ -764,6 +764,13 @@ export default function AdDetailPage() {
                     </div>
                   )}
 
+                  {ad.bodyType && (
+                    <div>
+                      <div className="text-sm text-gray-500">Body Type</div>
+                      <div className="font-semibold">{ad.bodyType}</div>
+                    </div>
+                  )}
+
                   {/* {ad.color && (
                     <div>
                       <div className="text-sm text-gray-500">Color</div>
@@ -773,7 +780,7 @@ export default function AdDetailPage() {
 
                   {ad.vehicleType && (
                     <div>
-                      <div className="text-sm text-gray-500">Body Type</div>
+                      <div className="text-sm text-gray-500">Vehicle Type</div>
                       <div className="font-semibold">{ad.vehicleType}</div>
                     </div>
                   )}

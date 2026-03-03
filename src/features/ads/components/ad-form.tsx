@@ -544,7 +544,7 @@ export function AdForm({
       engineCapacity: formData.engineCapacity ? parseFloat(formData.engineCapacity) : undefined,
       fuelType: (formData.fuelType as "PETROL" | "DIESEL" | "HYBRID" | "ELECTRIC" | "GAS") || undefined,
       transmission: (formData.transmission as "MANUAL" | "AUTOMATIC" | "CVT") || undefined,
-      bodyType: (formData.bodyType as "SALOON" | "HATCHBACK" | "STATION_WAGON") || undefined,
+      bodyType: (formData.bodyType as "SALOON" | "HATCHBACK" | "STATION_WAGON" | "SUV") || undefined,
       bikeType: (formData.bikeType as "SCOOTER" | "E_BIKE" | "MOTORBIKES" | "QUADRICYCLES") || undefined,
       vehicleType: (formData.vehicleType as "BED_TRAILER" | "BOWSER" | "BULLDOZER" | "CRANE" | "DUMP_TRUCK" | "EXCAVATOR" | "LOADER" | "OTHER" | undefined) || undefined,
       serviceType: formData.serviceType || undefined,
@@ -829,6 +829,7 @@ export function AdForm({
                                   <SelectItem value="SALOON">Saloon</SelectItem>
                                   <SelectItem value="HATCHBACK">Hatchback</SelectItem>
                                   <SelectItem value="STATION_WAGON">Station Wagon</SelectItem>
+                                  <SelectItem value="SUV">SUV</SelectItem>
                                 </SelectContent>
                               </Select>
                             </FormField>

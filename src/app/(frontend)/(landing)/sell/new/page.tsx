@@ -341,7 +341,7 @@ export default function QuickAdCreatePage() {
       // Type-specific enum fields - cast to proper types
       fuelType: formData.fuelType ? formData.fuelType as "PETROL" | "DIESEL" | "HYBRID" | "ELECTRIC" | "GAS" : undefined,
       transmission: formData.transmission ? formData.transmission as "MANUAL" | "AUTOMATIC" | "CVT" : undefined,
-      bodyType: formData.bodyType ? formData.bodyType as "SALOON" | "HATCHBACK" | "STATION_WAGON" : undefined,
+      bodyType: formData.bodyType ? formData.bodyType as "SALOON" | "HATCHBACK" | "STATION_WAGON" | "SUV" : undefined,
       bikeType: formData.bikeType ? formData.bikeType as "SCOOTER" | "E_BIKE" | "MOTORBIKES" | "QUADRICYCLES" : undefined,
       vehicleType: formData.vehicleType ? formData.vehicleType as "BED_TRAILER" | "BOWSER" | "BULLDOZER" | "CRANE" | "DUMP_TRUCK" | "EXCAVATOR" | "LOADER" | "OTHER" : undefined,
 
@@ -1176,6 +1176,7 @@ export default function QuickAdCreatePage() {
                   <SelectItem value="SALOON">Saloon</SelectItem>
                   <SelectItem value="HATCHBACK">Hatchback</SelectItem>
                   <SelectItem value="STATION_WAGON">Station Wagon</SelectItem>
+                  <SelectItem value="SUV">SUV</SelectItem>
                 </SelectContent>
               </Select>
             </div>
