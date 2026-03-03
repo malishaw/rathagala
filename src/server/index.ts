@@ -14,6 +14,7 @@ import userRoute from "@/server/routes/user/user.index";
 import usersRoute from "@/server/routes/users/users.index";
 import reportRoute from "@/server/routes/report/report.index";
 import analyticsRoute from "@/server/routes/analytics/analytics.index";
+import newsletterRoute from "@/server/routes/newsletter/newsletter.index";
 
 const app = createApp();
 
@@ -35,7 +36,8 @@ const routes = app
   .route("/user", userRoute)
   .route("/report", reportRoute)
   .route("/saved-ad", savedAdRoute)
-  .route("/analytics", analyticsRoute);
+  .route("/analytics", analyticsRoute)
+  .route("/newsletter", newsletterRoute);
 
 export type AppType = typeof routes;
 

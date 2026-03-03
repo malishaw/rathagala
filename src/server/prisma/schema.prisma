@@ -600,3 +600,19 @@ model VerificationCode {
   @@index([email, code])
   @@map("verificationCode")
 }
+
+// Newsletter Models
+
+model Newsletter {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  subject        String
+  htmlContent    String   // Rich HTML content from TipTap editor
+  plainContent   String?  // Plain text fallback
+  recipientCount Int      @default(0)
+  recipientEmails String[] // Store who received it
+  sentBy         String   // Admin user ID who sent it
+  sentAt         DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  @@map("newsletter")
+}

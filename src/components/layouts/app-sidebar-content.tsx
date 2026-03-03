@@ -15,7 +15,8 @@ import {
   NewspaperIcon,
   Users,
   Flag,
-  Trash2
+  Trash2,
+  MailIcon,
 } from "lucide-react";
 
 import { type Session } from "@/lib/auth";
@@ -107,6 +108,11 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
         title: "Gallery",
         url: "/dashboard/media",
         icon: ImageIcon
+      },
+      {
+        title: "Newsletter",
+        url: "/dashboard/newsletter",
+        icon: MailIcon
       }
     ],
     agentManagement: [
