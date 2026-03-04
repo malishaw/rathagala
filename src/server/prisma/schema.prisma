@@ -360,7 +360,11 @@ model Ad {
 
   // Service & Parts Specific Fields
   serviceType       String?     // Used by: Auto Service, Rental
-  partType          String?     // Used by: Auto Parts
+  partType          String?     // Used by: Auto Parts (legacy free-text)
+  partName          String?     // Used by: Auto Parts (part name)
+  partCategoryId    String?     // Used by: Auto Parts (FK to AutoPartCategory)
+  partCategory      AutoPartCategory? @relation(fields: [partCategoryId], references: [id])
+  compatibleVehicleType String? // Used by: Auto Parts (e.g. "CAR","VAN","ALL")
   maintenanceType   String?     // Used by: Maintenance
 
   // Contact Info
@@ -603,6 +607,19 @@ model VerificationCode {
 }
 
 // Newsletter Models
+
+model AutoPartCategory {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  slug        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  ads         Ad[]
+
+  @@map("autoPartCategory")
+}
 
 model Newsletter {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId

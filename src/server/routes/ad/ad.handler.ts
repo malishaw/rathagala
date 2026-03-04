@@ -386,6 +386,9 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       engineCapacity: ad.engineCapacity ?? null,
       serviceType: ad.serviceType ?? null,
       partType: ad.partType ?? null,
+      partName: ad.partName ?? null,
+      partCategoryId: ad.partCategoryId ?? null,
+      compatibleVehicleType: ad.compatibleVehicleType ?? null,
       maintenanceType: ad.maintenanceType ?? null,
 
       // Contact & Location fields
@@ -554,7 +557,10 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
 
         // Service & Parts Specific Fields
         serviceType: adDetails.serviceType || null, // Used by: Auto Service, Rental
-        partType: adDetails.partType || null, // Used by: Auto Parts
+        partType: adDetails.partType || null, // Used by: Auto Parts (legacy)
+        partName: adDetails.partName || null, // Used by: Auto Parts
+        partCategoryId: adDetails.partCategoryId || null, // Used by: Auto Parts
+        compatibleVehicleType: adDetails.compatibleVehicleType || null, // Used by: Auto Parts
         maintenanceType: adDetails.maintenanceType || null, // Used by: Maintenance
 
         // Contact Info
@@ -802,6 +808,9 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
       engineCapacity: ad.engineCapacity ?? null,
       serviceType: ad.serviceType ?? null,
       partType: ad.partType ?? null,
+      partName: ad.partName ?? null,
+      partCategoryId: ad.partCategoryId ?? null,
+      compatibleVehicleType: ad.compatibleVehicleType ?? null,
       maintenanceType: ad.maintenanceType ?? null,
 
       // Contact & Location fields
@@ -962,6 +971,12 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
       updateData.serviceType = adUpdates.serviceType;
     if (adUpdates.partType !== undefined)
       updateData.partType = adUpdates.partType;
+    if (adUpdates.partName !== undefined)
+      updateData.partName = adUpdates.partName;
+    if (adUpdates.partCategoryId !== undefined)
+      updateData.partCategoryId = adUpdates.partCategoryId;
+    if (adUpdates.compatibleVehicleType !== undefined)
+      updateData.compatibleVehicleType = adUpdates.compatibleVehicleType;
     if (adUpdates.maintenanceType !== undefined)
       updateData.maintenanceType = adUpdates.maintenanceType;
 

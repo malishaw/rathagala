@@ -15,6 +15,7 @@ import usersRoute from "@/server/routes/users/users.index";
 import reportRoute from "@/server/routes/report/report.index";
 import analyticsRoute from "@/server/routes/analytics/analytics.index";
 import newsletterRoute from "@/server/routes/newsletter/newsletter.index";
+import autoPartCategoryRoute from "@/server/routes/auto-part-category/auto-part-category.index";
 
 const app = createApp();
 
@@ -37,7 +38,8 @@ const routes = app
   .route("/report", reportRoute)
   .route("/saved-ad", savedAdRoute)
   .route("/analytics", analyticsRoute)
-  .route("/newsletter", newsletterRoute);
+  .route("/newsletter", newsletterRoute)
+  .route("/auto-part-category", autoPartCategoryRoute);
 
 export type AppType = typeof routes;
 

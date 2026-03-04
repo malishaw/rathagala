@@ -136,7 +136,10 @@ export const createAdBaseSchema = z
 
     // Service & Parts specific fields
     serviceType: z.string().optional(), // Used by: Auto Service, Rental
-    partType: z.string().optional(), // Used by: Auto Parts
+    partType: z.string().optional(), // Used by: Auto Parts (legacy)
+    partName: z.string().optional(), // Used by: Auto Parts (part name)
+    partCategoryId: z.string().optional(), // Used by: Auto Parts (category FK)
+    compatibleVehicleType: z.string().optional(), // Used by: Auto Parts
     maintenanceType: z.string().optional(), // Used by: Maintenance
 
     // Contact info
@@ -323,11 +326,18 @@ export const createAdSchema = createAdBaseSchema
               path: ["condition"],
             });
           }
-          if (!data.partType) {
+          if (!data.partName) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
-              message: "Part or Accessory Type is required",
-              path: ["partType"],
+              message: "Part Name is required",
+              path: ["partName"],
+            });
+          }
+          if (!data.brand) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Compatible Vehicle Brand is required",
+              path: ["brand"],
             });
           }
           break;

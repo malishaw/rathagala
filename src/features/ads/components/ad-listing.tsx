@@ -54,18 +54,27 @@ export function AdsTable() {
   // Transform the data to convert string dates to Date objects and ensure proper title format
   const formattedAds = data.ads.map((ad) => {
     // Generate the standardized title format
-    const typeLabel = vehicleTypeLabels[ad.type] || ad.type;
-    const vehicleInfo = [ad.brand, ad.model, ad.manufacturedYear || ad.modelYear, typeLabel]
-      .filter(Boolean)
-      .join(' ');
+    let generatedTitle: string;
+    if (ad.type === 'AUTO_PARTS') {
+      const adExt = ad as typeof ad & { partName?: string; compatibleVehicleType?: string };
+      const partName = adExt.partName || "";
+      const compatLabel = vehicleTypeLabels[adExt.compatibleVehicleType || ""] || adExt.compatibleVehicleType || "";
+      const forParts = [ad.brand, ad.model, compatLabel].filter(Boolean).join(" ");
+      generatedTitle = forParts ? `${partName} for ${forParts}` : (partName || ad.title || "Auto Part");
+    } else {
+      const typeLabel = vehicleTypeLabels[ad.type] || ad.type;
+      const vehicleInfo = [ad.brand, ad.model, ad.manufacturedYear || ad.modelYear, typeLabel]
+        .filter(Boolean)
+        .join(' ');
 
-    let generatedTitle = vehicleInfo;
-    if (ad.listingType === 'WANT') {
-      generatedTitle = `Want ${vehicleInfo}`;
-    } else if (ad.listingType === 'RENT') {
-      generatedTitle = `${vehicleInfo} for Rent`;
-    } else if (ad.listingType === 'HIRE') {
-      generatedTitle = `${vehicleInfo} for Hire`;
+      generatedTitle = vehicleInfo;
+      if (ad.listingType === 'WANT') {
+        generatedTitle = `Want ${vehicleInfo}`;
+      } else if (ad.listingType === 'RENT') {
+        generatedTitle = `${vehicleInfo} for Rent`;
+      } else if (ad.listingType === 'HIRE') {
+        generatedTitle = `${vehicleInfo} for Hire`;
+      }
     }
 
     return {

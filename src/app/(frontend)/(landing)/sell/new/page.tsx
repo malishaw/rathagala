@@ -21,13 +21,17 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Loader2, Camera, ChevronRight, CheckCircle2, X, PlusCircle, Zap, Star } from "lucide-react";
+import { Loader2, Camera, ChevronRight, CheckCircle2, X, PlusCircle, Zap, Star, ChevronsUpDown, Check } from "lucide-react";
 import { MediaGallery } from "@/modules/media/components/media-gallery";
 import type { MediaFile } from "@/modules/media/types";
 import { PendingAdModal } from "@/features/ads/components/pending-ad-modal";
 import { AdSubmissionSuccessModal } from "@/features/ads/components/ad-submission-success-modal";
 import { locationData, getManufactureYears } from "@/lib/location-data";
 import { CitySearchDropdown } from "@/components/ui/city-search-dropdown";
+import { useGetAutoPartCategories } from "@/features/ads/api/use-get-auto-part-categories";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 export default function QuickAdCreatePage() {
   const router = useRouter();
@@ -38,10 +42,16 @@ export default function QuickAdCreatePage() {
   const [showPendingModal, setShowPendingModal] = useState(false);
   const [selectedImages, setSelectedImages] = useState<MediaFile[]>([]);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  // Track whether we're in "Sell Auto Part" mode
+  const [adMode, setAdMode] = useState<"vehicle" | "auto_part">("vehicle");
 
   // Ref to track whether "Create Another" was chosen in pending modal
   // (prevents redirect to profile when user wants to stay and create again)
   const pendingModalActionRef = useRef<"createAnother" | "none">("none");
+
+  // Auto part categories
+  const { data: autoPartCategories = [] } = useGetAutoPartCategories(true);
+  const [categoryOpen, setCategoryOpen] = useState(false);
 
   // Promotion state
   const [promotionType, setPromotionType] = useState<"boost" | "featured" | "none">("none");
@@ -75,6 +85,11 @@ export default function QuickAdCreatePage() {
     partType: "",
     maintenanceType: "",
     vehicleType: "",
+
+    // Auto Parts specific fields
+    partName: "",
+    partCategoryId: "",
+    compatibleVehicleType: "",
 
     // Contact info
     name: "",
@@ -292,7 +307,25 @@ export default function QuickAdCreatePage() {
     const vehicleInfo = baseInfoParts.join(" ");
 
     let title = "Vehicle Ad";
-    if (formData.listingType === "WANT") {
+    if (adMode === "auto_part" || formData.type === "AUTO_PARTS") {
+      // Auto Parts title: [Part Name] for [Brand] [Model] [Vehicle Type]
+      const compatibleTypeLabel: Record<string, string> = {
+        ALL: "All Vehicles",
+        CAR: "Car",
+        VAN: "Van",
+        MOTORCYCLE: "Motorcycle",
+        BICYCLE: "Bicycle",
+        THREE_WHEEL: "Three Wheeler",
+        BUS: "Bus",
+        LORRY: "Lorry",
+        HEAVY_DUTY: "Heavy Duty",
+        TRACTOR: "Tractor",
+        BOAT: "Boat",
+      };
+      const vehicleTypeLabel = compatibleTypeLabel[formData.compatibleVehicleType] || formData.compatibleVehicleType;
+      const forPart = [formData.brand, formData.model, vehicleTypeLabel].filter(Boolean).join(" ");
+      title = forPart ? `${formData.partName} for ${forPart}` : formData.partName || "Auto Part";
+    } else if (formData.listingType === "WANT") {
       title = `Want ${vehicleInfo}`;
     } else if (formData.listingType === "RENT") {
       title = `${vehicleInfo} for Rent`;
@@ -348,6 +381,9 @@ export default function QuickAdCreatePage() {
       // Service & parts fields
       serviceType: formData.serviceType || undefined,
       partType: formData.partType || undefined,
+      partName: formData.partName || undefined,
+      partCategoryId: formData.partCategoryId || undefined,
+      compatibleVehicleType: formData.compatibleVehicleType || undefined,
       maintenanceType: formData.maintenanceType || undefined,
 
       // Contact info
@@ -387,6 +423,7 @@ export default function QuickAdCreatePage() {
             // Admin or draft - redirect normally
             if (isAdmin) {
               router.push(`/dashboard/ads/${data.id}`);
+
             } else {
               router.push('/profile#my-ads');
             }
@@ -416,7 +453,8 @@ export default function QuickAdCreatePage() {
         }
 
         if (formData.type === "AUTO_PARTS") {
-          return formData.type && formData.brand && formData.model;
+          // Auto parts mode Step 1: require compatible vehicle type, condition, and category
+          return formData.type && formData.compatibleVehicleType && formData.condition && formData.partCategoryId;
         }
 
         // For all vehicle types that need year
@@ -445,7 +483,9 @@ export default function QuickAdCreatePage() {
         } else if (formData.type === "AUTO_SERVICE" || formData.type === "RENTAL") {
           detailsRequired = detailsRequired && formData.serviceType;
         } else if (formData.type === "AUTO_PARTS") {
-          detailsRequired = detailsRequired && formData.partType;
+          // Auto parts: require partName, brand, price, description
+          const partPrice = formData.isNegotiable || formData.price;
+          detailsRequired = partPrice && formData.partName && formData.brand && formData.description;
         } else if (formData.type === "MAINTENANCE") {
           detailsRequired = detailsRequired && formData.maintenanceType;
         } else if (formData.type === "HEAVY_DUTY") {
@@ -980,9 +1020,32 @@ export default function QuickAdCreatePage() {
       case "AUTO_PARTS":
         return (
           <>
-            {/* Condition */}
+            {/* Compatible Vehicle Type */}
             <div>
-              <label className="block text-sm font-medium mb-1">Condition<span className="text-red-500">*</span></label>
+              <label className="block text-sm font-medium mb-1">Compatible Vehicle Type<span className="text-red-500">*</span></label>
+              <Select value={formData.compatibleVehicleType} onValueChange={(value) => handleInputChange("compatibleVehicleType", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select vehicle type this part fits" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Vehicles</SelectItem>
+                  <SelectItem value="CAR">Car</SelectItem>
+                  <SelectItem value="VAN">Van</SelectItem>
+                  <SelectItem value="MOTORCYCLE">Motorcycle</SelectItem>
+                  <SelectItem value="BICYCLE">Bicycle</SelectItem>
+                  <SelectItem value="THREE_WHEEL">Three Wheeler</SelectItem>
+                  <SelectItem value="BUS">Bus</SelectItem>
+                  <SelectItem value="LORRY">Lorry / Truck</SelectItem>
+                  <SelectItem value="HEAVY_DUTY">Heavy Duty</SelectItem>
+                  <SelectItem value="TRACTOR">Tractor</SelectItem>
+                  <SelectItem value="BOAT">Boat</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Part Condition */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Part Condition<span className="text-red-500">*</span></label>
               <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select condition" />
@@ -994,34 +1057,54 @@ export default function QuickAdCreatePage() {
               </Select>
             </div>
 
-            {/* Part Type */}
+            {/* Part Category */}
             <div>
-              <label className="block text-sm font-medium mb-1">Part or Accessory Type<span className="text-red-500">*</span></label>
-              <Input
-                placeholder="e.g., Engine Parts, Tires"
-                value={formData.partType}
-                onChange={(e) => handleInputChange("partType", e.target.value)}
-              />
-            </div>
-
-            {/* Brand */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
-              <Input
-                placeholder="e.g., Bosch"
-                value={formData.brand}
-                onChange={(e) => handleInputChange("brand", e.target.value)}
-              />
-            </div>
-
-            {/* Model */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
-              <Input
-                placeholder="e.g., Compatible model"
-                value={formData.model}
-                onChange={(e) => handleInputChange("model", e.target.value)}
-              />
+              <label className="block text-sm font-medium mb-1">Part Category<span className="text-red-500">*</span></label>
+              <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={categoryOpen}
+                    className="w-full justify-between font-normal"
+                    disabled={autoPartCategories.length === 0}
+                  >
+                    {formData.partCategoryId
+                      ? autoPartCategories.find((cat) => cat.id === formData.partCategoryId)?.name
+                      : (autoPartCategories.length === 0 ? "No categories available" : "Select category")}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search category..." />
+                    <CommandEmpty>No category found.</CommandEmpty>
+                    <CommandGroup className="max-h-60 overflow-y-auto">
+                      {autoPartCategories.map((cat) => (
+                        <CommandItem
+                          key={cat.id}
+                          value={cat.name}
+                          onSelect={() => {
+                            handleInputChange("partCategoryId", cat.id);
+                            setCategoryOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              formData.partCategoryId === cat.id ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {cat.name}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              {autoPartCategories.length === 0 && (
+                <p className="text-xs text-amber-600 mt-1">No categories found. Admin needs to add categories first.</p>
+              )}
             </div>
           </>
         );
@@ -1481,6 +1564,47 @@ export default function QuickAdCreatePage() {
           </>
         );
 
+      case "AUTO_PARTS":
+        return (
+          <>
+            {/* Part Name */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Part Name<span className="text-red-500">*</span></label>
+              <Input
+                placeholder="e.g., Wind Shield, Seat Cover, Brake Pad"
+                value={formData.partName}
+                onChange={(e) => handleInputChange("partName", e.target.value)}
+              />
+            </div>
+
+            {/* Compatible Vehicle Brand */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Compatible Vehicle Brand<span className="text-red-500">*</span></label>
+              <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select vehicle brand" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[280px]">
+                  <SelectItem value="Any">Any Brand</SelectItem>
+                  {vehicleMakes.map((make) => (
+                    <SelectItem key={make} value={make}>{make}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Compatible Vehicle Model */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Compatible Vehicle Model (optional)</label>
+              <Input
+                placeholder="e.g., Camry, WagonR, Civic"
+                value={formData.model}
+                onChange={(e) => handleInputChange("model", e.target.value)}
+              />
+            </div>
+          </>
+        );
+
       default:
         return null;
     }
@@ -1491,7 +1615,9 @@ export default function QuickAdCreatePage() {
       <div className="max-w-md mx-auto">
         <Card className="p-5 shadow-sm bg-white">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-center mb-1">Post Your Vehicle</h1>
+            <h1 className="text-2xl font-bold text-center mb-1">
+              {adMode === "auto_part" ? "Post Your Auto Part" : "Post Your Vehicle"}
+            </h1>
             <p className="text-center text-slate-500">Quick and easy</p>
           </div>
 
@@ -1518,14 +1644,44 @@ export default function QuickAdCreatePage() {
               <div>
                 <label className="block text-sm font-medium mb-1">What do you want to do?<span className="text-red-500">*</span></label>
                 <Select
-                  value={formData.listingType}
-                  onValueChange={(value) => handleInputChange("listingType", value)}
+                  value={adMode === "auto_part" ? "SELL_AUTO_PART" : formData.listingType}
+                  onValueChange={(value) => {
+                    if (value === "SELL_AUTO_PART") {
+                      setAdMode("auto_part");
+                      setFormData(prev => ({
+                        ...prev,
+                        listingType: "SELL",
+                        type: "AUTO_PARTS",
+                        // Clear vehicle-specific fields when switching to auto parts
+                        brand: "",
+                        model: "",
+                        manufacturedYear: "",
+                        modelYear: "",
+                        condition: "",
+                        partName: "",
+                        partCategoryId: "",
+                        compatibleVehicleType: "",
+                      }));
+                    } else {
+                      setAdMode("vehicle");
+                      setFormData(prev => ({
+                        ...prev,
+                        listingType: value,
+                        // If was in auto_part mode, reset to CAR
+                        type: prev.type === "AUTO_PARTS" ? "CAR" : prev.type,
+                        partName: "",
+                        partCategoryId: "",
+                        compatibleVehicleType: "",
+                      }));
+                    }
+                  }}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select listing type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="SELL">Sell</SelectItem>
+                    <SelectItem value="SELL">Sell Vehicle</SelectItem>
+                    <SelectItem value="SELL_AUTO_PART">Sell Auto Part</SelectItem>
                     <SelectItem value="WANT">Want to Buy</SelectItem>
                     <SelectItem value="RENT">Rent Out</SelectItem>
                     <SelectItem value="HIRE">Hire</SelectItem>
@@ -1533,6 +1689,8 @@ export default function QuickAdCreatePage() {
                 </Select>
               </div>
 
+              {/* Vehicle Type - only show when NOT in auto_part mode */}
+              {adMode !== "auto_part" && (
               <div>
                 <label className="block text-sm font-medium mb-1">Vehicle Type<span className="text-red-500">*</span></label>
                 <Select
@@ -1554,14 +1712,14 @@ export default function QuickAdCreatePage() {
                     <SelectItem value="TRACTOR">Tractor</SelectItem>
                     <SelectItem value="AUTO_SERVICE">Auto Service</SelectItem>
                     <SelectItem value="RENTAL">Rental</SelectItem>
-                    <SelectItem value="AUTO_PARTS">Auto Parts and Accessories</SelectItem>
                     <SelectItem value="MAINTENANCE">Maintenance and Repair</SelectItem>
                     <SelectItem value="BOAT">Boats & Water Transports</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+              )}
 
-              {/* Dynamic vehicle fields based on type */}
+              {/* Dynamic vehicle/auto-part fields based on type */}
               {renderVehicleFields()}
 
               {/* <div className="pt-2">
@@ -1950,6 +2108,7 @@ export default function QuickAdCreatePage() {
           pendingModalActionRef.current = "createAnother";
           // Reset form and go to step 1
           setCurrentStep(1);
+          setAdMode("vehicle");
           setFormData({
             listingType: "SELL",
             type: "CAR",
@@ -1972,6 +2131,9 @@ export default function QuickAdCreatePage() {
             partType: "",
             maintenanceType: "",
             vehicleType: "",
+            partName: "",
+            partCategoryId: "",
+            compatibleVehicleType: "",
             name: "",
             phoneNumber: "",
             whatsappNumber: "",

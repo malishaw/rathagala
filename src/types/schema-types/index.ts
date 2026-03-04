@@ -74,7 +74,7 @@ export const TwoFactorScalarFieldEnumSchema = z.enum(['id','secret','backupCodes
 
 export const TasksScalarFieldEnumSchema = z.enum(['id','name','done']);
 
-export const AdScalarFieldEnumSchema = z.enum(['id','orgId','createdBy','title','description','type','listingType','price','published','isDraft','boosted','featured','boostExpiry','featureExpiry','status','expiryDate','rejectionDescription','seoTitle','seoDescription','seoSlug','categoryId','tags','condition','brand','model','trimEdition','manufacturedYear','modelYear','mileage','engineCapacity','fuelType','transmission','bodyType','bikeType','vehicleType','serviceType','partType','maintenanceType','name','phoneNumber','whatsappNumber','termsAndConditions','location','address','province','district','city','specialNote','metadata','createdAt','updatedAt']);
+export const AdScalarFieldEnumSchema = z.enum(['id','orgId','createdBy','title','description','type','listingType','price','published','isDraft','boosted','featured','boostExpiry','featureExpiry','status','expiryDate','rejectionDescription','seoTitle','seoDescription','seoSlug','categoryId','tags','condition','brand','model','trimEdition','manufacturedYear','modelYear','mileage','engineCapacity','fuelType','transmission','bodyType','bikeType','vehicleType','serviceType','partType','partName','partCategoryId','compatibleVehicleType','maintenanceType','name','phoneNumber','whatsappNumber','termsAndConditions','location','address','province','district','city','specialNote','metadata','createdAt','updatedAt']);
 
 export const AdRevisionScalarFieldEnumSchema = z.enum(['id','adId','version','data','createdAt']);
 
@@ -107,6 +107,8 @@ export const AuditLogScalarFieldEnumSchema = z.enum(['id','userId','orgId','acti
 export const AdMediaScalarFieldEnumSchema = z.enum(['id','adId','mediaId','order']);
 
 export const VerificationCodeScalarFieldEnumSchema = z.enum(['id','email','code','expiresAt','createdAt']);
+
+export const AutoPartCategoryScalarFieldEnumSchema = z.enum(['id','name','slug','description','isActive','createdAt','updatedAt']);
 
 export const NewsletterScalarFieldEnumSchema = z.enum(['id','subject','htmlContent','plainContent','recipientCount','recipientEmails','sentBy','sentAt','createdAt']);
 
@@ -381,6 +383,9 @@ export const AdSchema = z.object({
   engineCapacity: z.number().nullable(),
   serviceType: z.string().nullable(),
   partType: z.string().nullable(),
+  partName: z.string().nullable(),
+  partCategoryId: z.string().nullable(),
+  compatibleVehicleType: z.string().nullable(),
   maintenanceType: z.string().nullable(),
   name: z.string().nullable(),
   phoneNumber: z.string().nullable(),
@@ -640,6 +645,22 @@ export const VerificationCodeSchema = z.object({
 })
 
 export type VerificationCode = z.infer<typeof VerificationCodeSchema>
+
+/////////////////////////////////////////
+// AUTO PART CATEGORY SCHEMA
+/////////////////////////////////////////
+
+export const AutoPartCategorySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  slug: z.string(),
+  description: z.string().nullable(),
+  isActive: z.boolean(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+})
+
+export type AutoPartCategory = z.infer<typeof AutoPartCategorySchema>
 
 /////////////////////////////////////////
 // NEWSLETTER SCHEMA
@@ -1007,6 +1028,9 @@ export const AdSelectSchema: z.ZodType<Prisma.AdSelect> = z.object({
   vehicleType: z.boolean().optional(),
   serviceType: z.boolean().optional(),
   partType: z.boolean().optional(),
+  partName: z.boolean().optional(),
+  partCategoryId: z.boolean().optional(),
+  compatibleVehicleType: z.boolean().optional(),
   maintenanceType: z.boolean().optional(),
   name: z.boolean().optional(),
   phoneNumber: z.boolean().optional(),
@@ -1024,6 +1048,7 @@ export const AdSelectSchema: z.ZodType<Prisma.AdSelect> = z.object({
   org: z.union([z.boolean(),z.lazy(() => OrganizationArgsSchema)]).optional(),
   creator: z.union([z.boolean(),z.lazy(() => UserArgsSchema)]).optional(),
   category: z.union([z.boolean(),z.lazy(() => CategoryArgsSchema)]).optional(),
+  partCategory: z.union([z.boolean(),z.lazy(() => AutoPartCategoryArgsSchema)]).optional(),
   analytics: z.union([z.boolean(),z.lazy(() => AdAnalyticsArgsSchema)]).optional(),
   payments: z.union([z.boolean(),z.lazy(() => PaymentArgsSchema)]).optional(),
   favorites: z.union([z.boolean(),z.lazy(() => FavoriteArgsSchema)]).optional(),
@@ -1386,6 +1411,37 @@ export const VerificationCodeSelectSchema: z.ZodType<Prisma.VerificationCodeSele
   code: z.boolean().optional(),
   expiresAt: z.boolean().optional(),
   createdAt: z.boolean().optional(),
+}).strict()
+
+// AUTO PART CATEGORY
+//------------------------------------------------------
+
+export const AutoPartCategoryIncludeSchema: z.ZodType<Prisma.AutoPartCategoryInclude> = z.object({
+}).strict();
+
+export const AutoPartCategoryArgsSchema: z.ZodType<Prisma.AutoPartCategoryDefaultArgs> = z.object({
+  select: z.lazy(() => AutoPartCategorySelectSchema).optional(),
+  include: z.lazy(() => AutoPartCategoryIncludeSchema).optional(),
+}).strict();
+
+export const AutoPartCategoryCountOutputTypeArgsSchema: z.ZodType<Prisma.AutoPartCategoryCountOutputTypeDefaultArgs> = z.object({
+  select: z.lazy(() => AutoPartCategoryCountOutputTypeSelectSchema).nullish(),
+}).strict();
+
+export const AutoPartCategoryCountOutputTypeSelectSchema: z.ZodType<Prisma.AutoPartCategoryCountOutputTypeSelect> = z.object({
+  ads: z.boolean().optional(),
+}).strict();
+
+export const AutoPartCategorySelectSchema: z.ZodType<Prisma.AutoPartCategorySelect> = z.object({
+  id: z.boolean().optional(),
+  name: z.boolean().optional(),
+  slug: z.boolean().optional(),
+  description: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+  createdAt: z.boolean().optional(),
+  updatedAt: z.boolean().optional(),
+  ads: z.union([z.boolean(),z.lazy(() => AdArgsSchema)]).optional(),
+  _count: z.union([z.boolean(),z.lazy(() => AutoPartCategoryCountOutputTypeArgsSchema)]).optional(),
 }).strict()
 
 // NEWSLETTER
@@ -2281,6 +2337,9 @@ export const AdWhereInputSchema: z.ZodType<Prisma.AdWhereInput> = z.object({
   vehicleType: z.union([ z.lazy(() => EnumHeavyDutyVehicleTypeNullableFilterSchema), z.lazy(() => HeavyDutyVehicleTypeSchema) ]).optional().nullable(),
   serviceType: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   partType: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
+  partName: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
+  partCategoryId: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   maintenanceType: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   name: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   phoneNumber: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
@@ -2298,6 +2357,7 @@ export const AdWhereInputSchema: z.ZodType<Prisma.AdWhereInput> = z.object({
   org: z.union([ z.lazy(() => OrganizationScalarRelationFilterSchema), z.lazy(() => OrganizationWhereInputSchema) ]).optional(),
   creator: z.union([ z.lazy(() => UserScalarRelationFilterSchema), z.lazy(() => UserWhereInputSchema) ]).optional(),
   category: z.union([ z.lazy(() => CategoryNullableScalarRelationFilterSchema), z.lazy(() => CategoryWhereInputSchema) ]).optional().nullable(),
+  partCategory: z.union([ z.lazy(() => AutoPartCategoryNullableScalarRelationFilterSchema), z.lazy(() => AutoPartCategoryWhereInputSchema) ]).optional().nullable(),
   analytics: z.union([ z.lazy(() => AdAnalyticsNullableScalarRelationFilterSchema), z.lazy(() => AdAnalyticsWhereInputSchema) ]).optional().nullable(),
   payments: z.lazy(() => PaymentListRelationFilterSchema).optional(),
   favorites: z.lazy(() => FavoriteListRelationFilterSchema).optional(),
@@ -2346,6 +2406,9 @@ export const AdOrderByWithRelationInputSchema: z.ZodType<Prisma.AdOrderByWithRel
   vehicleType: z.lazy(() => SortOrderSchema).optional(),
   serviceType: z.lazy(() => SortOrderSchema).optional(),
   partType: z.lazy(() => SortOrderSchema).optional(),
+  partName: z.lazy(() => SortOrderSchema).optional(),
+  partCategoryId: z.lazy(() => SortOrderSchema).optional(),
+  compatibleVehicleType: z.lazy(() => SortOrderSchema).optional(),
   maintenanceType: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
   phoneNumber: z.lazy(() => SortOrderSchema).optional(),
@@ -2363,6 +2426,7 @@ export const AdOrderByWithRelationInputSchema: z.ZodType<Prisma.AdOrderByWithRel
   org: z.lazy(() => OrganizationOrderByWithRelationInputSchema).optional(),
   creator: z.lazy(() => UserOrderByWithRelationInputSchema).optional(),
   category: z.lazy(() => CategoryOrderByWithRelationInputSchema).optional(),
+  partCategory: z.lazy(() => AutoPartCategoryOrderByWithRelationInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsOrderByWithRelationInputSchema).optional(),
   payments: z.lazy(() => PaymentOrderByRelationAggregateInputSchema).optional(),
   favorites: z.lazy(() => FavoriteOrderByRelationAggregateInputSchema).optional(),
@@ -2426,6 +2490,9 @@ export const AdWhereUniqueInputSchema: z.ZodType<Prisma.AdWhereUniqueInput> = z.
   vehicleType: z.union([ z.lazy(() => EnumHeavyDutyVehicleTypeNullableFilterSchema), z.lazy(() => HeavyDutyVehicleTypeSchema) ]).optional().nullable(),
   serviceType: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   partType: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
+  partName: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
+  partCategoryId: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   maintenanceType: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   name: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   phoneNumber: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
@@ -2443,6 +2510,7 @@ export const AdWhereUniqueInputSchema: z.ZodType<Prisma.AdWhereUniqueInput> = z.
   org: z.union([ z.lazy(() => OrganizationScalarRelationFilterSchema), z.lazy(() => OrganizationWhereInputSchema) ]).optional(),
   creator: z.union([ z.lazy(() => UserScalarRelationFilterSchema), z.lazy(() => UserWhereInputSchema) ]).optional(),
   category: z.union([ z.lazy(() => CategoryNullableScalarRelationFilterSchema), z.lazy(() => CategoryWhereInputSchema) ]).optional().nullable(),
+  partCategory: z.union([ z.lazy(() => AutoPartCategoryNullableScalarRelationFilterSchema), z.lazy(() => AutoPartCategoryWhereInputSchema) ]).optional().nullable(),
   analytics: z.union([ z.lazy(() => AdAnalyticsNullableScalarRelationFilterSchema), z.lazy(() => AdAnalyticsWhereInputSchema) ]).optional().nullable(),
   payments: z.lazy(() => PaymentListRelationFilterSchema).optional(),
   favorites: z.lazy(() => FavoriteListRelationFilterSchema).optional(),
@@ -2491,6 +2559,9 @@ export const AdOrderByWithAggregationInputSchema: z.ZodType<Prisma.AdOrderByWith
   vehicleType: z.lazy(() => SortOrderSchema).optional(),
   serviceType: z.lazy(() => SortOrderSchema).optional(),
   partType: z.lazy(() => SortOrderSchema).optional(),
+  partName: z.lazy(() => SortOrderSchema).optional(),
+  partCategoryId: z.lazy(() => SortOrderSchema).optional(),
+  compatibleVehicleType: z.lazy(() => SortOrderSchema).optional(),
   maintenanceType: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
   phoneNumber: z.lazy(() => SortOrderSchema).optional(),
@@ -2553,6 +2624,9 @@ export const AdScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.AdScalarWh
   vehicleType: z.union([ z.lazy(() => EnumHeavyDutyVehicleTypeNullableWithAggregatesFilterSchema), z.lazy(() => HeavyDutyVehicleTypeSchema) ]).optional().nullable(),
   serviceType: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema), z.string() ]).optional().nullable(),
   partType: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema), z.string() ]).optional().nullable(),
+  partName: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema), z.string() ]).optional().nullable(),
+  partCategoryId: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema), z.string() ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema), z.string() ]).optional().nullable(),
   maintenanceType: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema), z.string() ]).optional().nullable(),
   name: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema), z.string() ]).optional().nullable(),
   phoneNumber: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema), z.string() ]).optional().nullable(),
@@ -3693,6 +3767,83 @@ export const VerificationCodeScalarWhereWithAggregatesInputSchema: z.ZodType<Pri
   createdAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
 }).strict();
 
+export const AutoPartCategoryWhereInputSchema: z.ZodType<Prisma.AutoPartCategoryWhereInput> = z.object({
+  AND: z.union([ z.lazy(() => AutoPartCategoryWhereInputSchema), z.lazy(() => AutoPartCategoryWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => AutoPartCategoryWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => AutoPartCategoryWhereInputSchema), z.lazy(() => AutoPartCategoryWhereInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  slug: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  description: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
+  isActive: z.union([ z.lazy(() => BoolFilterSchema), z.boolean() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  ads: z.lazy(() => AdListRelationFilterSchema).optional(),
+}).strict();
+
+export const AutoPartCategoryOrderByWithRelationInputSchema: z.ZodType<Prisma.AutoPartCategoryOrderByWithRelationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
+  description: z.lazy(() => SortOrderSchema).optional(),
+  isActive: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+  ads: z.lazy(() => AdOrderByRelationAggregateInputSchema).optional(),
+}).strict();
+
+export const AutoPartCategoryWhereUniqueInputSchema: z.ZodType<Prisma.AutoPartCategoryWhereUniqueInput> = z.union([
+  z.object({
+    id: z.string(),
+    slug: z.string(),
+  }),
+  z.object({
+    id: z.string(),
+  }),
+  z.object({
+    slug: z.string(),
+  }),
+])
+.and(z.object({
+  id: z.string().optional(),
+  slug: z.string().optional(),
+  AND: z.union([ z.lazy(() => AutoPartCategoryWhereInputSchema), z.lazy(() => AutoPartCategoryWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => AutoPartCategoryWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => AutoPartCategoryWhereInputSchema), z.lazy(() => AutoPartCategoryWhereInputSchema).array() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  description: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
+  isActive: z.union([ z.lazy(() => BoolFilterSchema), z.boolean() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  ads: z.lazy(() => AdListRelationFilterSchema).optional(),
+}).strict());
+
+export const AutoPartCategoryOrderByWithAggregationInputSchema: z.ZodType<Prisma.AutoPartCategoryOrderByWithAggregationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
+  description: z.lazy(() => SortOrderSchema).optional(),
+  isActive: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+  _count: z.lazy(() => AutoPartCategoryCountOrderByAggregateInputSchema).optional(),
+  _max: z.lazy(() => AutoPartCategoryMaxOrderByAggregateInputSchema).optional(),
+  _min: z.lazy(() => AutoPartCategoryMinOrderByAggregateInputSchema).optional(),
+}).strict();
+
+export const AutoPartCategoryScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.AutoPartCategoryScalarWhereWithAggregatesInput> = z.object({
+  AND: z.union([ z.lazy(() => AutoPartCategoryScalarWhereWithAggregatesInputSchema), z.lazy(() => AutoPartCategoryScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  OR: z.lazy(() => AutoPartCategoryScalarWhereWithAggregatesInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => AutoPartCategoryScalarWhereWithAggregatesInputSchema), z.lazy(() => AutoPartCategoryScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
+  name: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
+  slug: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
+  description: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema), z.string() ]).optional().nullable(),
+  isActive: z.union([ z.lazy(() => BoolWithAggregatesFilterSchema), z.boolean() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
+}).strict();
+
 export const NewsletterWhereInputSchema: z.ZodType<Prisma.NewsletterWhereInput> = z.object({
   AND: z.union([ z.lazy(() => NewsletterWhereInputSchema), z.lazy(() => NewsletterWhereInputSchema).array() ]).optional(),
   OR: z.lazy(() => NewsletterWhereInputSchema).array().optional(),
@@ -4606,6 +4757,8 @@ export const AdCreateInputSchema: z.ZodType<Prisma.AdCreateInput> = z.object({
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -4623,6 +4776,7 @@ export const AdCreateInputSchema: z.ZodType<Prisma.AdCreateInput> = z.object({
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
+  partCategory: z.lazy(() => AutoPartCategoryCreateNestedOneWithoutAdsInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
@@ -4671,6 +4825,9 @@ export const AdUncheckedCreateInputSchema: z.ZodType<Prisma.AdUncheckedCreateInp
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  partCategoryId: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -4729,6 +4886,8 @@ export const AdUpdateInputSchema: z.ZodType<Prisma.AdUpdateInput> = z.object({
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -4746,6 +4905,7 @@ export const AdUpdateInputSchema: z.ZodType<Prisma.AdUpdateInput> = z.object({
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
+  partCategory: z.lazy(() => AutoPartCategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -4793,6 +4953,9 @@ export const AdUncheckedUpdateInputSchema: z.ZodType<Prisma.AdUncheckedUpdateInp
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partCategoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -4855,6 +5018,9 @@ export const AdCreateManyInputSchema: z.ZodType<Prisma.AdCreateManyInput> = z.ob
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  partCategoryId: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -4905,6 +5071,8 @@ export const AdUpdateManyMutationInputSchema: z.ZodType<Prisma.AdUpdateManyMutat
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -4958,6 +5126,9 @@ export const AdUncheckedUpdateManyInputSchema: z.ZodType<Prisma.AdUncheckedUpdat
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partCategoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -5921,6 +6092,76 @@ export const VerificationCodeUncheckedUpdateManyInputSchema: z.ZodType<Prisma.Ve
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
+export const AutoPartCategoryCreateInputSchema: z.ZodType<Prisma.AutoPartCategoryCreateInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  slug: z.string(),
+  description: z.string().optional().nullable(),
+  isActive: z.boolean().optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+  ads: z.lazy(() => AdCreateNestedManyWithoutPartCategoryInputSchema).optional(),
+}).strict();
+
+export const AutoPartCategoryUncheckedCreateInputSchema: z.ZodType<Prisma.AutoPartCategoryUncheckedCreateInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  slug: z.string(),
+  description: z.string().optional().nullable(),
+  isActive: z.boolean().optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+  ads: z.lazy(() => AdUncheckedCreateNestedManyWithoutPartCategoryInputSchema).optional(),
+}).strict();
+
+export const AutoPartCategoryUpdateInputSchema: z.ZodType<Prisma.AutoPartCategoryUpdateInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  isActive: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  ads: z.lazy(() => AdUpdateManyWithoutPartCategoryNestedInputSchema).optional(),
+}).strict();
+
+export const AutoPartCategoryUncheckedUpdateInputSchema: z.ZodType<Prisma.AutoPartCategoryUncheckedUpdateInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  isActive: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  ads: z.lazy(() => AdUncheckedUpdateManyWithoutPartCategoryNestedInputSchema).optional(),
+}).strict();
+
+export const AutoPartCategoryCreateManyInputSchema: z.ZodType<Prisma.AutoPartCategoryCreateManyInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  slug: z.string(),
+  description: z.string().optional().nullable(),
+  isActive: z.boolean().optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const AutoPartCategoryUpdateManyMutationInputSchema: z.ZodType<Prisma.AutoPartCategoryUpdateManyMutationInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  isActive: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const AutoPartCategoryUncheckedUpdateManyInputSchema: z.ZodType<Prisma.AutoPartCategoryUncheckedUpdateManyInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  isActive: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
 export const NewsletterCreateInputSchema: z.ZodType<Prisma.NewsletterCreateInput> = z.object({
   id: z.string().optional(),
   subject: z.string(),
@@ -6748,6 +6989,11 @@ export const CategoryNullableScalarRelationFilterSchema: z.ZodType<Prisma.Catego
   isNot: z.lazy(() => CategoryWhereInputSchema).optional().nullable(),
 }).strict();
 
+export const AutoPartCategoryNullableScalarRelationFilterSchema: z.ZodType<Prisma.AutoPartCategoryNullableScalarRelationFilter> = z.object({
+  is: z.lazy(() => AutoPartCategoryWhereInputSchema).optional().nullable(),
+  isNot: z.lazy(() => AutoPartCategoryWhereInputSchema).optional().nullable(),
+}).strict();
+
 export const AdAnalyticsNullableScalarRelationFilterSchema: z.ZodType<Prisma.AdAnalyticsNullableScalarRelationFilter> = z.object({
   is: z.lazy(() => AdAnalyticsWhereInputSchema).optional().nullable(),
   isNot: z.lazy(() => AdAnalyticsWhereInputSchema).optional().nullable(),
@@ -6831,6 +7077,9 @@ export const AdCountOrderByAggregateInputSchema: z.ZodType<Prisma.AdCountOrderBy
   vehicleType: z.lazy(() => SortOrderSchema).optional(),
   serviceType: z.lazy(() => SortOrderSchema).optional(),
   partType: z.lazy(() => SortOrderSchema).optional(),
+  partName: z.lazy(() => SortOrderSchema).optional(),
+  partCategoryId: z.lazy(() => SortOrderSchema).optional(),
+  compatibleVehicleType: z.lazy(() => SortOrderSchema).optional(),
   maintenanceType: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
   phoneNumber: z.lazy(() => SortOrderSchema).optional(),
@@ -6890,6 +7139,9 @@ export const AdMaxOrderByAggregateInputSchema: z.ZodType<Prisma.AdMaxOrderByAggr
   vehicleType: z.lazy(() => SortOrderSchema).optional(),
   serviceType: z.lazy(() => SortOrderSchema).optional(),
   partType: z.lazy(() => SortOrderSchema).optional(),
+  partName: z.lazy(() => SortOrderSchema).optional(),
+  partCategoryId: z.lazy(() => SortOrderSchema).optional(),
+  compatibleVehicleType: z.lazy(() => SortOrderSchema).optional(),
   maintenanceType: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
   phoneNumber: z.lazy(() => SortOrderSchema).optional(),
@@ -6942,6 +7194,9 @@ export const AdMinOrderByAggregateInputSchema: z.ZodType<Prisma.AdMinOrderByAggr
   vehicleType: z.lazy(() => SortOrderSchema).optional(),
   serviceType: z.lazy(() => SortOrderSchema).optional(),
   partType: z.lazy(() => SortOrderSchema).optional(),
+  partName: z.lazy(() => SortOrderSchema).optional(),
+  partCategoryId: z.lazy(() => SortOrderSchema).optional(),
+  compatibleVehicleType: z.lazy(() => SortOrderSchema).optional(),
   maintenanceType: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
   phoneNumber: z.lazy(() => SortOrderSchema).optional(),
@@ -7760,6 +8015,36 @@ export const VerificationCodeMinOrderByAggregateInputSchema: z.ZodType<Prisma.Ve
   code: z.lazy(() => SortOrderSchema).optional(),
   expiresAt: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const AutoPartCategoryCountOrderByAggregateInputSchema: z.ZodType<Prisma.AutoPartCategoryCountOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
+  description: z.lazy(() => SortOrderSchema).optional(),
+  isActive: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const AutoPartCategoryMaxOrderByAggregateInputSchema: z.ZodType<Prisma.AutoPartCategoryMaxOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
+  description: z.lazy(() => SortOrderSchema).optional(),
+  isActive: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const AutoPartCategoryMinOrderByAggregateInputSchema: z.ZodType<Prisma.AutoPartCategoryMinOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
+  description: z.lazy(() => SortOrderSchema).optional(),
+  isActive: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
 }).strict();
 
 export const NewsletterCountOrderByAggregateInputSchema: z.ZodType<Prisma.NewsletterCountOrderByAggregateInput> = z.object({
@@ -8919,6 +9204,12 @@ export const CategoryCreateNestedOneWithoutAdsInputSchema: z.ZodType<Prisma.Cate
   connect: z.lazy(() => CategoryWhereUniqueInputSchema).optional(),
 }).strict();
 
+export const AutoPartCategoryCreateNestedOneWithoutAdsInputSchema: z.ZodType<Prisma.AutoPartCategoryCreateNestedOneWithoutAdsInput> = z.object({
+  create: z.union([ z.lazy(() => AutoPartCategoryCreateWithoutAdsInputSchema), z.lazy(() => AutoPartCategoryUncheckedCreateWithoutAdsInputSchema) ]).optional(),
+  connectOrCreate: z.lazy(() => AutoPartCategoryCreateOrConnectWithoutAdsInputSchema).optional(),
+  connect: z.lazy(() => AutoPartCategoryWhereUniqueInputSchema).optional(),
+}).strict();
+
 export const AdAnalyticsCreateNestedOneWithoutAdInputSchema: z.ZodType<Prisma.AdAnalyticsCreateNestedOneWithoutAdInput> = z.object({
   create: z.union([ z.lazy(() => AdAnalyticsCreateWithoutAdInputSchema), z.lazy(() => AdAnalyticsUncheckedCreateWithoutAdInputSchema) ]).optional(),
   connectOrCreate: z.lazy(() => AdAnalyticsCreateOrConnectWithoutAdInputSchema).optional(),
@@ -9104,6 +9395,16 @@ export const CategoryUpdateOneWithoutAdsNestedInputSchema: z.ZodType<Prisma.Cate
   delete: z.union([ z.boolean(),z.lazy(() => CategoryWhereInputSchema) ]).optional(),
   connect: z.lazy(() => CategoryWhereUniqueInputSchema).optional(),
   update: z.union([ z.lazy(() => CategoryUpdateToOneWithWhereWithoutAdsInputSchema), z.lazy(() => CategoryUpdateWithoutAdsInputSchema), z.lazy(() => CategoryUncheckedUpdateWithoutAdsInputSchema) ]).optional(),
+}).strict();
+
+export const AutoPartCategoryUpdateOneWithoutAdsNestedInputSchema: z.ZodType<Prisma.AutoPartCategoryUpdateOneWithoutAdsNestedInput> = z.object({
+  create: z.union([ z.lazy(() => AutoPartCategoryCreateWithoutAdsInputSchema), z.lazy(() => AutoPartCategoryUncheckedCreateWithoutAdsInputSchema) ]).optional(),
+  connectOrCreate: z.lazy(() => AutoPartCategoryCreateOrConnectWithoutAdsInputSchema).optional(),
+  upsert: z.lazy(() => AutoPartCategoryUpsertWithoutAdsInputSchema).optional(),
+  disconnect: z.boolean().optional(),
+  delete: z.union([ z.boolean(),z.lazy(() => AutoPartCategoryWhereInputSchema) ]).optional(),
+  connect: z.lazy(() => AutoPartCategoryWhereUniqueInputSchema).optional(),
+  update: z.union([ z.lazy(() => AutoPartCategoryUpdateToOneWithWhereWithoutAdsInputSchema), z.lazy(() => AutoPartCategoryUpdateWithoutAdsInputSchema), z.lazy(() => AutoPartCategoryUncheckedUpdateWithoutAdsInputSchema) ]).optional(),
 }).strict();
 
 export const AdAnalyticsUpdateOneWithoutAdNestedInputSchema: z.ZodType<Prisma.AdAnalyticsUpdateOneWithoutAdNestedInput> = z.object({
@@ -9719,6 +10020,48 @@ export const MediaUpdateOneRequiredWithoutAdsNestedInputSchema: z.ZodType<Prisma
   upsert: z.lazy(() => MediaUpsertWithoutAdsInputSchema).optional(),
   connect: z.lazy(() => MediaWhereUniqueInputSchema).optional(),
   update: z.union([ z.lazy(() => MediaUpdateToOneWithWhereWithoutAdsInputSchema), z.lazy(() => MediaUpdateWithoutAdsInputSchema), z.lazy(() => MediaUncheckedUpdateWithoutAdsInputSchema) ]).optional(),
+}).strict();
+
+export const AdCreateNestedManyWithoutPartCategoryInputSchema: z.ZodType<Prisma.AdCreateNestedManyWithoutPartCategoryInput> = z.object({
+  create: z.union([ z.lazy(() => AdCreateWithoutPartCategoryInputSchema), z.lazy(() => AdCreateWithoutPartCategoryInputSchema).array(), z.lazy(() => AdUncheckedCreateWithoutPartCategoryInputSchema), z.lazy(() => AdUncheckedCreateWithoutPartCategoryInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => AdCreateOrConnectWithoutPartCategoryInputSchema), z.lazy(() => AdCreateOrConnectWithoutPartCategoryInputSchema).array() ]).optional(),
+  createMany: z.lazy(() => AdCreateManyPartCategoryInputEnvelopeSchema).optional(),
+  connect: z.union([ z.lazy(() => AdWhereUniqueInputSchema), z.lazy(() => AdWhereUniqueInputSchema).array() ]).optional(),
+}).strict();
+
+export const AdUncheckedCreateNestedManyWithoutPartCategoryInputSchema: z.ZodType<Prisma.AdUncheckedCreateNestedManyWithoutPartCategoryInput> = z.object({
+  create: z.union([ z.lazy(() => AdCreateWithoutPartCategoryInputSchema), z.lazy(() => AdCreateWithoutPartCategoryInputSchema).array(), z.lazy(() => AdUncheckedCreateWithoutPartCategoryInputSchema), z.lazy(() => AdUncheckedCreateWithoutPartCategoryInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => AdCreateOrConnectWithoutPartCategoryInputSchema), z.lazy(() => AdCreateOrConnectWithoutPartCategoryInputSchema).array() ]).optional(),
+  createMany: z.lazy(() => AdCreateManyPartCategoryInputEnvelopeSchema).optional(),
+  connect: z.union([ z.lazy(() => AdWhereUniqueInputSchema), z.lazy(() => AdWhereUniqueInputSchema).array() ]).optional(),
+}).strict();
+
+export const AdUpdateManyWithoutPartCategoryNestedInputSchema: z.ZodType<Prisma.AdUpdateManyWithoutPartCategoryNestedInput> = z.object({
+  create: z.union([ z.lazy(() => AdCreateWithoutPartCategoryInputSchema), z.lazy(() => AdCreateWithoutPartCategoryInputSchema).array(), z.lazy(() => AdUncheckedCreateWithoutPartCategoryInputSchema), z.lazy(() => AdUncheckedCreateWithoutPartCategoryInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => AdCreateOrConnectWithoutPartCategoryInputSchema), z.lazy(() => AdCreateOrConnectWithoutPartCategoryInputSchema).array() ]).optional(),
+  upsert: z.union([ z.lazy(() => AdUpsertWithWhereUniqueWithoutPartCategoryInputSchema), z.lazy(() => AdUpsertWithWhereUniqueWithoutPartCategoryInputSchema).array() ]).optional(),
+  createMany: z.lazy(() => AdCreateManyPartCategoryInputEnvelopeSchema).optional(),
+  set: z.union([ z.lazy(() => AdWhereUniqueInputSchema), z.lazy(() => AdWhereUniqueInputSchema).array() ]).optional(),
+  disconnect: z.union([ z.lazy(() => AdWhereUniqueInputSchema), z.lazy(() => AdWhereUniqueInputSchema).array() ]).optional(),
+  delete: z.union([ z.lazy(() => AdWhereUniqueInputSchema), z.lazy(() => AdWhereUniqueInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => AdWhereUniqueInputSchema), z.lazy(() => AdWhereUniqueInputSchema).array() ]).optional(),
+  update: z.union([ z.lazy(() => AdUpdateWithWhereUniqueWithoutPartCategoryInputSchema), z.lazy(() => AdUpdateWithWhereUniqueWithoutPartCategoryInputSchema).array() ]).optional(),
+  updateMany: z.union([ z.lazy(() => AdUpdateManyWithWhereWithoutPartCategoryInputSchema), z.lazy(() => AdUpdateManyWithWhereWithoutPartCategoryInputSchema).array() ]).optional(),
+  deleteMany: z.union([ z.lazy(() => AdScalarWhereInputSchema), z.lazy(() => AdScalarWhereInputSchema).array() ]).optional(),
+}).strict();
+
+export const AdUncheckedUpdateManyWithoutPartCategoryNestedInputSchema: z.ZodType<Prisma.AdUncheckedUpdateManyWithoutPartCategoryNestedInput> = z.object({
+  create: z.union([ z.lazy(() => AdCreateWithoutPartCategoryInputSchema), z.lazy(() => AdCreateWithoutPartCategoryInputSchema).array(), z.lazy(() => AdUncheckedCreateWithoutPartCategoryInputSchema), z.lazy(() => AdUncheckedCreateWithoutPartCategoryInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => AdCreateOrConnectWithoutPartCategoryInputSchema), z.lazy(() => AdCreateOrConnectWithoutPartCategoryInputSchema).array() ]).optional(),
+  upsert: z.union([ z.lazy(() => AdUpsertWithWhereUniqueWithoutPartCategoryInputSchema), z.lazy(() => AdUpsertWithWhereUniqueWithoutPartCategoryInputSchema).array() ]).optional(),
+  createMany: z.lazy(() => AdCreateManyPartCategoryInputEnvelopeSchema).optional(),
+  set: z.union([ z.lazy(() => AdWhereUniqueInputSchema), z.lazy(() => AdWhereUniqueInputSchema).array() ]).optional(),
+  disconnect: z.union([ z.lazy(() => AdWhereUniqueInputSchema), z.lazy(() => AdWhereUniqueInputSchema).array() ]).optional(),
+  delete: z.union([ z.lazy(() => AdWhereUniqueInputSchema), z.lazy(() => AdWhereUniqueInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => AdWhereUniqueInputSchema), z.lazy(() => AdWhereUniqueInputSchema).array() ]).optional(),
+  update: z.union([ z.lazy(() => AdUpdateWithWhereUniqueWithoutPartCategoryInputSchema), z.lazy(() => AdUpdateWithWhereUniqueWithoutPartCategoryInputSchema).array() ]).optional(),
+  updateMany: z.union([ z.lazy(() => AdUpdateManyWithWhereWithoutPartCategoryInputSchema), z.lazy(() => AdUpdateManyWithWhereWithoutPartCategoryInputSchema).array() ]).optional(),
+  deleteMany: z.union([ z.lazy(() => AdScalarWhereInputSchema), z.lazy(() => AdScalarWhereInputSchema).array() ]).optional(),
 }).strict();
 
 export const NewsletterCreaterecipientEmailsInputSchema: z.ZodType<Prisma.NewsletterCreaterecipientEmailsInput> = z.object({
@@ -10439,6 +10782,8 @@ export const AdCreateWithoutCreatorInputSchema: z.ZodType<Prisma.AdCreateWithout
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -10455,6 +10800,7 @@ export const AdCreateWithoutCreatorInputSchema: z.ZodType<Prisma.AdCreateWithout
   updatedAt: z.coerce.date().optional(),
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
+  partCategory: z.lazy(() => AutoPartCategoryCreateNestedOneWithoutAdsInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
@@ -10502,6 +10848,9 @@ export const AdUncheckedCreateWithoutCreatorInputSchema: z.ZodType<Prisma.AdUnch
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  partCategoryId: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -11046,6 +11395,9 @@ export const AdScalarWhereInputSchema: z.ZodType<Prisma.AdScalarWhereInput> = z.
   vehicleType: z.union([ z.lazy(() => EnumHeavyDutyVehicleTypeNullableFilterSchema), z.lazy(() => HeavyDutyVehicleTypeSchema) ]).optional().nullable(),
   serviceType: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   partType: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
+  partName: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
+  partCategoryId: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   maintenanceType: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   name: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   phoneNumber: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
@@ -11849,6 +12201,8 @@ export const AdCreateWithoutOrgInputSchema: z.ZodType<Prisma.AdCreateWithoutOrgI
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -11865,6 +12219,7 @@ export const AdCreateWithoutOrgInputSchema: z.ZodType<Prisma.AdCreateWithoutOrgI
   updatedAt: z.coerce.date().optional(),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
+  partCategory: z.lazy(() => AutoPartCategoryCreateNestedOneWithoutAdsInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
@@ -11912,6 +12267,9 @@ export const AdUncheckedCreateWithoutOrgInputSchema: z.ZodType<Prisma.AdUnchecke
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  partCategoryId: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -13145,6 +13503,31 @@ export const CategoryCreateOrConnectWithoutAdsInputSchema: z.ZodType<Prisma.Cate
   create: z.union([ z.lazy(() => CategoryCreateWithoutAdsInputSchema), z.lazy(() => CategoryUncheckedCreateWithoutAdsInputSchema) ]),
 }).strict();
 
+export const AutoPartCategoryCreateWithoutAdsInputSchema: z.ZodType<Prisma.AutoPartCategoryCreateWithoutAdsInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  slug: z.string(),
+  description: z.string().optional().nullable(),
+  isActive: z.boolean().optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const AutoPartCategoryUncheckedCreateWithoutAdsInputSchema: z.ZodType<Prisma.AutoPartCategoryUncheckedCreateWithoutAdsInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  slug: z.string(),
+  description: z.string().optional().nullable(),
+  isActive: z.boolean().optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const AutoPartCategoryCreateOrConnectWithoutAdsInputSchema: z.ZodType<Prisma.AutoPartCategoryCreateOrConnectWithoutAdsInput> = z.object({
+  where: z.lazy(() => AutoPartCategoryWhereUniqueInputSchema),
+  create: z.union([ z.lazy(() => AutoPartCategoryCreateWithoutAdsInputSchema), z.lazy(() => AutoPartCategoryUncheckedCreateWithoutAdsInputSchema) ]),
+}).strict();
+
 export const AdAnalyticsCreateWithoutAdInputSchema: z.ZodType<Prisma.AdAnalyticsCreateWithoutAdInput> = z.object({
   id: z.string().optional(),
   views: z.number().int().optional(),
@@ -13490,6 +13873,35 @@ export const CategoryUncheckedUpdateWithoutAdsInputSchema: z.ZodType<Prisma.Cate
   slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
+export const AutoPartCategoryUpsertWithoutAdsInputSchema: z.ZodType<Prisma.AutoPartCategoryUpsertWithoutAdsInput> = z.object({
+  update: z.union([ z.lazy(() => AutoPartCategoryUpdateWithoutAdsInputSchema), z.lazy(() => AutoPartCategoryUncheckedUpdateWithoutAdsInputSchema) ]),
+  create: z.union([ z.lazy(() => AutoPartCategoryCreateWithoutAdsInputSchema), z.lazy(() => AutoPartCategoryUncheckedCreateWithoutAdsInputSchema) ]),
+  where: z.lazy(() => AutoPartCategoryWhereInputSchema).optional(),
+}).strict();
+
+export const AutoPartCategoryUpdateToOneWithWhereWithoutAdsInputSchema: z.ZodType<Prisma.AutoPartCategoryUpdateToOneWithWhereWithoutAdsInput> = z.object({
+  where: z.lazy(() => AutoPartCategoryWhereInputSchema).optional(),
+  data: z.union([ z.lazy(() => AutoPartCategoryUpdateWithoutAdsInputSchema), z.lazy(() => AutoPartCategoryUncheckedUpdateWithoutAdsInputSchema) ]),
+}).strict();
+
+export const AutoPartCategoryUpdateWithoutAdsInputSchema: z.ZodType<Prisma.AutoPartCategoryUpdateWithoutAdsInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  isActive: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const AutoPartCategoryUncheckedUpdateWithoutAdsInputSchema: z.ZodType<Prisma.AutoPartCategoryUncheckedUpdateWithoutAdsInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  isActive: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
 export const AdAnalyticsUpsertWithoutAdInputSchema: z.ZodType<Prisma.AdAnalyticsUpsertWithoutAdInput> = z.object({
   update: z.union([ z.lazy(() => AdAnalyticsUpdateWithoutAdInputSchema), z.lazy(() => AdAnalyticsUncheckedUpdateWithoutAdInputSchema) ]),
   create: z.union([ z.lazy(() => AdAnalyticsCreateWithoutAdInputSchema), z.lazy(() => AdAnalyticsUncheckedCreateWithoutAdInputSchema) ]),
@@ -13711,6 +14123,8 @@ export const AdCreateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdCreateWitho
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -13728,6 +14142,7 @@ export const AdCreateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdCreateWitho
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
+  partCategory: z.lazy(() => AutoPartCategoryCreateNestedOneWithoutAdsInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
@@ -13775,6 +14190,9 @@ export const AdUncheckedCreateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdUn
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  partCategoryId: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -13848,6 +14266,8 @@ export const AdUpdateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdUpdateWitho
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -13865,6 +14285,7 @@ export const AdUpdateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdUpdateWitho
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
+  partCategory: z.lazy(() => AutoPartCategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -13911,6 +14332,9 @@ export const AdUncheckedUpdateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdUn
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partCategoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -13969,6 +14393,8 @@ export const AdCreateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdCreateWitho
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -13986,6 +14412,7 @@ export const AdCreateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdCreateWitho
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
+  partCategory: z.lazy(() => AutoPartCategoryCreateNestedOneWithoutAdsInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
   reports: z.lazy(() => ReportCreateNestedManyWithoutAdInputSchema).optional(),
@@ -14033,6 +14460,9 @@ export const AdUncheckedCreateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdUn
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  partCategoryId: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -14106,6 +14536,8 @@ export const AdUpdateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdUpdateWitho
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -14123,6 +14555,7 @@ export const AdUpdateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdUpdateWitho
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
+  partCategory: z.lazy(() => AutoPartCategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
   reports: z.lazy(() => ReportUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -14169,6 +14602,9 @@ export const AdUncheckedUpdateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdUn
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partCategoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -14227,6 +14663,8 @@ export const AdCreateWithoutCategoryInputSchema: z.ZodType<Prisma.AdCreateWithou
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -14243,6 +14681,7 @@ export const AdCreateWithoutCategoryInputSchema: z.ZodType<Prisma.AdCreateWithou
   updatedAt: z.coerce.date().optional(),
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
+  partCategory: z.lazy(() => AutoPartCategoryCreateNestedOneWithoutAdsInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
@@ -14290,6 +14729,9 @@ export const AdUncheckedCreateWithoutCategoryInputSchema: z.ZodType<Prisma.AdUnc
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  partCategoryId: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -14581,6 +15023,8 @@ export const AdCreateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdCreateWithou
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -14598,6 +15042,7 @@ export const AdCreateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdCreateWithou
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
+  partCategory: z.lazy(() => AutoPartCategoryCreateNestedOneWithoutAdsInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
   reports: z.lazy(() => ReportCreateNestedManyWithoutAdInputSchema).optional(),
@@ -14645,6 +15090,9 @@ export const AdUncheckedCreateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdUnc
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  partCategoryId: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -14801,6 +15249,8 @@ export const AdUpdateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdUpdateWithou
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -14818,6 +15268,7 @@ export const AdUpdateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdUpdateWithou
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
+  partCategory: z.lazy(() => AutoPartCategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
   reports: z.lazy(() => ReportUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -14864,6 +15315,9 @@ export const AdUncheckedUpdateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdUnc
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partCategoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -15092,6 +15546,8 @@ export const AdCreateWithoutFavoritesInputSchema: z.ZodType<Prisma.AdCreateWitho
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -15109,6 +15565,7 @@ export const AdCreateWithoutFavoritesInputSchema: z.ZodType<Prisma.AdCreateWitho
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
+  partCategory: z.lazy(() => AutoPartCategoryCreateNestedOneWithoutAdsInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   reports: z.lazy(() => ReportCreateNestedManyWithoutAdInputSchema).optional(),
@@ -15156,6 +15613,9 @@ export const AdUncheckedCreateWithoutFavoritesInputSchema: z.ZodType<Prisma.AdUn
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  partCategoryId: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -15316,6 +15776,8 @@ export const AdUpdateWithoutFavoritesInputSchema: z.ZodType<Prisma.AdUpdateWitho
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -15333,6 +15795,7 @@ export const AdUpdateWithoutFavoritesInputSchema: z.ZodType<Prisma.AdUpdateWitho
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
+  partCategory: z.lazy(() => AutoPartCategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   reports: z.lazy(() => ReportUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -15379,6 +15842,9 @@ export const AdUncheckedUpdateWithoutFavoritesInputSchema: z.ZodType<Prisma.AdUn
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partCategoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -15607,6 +16073,8 @@ export const AdCreateWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdCreateWithou
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -15624,6 +16092,7 @@ export const AdCreateWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdCreateWithou
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
+  partCategory: z.lazy(() => AutoPartCategoryCreateNestedOneWithoutAdsInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
@@ -15671,6 +16140,9 @@ export const AdUncheckedCreateWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdUnc
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  partCategoryId: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -15744,6 +16216,8 @@ export const AdUpdateWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdUpdateWithou
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -15761,6 +16235,7 @@ export const AdUpdateWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdUpdateWithou
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
+  partCategory: z.lazy(() => AutoPartCategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -15807,6 +16282,9 @@ export const AdUncheckedUpdateWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdUnc
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partCategoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -16375,6 +16853,8 @@ export const AdCreateWithoutShareEventsInputSchema: z.ZodType<Prisma.AdCreateWit
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -16392,6 +16872,7 @@ export const AdCreateWithoutShareEventsInputSchema: z.ZodType<Prisma.AdCreateWit
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
+  partCategory: z.lazy(() => AutoPartCategoryCreateNestedOneWithoutAdsInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
@@ -16439,6 +16920,9 @@ export const AdUncheckedCreateWithoutShareEventsInputSchema: z.ZodType<Prisma.Ad
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  partCategoryId: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -16512,6 +16996,8 @@ export const AdUpdateWithoutShareEventsInputSchema: z.ZodType<Prisma.AdUpdateWit
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -16529,6 +17015,7 @@ export const AdUpdateWithoutShareEventsInputSchema: z.ZodType<Prisma.AdUpdateWit
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
+  partCategory: z.lazy(() => AutoPartCategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -16575,6 +17062,9 @@ export const AdUncheckedUpdateWithoutShareEventsInputSchema: z.ZodType<Prisma.Ad
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partCategoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -16716,6 +17206,8 @@ export const AdCreateWithoutReportsInputSchema: z.ZodType<Prisma.AdCreateWithout
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -16733,6 +17225,7 @@ export const AdCreateWithoutReportsInputSchema: z.ZodType<Prisma.AdCreateWithout
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
+  partCategory: z.lazy(() => AutoPartCategoryCreateNestedOneWithoutAdsInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
@@ -16780,6 +17273,9 @@ export const AdUncheckedCreateWithoutReportsInputSchema: z.ZodType<Prisma.AdUnch
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  partCategoryId: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -16940,6 +17436,8 @@ export const AdUpdateWithoutReportsInputSchema: z.ZodType<Prisma.AdUpdateWithout
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -16957,6 +17455,7 @@ export const AdUpdateWithoutReportsInputSchema: z.ZodType<Prisma.AdUpdateWithout
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
+  partCategory: z.lazy(() => AutoPartCategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -17003,6 +17502,9 @@ export const AdUncheckedUpdateWithoutReportsInputSchema: z.ZodType<Prisma.AdUnch
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partCategoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -17301,6 +17803,8 @@ export const AdCreateWithoutMediaInputSchema: z.ZodType<Prisma.AdCreateWithoutMe
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -17318,6 +17822,7 @@ export const AdCreateWithoutMediaInputSchema: z.ZodType<Prisma.AdCreateWithoutMe
   org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
   creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
   category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
+  partCategory: z.lazy(() => AutoPartCategoryCreateNestedOneWithoutAdsInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
   payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
   favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
@@ -17365,6 +17870,9 @@ export const AdUncheckedCreateWithoutMediaInputSchema: z.ZodType<Prisma.AdUnchec
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  partCategoryId: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -17463,6 +17971,8 @@ export const AdUpdateWithoutMediaInputSchema: z.ZodType<Prisma.AdUpdateWithoutMe
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -17480,6 +17990,7 @@ export const AdUpdateWithoutMediaInputSchema: z.ZodType<Prisma.AdUpdateWithoutMe
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
+  partCategory: z.lazy(() => AutoPartCategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -17526,6 +18037,9 @@ export const AdUncheckedUpdateWithoutMediaInputSchema: z.ZodType<Prisma.AdUnchec
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partCategoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -17576,6 +18090,159 @@ export const MediaUncheckedUpdateWithoutAdsInputSchema: z.ZodType<Prisma.MediaUn
   filename: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   size: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const AdCreateWithoutPartCategoryInputSchema: z.ZodType<Prisma.AdCreateWithoutPartCategoryInput> = z.object({
+  id: z.string().optional(),
+  title: z.string(),
+  description: z.string(),
+  type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
+  price: z.number().optional().nullable(),
+  published: z.boolean().optional(),
+  isDraft: z.boolean().optional(),
+  boosted: z.boolean().optional(),
+  featured: z.boolean().optional(),
+  boostExpiry: z.coerce.date().optional().nullable(),
+  featureExpiry: z.coerce.date().optional().nullable(),
+  status: z.lazy(() => AdStatusSchema).optional(),
+  expiryDate: z.coerce.date().optional().nullable(),
+  rejectionDescription: z.string().optional().nullable(),
+  seoTitle: z.string().optional().nullable(),
+  seoDescription: z.string().optional().nullable(),
+  seoSlug: z.string().optional().nullable(),
+  tags: z.union([ z.lazy(() => AdCreatetagsInputSchema), z.string().array() ]).optional(),
+  condition: z.string().optional().nullable(),
+  brand: z.string().optional().nullable(),
+  model: z.string().optional().nullable(),
+  trimEdition: z.string().optional().nullable(),
+  manufacturedYear: z.string().optional().nullable(),
+  modelYear: z.string().optional().nullable(),
+  mileage: z.number().optional().nullable(),
+  engineCapacity: z.number().optional().nullable(),
+  fuelType: z.lazy(() => FuelTypeSchema).optional().nullable(),
+  transmission: z.lazy(() => TransmissionSchema).optional().nullable(),
+  bodyType: z.lazy(() => BodyTypeSchema).optional().nullable(),
+  bikeType: z.lazy(() => BikeTypeSchema).optional().nullable(),
+  vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
+  serviceType: z.string().optional().nullable(),
+  partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
+  maintenanceType: z.string().optional().nullable(),
+  name: z.string().optional().nullable(),
+  phoneNumber: z.string().optional().nullable(),
+  whatsappNumber: z.string().optional().nullable(),
+  termsAndConditions: z.boolean().optional().nullable(),
+  location: z.string().optional().nullable(),
+  address: z.string().optional().nullable(),
+  province: z.string().optional().nullable(),
+  district: z.string().optional().nullable(),
+  city: z.string().optional().nullable(),
+  specialNote: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+  org: z.lazy(() => OrganizationCreateNestedOneWithoutAdsInputSchema),
+  creator: z.lazy(() => UserCreateNestedOneWithoutAdsCreatedInputSchema),
+  category: z.lazy(() => CategoryCreateNestedOneWithoutAdsInputSchema).optional(),
+  analytics: z.lazy(() => AdAnalyticsCreateNestedOneWithoutAdInputSchema).optional(),
+  payments: z.lazy(() => PaymentCreateNestedManyWithoutAdInputSchema).optional(),
+  favorites: z.lazy(() => FavoriteCreateNestedManyWithoutAdInputSchema).optional(),
+  reports: z.lazy(() => ReportCreateNestedManyWithoutAdInputSchema).optional(),
+  revisions: z.lazy(() => AdRevisionCreateNestedManyWithoutAdInputSchema).optional(),
+  geoViews: z.lazy(() => GeoHeatmapCreateNestedManyWithoutAdInputSchema).optional(),
+  shareEvents: z.lazy(() => ShareEventCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaCreateNestedManyWithoutAdInputSchema).optional(),
+}).strict();
+
+export const AdUncheckedCreateWithoutPartCategoryInputSchema: z.ZodType<Prisma.AdUncheckedCreateWithoutPartCategoryInput> = z.object({
+  id: z.string().optional(),
+  orgId: z.string(),
+  createdBy: z.string(),
+  title: z.string(),
+  description: z.string(),
+  type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
+  price: z.number().optional().nullable(),
+  published: z.boolean().optional(),
+  isDraft: z.boolean().optional(),
+  boosted: z.boolean().optional(),
+  featured: z.boolean().optional(),
+  boostExpiry: z.coerce.date().optional().nullable(),
+  featureExpiry: z.coerce.date().optional().nullable(),
+  status: z.lazy(() => AdStatusSchema).optional(),
+  expiryDate: z.coerce.date().optional().nullable(),
+  rejectionDescription: z.string().optional().nullable(),
+  seoTitle: z.string().optional().nullable(),
+  seoDescription: z.string().optional().nullable(),
+  seoSlug: z.string().optional().nullable(),
+  categoryId: z.string().optional().nullable(),
+  tags: z.union([ z.lazy(() => AdCreatetagsInputSchema), z.string().array() ]).optional(),
+  condition: z.string().optional().nullable(),
+  brand: z.string().optional().nullable(),
+  model: z.string().optional().nullable(),
+  trimEdition: z.string().optional().nullable(),
+  manufacturedYear: z.string().optional().nullable(),
+  modelYear: z.string().optional().nullable(),
+  mileage: z.number().optional().nullable(),
+  engineCapacity: z.number().optional().nullable(),
+  fuelType: z.lazy(() => FuelTypeSchema).optional().nullable(),
+  transmission: z.lazy(() => TransmissionSchema).optional().nullable(),
+  bodyType: z.lazy(() => BodyTypeSchema).optional().nullable(),
+  bikeType: z.lazy(() => BikeTypeSchema).optional().nullable(),
+  vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
+  serviceType: z.string().optional().nullable(),
+  partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
+  maintenanceType: z.string().optional().nullable(),
+  name: z.string().optional().nullable(),
+  phoneNumber: z.string().optional().nullable(),
+  whatsappNumber: z.string().optional().nullable(),
+  termsAndConditions: z.boolean().optional().nullable(),
+  location: z.string().optional().nullable(),
+  address: z.string().optional().nullable(),
+  province: z.string().optional().nullable(),
+  district: z.string().optional().nullable(),
+  city: z.string().optional().nullable(),
+  specialNote: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+  analytics: z.lazy(() => AdAnalyticsUncheckedCreateNestedOneWithoutAdInputSchema).optional(),
+  payments: z.lazy(() => PaymentUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
+  favorites: z.lazy(() => FavoriteUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
+  reports: z.lazy(() => ReportUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
+  revisions: z.lazy(() => AdRevisionUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
+  geoViews: z.lazy(() => GeoHeatmapUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
+  shareEvents: z.lazy(() => ShareEventUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedCreateNestedManyWithoutAdInputSchema).optional(),
+}).strict();
+
+export const AdCreateOrConnectWithoutPartCategoryInputSchema: z.ZodType<Prisma.AdCreateOrConnectWithoutPartCategoryInput> = z.object({
+  where: z.lazy(() => AdWhereUniqueInputSchema),
+  create: z.union([ z.lazy(() => AdCreateWithoutPartCategoryInputSchema), z.lazy(() => AdUncheckedCreateWithoutPartCategoryInputSchema) ]),
+}).strict();
+
+export const AdCreateManyPartCategoryInputEnvelopeSchema: z.ZodType<Prisma.AdCreateManyPartCategoryInputEnvelope> = z.object({
+  data: z.union([ z.lazy(() => AdCreateManyPartCategoryInputSchema), z.lazy(() => AdCreateManyPartCategoryInputSchema).array() ]),
+}).strict();
+
+export const AdUpsertWithWhereUniqueWithoutPartCategoryInputSchema: z.ZodType<Prisma.AdUpsertWithWhereUniqueWithoutPartCategoryInput> = z.object({
+  where: z.lazy(() => AdWhereUniqueInputSchema),
+  update: z.union([ z.lazy(() => AdUpdateWithoutPartCategoryInputSchema), z.lazy(() => AdUncheckedUpdateWithoutPartCategoryInputSchema) ]),
+  create: z.union([ z.lazy(() => AdCreateWithoutPartCategoryInputSchema), z.lazy(() => AdUncheckedCreateWithoutPartCategoryInputSchema) ]),
+}).strict();
+
+export const AdUpdateWithWhereUniqueWithoutPartCategoryInputSchema: z.ZodType<Prisma.AdUpdateWithWhereUniqueWithoutPartCategoryInput> = z.object({
+  where: z.lazy(() => AdWhereUniqueInputSchema),
+  data: z.union([ z.lazy(() => AdUpdateWithoutPartCategoryInputSchema), z.lazy(() => AdUncheckedUpdateWithoutPartCategoryInputSchema) ]),
+}).strict();
+
+export const AdUpdateManyWithWhereWithoutPartCategoryInputSchema: z.ZodType<Prisma.AdUpdateManyWithWhereWithoutPartCategoryInput> = z.object({
+  where: z.lazy(() => AdScalarWhereInputSchema),
+  data: z.union([ z.lazy(() => AdUpdateManyMutationInputSchema), z.lazy(() => AdUncheckedUpdateManyWithoutPartCategoryInputSchema) ]),
 }).strict();
 
 export const SessionCreateManyUserInputSchema: z.ZodType<Prisma.SessionCreateManyUserInput> = z.object({
@@ -17664,6 +18331,9 @@ export const AdCreateManyCreatorInputSchema: z.ZodType<Prisma.AdCreateManyCreato
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  partCategoryId: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -17934,6 +18604,8 @@ export const AdUpdateWithoutCreatorInputSchema: z.ZodType<Prisma.AdUpdateWithout
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -17950,6 +18622,7 @@ export const AdUpdateWithoutCreatorInputSchema: z.ZodType<Prisma.AdUpdateWithout
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
+  partCategory: z.lazy(() => AutoPartCategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -17996,6 +18669,9 @@ export const AdUncheckedUpdateWithoutCreatorInputSchema: z.ZodType<Prisma.AdUnch
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partCategoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -18056,6 +18732,9 @@ export const AdUncheckedUpdateManyWithoutCreatorInputSchema: z.ZodType<Prisma.Ad
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partCategoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -18384,6 +19063,9 @@ export const AdCreateManyOrgInputSchema: z.ZodType<Prisma.AdCreateManyOrgInput> 
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  partCategoryId: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -18592,6 +19274,8 @@ export const AdUpdateWithoutOrgInputSchema: z.ZodType<Prisma.AdUpdateWithoutOrgI
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -18608,6 +19292,7 @@ export const AdUpdateWithoutOrgInputSchema: z.ZodType<Prisma.AdUpdateWithoutOrgI
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
   category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
+  partCategory: z.lazy(() => AutoPartCategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -18654,6 +19339,9 @@ export const AdUncheckedUpdateWithoutOrgInputSchema: z.ZodType<Prisma.AdUnchecke
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partCategoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -18714,6 +19402,9 @@ export const AdUncheckedUpdateManyWithoutOrgInputSchema: z.ZodType<Prisma.AdUnch
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partCategoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -19022,6 +19713,9 @@ export const AdCreateManyCategoryInputSchema: z.ZodType<Prisma.AdCreateManyCateg
   vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
   serviceType: z.string().optional().nullable(),
   partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  partCategoryId: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
   maintenanceType: z.string().optional().nullable(),
   name: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
@@ -19072,6 +19766,8 @@ export const AdUpdateWithoutCategoryInputSchema: z.ZodType<Prisma.AdUpdateWithou
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -19088,6 +19784,7 @@ export const AdUpdateWithoutCategoryInputSchema: z.ZodType<Prisma.AdUpdateWithou
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
   creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
+  partCategory: z.lazy(() => AutoPartCategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
   analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
   payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
   favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
@@ -19134,6 +19831,9 @@ export const AdUncheckedUpdateWithoutCategoryInputSchema: z.ZodType<Prisma.AdUnc
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partCategoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -19194,6 +19894,9 @@ export const AdUncheckedUpdateManyWithoutCategoryInputSchema: z.ZodType<Prisma.A
   vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partCategoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -19229,6 +19932,243 @@ export const AdMediaUncheckedUpdateWithoutMediaInputSchema: z.ZodType<Prisma.AdM
 export const AdMediaUncheckedUpdateManyWithoutMediaInputSchema: z.ZodType<Prisma.AdMediaUncheckedUpdateManyWithoutMediaInput> = z.object({
   adId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const AdCreateManyPartCategoryInputSchema: z.ZodType<Prisma.AdCreateManyPartCategoryInput> = z.object({
+  id: z.string().optional(),
+  orgId: z.string(),
+  createdBy: z.string(),
+  title: z.string(),
+  description: z.string(),
+  type: z.lazy(() => AdTypeSchema),
+  listingType: z.lazy(() => ListingTypeSchema).optional(),
+  price: z.number().optional().nullable(),
+  published: z.boolean().optional(),
+  isDraft: z.boolean().optional(),
+  boosted: z.boolean().optional(),
+  featured: z.boolean().optional(),
+  boostExpiry: z.coerce.date().optional().nullable(),
+  featureExpiry: z.coerce.date().optional().nullable(),
+  status: z.lazy(() => AdStatusSchema).optional(),
+  expiryDate: z.coerce.date().optional().nullable(),
+  rejectionDescription: z.string().optional().nullable(),
+  seoTitle: z.string().optional().nullable(),
+  seoDescription: z.string().optional().nullable(),
+  seoSlug: z.string().optional().nullable(),
+  categoryId: z.string().optional().nullable(),
+  tags: z.union([ z.lazy(() => AdCreatetagsInputSchema), z.string().array() ]).optional(),
+  condition: z.string().optional().nullable(),
+  brand: z.string().optional().nullable(),
+  model: z.string().optional().nullable(),
+  trimEdition: z.string().optional().nullable(),
+  manufacturedYear: z.string().optional().nullable(),
+  modelYear: z.string().optional().nullable(),
+  mileage: z.number().optional().nullable(),
+  engineCapacity: z.number().optional().nullable(),
+  fuelType: z.lazy(() => FuelTypeSchema).optional().nullable(),
+  transmission: z.lazy(() => TransmissionSchema).optional().nullable(),
+  bodyType: z.lazy(() => BodyTypeSchema).optional().nullable(),
+  bikeType: z.lazy(() => BikeTypeSchema).optional().nullable(),
+  vehicleType: z.lazy(() => HeavyDutyVehicleTypeSchema).optional().nullable(),
+  serviceType: z.string().optional().nullable(),
+  partType: z.string().optional().nullable(),
+  partName: z.string().optional().nullable(),
+  compatibleVehicleType: z.string().optional().nullable(),
+  maintenanceType: z.string().optional().nullable(),
+  name: z.string().optional().nullable(),
+  phoneNumber: z.string().optional().nullable(),
+  whatsappNumber: z.string().optional().nullable(),
+  termsAndConditions: z.boolean().optional().nullable(),
+  location: z.string().optional().nullable(),
+  address: z.string().optional().nullable(),
+  province: z.string().optional().nullable(),
+  district: z.string().optional().nullable(),
+  city: z.string().optional().nullable(),
+  specialNote: z.string().optional().nullable(),
+  metadata: InputJsonValueSchema.optional().nullable(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const AdUpdateWithoutPartCategoryInputSchema: z.ZodType<Prisma.AdUpdateWithoutPartCategoryInput> = z.object({
+  title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  type: z.union([ z.lazy(() => AdTypeSchema), z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema), z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  boosted: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  featured: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  boostExpiry: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  featureExpiry: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  status: z.union([ z.lazy(() => AdStatusSchema), z.lazy(() => EnumAdStatusFieldUpdateOperationsInputSchema) ]).optional(),
+  expiryDate: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  rejectionDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  seoTitle: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  seoDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema), z.string().array() ]).optional(),
+  condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  mileage: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  engineCapacity: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  fuelType: z.union([ z.lazy(() => FuelTypeSchema), z.lazy(() => NullableEnumFuelTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  transmission: z.union([ z.lazy(() => TransmissionSchema), z.lazy(() => NullableEnumTransmissionFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  bodyType: z.union([ z.lazy(() => BodyTypeSchema), z.lazy(() => NullableEnumBodyTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  bikeType: z.union([ z.lazy(() => BikeTypeSchema), z.lazy(() => NullableEnumBikeTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  whatsappNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  termsAndConditions: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  address: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  province: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  district: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  city: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  specialNote: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  org: z.lazy(() => OrganizationUpdateOneRequiredWithoutAdsNestedInputSchema).optional(),
+  creator: z.lazy(() => UserUpdateOneRequiredWithoutAdsCreatedNestedInputSchema).optional(),
+  category: z.lazy(() => CategoryUpdateOneWithoutAdsNestedInputSchema).optional(),
+  analytics: z.lazy(() => AdAnalyticsUpdateOneWithoutAdNestedInputSchema).optional(),
+  payments: z.lazy(() => PaymentUpdateManyWithoutAdNestedInputSchema).optional(),
+  favorites: z.lazy(() => FavoriteUpdateManyWithoutAdNestedInputSchema).optional(),
+  reports: z.lazy(() => ReportUpdateManyWithoutAdNestedInputSchema).optional(),
+  revisions: z.lazy(() => AdRevisionUpdateManyWithoutAdNestedInputSchema).optional(),
+  geoViews: z.lazy(() => GeoHeatmapUpdateManyWithoutAdNestedInputSchema).optional(),
+  shareEvents: z.lazy(() => ShareEventUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUpdateManyWithoutAdNestedInputSchema).optional(),
+}).strict();
+
+export const AdUncheckedUpdateWithoutPartCategoryInputSchema: z.ZodType<Prisma.AdUncheckedUpdateWithoutPartCategoryInput> = z.object({
+  orgId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdBy: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  type: z.union([ z.lazy(() => AdTypeSchema), z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema), z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  boosted: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  featured: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  boostExpiry: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  featureExpiry: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  status: z.union([ z.lazy(() => AdStatusSchema), z.lazy(() => EnumAdStatusFieldUpdateOperationsInputSchema) ]).optional(),
+  expiryDate: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  rejectionDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  seoTitle: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  seoDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  categoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema), z.string().array() ]).optional(),
+  condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  mileage: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  engineCapacity: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  fuelType: z.union([ z.lazy(() => FuelTypeSchema), z.lazy(() => NullableEnumFuelTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  transmission: z.union([ z.lazy(() => TransmissionSchema), z.lazy(() => NullableEnumTransmissionFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  bodyType: z.union([ z.lazy(() => BodyTypeSchema), z.lazy(() => NullableEnumBodyTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  bikeType: z.union([ z.lazy(() => BikeTypeSchema), z.lazy(() => NullableEnumBikeTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  whatsappNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  termsAndConditions: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  address: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  province: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  district: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  city: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  specialNote: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  analytics: z.lazy(() => AdAnalyticsUncheckedUpdateOneWithoutAdNestedInputSchema).optional(),
+  payments: z.lazy(() => PaymentUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
+  favorites: z.lazy(() => FavoriteUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
+  reports: z.lazy(() => ReportUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
+  revisions: z.lazy(() => AdRevisionUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
+  geoViews: z.lazy(() => GeoHeatmapUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
+  shareEvents: z.lazy(() => ShareEventUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
+  media: z.lazy(() => AdMediaUncheckedUpdateManyWithoutAdNestedInputSchema).optional(),
+}).strict();
+
+export const AdUncheckedUpdateManyWithoutPartCategoryInputSchema: z.ZodType<Prisma.AdUncheckedUpdateManyWithoutPartCategoryInput> = z.object({
+  orgId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdBy: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  title: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  description: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  type: z.union([ z.lazy(() => AdTypeSchema), z.lazy(() => EnumAdTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  listingType: z.union([ z.lazy(() => ListingTypeSchema), z.lazy(() => EnumListingTypeFieldUpdateOperationsInputSchema) ]).optional(),
+  price: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  published: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  isDraft: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  boosted: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  featured: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  boostExpiry: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  featureExpiry: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  status: z.union([ z.lazy(() => AdStatusSchema), z.lazy(() => EnumAdStatusFieldUpdateOperationsInputSchema) ]).optional(),
+  expiryDate: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  rejectionDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  seoTitle: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  seoDescription: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  seoSlug: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  categoryId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  tags: z.union([ z.lazy(() => AdUpdatetagsInputSchema), z.string().array() ]).optional(),
+  condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  mileage: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  engineCapacity: z.union([ z.number(),z.lazy(() => NullableFloatFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  fuelType: z.union([ z.lazy(() => FuelTypeSchema), z.lazy(() => NullableEnumFuelTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  transmission: z.union([ z.lazy(() => TransmissionSchema), z.lazy(() => NullableEnumTransmissionFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  bodyType: z.union([ z.lazy(() => BodyTypeSchema), z.lazy(() => NullableEnumBodyTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  bikeType: z.union([ z.lazy(() => BikeTypeSchema), z.lazy(() => NullableEnumBikeTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  vehicleType: z.union([ z.lazy(() => HeavyDutyVehicleTypeSchema), z.lazy(() => NullableEnumHeavyDutyVehicleTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  serviceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  partName: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  compatibleVehicleType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  maintenanceType: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  phoneNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  whatsappNumber: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  termsAndConditions: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  location: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  address: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  province: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  district: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  city: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  specialNote: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  metadata: z.union([ InputJsonValueSchema,InputJsonValueSchema ]).optional().nullable(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 /////////////////////////////////////////
@@ -20889,6 +21829,68 @@ export const VerificationCodeFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.Verif
   where: VerificationCodeWhereUniqueInputSchema, 
 }).strict();
 
+export const AutoPartCategoryFindFirstArgsSchema: z.ZodType<Prisma.AutoPartCategoryFindFirstArgs> = z.object({
+  select: AutoPartCategorySelectSchema.optional(),
+  include: AutoPartCategoryIncludeSchema.optional(),
+  where: AutoPartCategoryWhereInputSchema.optional(), 
+  orderBy: z.union([ AutoPartCategoryOrderByWithRelationInputSchema.array(), AutoPartCategoryOrderByWithRelationInputSchema ]).optional(),
+  cursor: AutoPartCategoryWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ AutoPartCategoryScalarFieldEnumSchema, AutoPartCategoryScalarFieldEnumSchema.array() ]).optional(),
+}).strict();
+
+export const AutoPartCategoryFindFirstOrThrowArgsSchema: z.ZodType<Prisma.AutoPartCategoryFindFirstOrThrowArgs> = z.object({
+  select: AutoPartCategorySelectSchema.optional(),
+  include: AutoPartCategoryIncludeSchema.optional(),
+  where: AutoPartCategoryWhereInputSchema.optional(), 
+  orderBy: z.union([ AutoPartCategoryOrderByWithRelationInputSchema.array(), AutoPartCategoryOrderByWithRelationInputSchema ]).optional(),
+  cursor: AutoPartCategoryWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ AutoPartCategoryScalarFieldEnumSchema, AutoPartCategoryScalarFieldEnumSchema.array() ]).optional(),
+}).strict();
+
+export const AutoPartCategoryFindManyArgsSchema: z.ZodType<Prisma.AutoPartCategoryFindManyArgs> = z.object({
+  select: AutoPartCategorySelectSchema.optional(),
+  include: AutoPartCategoryIncludeSchema.optional(),
+  where: AutoPartCategoryWhereInputSchema.optional(), 
+  orderBy: z.union([ AutoPartCategoryOrderByWithRelationInputSchema.array(), AutoPartCategoryOrderByWithRelationInputSchema ]).optional(),
+  cursor: AutoPartCategoryWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ AutoPartCategoryScalarFieldEnumSchema, AutoPartCategoryScalarFieldEnumSchema.array() ]).optional(),
+}).strict();
+
+export const AutoPartCategoryAggregateArgsSchema: z.ZodType<Prisma.AutoPartCategoryAggregateArgs> = z.object({
+  where: AutoPartCategoryWhereInputSchema.optional(), 
+  orderBy: z.union([ AutoPartCategoryOrderByWithRelationInputSchema.array(), AutoPartCategoryOrderByWithRelationInputSchema ]).optional(),
+  cursor: AutoPartCategoryWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict();
+
+export const AutoPartCategoryGroupByArgsSchema: z.ZodType<Prisma.AutoPartCategoryGroupByArgs> = z.object({
+  where: AutoPartCategoryWhereInputSchema.optional(), 
+  orderBy: z.union([ AutoPartCategoryOrderByWithAggregationInputSchema.array(), AutoPartCategoryOrderByWithAggregationInputSchema ]).optional(),
+  by: AutoPartCategoryScalarFieldEnumSchema.array(), 
+  having: AutoPartCategoryScalarWhereWithAggregatesInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict();
+
+export const AutoPartCategoryFindUniqueArgsSchema: z.ZodType<Prisma.AutoPartCategoryFindUniqueArgs> = z.object({
+  select: AutoPartCategorySelectSchema.optional(),
+  include: AutoPartCategoryIncludeSchema.optional(),
+  where: AutoPartCategoryWhereUniqueInputSchema, 
+}).strict();
+
+export const AutoPartCategoryFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.AutoPartCategoryFindUniqueOrThrowArgs> = z.object({
+  select: AutoPartCategorySelectSchema.optional(),
+  include: AutoPartCategoryIncludeSchema.optional(),
+  where: AutoPartCategoryWhereUniqueInputSchema, 
+}).strict();
+
 export const NewsletterFindFirstArgsSchema: z.ZodType<Prisma.NewsletterFindFirstArgs> = z.object({
   select: NewsletterSelectSchema.optional(),
   where: NewsletterWhereInputSchema.optional(), 
@@ -22061,6 +23063,48 @@ export const VerificationCodeUpdateManyArgsSchema: z.ZodType<Prisma.Verification
 
 export const VerificationCodeDeleteManyArgsSchema: z.ZodType<Prisma.VerificationCodeDeleteManyArgs> = z.object({
   where: VerificationCodeWhereInputSchema.optional(), 
+  limit: z.number().optional(),
+}).strict();
+
+export const AutoPartCategoryCreateArgsSchema: z.ZodType<Prisma.AutoPartCategoryCreateArgs> = z.object({
+  select: AutoPartCategorySelectSchema.optional(),
+  include: AutoPartCategoryIncludeSchema.optional(),
+  data: z.union([ AutoPartCategoryCreateInputSchema, AutoPartCategoryUncheckedCreateInputSchema ]),
+}).strict();
+
+export const AutoPartCategoryUpsertArgsSchema: z.ZodType<Prisma.AutoPartCategoryUpsertArgs> = z.object({
+  select: AutoPartCategorySelectSchema.optional(),
+  include: AutoPartCategoryIncludeSchema.optional(),
+  where: AutoPartCategoryWhereUniqueInputSchema, 
+  create: z.union([ AutoPartCategoryCreateInputSchema, AutoPartCategoryUncheckedCreateInputSchema ]),
+  update: z.union([ AutoPartCategoryUpdateInputSchema, AutoPartCategoryUncheckedUpdateInputSchema ]),
+}).strict();
+
+export const AutoPartCategoryCreateManyArgsSchema: z.ZodType<Prisma.AutoPartCategoryCreateManyArgs> = z.object({
+  data: z.union([ AutoPartCategoryCreateManyInputSchema, AutoPartCategoryCreateManyInputSchema.array() ]),
+}).strict();
+
+export const AutoPartCategoryDeleteArgsSchema: z.ZodType<Prisma.AutoPartCategoryDeleteArgs> = z.object({
+  select: AutoPartCategorySelectSchema.optional(),
+  include: AutoPartCategoryIncludeSchema.optional(),
+  where: AutoPartCategoryWhereUniqueInputSchema, 
+}).strict();
+
+export const AutoPartCategoryUpdateArgsSchema: z.ZodType<Prisma.AutoPartCategoryUpdateArgs> = z.object({
+  select: AutoPartCategorySelectSchema.optional(),
+  include: AutoPartCategoryIncludeSchema.optional(),
+  data: z.union([ AutoPartCategoryUpdateInputSchema, AutoPartCategoryUncheckedUpdateInputSchema ]),
+  where: AutoPartCategoryWhereUniqueInputSchema, 
+}).strict();
+
+export const AutoPartCategoryUpdateManyArgsSchema: z.ZodType<Prisma.AutoPartCategoryUpdateManyArgs> = z.object({
+  data: z.union([ AutoPartCategoryUpdateManyMutationInputSchema, AutoPartCategoryUncheckedUpdateManyInputSchema ]),
+  where: AutoPartCategoryWhereInputSchema.optional(), 
+  limit: z.number().optional(),
+}).strict();
+
+export const AutoPartCategoryDeleteManyArgsSchema: z.ZodType<Prisma.AutoPartCategoryDeleteManyArgs> = z.object({
+  where: AutoPartCategoryWhereInputSchema.optional(), 
   limit: z.number().optional(),
 }).strict();
 

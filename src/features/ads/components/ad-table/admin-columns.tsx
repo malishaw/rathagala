@@ -76,7 +76,13 @@ const vehicleTypeLabels: Record<string, string> = {
   OTHER: "Other",
   TRACTOR: "Tractor",
   HEAVY_DUTY: "Heavy-Duty",
-  BICYCLE: "Bicycle"
+  BICYCLE: "Bicycle",
+  AUTO_PARTS: "Auto Parts",
+  AUTO_SERVICE: "Auto Service",
+  RENTAL: "Rental",
+  MAINTENANCE: "Maintenance",
+  BOAT: "Boat",
+  ALL: "All Vehicles"
 };
 
 // Status badge colors - using teal gradient theme
@@ -99,6 +105,13 @@ const getStatusBadge = (status: string) => {
 
 // Helper function to generate ad title from components
 const generateAdTitle = (ad: AdType): string => {
+  if (ad.type === "AUTO_PARTS") {
+    const adExt = ad as AdType & { partName?: string; compatibleVehicleType?: string };
+    const partName = adExt.partName || "";
+    const compatibleVehicleLabel = vehicleTypeLabels[adExt.compatibleVehicleType || ""] || adExt.compatibleVehicleType || "";
+    const forParts = [ad.brand, ad.model, compatibleVehicleLabel].filter(Boolean).join(" ");
+    return forParts ? `${partName} for ${forParts}` : (partName || ad.title || "Auto Part");
+  }
   return [ad.brand, ad.model, ad.manufacturedYear, vehicleTypeLabels[ad.type] || ad.type]
     .filter(Boolean)
     .join(' ') || ad.title || "Untitled Ad";
@@ -775,7 +788,7 @@ function PromotionButton({ ad, hasPromotion }: { ad: AdType; hasPromotion: boole
 // Ad Details Modal Component
 function AdDetailsModal({ ad, open, onOpenChange }: { ad: AdType; open: boolean; onOpenChange: (open: boolean) => void }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const images = ad.media || [];
+  const images = (ad as any).media || [];
   
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % (images.length || 1));
@@ -834,7 +847,39 @@ function AdDetailsModal({ ad, open, onOpenChange }: { ad: AdType; open: boolean;
             </div>
           )}
 
-          {/* Vehicle Details Grid */}
+          {/* Details Grid — adapts to auto parts vs vehicles */}
+          {ad.type === "AUTO_PARTS" ? (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-600">Part Name</label>
+                <p className="text-sm text-slate-800">{(ad as any).partName || "—"}</p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-600">Condition</label>
+                <p className="text-sm text-slate-800">{ad.condition || "—"}</p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-600">Compatible Vehicle</label>
+                <p className="text-sm text-slate-800">{vehicleTypeLabels[(ad as any).compatibleVehicleType || ""] || (ad as any).compatibleVehicleType || "—"}</p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-600">Compatible Brand</label>
+                <p className="text-sm text-slate-800">{ad.brand || "—"}</p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-600">Compatible Model</label>
+                <p className="text-sm text-slate-800">{ad.model || "—"}</p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-600">Price</label>
+                <p className="text-sm font-semibold text-teal-700">
+                  {ad.price
+                    ? `Rs. ${ad.price.toLocaleString()}`
+                    : ((ad as any).metadata?.isNegotiable ? "Negotiable" : "Price on request")}
+                </p>
+              </div>
+            </div>
+          ) : (
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-semibold text-slate-600">Make</label>
@@ -874,7 +919,7 @@ function AdDetailsModal({ ad, open, onOpenChange }: { ad: AdType; open: boolean;
             </div>
             <div>
               <label className="text-xs font-semibold text-slate-600">Grade</label>
-              <p className="text-sm text-slate-800">{ad.grade || "—"}</p>
+              <p className="text-sm text-slate-800">{(ad as any).grade || "—"}</p>
             </div>
             <div>
               <label className="text-xs font-semibold text-slate-600">Price</label>
@@ -885,6 +930,7 @@ function AdDetailsModal({ ad, open, onOpenChange }: { ad: AdType; open: boolean;
               </p>
             </div>
           </div>
+          )}
 
           {/* Location Details */}
           <div className="border-t pt-4 grid grid-cols-2 gap-4">

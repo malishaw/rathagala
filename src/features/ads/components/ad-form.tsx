@@ -181,6 +181,9 @@ export function AdForm({
     serviceType: "",
     partType: "",
     maintenanceType: "",
+    partName: "",
+    partCategoryId: "",
+    compatibleVehicleType: "",
 
     // Contact & location fields (keep existing)
     name: "",
@@ -243,6 +246,9 @@ export function AdForm({
         serviceType: initialData.serviceType || "",
         partType: initialData.partType || "",
         maintenanceType: initialData.maintenanceType || "",
+        partName: (initialData as any).partName || "",
+        partCategoryId: (initialData as any).partCategoryId || "",
+        compatibleVehicleType: (initialData as any).compatibleVehicleType || "",
 
         // Contact & location fields
         name: initialData.name || "",
@@ -507,7 +513,13 @@ export function AdForm({
     const vehicleInfo = baseInfoParts.join(" ");
 
     let autoTitle = "Vehicle Ad";
-    if (formData.listingType === "WANT") {
+    if (formData.type === "AUTO_PARTS") {
+      // Auto parts title: {partName} for {brand} {model} {vehicleType}
+      const partName = (formData as any).partName || "Auto Part";
+      const compatVehicleLabel = vehicleTypeLabels[(formData as any).compatibleVehicleType || ""] || "";
+      const forParts = [formData.brand, formData.model, compatVehicleLabel].filter(Boolean).join(" ");
+      autoTitle = forParts ? `${partName} for ${forParts}` : partName;
+    } else if (formData.listingType === "WANT") {
       autoTitle = `Want ${vehicleInfo}`;
     } else if (formData.listingType === "RENT") {
       autoTitle = `${vehicleInfo} for Rent`;
@@ -549,6 +561,9 @@ export function AdForm({
       vehicleType: (formData.vehicleType as "BED_TRAILER" | "BOWSER" | "BULLDOZER" | "CRANE" | "DUMP_TRUCK" | "EXCAVATOR" | "LOADER" | "OTHER" | undefined) || undefined,
       serviceType: formData.serviceType || undefined,
       partType: formData.partType || undefined,
+      partName: (formData as any).partName || undefined,
+      partCategoryId: (formData as any).partCategoryId || undefined,
+      compatibleVehicleType: (formData as any).compatibleVehicleType || undefined,
       maintenanceType: formData.maintenanceType || undefined,
 
       // Keep all your existing fields
@@ -1076,8 +1091,17 @@ export function AdForm({
                       case "AUTO_PARTS":
                         return (
                           <>
+                            <FormField label="Part Name" required>
+                              <Input
+                                placeholder="e.g., Wind Shield, Brake Pad"
+                                value={(formData as any).partName || ""}
+                                onChange={(e) => handleInputChange("partName", e.target.value)}
+                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
+                              />
+                            </FormField>
+
                             {formData.listingType !== "HIRE" && (
-                              <FormField label={formData.listingType === "SELL" ? "Condition" : "Preferred Condition"} required={formData.listingType === "SELL"}>
+                              <FormField label="Condition" required>
                                 <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
                                   <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
                                     <SelectValue placeholder="Select Condition" />
@@ -1090,27 +1114,39 @@ export function AdForm({
                               </FormField>
                             )}
 
-                            <FormField label="Part or Accessory Type" required>
-                              <Input
-                                placeholder="e.g., Engine Parts, Tires"
-                                value={formData.partType || ""}
-                                onChange={(e) => handleInputChange("partType", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
-                              />
+                            <FormField label="Compatible Vehicle Type">
+                              <Select value={(formData as any).compatibleVehicleType || ""} onValueChange={(value) => handleInputChange("compatibleVehicleType", value)}>
+                                <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
+                                  <SelectValue placeholder="Select compatible vehicle" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="ALL">All Vehicles</SelectItem>
+                                  <SelectItem value="CAR">Car</SelectItem>
+                                  <SelectItem value="VAN">Van</SelectItem>
+                                  <SelectItem value="MOTORCYCLE">Motorcycle</SelectItem>
+                                  <SelectItem value="BICYCLE">Bicycle</SelectItem>
+                                  <SelectItem value="THREE_WHEEL">Three Wheeler</SelectItem>
+                                  <SelectItem value="BUS">Bus</SelectItem>
+                                  <SelectItem value="LORRY">Lorry</SelectItem>
+                                  <SelectItem value="HEAVY_DUTY">Heavy Duty</SelectItem>
+                                  <SelectItem value="TRACTOR">Tractor</SelectItem>
+                                  <SelectItem value="BOAT">Boat</SelectItem>
+                                </SelectContent>
+                              </Select>
                             </FormField>
 
-                            <FormField label="Brand" required={formData.listingType === "SELL"}>
+                            <FormField label="Compatible Brand">
                               <Input
-                                placeholder="e.g., Bosch"
+                                placeholder="e.g., Toyota, Honda, Any"
                                 value={formData.brand || ""}
                                 onChange={(e) => handleInputChange("brand", e.target.value)}
                                 className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                               />
                             </FormField>
 
-                            <FormField label="Model" required={formData.listingType === "SELL"}>
+                            <FormField label="Compatible Model">
                               <Input
-                                placeholder="e.g., Compatible model"
+                                placeholder="e.g., Corolla, Civic"
                                 value={formData.model || ""}
                                 onChange={(e) => handleInputChange("model", e.target.value)}
                                 className="border border-gray-300 bg-white h-10 rounded-md shadow-none"

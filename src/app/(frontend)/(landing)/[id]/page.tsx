@@ -466,6 +466,14 @@ export default function AdDetailPage() {
       BOAT: "Boat"
     };
 
+    // AUTO_PARTS: use part-specific title format
+    if ((ad.type ?? ad.vehicleType) === 'AUTO_PARTS') {
+      const partName = ad.partName || 'Auto Part';
+      const compatLabel = vehicleTypeLabels[ad.compatibleVehicleType || ''] || ad.compatibleVehicleType || '';
+      const forParts = [ad.brand, ad.model, compatLabel].filter(Boolean).join(' ');
+      return forParts ? `${partName} for ${forParts}` : partName;
+    }
+
     // Build vehicle info with type at the end (brand model year [Type])
     const rawType = (ad.type ?? ad.vehicleType) as string | undefined;
     const typeLabel = rawType ? (vehicleTypeLabels[rawType] || String(rawType)) : undefined;
@@ -705,14 +713,50 @@ export default function AdDetailPage() {
               )}
             </Card>
 
-            {/* Vehicle Details */}
+            {/* Vehicle / Part Details */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-[#024950]">
-                  Vehicle Details
+                  {(ad as any).type === 'AUTO_PARTS' ? 'Part Details' : 'Vehicle Details'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                {(ad as any).type === 'AUTO_PARTS' ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {(ad as any).partName && (
+                      <div>
+                        <div className="text-sm text-gray-500">Part Name</div>
+                        <div className="font-semibold">{(ad as any).partName}</div>
+                      </div>
+                    )}
+                    {(ad as any).compatibleVehicleType && (
+                      <div>
+                        <div className="text-sm text-gray-500">Compatible Vehicle</div>
+                        <div className="font-semibold">
+                          {({ CAR: "Car", VAN: "Van", MOTORCYCLE: "Motorbike", BICYCLE: "Bicycle", THREE_WHEEL: "Three Wheeler", BUS: "Bus", LORRY: "Lorry", HEAVY_DUTY: "Heavy Duty", TRACTOR: "Tractor", BOAT: "Boat" } as Record<string, string>)[(ad as any).compatibleVehicleType] || (ad as any).compatibleVehicleType}
+                        </div>
+                      </div>
+                    )}
+                    {ad.brand && (
+                      <div>
+                        <div className="text-sm text-gray-500">Compatible Brand</div>
+                        <div className="font-semibold">{ad.brand}</div>
+                      </div>
+                    )}
+                    {ad.model && (
+                      <div>
+                        <div className="text-sm text-gray-500">Compatible Model</div>
+                        <div className="font-semibold">{ad.model}</div>
+                      </div>
+                    )}
+                    {ad.condition && (
+                      <div>
+                        <div className="text-sm text-gray-500">Condition</div>
+                        <div className="font-semibold">{ad.condition}</div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {ad.manufacturedYear && (
                     <div className="flex items-center space-x-2">
@@ -771,13 +815,6 @@ export default function AdDetailPage() {
                     </div>
                   )}
 
-                  {/* {ad.color && (
-                    <div>
-                      <div className="text-sm text-gray-500">Color</div>
-                      <div className="font-semibold">{ad.color}</div>
-                    </div>
-                  )} */}
-
                   {ad.vehicleType && (
                     <div>
                       <div className="text-sm text-gray-500">Vehicle Type</div>
@@ -806,6 +843,7 @@ export default function AdDetailPage() {
                     </div>
                   )}
                 </div>
+                )}
               </CardContent>
             </Card>
 
@@ -983,7 +1021,7 @@ export default function AdDetailPage() {
 
             {/* Similar Vehicles (desktop/tablet) - hidden on mobile so we can show it last on small screens */}
             <div className="hidden sm:block">
-              {(modelFilteredVehicles.length > 0 || isLoadingSimilar) && (
+              {(ad as any).type !== 'AUTO_PARTS' && (modelFilteredVehicles.length > 0 || isLoadingSimilar) && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-[#024950]">Similar Vehicles</CardTitle>
@@ -1309,7 +1347,7 @@ export default function AdDetailPage() {
             )}
 
             {/* Similar Vehicle Comparison */}
-            {ad.price && (
+            {(ad as any).type !== 'AUTO_PARTS' && ad.price && (
               <SimilarVehicleComparison
                 adId={adId || ""}
                 currentPrice={(ad as any).discountPrice || ad.price}
@@ -1345,7 +1383,7 @@ export default function AdDetailPage() {
       </div>
 
       {/* Similar Vehicles (mobile: show last) */}
-      {(modelFilteredVehicles.length > 0 || isLoadingSimilar) && (
+      {(ad as any).type !== 'AUTO_PARTS' && (modelFilteredVehicles.length > 0 || isLoadingSimilar) && (
         <div className="max-w-6xl mx-auto px-4 py-6 sm:hidden">
           <Card>
             <CardHeader>

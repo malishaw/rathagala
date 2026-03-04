@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { betterFetch } from "@better-fetch/fetch";
-import { ArrowRight, Calendar, CarIcon, Check, LayoutDashboard, LogOut, Menu, Search, TrendingUp, UserIcon, XIcon } from "lucide-react";
+import { ArrowRight, Calendar, CarIcon, Check, LayoutDashboard, LogOut, Menu, Search, TrendingUp, UserIcon, Wrench, XIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -143,6 +143,12 @@ export function Header() {
               className="hover:text-teal-200 transition-colors font-medium"
             >
               Hire
+            </Link>
+            <Link
+              href="/auto-parts"
+              className="hover:text-teal-200 transition-colors font-medium"
+            >
+              Auto Parts
             </Link>
             <Link
               href="/compare"
@@ -338,6 +344,17 @@ export function Header() {
                       <UserIcon className="h-4 w-4" />
                     </div>
                     Hire
+                  </Link>
+
+                  <Link
+                    href="/auto-parts"
+                    className="text-base font-semibold flex items-center gap-3 py-2 border-b border-white/5 hover:text-teal-200 transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <div className="bg-white/10 p-1.5 rounded-lg">
+                      <Wrench className="h-4 w-4" />
+                    </div>
+                    Auto Parts
                   </Link>
 
                   <Link
