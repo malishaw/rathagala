@@ -20,9 +20,15 @@ import { OrgSwitcher } from "@/features/organizations/components/org-switcher";
 export async function AppSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar> & { session: Session }) {
-  const activeMember = await auth.api.getActiveMember({
-    headers: await headers()
-  });
+  let activeMember = null;
+  try {
+    activeMember = await auth.api.getActiveMember({
+      headers: await headers()
+    });
+  } catch (error) {
+    // No active organization, this is expected for new users
+    console.log("No active organization found");
+  }
 
   return (
     <Sidebar collapsible="icon" {...props}>
