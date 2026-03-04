@@ -389,4 +389,7 @@ export const bulkCreateAdSchema = z.object({
   })),
 });
 
+// Alias for use in trending route
+export const adSchema = selectAdSchema;
+
 

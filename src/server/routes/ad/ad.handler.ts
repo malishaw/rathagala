@@ -1652,6 +1652,111 @@ export const updatePromotion: AppRouteHandler<UpdatePromotionRoute> = async (c) 
   }
 };
 
+export const bulkCreate: AppRouteHandler<BulkCreateRoute> = async (c) => {
+  try {
+    const user = c.get("user");
+
+    if (!user) {
+      return c.json(
+        { message: HttpStatusPhrases.UNAUTHORIZED },
+        HttpStatusCodes.UNAUTHORIZED
+      ) as any;
+    }
+
+    // Check admin role
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { role: true },
+    });
+
+    if (!dbUser || dbUser.role !== "admin") {
+      return c.json(
+        { message: "Admin access required" },
+        HttpStatusCodes.FORBIDDEN
+      ) as any;
+    }
+
+    const { ads } = c.req.valid("json");
+    let createdCount = 0;
+
+    for (const adDetails of ads) {
+      // Find the seller by email
+      const seller = await prisma.user.findUnique({
+        where: { email: adDetails.sellerEmail },
+        select: { id: true },
+      });
+
+      if (!seller) {
+        console.warn(`[BULK CREATE] Seller not found for email: ${adDetails.sellerEmail}`);
+        continue;
+      }
+
+      // Generate seo slug
+      let seoSlug = adDetails.title
+        ? adDetails.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
+        : `vehicle-${Date.now()}`;
+      seoSlug += `-${Math.random().toString(36).substring(2, 8)}`;
+
+      await prisma.ad.create({
+        data: {
+          orgId: "",
+          createdBy: seller.id,
+          title: adDetails.title || "",
+          description: adDetails.description || "",
+          type: (adDetails.type as AdType) || AdType.CAR,
+          listingType: adDetails.listingType || "SELL",
+          status: AdStatus.PENDING_REVIEW,
+          seoSlug,
+          published: false,
+          isDraft: false,
+          boosted: false,
+          featured: false,
+          price: adDetails.price || null,
+          condition: adDetails.condition || null,
+          brand: adDetails.brand || null,
+          model: adDetails.model || null,
+          trimEdition: adDetails.trimEdition || null,
+          manufacturedYear: adDetails.manufacturedYear || null,
+          modelYear: adDetails.modelYear || null,
+          mileage: adDetails.mileage || null,
+          engineCapacity: adDetails.engineCapacity || null,
+          fuelType: adDetails.fuelType || null,
+          transmission: adDetails.transmission || null,
+          bodyType: adDetails.bodyType || null,
+          bikeType: adDetails.bikeType || null,
+          vehicleType: adDetails.vehicleType || null,
+          serviceType: adDetails.serviceType || null,
+          partType: adDetails.partType || null,
+          partName: adDetails.partName || null,
+          maintenanceType: adDetails.maintenanceType || null,
+          phoneNumber: adDetails.phoneNumber || null,
+          whatsappNumber: adDetails.whatsappNumber || null,
+          location: adDetails.location || null,
+          address: adDetails.address || null,
+          province: adDetails.province || null,
+          district: adDetails.district || null,
+          city: adDetails.city || null,
+          specialNote: adDetails.specialNote || null,
+          metadata: adDetails.metadata || {},
+        },
+      });
+
+      createdCount++;
+    }
+
+    return c.json(
+      { message: `Successfully created ${createdCount} ads`, count: createdCount },
+      HttpStatusCodes.OK
+    );
+  } catch (error: any) {
+    console.error("[BULK CREATE ADS] Error:", error);
+    return c.json(
+      { message: error.message || "Failed to bulk create ads" },
+      HttpStatusCodes.UNPROCESSABLE_ENTITY
+    ) as any;
+  }
+};
+
 export const incrementView: AppRouteHandler<IncrementViewRoute> = async (c) => {
   try {
     const { id } = c.req.param();
