@@ -221,33 +221,43 @@ export default function AutoPartsAdminPage() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-1 pt-4 px-4">
-            <CardDescription>Total</CardDescription>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card className="transition-all hover:shadow-md hover:border-teal-200">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardDescription className="text-xs font-medium uppercase tracking-wider">Total Categories</CardDescription>
+        <div className="h-4 w-4 text-muted-foreground/50">
+           <Wrench className="h-4 w-4" />
+        </div>
           </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <p className="text-2xl font-bold">{categories?.length ?? "—"}</p>
+          <CardContent>
+        <div className="text-2xl font-bold">{categories?.length ?? "—"}</div>
+        <p className="text-xs text-muted-foreground mt-1">Managed auto-part types</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-1 pt-4 px-4">
-            <CardDescription>Active</CardDescription>
+        
+        <Card className="transition-all hover:shadow-md hover:border-green-200">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardDescription className="text-xs font-medium uppercase tracking-wider text-green-700">Active</CardDescription>
+        <div className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
           </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <p className="text-2xl font-bold text-teal-700">
-              {categories?.filter((c) => c.isActive).length ?? "—"}
-            </p>
+          <CardContent>
+        <div className="text-2xl font-bold text-green-700">
+          {categories?.filter((c) => c.isActive).length ?? "—"}
+        </div>
+        <p className="text-xs text-muted-foreground mt-1">Currently visible to users</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-1 pt-4 px-4">
-            <CardDescription>Inactive</CardDescription>
+
+        <Card className="transition-all hover:shadow-md hover:border-slate-200">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardDescription className="text-xs font-medium uppercase tracking-wider">Inactive</CardDescription>
+        <X className="h-4 w-4 text-slate-300" />
           </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <p className="text-2xl font-bold text-slate-400">
-              {categories?.filter((c) => !c.isActive).length ?? "—"}
-            </p>
+          <CardContent>
+        <div className="text-2xl font-bold text-slate-500">
+          {categories?.filter((c) => !c.isActive).length ?? "—"}
+        </div>
+        <p className="text-xs text-muted-foreground mt-1">Hidden from selection</p>
           </CardContent>
         </Card>
       </div>
@@ -302,19 +312,17 @@ export default function AutoPartsAdminPage() {
                       </button>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center gap-1 justify-end">
+                      <div className="flex items-center gap-6 justify-end">
                         <Button
-                          variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-slate-500 hover:text-teal-700"
+                          className="h-8 w-8  bg-teal-100 text-teal-700 hover:bg-teal-700 hover:text-white"
                           onClick={() => openEdit(cat)}
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
                         <Button
-                          variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-slate-500 hover:text-red-600"
+                          className="h-8 w-8 text-red-500 hover:text-white bg-red-200 hover:bg-red-500 "
                           onClick={() => setDeleteId(cat.id)}
                         >
                           <Trash2 className="h-3.5 w-3.5" />

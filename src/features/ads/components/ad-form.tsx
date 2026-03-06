@@ -13,14 +13,15 @@ import {
   Settings,
   ArrowRight,
   ArrowLeft,
-  X,
+  // X,       // used by tag badges (commented out)
   PlusCircle,
   XCircle,
   Loader2,
   Check,
-  TagIcon,
+  // TagIcon, // used by tags section (commented out)
   Zap,
-  Star
+  Star,
+  ChevronsUpDown
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -37,8 +38,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+// import { Badge } from "@/components/ui/badge"; // kept for tags (commented out)
+// import { Separator } from "@/components/ui/separator"; // kept for settings tab (commented out)
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -62,6 +63,10 @@ import { CreateAdSchema } from "@/server/routes/ad/ad.schemas";
 import { authClient } from "@/lib/auth-client";
 import { locationData, getManufactureYears } from "@/lib/location-data";
 import { CitySearchDropdown } from "@/components/ui/city-search-dropdown";
+import { useGetAutoPartCategories } from "@/features/ads/api/use-get-auto-part-categories";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 export type AdFormProps = {
   initialData?: any;
@@ -105,8 +110,17 @@ export function AdForm({
 
   // Check if user is admin
   const { data: session } = authClient.useSession();
-  const user = session?.user;
-  const isAdmin = (user as any)?.role === "admin";
+  // const user = session?.user; // reserved for future use
+  void session; // suppress unused warning
+  // const isAdmin = (user as any)?.role === "admin"; // reserved for future use
+
+  // Fetch auto part categories at top level
+  const { data: autoPartCategories = [] } = useGetAutoPartCategories(true);
+
+  // Searchable dropdown states for AUTO_PARTS fields
+  const [partCategoryOpen, setPartCategoryOpen] = useState(false);
+  // compatibleBrandOpen state reserved for future use
+  // const [compatibleBrandOpen, setCompatibleBrandOpen] = useState(false);
 
   // Set "vehicle" as the default active tab
   const [activeTab, setActiveTab] = useState("vehicle");
@@ -296,26 +310,28 @@ export function AdForm({
       }
 
       // Load images from initialData if available
+      // Each item in initialData.media is an AdMedia record with a nested .media property (the actual Media object)
       if (initialData.media && Array.isArray(initialData.media)) {
-        // Convert to MediaFile format
         setSelectedMedia(
-          initialData.media.map((media: any) => ({
-            id: media.id,
-            url: media.url,
-            type: "IMAGE", // Default to image type
-            filename: media.title || "image",
-            size: 0, // Size may not be available from initialData
-            createdAt: new Date(),
-            title: media.title || "",
-            alt: media.alt || ""
-          }))
+          initialData.media
+            .filter((adMedia: any) => adMedia.media?.url || adMedia.url)
+            .map((adMedia: any) => ({
+              id: adMedia.media?.id || adMedia.mediaId || adMedia.id,
+              url: adMedia.media?.url || adMedia.url || "",
+              type: "IMAGE",
+              filename: adMedia.media?.title || adMedia.title || "image",
+              size: 0,
+              createdAt: new Date(),
+              title: adMedia.media?.title || adMedia.title || "",
+              alt: adMedia.media?.alt || adMedia.alt || ""
+            }))
         );
       }
     }
   }, [initialData]);
 
-  const [newTag, setNewTag] = useState("");
-  const [newOption, setNewOption] = useState("");
+  // const [newTag, setNewTag] = useState(""); // used by Tags section (commented out)
+  // const [newOption, setNewOption] = useState(""); // used by Tags section (commented out)
 
   // Handle tab navigation
   const goToNextTab = () => {
@@ -338,36 +354,11 @@ export function AdForm({
     setFormData(prev => ({ ...prev, [field]: value }));
   }, []);
 
-  const addTag = () => {
-    if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
-      setFormData((prev) => ({ ...prev, tags: [...prev.tags, newTag.trim()] }));
-      setNewTag("");
-    }
-  };
-
-  const removeTag = (tagToRemove: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      tags: prev.tags.filter((tag) => tag !== tagToRemove)
-    }));
-  };
-
-  const addOption = () => {
-    if (newOption.trim() && !formData.options.includes(newOption.trim())) {
-      setFormData((prev) => ({
-        ...prev,
-        options: [...prev.options, newOption.trim()]
-      }));
-      setNewOption("");
-    }
-  };
-
-  const removeOption = (optionToRemove: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      options: prev.options.filter((option) => option !== optionToRemove)
-    }));
-  };
+  // addTag/removeTag/addOption/removeOption — used by Tags section (commented out)
+  // const addTag = () => { ... };
+  // const removeTag = (tagToRemove: string) => { ... };
+  // const addOption = () => { ... };
+  // const removeOption = (optionToRemove: string) => { ... };
 
   // Handle media selection from gallery
   const handleMediaSelect = (media: MediaFile[]) => {
@@ -1091,6 +1082,54 @@ export function AdForm({
                       case "AUTO_PARTS":
                         return (
                           <>
+                            <FormField label="Part Category" required>
+                              <Popover open={partCategoryOpen} onOpenChange={setPartCategoryOpen}>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={partCategoryOpen}
+                                    className="w-full justify-between font-normal h-10 border border-gray-300 bg-white rounded-md shadow-none text-sm"
+                                    disabled={autoPartCategories.length === 0}
+                                    type="button"
+                                  >
+                                    <span className="truncate">
+                                      {(formData as any).partCategoryId
+                                        ? autoPartCategories.find((cat) => cat.id === (formData as any).partCategoryId)?.name || "Select category"
+                                        : (autoPartCategories.length === 0 ? "No categories available" : "Select category")}
+                                    </span>
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]" align="start">
+                                  <Command>
+                                    <CommandInput placeholder="Search category..." />
+                                    <CommandEmpty>No category found.</CommandEmpty>
+                                    <CommandGroup className="max-h-60 overflow-y-auto">
+                                      {autoPartCategories.map((cat) => (
+                                        <CommandItem
+                                          key={cat.id}
+                                          value={cat.name}
+                                          onSelect={() => {
+                                            handleInputChange("partCategoryId", cat.id);
+                                            setPartCategoryOpen(false);
+                                          }}
+                                        >
+                                          <Check
+                                            className={cn(
+                                              "mr-2 h-4 w-4",
+                                              (formData as any).partCategoryId === cat.id ? "opacity-100" : "opacity-0"
+                                            )}
+                                          />
+                                          {cat.name}
+                                        </CommandItem>
+                                      ))}
+                                    </CommandGroup>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
+                            </FormField>
+
                             <FormField label="Part Name" required>
                               <Input
                                 placeholder="e.g., Wind Shield, Brake Pad"
@@ -1136,11 +1175,12 @@ export function AdForm({
                             </FormField>
 
                             <FormField label="Compatible Brand">
-                              <Input
-                                placeholder="e.g., Toyota, Honda, Any"
+                              <CitySearchDropdown
+                                cities={["Any", ...vehicleMakes]}
                                 value={formData.brand || ""}
-                                onChange={(e) => handleInputChange("brand", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
+                                onChange={(value) => handleInputChange("brand", value)}
+                                placeholder="Select compatible brand"
+                                triggerClassName="border border-gray-300 bg-white shadow-none"
                               />
                             </FormField>
 
@@ -1981,7 +2021,7 @@ export function AdForm({
                         className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        If there's a discount, enter the original price here
+                        If there&apos;s a discount, enter the original price here
                       </p>
                     </div>
                   </div>
@@ -2261,8 +2301,8 @@ export function AdForm({
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {/* Tags */}
-                  <div className="flex items-center">
+                  {/* Tags - hidden (commented out) */}
+                  {/* <div className="flex items-center">
                     <div className="w-48 text-right pr-4 text-gray-600">
                       Tags
                     </div>
@@ -2299,7 +2339,7 @@ export function AdForm({
 
                   <div className="mt-4">
                     <Separator />
-                  </div>
+                  </div> */}
 
                   {/* Publish Status */}
                   <div className="flex items-center">
@@ -2410,12 +2450,13 @@ export function AdForm({
                     </div>
                   </div>
 
-                  <div className="mt-4">
+                  {/* Separator before SEO sections - hidden (commented out) */}
+                  {/* <div className="mt-4">
                     <Separator />
-                  </div>
+                  </div> */}
 
-                  {/* Auto Generate SEO Button */}
-                  <div className="flex items-center mb-4">
+                  {/* Auto Generate SEO Button - hidden (commented out) */}
+                  {/* <div className="flex items-center mb-4">
                     <div className="w-48 text-right pr-4 text-gray-600">
                       Generate SEO
                     </div>
@@ -2445,10 +2486,10 @@ export function AdForm({
                         Auto Generate SEO
                       </Button>
                     </div>
-                  </div>
+                  </div> */}
 
-                  {/* SEO Title */}
-                  <div className="flex items-center">
+                  {/* SEO Title - hidden (commented out) */}
+                  {/* <div className="flex items-center">
                     <div className="w-48 text-right pr-4 text-gray-600">
                       Auto Generated SEO Title
                     </div>
@@ -2466,10 +2507,10 @@ export function AdForm({
                         </p>
                       </div>
                     </div>
-                  </div>
+                  </div> */}
 
-                  {/* SEO Description */}
-                  <div className="flex items-center">
+                  {/* SEO Description - hidden (commented out) */}
+                  {/* <div className="flex items-center">
                     <div className="w-48 text-right pr-4 text-gray-600 pt-2">
                       Auto Generated SEO Description
                     </div>
@@ -2483,7 +2524,7 @@ export function AdForm({
                         className="border border-gray-300 bg-white rounded-md shadow-none resize-y"
                       />
                     </div>
-                  </div>
+                  </div> */}
 
                   {/* Draft status */}
                   <div className="flex items-center">

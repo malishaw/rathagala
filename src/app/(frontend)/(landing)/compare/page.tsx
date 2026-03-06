@@ -570,7 +570,7 @@ export default function AdComparisonPage() {
                                                 {formatPrice(vehicle1.price)}
                                             </div>
                                             {!isExpired(vehicle1) && (
-                                                <Link href={`/${vehicle1Id}`}>
+                                                <Link href={`/ads/${vehicle1Id}`}>
                                                     <Button
                                                         variant="outline"
                                                         className="w-full mt-2 md:mt-4 h-8 md:h-10 text-xs md:text-sm bg-white/10 border-white/30 text-white hover:bg-white/20"
@@ -615,7 +615,7 @@ export default function AdComparisonPage() {
                                                 {formatPrice(vehicle2.price)}
                                             </div>
                                             {!isExpired(vehicle2) && (
-                                                <Link href={`/${vehicle2Id}`}>
+                                                <Link href={`/ads/${vehicle2Id}`}>
                                                     <Button
                                                         variant="outline"
                                                         className="w-full mt-2 md:mt-4 h-8 md:h-10 text-xs md:text-sm bg-white/10 border-white/30 text-white hover:bg-white/20"

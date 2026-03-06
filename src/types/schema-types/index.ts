@@ -112,6 +112,8 @@ export const AutoPartCategoryScalarFieldEnumSchema = z.enum(['id','name','slug',
 
 export const NewsletterScalarFieldEnumSchema = z.enum(['id','subject','htmlContent','plainContent','recipientCount','recipientEmails','sentBy','sentAt','createdAt']);
 
+export const BrandCarouselScalarFieldEnumSchema = z.enum(['id','name','imageUrl','order','createdAt','updatedAt']);
+
 export const SortOrderSchema = z.enum(['asc','desc']);
 
 export const QueryModeSchema = z.enum(['default','insensitive']);
@@ -679,6 +681,21 @@ export const NewsletterSchema = z.object({
 })
 
 export type Newsletter = z.infer<typeof NewsletterSchema>
+
+/////////////////////////////////////////
+// BRAND CAROUSEL SCHEMA
+/////////////////////////////////////////
+
+export const BrandCarouselSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  imageUrl: z.string(),
+  order: z.number().int(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+})
+
+export type BrandCarousel = z.infer<typeof BrandCarouselSchema>
 
 /////////////////////////////////////////
 // SELECT & INCLUDE
@@ -1461,6 +1478,22 @@ export const NewsletterSelectSchema: z.ZodType<Prisma.NewsletterSelect> = z.obje
   sentBy: z.boolean().optional(),
   sentAt: z.boolean().optional(),
   createdAt: z.boolean().optional(),
+}).strict()
+
+// BRAND CAROUSEL
+//------------------------------------------------------
+
+export const BrandCarouselArgsSchema: z.ZodType<Prisma.BrandCarouselDefaultArgs> = z.object({
+  select: z.lazy(() => BrandCarouselSelectSchema).optional(),
+}).strict();
+
+export const BrandCarouselSelectSchema: z.ZodType<Prisma.BrandCarouselSelect> = z.object({
+  id: z.boolean().optional(),
+  name: z.boolean().optional(),
+  imageUrl: z.boolean().optional(),
+  order: z.boolean().optional(),
+  createdAt: z.boolean().optional(),
+  updatedAt: z.boolean().optional(),
 }).strict()
 
 
@@ -3921,6 +3954,77 @@ export const NewsletterScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.Ne
   createdAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
 }).strict();
 
+export const BrandCarouselWhereInputSchema: z.ZodType<Prisma.BrandCarouselWhereInput> = z.object({
+  AND: z.union([ z.lazy(() => BrandCarouselWhereInputSchema), z.lazy(() => BrandCarouselWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => BrandCarouselWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => BrandCarouselWhereInputSchema), z.lazy(() => BrandCarouselWhereInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  imageUrl: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  order: z.union([ z.lazy(() => IntFilterSchema), z.number() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+}).strict();
+
+export const BrandCarouselOrderByWithRelationInputSchema: z.ZodType<Prisma.BrandCarouselOrderByWithRelationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  imageUrl: z.lazy(() => SortOrderSchema).optional(),
+  order: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const BrandCarouselWhereUniqueInputSchema: z.ZodType<Prisma.BrandCarouselWhereUniqueInput> = z.union([
+  z.object({
+    id: z.string(),
+    name: z.string(),
+  }),
+  z.object({
+    id: z.string(),
+  }),
+  z.object({
+    name: z.string(),
+  }),
+])
+.and(z.object({
+  id: z.string().optional(),
+  name: z.string().optional(),
+  AND: z.union([ z.lazy(() => BrandCarouselWhereInputSchema), z.lazy(() => BrandCarouselWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => BrandCarouselWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => BrandCarouselWhereInputSchema), z.lazy(() => BrandCarouselWhereInputSchema).array() ]).optional(),
+  imageUrl: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  order: z.union([ z.lazy(() => IntFilterSchema), z.number().int() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+}).strict());
+
+export const BrandCarouselOrderByWithAggregationInputSchema: z.ZodType<Prisma.BrandCarouselOrderByWithAggregationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  imageUrl: z.lazy(() => SortOrderSchema).optional(),
+  order: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+  _count: z.lazy(() => BrandCarouselCountOrderByAggregateInputSchema).optional(),
+  _avg: z.lazy(() => BrandCarouselAvgOrderByAggregateInputSchema).optional(),
+  _max: z.lazy(() => BrandCarouselMaxOrderByAggregateInputSchema).optional(),
+  _min: z.lazy(() => BrandCarouselMinOrderByAggregateInputSchema).optional(),
+  _sum: z.lazy(() => BrandCarouselSumOrderByAggregateInputSchema).optional(),
+}).strict();
+
+export const BrandCarouselScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.BrandCarouselScalarWhereWithAggregatesInput> = z.object({
+  AND: z.union([ z.lazy(() => BrandCarouselScalarWhereWithAggregatesInputSchema), z.lazy(() => BrandCarouselScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  OR: z.lazy(() => BrandCarouselScalarWhereWithAggregatesInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => BrandCarouselScalarWhereWithAggregatesInputSchema), z.lazy(() => BrandCarouselScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
+  name: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
+  imageUrl: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
+  order: z.union([ z.lazy(() => IntWithAggregatesFilterSchema), z.number() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
+}).strict();
+
 export const UserCreateInputSchema: z.ZodType<Prisma.UserCreateInput> = z.object({
   id: z.string(),
   name: z.string(),
@@ -6242,6 +6346,65 @@ export const NewsletterUncheckedUpdateManyInputSchema: z.ZodType<Prisma.Newslett
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
+export const BrandCarouselCreateInputSchema: z.ZodType<Prisma.BrandCarouselCreateInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  imageUrl: z.string(),
+  order: z.number().int().optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const BrandCarouselUncheckedCreateInputSchema: z.ZodType<Prisma.BrandCarouselUncheckedCreateInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  imageUrl: z.string(),
+  order: z.number().int().optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const BrandCarouselUpdateInputSchema: z.ZodType<Prisma.BrandCarouselUpdateInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  imageUrl: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const BrandCarouselUncheckedUpdateInputSchema: z.ZodType<Prisma.BrandCarouselUncheckedUpdateInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  imageUrl: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const BrandCarouselCreateManyInputSchema: z.ZodType<Prisma.BrandCarouselCreateManyInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  imageUrl: z.string(),
+  order: z.number().int().optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const BrandCarouselUpdateManyMutationInputSchema: z.ZodType<Prisma.BrandCarouselUpdateManyMutationInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  imageUrl: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const BrandCarouselUncheckedUpdateManyInputSchema: z.ZodType<Prisma.BrandCarouselUncheckedUpdateManyInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  imageUrl: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  order: z.union([ z.number().int(),z.lazy(() => IntFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
 export const StringFilterSchema: z.ZodType<Prisma.StringFilter> = z.object({
   equals: z.string().optional(),
   in: z.string().array().optional(),
@@ -8087,6 +8250,41 @@ export const NewsletterMinOrderByAggregateInputSchema: z.ZodType<Prisma.Newslett
 
 export const NewsletterSumOrderByAggregateInputSchema: z.ZodType<Prisma.NewsletterSumOrderByAggregateInput> = z.object({
   recipientCount: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const BrandCarouselCountOrderByAggregateInputSchema: z.ZodType<Prisma.BrandCarouselCountOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  imageUrl: z.lazy(() => SortOrderSchema).optional(),
+  order: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const BrandCarouselAvgOrderByAggregateInputSchema: z.ZodType<Prisma.BrandCarouselAvgOrderByAggregateInput> = z.object({
+  order: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const BrandCarouselMaxOrderByAggregateInputSchema: z.ZodType<Prisma.BrandCarouselMaxOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  imageUrl: z.lazy(() => SortOrderSchema).optional(),
+  order: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const BrandCarouselMinOrderByAggregateInputSchema: z.ZodType<Prisma.BrandCarouselMinOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  imageUrl: z.lazy(() => SortOrderSchema).optional(),
+  order: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const BrandCarouselSumOrderByAggregateInputSchema: z.ZodType<Prisma.BrandCarouselSumOrderByAggregateInput> = z.object({
+  order: z.lazy(() => SortOrderSchema).optional(),
 }).strict();
 
 export const OrganizationCreateNestedOneWithoutUsersInputSchema: z.ZodType<Prisma.OrganizationCreateNestedOneWithoutUsersInput> = z.object({
@@ -21948,6 +22146,63 @@ export const NewsletterFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.NewsletterF
   where: NewsletterWhereUniqueInputSchema, 
 }).strict();
 
+export const BrandCarouselFindFirstArgsSchema: z.ZodType<Prisma.BrandCarouselFindFirstArgs> = z.object({
+  select: BrandCarouselSelectSchema.optional(),
+  where: BrandCarouselWhereInputSchema.optional(), 
+  orderBy: z.union([ BrandCarouselOrderByWithRelationInputSchema.array(), BrandCarouselOrderByWithRelationInputSchema ]).optional(),
+  cursor: BrandCarouselWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ BrandCarouselScalarFieldEnumSchema, BrandCarouselScalarFieldEnumSchema.array() ]).optional(),
+}).strict();
+
+export const BrandCarouselFindFirstOrThrowArgsSchema: z.ZodType<Prisma.BrandCarouselFindFirstOrThrowArgs> = z.object({
+  select: BrandCarouselSelectSchema.optional(),
+  where: BrandCarouselWhereInputSchema.optional(), 
+  orderBy: z.union([ BrandCarouselOrderByWithRelationInputSchema.array(), BrandCarouselOrderByWithRelationInputSchema ]).optional(),
+  cursor: BrandCarouselWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ BrandCarouselScalarFieldEnumSchema, BrandCarouselScalarFieldEnumSchema.array() ]).optional(),
+}).strict();
+
+export const BrandCarouselFindManyArgsSchema: z.ZodType<Prisma.BrandCarouselFindManyArgs> = z.object({
+  select: BrandCarouselSelectSchema.optional(),
+  where: BrandCarouselWhereInputSchema.optional(), 
+  orderBy: z.union([ BrandCarouselOrderByWithRelationInputSchema.array(), BrandCarouselOrderByWithRelationInputSchema ]).optional(),
+  cursor: BrandCarouselWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ BrandCarouselScalarFieldEnumSchema, BrandCarouselScalarFieldEnumSchema.array() ]).optional(),
+}).strict();
+
+export const BrandCarouselAggregateArgsSchema: z.ZodType<Prisma.BrandCarouselAggregateArgs> = z.object({
+  where: BrandCarouselWhereInputSchema.optional(), 
+  orderBy: z.union([ BrandCarouselOrderByWithRelationInputSchema.array(), BrandCarouselOrderByWithRelationInputSchema ]).optional(),
+  cursor: BrandCarouselWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict();
+
+export const BrandCarouselGroupByArgsSchema: z.ZodType<Prisma.BrandCarouselGroupByArgs> = z.object({
+  where: BrandCarouselWhereInputSchema.optional(), 
+  orderBy: z.union([ BrandCarouselOrderByWithAggregationInputSchema.array(), BrandCarouselOrderByWithAggregationInputSchema ]).optional(),
+  by: BrandCarouselScalarFieldEnumSchema.array(), 
+  having: BrandCarouselScalarWhereWithAggregatesInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict();
+
+export const BrandCarouselFindUniqueArgsSchema: z.ZodType<Prisma.BrandCarouselFindUniqueArgs> = z.object({
+  select: BrandCarouselSelectSchema.optional(),
+  where: BrandCarouselWhereUniqueInputSchema, 
+}).strict();
+
+export const BrandCarouselFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.BrandCarouselFindUniqueOrThrowArgs> = z.object({
+  select: BrandCarouselSelectSchema.optional(),
+  where: BrandCarouselWhereUniqueInputSchema, 
+}).strict();
+
 export const UserCreateArgsSchema: z.ZodType<Prisma.UserCreateArgs> = z.object({
   select: UserSelectSchema.optional(),
   include: UserIncludeSchema.optional(),
@@ -23143,5 +23398,43 @@ export const NewsletterUpdateManyArgsSchema: z.ZodType<Prisma.NewsletterUpdateMa
 
 export const NewsletterDeleteManyArgsSchema: z.ZodType<Prisma.NewsletterDeleteManyArgs> = z.object({
   where: NewsletterWhereInputSchema.optional(), 
+  limit: z.number().optional(),
+}).strict();
+
+export const BrandCarouselCreateArgsSchema: z.ZodType<Prisma.BrandCarouselCreateArgs> = z.object({
+  select: BrandCarouselSelectSchema.optional(),
+  data: z.union([ BrandCarouselCreateInputSchema, BrandCarouselUncheckedCreateInputSchema ]),
+}).strict();
+
+export const BrandCarouselUpsertArgsSchema: z.ZodType<Prisma.BrandCarouselUpsertArgs> = z.object({
+  select: BrandCarouselSelectSchema.optional(),
+  where: BrandCarouselWhereUniqueInputSchema, 
+  create: z.union([ BrandCarouselCreateInputSchema, BrandCarouselUncheckedCreateInputSchema ]),
+  update: z.union([ BrandCarouselUpdateInputSchema, BrandCarouselUncheckedUpdateInputSchema ]),
+}).strict();
+
+export const BrandCarouselCreateManyArgsSchema: z.ZodType<Prisma.BrandCarouselCreateManyArgs> = z.object({
+  data: z.union([ BrandCarouselCreateManyInputSchema, BrandCarouselCreateManyInputSchema.array() ]),
+}).strict();
+
+export const BrandCarouselDeleteArgsSchema: z.ZodType<Prisma.BrandCarouselDeleteArgs> = z.object({
+  select: BrandCarouselSelectSchema.optional(),
+  where: BrandCarouselWhereUniqueInputSchema, 
+}).strict();
+
+export const BrandCarouselUpdateArgsSchema: z.ZodType<Prisma.BrandCarouselUpdateArgs> = z.object({
+  select: BrandCarouselSelectSchema.optional(),
+  data: z.union([ BrandCarouselUpdateInputSchema, BrandCarouselUncheckedUpdateInputSchema ]),
+  where: BrandCarouselWhereUniqueInputSchema, 
+}).strict();
+
+export const BrandCarouselUpdateManyArgsSchema: z.ZodType<Prisma.BrandCarouselUpdateManyArgs> = z.object({
+  data: z.union([ BrandCarouselUpdateManyMutationInputSchema, BrandCarouselUncheckedUpdateManyInputSchema ]),
+  where: BrandCarouselWhereInputSchema.optional(), 
+  limit: z.number().optional(),
+}).strict();
+
+export const BrandCarouselDeleteManyArgsSchema: z.ZodType<Prisma.BrandCarouselDeleteManyArgs> = z.object({
+  where: BrandCarouselWhereInputSchema.optional(), 
   limit: z.number().optional(),
 }).strict();

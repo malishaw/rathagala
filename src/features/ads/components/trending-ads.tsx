@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Eye, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { useGetTrendingAds } from "../api/use-get-trending-ads";
+import { buildAdUrl } from "@/lib/ad-url";
 
 export function TrendingAds() {
   const { data: trendingAds, isLoading, error } = useGetTrendingAds(10);
@@ -36,7 +37,7 @@ export function TrendingAds() {
           trendingAds.map((ad: any) => (
             <Link
               key={ad.id}
-              href={`/${ad.id}`}
+              href={buildAdUrl(ad)}
               className="flex items-center space-x-3 p-2 rounded-lg hover:bg-slate-50 transition-colors group"
             >
               <div className="w-12 h-12 bg-slate-100 rounded-lg overflow-hidden flex-shrink-0">

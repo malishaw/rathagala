@@ -656,6 +656,10 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
 
     let ad: any;
 
+    // Detect whether the identifier is a MongoDB ObjectId (24 hex chars) or a seoSlug
+    const isObjectId = /^[a-f0-9]{24}$/i.test(adId);
+    const whereClause = isObjectId ? { id: adId } : { seoSlug: adId };
+
     // Full includes for the ideal case
     const fullIncludes = {
       media: true,
@@ -684,7 +688,7 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
 
     try {
       ad = await prisma.ad.findUnique({
-        where: { id: adId },
+        where: whereClause,
         include: fullIncludes,
       });
     } catch (findError: any) {
@@ -692,7 +696,7 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
       console.warn("[GET AD] Full include failed for ad, retrying with safe includes", adId, String(findError?.message || "").slice(0, 200));
       try {
         ad = await prisma.ad.findUnique({
-          where: { id: adId },
+          where: whereClause,
           include: safeIncludes,
         });
         // Manually hydrate creator if the ad was found

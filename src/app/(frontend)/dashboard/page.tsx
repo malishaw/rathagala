@@ -13,6 +13,7 @@ import {
 
 import { useGetAds } from "@/features/ads/api/use-get-ads";
 import { useGetOrganizations } from "@/features/organizations/api/use-get-orgs";
+import { buildAdUrl } from "@/lib/ad-url";
 import { useGetUsers } from "@/features/users/api/use-get-users";
 import { format } from "date-fns";
 import { Bell, Car, Clock, Lightbulb, Building2, Users, ArrowRight, Star, TrendingUp } from "lucide-react";
@@ -212,7 +213,7 @@ export default function DashboardPage() {
                     <ul className="space-y-3">
                       {currentAds.map((ad: any) => (
                         <li key={ad.id} className="group relative rounded-xl hover:bg-gradient-to-r hover:from-teal-50 hover:to-emerald-50 transition-all duration-300 border border-slate-100 hover:border-teal-200">
-                          <Link href={`/${ad.id}`} className="flex items-center gap-3 p-2 w-full h-full">
+                          <Link href={buildAdUrl(ad)} className="flex items-center gap-3 p-2 w-full h-full">
                             <div className="w-16 h-12 bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
                               {ad.media && ad.media.length > 0 && ad.media[0].media?.url ? (
                                 // eslint-disable-next-line @next/next/no-img-element

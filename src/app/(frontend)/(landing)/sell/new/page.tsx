@@ -515,16 +515,12 @@ export default function QuickAdCreatePage() {
         <>
           <div>
             <label className="block text-sm font-medium mb-1">Brand (optional)</label>
-            <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select brand" />
-              </SelectTrigger>
-              <SelectContent>
-                {vehicleMakes.map((make) => (
-                  <SelectItem key={make} value={make}>{make}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <CitySearchDropdown
+              cities={vehicleMakes}
+              value={formData.brand}
+              onChange={(value) => handleInputChange("brand", value)}
+              placeholder="Select brand"
+            />
           </div>
 
           <div>
@@ -576,16 +572,12 @@ export default function QuickAdCreatePage() {
             {/* Brand */}
             <div>
               <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
-              <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select brand" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[280px]">
-                  {vehicleMakes.map(make => (
-                    <SelectItem key={make} value={make}>{make}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <CitySearchDropdown
+                cities={vehicleMakes}
+                value={formData.brand}
+                onChange={(value) => handleInputChange("brand", value)}
+                placeholder="Select brand"
+              />
             </div>
 
             {/* Model */}
@@ -646,16 +638,12 @@ export default function QuickAdCreatePage() {
             {/* Brand */}
             <div>
               <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
-              <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select brand" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[280px]">
-                  {vehicleMakes.map(make => (
-                    <SelectItem key={make} value={make}>{make}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <CitySearchDropdown
+                cities={vehicleMakes}
+                value={formData.brand}
+                onChange={(value) => handleInputChange("brand", value)}
+                placeholder="Select brand"
+              />
             </div>
 
             {/* Model */}
@@ -731,16 +719,12 @@ export default function QuickAdCreatePage() {
             {/* Brand */}
             <div>
               <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
-              <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select brand" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[280px]">
-                  {motorbikeBrands.map((brand) => (
-                    <SelectItem key={brand} value={brand}>{brand}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <CitySearchDropdown
+                cities={motorbikeBrands}
+                value={formData.brand}
+                onChange={(value) => handleInputChange("brand", value)}
+                placeholder="Select brand"
+              />
             </div>
 
             {/* Model */}
@@ -820,16 +804,12 @@ export default function QuickAdCreatePage() {
             {/* Brand */}
             <div>
               <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
-              <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select brand" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[280px]">
-                  {vehicleMakes.map(make => (
-                    <SelectItem key={make} value={make}>{make}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <CitySearchDropdown
+                cities={vehicleMakes}
+                value={formData.brand}
+                onChange={(value) => handleInputChange("brand", value)}
+                placeholder="Select brand"
+              />
             </div>
 
             {/* Model */}
@@ -882,16 +862,12 @@ export default function QuickAdCreatePage() {
             {/* Brand */}
             <div>
               <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
-              <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select brand" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[280px]">
-                  {vehicleMakes.map(make => (
-                    <SelectItem key={make} value={make}>{make}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <CitySearchDropdown
+                cities={vehicleMakes}
+                value={formData.brand}
+                onChange={(value) => handleInputChange("brand", value)}
+                placeholder="Select brand"
+              />
             </div>
 
             {/* Model */}
@@ -962,16 +938,12 @@ export default function QuickAdCreatePage() {
             {/* Brand */}
             <div>
               <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
-              <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select brand" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[280px]">
-                  {vehicleMakes.map(make => (
-                    <SelectItem key={make} value={make}>{make}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <CitySearchDropdown
+                cities={vehicleMakes}
+                value={formData.brand}
+                onChange={(value) => handleInputChange("brand", value)}
+                placeholder="Select brand"
+              />
             </div>
 
             {/* Model */}
@@ -1580,17 +1552,12 @@ export default function QuickAdCreatePage() {
             {/* Compatible Vehicle Brand */}
             <div>
               <label className="block text-sm font-medium mb-1">Compatible Vehicle Brand<span className="text-red-500">*</span></label>
-              <Select value={formData.brand} onValueChange={(value) => handleInputChange("brand", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select vehicle brand" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[280px]">
-                  <SelectItem value="Any">Any Brand</SelectItem>
-                  {vehicleMakes.map((make) => (
-                    <SelectItem key={make} value={make}>{make}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <CitySearchDropdown
+                cities={["Any", ...vehicleMakes]}
+                value={formData.brand}
+                onChange={(value) => handleInputChange("brand", value)}
+                placeholder="Select vehicle brand"
+              />
             </div>
 
             {/* Compatible Vehicle Model */}

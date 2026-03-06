@@ -8,13 +8,11 @@ import { useGetAdById } from "@/features/ads/api/use-get-ad-by-id";
 import { useGetMarketPrice } from "@/features/ads/api/use-get-market-price";
 import { useGetSimilarVehicles } from "@/features/ads/api/use-get-similar-vehicles";
 import { ArrowLeft, TrendingUp, BarChart3 } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, ReferenceLine } from "recharts";
 
-export default function VehicleAnalyticsPage() {
-  const { id } = useParams();
-  const adId = Array.isArray(id) ? id[0] : id;
+export default function VehicleAnalyticsContent({ adId }: { adId: string }) {
   const router = useRouter();
 
   const { data: ad, isLoading, isError } = useGetAdById({ adId: adId || "" });
@@ -397,9 +395,9 @@ export default function VehicleAnalyticsPage() {
             <div>
               <h3 className="font-semibold text-gray-800 mb-2">Market Price Analysis</h3>
               <p className="text-sm text-gray-600">
-                Compare this vehicle's price against the market average based on similar vehicles. 
+                Compare this vehicle&apos;s price against the market average based on similar vehicles. 
                 This helps you understand if the price is competitive, above, or below market value. 
-                The chart provides a visual representation of how your vehicle's price compares to the market average.
+                The chart provides a visual representation of how your vehicle&apos;s price compares to the market average.
               </p>
             </div>
           </CardContent>
@@ -408,4 +406,3 @@ export default function VehicleAnalyticsPage() {
     </div>
   );
 }
-

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { buildAdUrl } from "@/lib/ad-url";
 import {
   Loader2,
   Search,
@@ -23,7 +24,12 @@ import {
   Filter,
   ChevronDown,
   ChevronUp,
-  Wrench,
+  TrendingUp,
+  Car,
+  Sparkles,
+  Eye,
+  Zap,
+  Star,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
@@ -31,6 +37,8 @@ import { FavoriteButton } from "@/features/saved-ads/components/favorite-button"
 import { useGetAutoPartCategories } from "@/features/ads/api/use-get-auto-part-categories";
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { format } from "date-fns";
 
 const vehicleTypeLabels: Record<string, string> = {
   CAR: "Car",
@@ -46,6 +54,7 @@ const vehicleTypeLabels: Record<string, string> = {
 };
 
 export default function AutoPartsPage() {
+  const router = useRouter();
   const { data: session } = authClient.useSession();
   const user = session?.user;
 
@@ -56,7 +65,7 @@ export default function AutoPartsPage() {
   const [selectedDistrict, setSelectedDistrict] = useState<string>("all");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
-  const [visibleCount, setVisibleCount] = useState(20);
+  const [currentPage, setCurrentPage] = useState(1);
   const [isFiltersOpen, setIsFiltersOpen] = useState(true);
 
   const { data: categories = [] } = useGetAutoPartCategories(true);
@@ -118,9 +127,16 @@ export default function AutoPartsPage() {
     });
   }, [data, searchQuery, selectedCategory, selectedVehicleType, selectedCondition, selectedDistrict, minPrice, maxPrice]);
 
-  const visibleAds = filteredAds.slice(0, visibleCount);
-
-  const handleLoadMore = () => setVisibleCount((prev) => prev + 20);
+  const handleFilterChange = (key: string, value: any) => {
+    if (key === "searchQuery") setSearchQuery(value);
+    else if (key === "selectedCategory") setSelectedCategory(value);
+    else if (key === "selectedVehicleType") setSelectedVehicleType(value);
+    else if (key === "selectedCondition") setSelectedCondition(value);
+    else if (key === "selectedDistrict") setSelectedDistrict(value);
+    else if (key === "minPrice") setMinPrice(value);
+    else if (key === "maxPrice") setMaxPrice(value);
+    setCurrentPage(1);
+  };
 
   const clearFilters = () => {
     setSearchQuery("");
@@ -130,6 +146,7 @@ export default function AutoPartsPage() {
     setSelectedDistrict("all");
     setMinPrice("");
     setMaxPrice("");
+    setCurrentPage(1);
   };
 
   const activeFilterCount = [
@@ -146,28 +163,45 @@ export default function AutoPartsPage() {
     return categories.find((c) => c.id === categoryId)?.name ?? "—";
   };
 
+  // Pagination logic
+  const limit = 20;
+  const totalPages = Math.ceil(filteredAds.length / limit);
+  const paginationPage = Math.max(1, Math.min(currentPage, Math.max(1, totalPages)));
+
+  const paginatedAds = useMemo(() => {
+    const startIndex = (paginationPage - 1) * limit;
+    return filteredAds.slice(startIndex, startIndex + limit);
+  }, [filteredAds, paginationPage, limit]);
+
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header Banner */}
-      <div className="bg-[#024950] text-white py-8 px-4">
-        <div className="max-w-[1600px] mx-auto">
-          <div className="flex items-center gap-3 mb-1">
-            <Wrench className="h-7 w-7 text-teal-300" />
-            <h1 className="text-2xl md:text-3xl font-bold">Auto Parts &amp; Accessories</h1>
+      {/* Header */}
+      <div className="bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              onClick={() => router.back()}
+              className="text-slate-600 hover:text-slate-900"
+            >
+              ← Back
+            </Button>
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-slate-900">Auto Parts & Accessories</h1>
+              <p className="text-slate-600">
+                {isLoading ? "Loading..." : `${filteredAds.length} results found`}
+                {activeFilterCount > 0 && ` with ${activeFilterCount} filter${activeFilterCount > 1 ? 's' : ''} applied`}
+              </p>
+            </div>
           </div>
-          <p className="text-teal-200 text-sm">
-            {isLoading ? "Loading..." : `${filteredAds.length} parts found`}
-            {activeFilterCount > 0 && ` · ${activeFilterCount} filter${activeFilterCount > 1 ? "s" : ""} applied`}
-          </p>
         </div>
       </div>
 
       <div className="max-w-[1600px] mx-auto px-4 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* ── Left Sidebar ─────────────────────── */}
+          {/* Left Sidebar - Filters */}
           <div className="w-full lg:w-72 flex-shrink-0">
             <Card className="p-4 shadow-sm border-slate-200">
-              {/* Header – collapsible on mobile */}
               <div
                 className="flex items-center justify-between mb-4 cursor-pointer lg:cursor-default"
                 onClick={() => setIsFiltersOpen(!isFiltersOpen)}
@@ -175,18 +209,16 @@ export default function AutoPartsPage() {
                 <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
                   <Filter className="h-5 w-5 text-teal-600" />
                   Filters
-                  {activeFilterCount > 0 && (
-                    <Badge className="bg-teal-700 text-white text-xs px-1.5 py-0.5 rounded-full">
-                      {activeFilterCount}
-                    </Badge>
-                  )}
                 </h2>
                 <div className="flex items-center gap-2">
                   {activeFilterCount > 0 && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={(e) => { e.stopPropagation(); clearFilters(); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        clearFilters();
+                      }}
                       className="text-xs text-teal-600 hover:text-teal-700 h-7 px-2"
                     >
                       Clear
@@ -198,23 +230,23 @@ export default function AutoPartsPage() {
                 </div>
               </div>
 
-              <div className={`${isFiltersOpen ? "block" : "hidden"} lg:block space-y-4`}>
+              <div className={`${isFiltersOpen ? 'block' : 'hidden'} lg:block space-y-4`}>
                 {/* Search */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
-                    <Search className="h-3.5 w-3.5 inline mr-1" />
+                    <Search className="h-4 w-4 inline mr-1" />
                     Search
                   </label>
                   <div className="relative">
                     <Input
                       placeholder="Part name, brand, model..."
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onChange={(e) => handleFilterChange('searchQuery', e.target.value)}
                       className="h-10 text-sm border-slate-200 pr-8"
                     />
                     {searchQuery && (
                       <button
-                        onClick={() => setSearchQuery("")}
+                        onClick={() => handleFilterChange('searchQuery', '')}
                         className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                       >
                         <X className="h-4 w-4" />
@@ -223,14 +255,14 @@ export default function AutoPartsPage() {
                   </div>
                 </div>
 
-                <Separator />
+                <Separator className="my-3" />
 
                 {/* Category */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
                     Category
                   </label>
-                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <Select value={selectedCategory} onValueChange={(value) => handleFilterChange('selectedCategory', value)}>
                     <SelectTrigger className="h-9 text-sm border-slate-200">
                       <SelectValue placeholder="All Categories" />
                     </SelectTrigger>
@@ -245,12 +277,14 @@ export default function AutoPartsPage() {
                   </Select>
                 </div>
 
+                <Separator className="my-3" />
+
                 {/* Compatible Vehicle */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
                     Compatible Vehicle
                   </label>
-                  <Select value={selectedVehicleType} onValueChange={setSelectedVehicleType}>
+                  <Select value={selectedVehicleType} onValueChange={(value) => handleFilterChange('selectedVehicleType', value)}>
                     <SelectTrigger className="h-9 text-sm border-slate-200">
                       <SelectValue placeholder="All Vehicles" />
                     </SelectTrigger>
@@ -265,14 +299,14 @@ export default function AutoPartsPage() {
                   </Select>
                 </div>
 
-                <Separator />
+                <Separator className="my-3" />
 
                 {/* Condition */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
                     Condition
                   </label>
-                  <Select value={selectedCondition} onValueChange={setSelectedCondition}>
+                  <Select value={selectedCondition} onValueChange={(value) => handleFilterChange('selectedCondition', value)}>
                     <SelectTrigger className="h-9 text-sm border-slate-200">
                       <SelectValue placeholder="Any Condition" />
                     </SelectTrigger>
@@ -284,40 +318,39 @@ export default function AutoPartsPage() {
                   </Select>
                 </div>
 
-                <Separator />
+                <Separator className="my-3" />
 
                 {/* Price Range */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
                     Price Range (Rs.)
                   </label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
                     <Input
                       type="number"
                       placeholder="Min"
                       value={minPrice}
-                      onChange={(e) => setMinPrice(e.target.value)}
+                      onChange={(e) => handleFilterChange('minPrice', e.target.value)}
                       className="h-9 text-sm border-slate-200"
                     />
                     <Input
                       type="number"
                       placeholder="Max"
                       value={maxPrice}
-                      onChange={(e) => setMaxPrice(e.target.value)}
+                      onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
                       className="h-9 text-sm border-slate-200"
                     />
                   </div>
                 </div>
 
-                {/* District */}
                 {districts.length > 0 && (
                   <>
-                    <Separator />
+                    <Separator className="my-3" />
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
                         District
                       </label>
-                      <Select value={selectedDistrict} onValueChange={setSelectedDistrict}>
+                      <Select value={selectedDistrict} onValueChange={(value) => handleFilterChange('selectedDistrict', value)}>
                         <SelectTrigger className="h-9 text-sm border-slate-200">
                           <SelectValue placeholder="All Districts" />
                         </SelectTrigger>
@@ -333,179 +366,202 @@ export default function AutoPartsPage() {
                     </div>
                   </>
                 )}
-
-                {activeFilterCount > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={clearFilters}
-                    className="w-full text-sm text-slate-600"
-                  >
-                    <X className="h-3.5 w-3.5 mr-1" />
-                    Clear all filters
-                  </Button>
-                )}
               </div>
             </Card>
           </div>
 
-          {/* ── Right Content ─────────────────────── */}
+          {/* Center Column - Results */}
           <div className="flex-1 min-w-0">
-            {/* Toolbar */}
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-sm text-slate-600">
-                {isLoading
-                  ? "Loading..."
-                  : `${filteredAds.length} part${filteredAds.length !== 1 ? "s" : ""} found`}
-              </p>
-              <Link href="/sell/new">
-                <Button className="bg-teal-700 hover:bg-teal-800 h-9 text-sm">
-                  Post Free Ad <ChevronRight className="ml-1 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-
-            {/* Results */}
-            {isLoading ? (
-              <div className="flex justify-center py-24">
-                <Loader2 className="h-8 w-8 animate-spin text-teal-700" />
+            {/* Loading State */}
+            {isLoading && (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+                <span className="ml-3 text-slate-600">Loading auto parts...</span>
               </div>
-            ) : error ? (
-              <div className="text-center py-24 text-red-500">Failed to load parts. Please try again.</div>
-            ) : filteredAds.length === 0 ? (
-              <div className="text-center py-24">
-                <Package className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-slate-600 mb-2">No parts found</h3>
-                <p className="text-slate-500 mb-4">Try adjusting your filters or search query</p>
-                <Button variant="outline" onClick={clearFilters}>
-                  Clear all filters
-                </Button>
-              </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {visibleAds.map((ad) => {
-                    const adExt = ad as typeof ad & {
-                      partCategoryId?: string;
-                      compatibleVehicleType?: string;
-                      partName?: string;
-                      media?: Array<{ media?: { url?: string } }>;
-                    };
-                    const mainImage = adExt.media?.[0]?.media?.url;
-                    const categoryName = adExt.partCategoryId
-                      ? getCategoryName(adExt.partCategoryId)
-                      : null;
-                    const compatVehicle = adExt.compatibleVehicleType
-                      ? vehicleTypeLabels[adExt.compatibleVehicleType] || adExt.compatibleVehicleType
-                      : null;
+            )}
 
-                    // Build display title: Part Name for Brand Model VehicleType
-                    const partName = adExt.partName || ad.title || "Auto Part";
-                    const forParts = [ad.brand, ad.model, compatVehicle].filter(Boolean).join(" ");
-                    const displayTitle = forParts ? `${partName} for ${forParts}` : partName;
+            {/* Results Grid */}
+            {!isLoading && !error && paginatedAds.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {paginatedAds.map((vehicle) => {
+                  const adExt = vehicle as typeof vehicle & {
+                    partCategoryId?: string;
+                    compatibleVehicleType?: string;
+                    partName?: string;
+                    media?: Array<{ media?: { url?: string } }>;
+                  };
+                  const mainImage = adExt.media?.[0]?.media?.url;
+                  const categoryName = adExt.partCategoryId ? getCategoryName(adExt.partCategoryId) : null;
+                  const compatVehicle = adExt.compatibleVehicleType
+                    ? vehicleTypeLabels[adExt.compatibleVehicleType] || adExt.compatibleVehicleType
+                    : null;
 
-                    return (
-                      <Link key={ad.id} href={`/${ad.id}`} className="block group">
-                        <Card className="overflow-hidden hover:shadow-md transition-shadow duration-200 h-full flex flex-col">
+                  const partName = adExt.partName || vehicle.title || "Auto Part";
+                  const forParts = [vehicle.brand, vehicle.model, compatVehicle].filter(Boolean).join(" ");
+                  const displayTitle = forParts ? `${partName} for ${forParts}` : partName;
+
+                  const now = new Date();
+                  const isBoosted = vehicle.boosted && vehicle.boostExpiry && new Date(vehicle.boostExpiry) > now;
+                  const isFeatured = vehicle.featured && vehicle.featureExpiry && new Date(vehicle.featureExpiry) > now;
+
+                  return (
+                    <div
+                      key={vehicle.id}
+                      className="rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative bg-white"
+                      onClick={() => router.push(buildAdUrl(vehicle))}
+                    >
+                      {/* Boosted Badge */}
+                      {isBoosted && (
+                        <div className="absolute top-0 left-0 z-10">
+                          <div className="bg-orange-500 text-white px-2 font-semibold text-xs flex rounded-full items-center gap-1">
+                            <Zap className="h-3 w-3" />
+                            Boosted
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Featured Badge */}
+                      {isFeatured && (
+                        <div className="absolute top-0 left-0 z-10">
+                          <div className="bg-yellow-500 text-white px-2 font-semibold text-xs flex rounded-full items-center gap-1">
+                            <Star className="h-3 w-3" />
+                            Featured
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Favorite Button */}
+                      <div className="absolute top-10 right-2 z-10">
+                        <FavoriteButton adId={vehicle.id} />
+                      </div>
+
+                      <div className="p-3 mt-3">
+                        {/* Part Title */}
+                        <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
+                          {displayTitle}
+                        </h3>
+
+                        <div className="flex">
                           {/* Image */}
-                          <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden flex-shrink-0">
+                          <div className="w-32 h-20 flex-shrink-0">
                             {mainImage ? (
-                              // eslint-disable-next-line @next/next/no-img-element
                               <img
                                 src={mainImage}
                                 alt={displayTitle}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
                               />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center text-slate-300">
-                                <Package className="h-12 w-12" />
-                              </div>
-                            )}
-                            {/* Condition badge */}
-                            {ad.condition && (
-                              <div className="absolute top-2 left-2">
-                                <Badge
-                                  variant="secondary"
-                                  className={`text-xs font-medium ${
-                                    ad.condition === "New"
-                                      ? "bg-green-100 text-green-800"
-                                      : "bg-amber-100 text-amber-800"
-                                  }`}
-                                >
-                                  {ad.condition === "New" ? "Brand New" : "Used"}
-                                </Badge>
-                              </div>
-                            )}
-                            {/* Favourite button */}
-                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              {user && <FavoriteButton adId={ad.id} />}
-                            </div>
-                            {/* Featured */}
-                            {ad.featured && (
-                              <div className="absolute bottom-2 left-2">
-                                <Badge className="bg-yellow-500 text-white text-xs">Featured</Badge>
+                              <div className="w-full h-full flex items-center justify-center bg-slate-100 rounded-md">
+                                <Package className="h-8 w-8 text-slate-300" />
                               </div>
                             )}
                           </div>
 
-                          {/* Content */}
-                          <div className="p-3 flex flex-col flex-1 gap-1.5">
-                            {/* Category */}
-                            {categoryName && (
-                              <div className="flex items-center gap-1 text-xs text-teal-700 font-medium">
-                                <Tag className="h-3 w-3" />
-                                {categoryName}
-                              </div>
-                            )}
-
-                            {/* Title */}
-                            <h3 className="text-sm font-semibold text-slate-800 line-clamp-2 leading-tight group-hover:text-teal-700 transition-colors">
-                              {displayTitle}
-                            </h3>
-
-                            {/* Compatible vehicle */}
-                            {compatVehicle && (
-                              <p className="text-xs text-slate-500">
-                                Fits:{" "}
-                                <span className="font-medium text-slate-600">
-                                  {compatVehicle}
-                                </span>
-                              </p>
-                            )}
-
-                            <div className="flex-1" />
-
-                            {/* Price & Location */}
-                            <div className="flex items-center justify-between pt-1 border-t border-slate-100">
-                              <span className="text-base font-bold text-teal-700">
-                                {ad.price ? `Rs. ${ad.price.toLocaleString()}` : "Price on request"}
-                              </span>
-                              {(ad.city || ad.district) && (
-                                <div className="flex items-center gap-1 text-xs text-slate-400">
-                                  <MapPin className="h-3 w-3" />
-                                  <span className="truncate max-w-[90px]">
-                                    {ad.city || ad.district}
-                                  </span>
+                          {/* Details */}
+                          <div className="flex-1 pl-3 flex flex-col justify-between">
+                            <div>
+                              {/* Category */}
+                              {categoryName && (
+                                <div className="text-xs text-slate-600 mb-1 line-clamp-1">
+                                  {categoryName}
                                 </div>
                               )}
+
+                              {/* Price */}
+                              <div className="text-sm font-semibold text-teal-700 mb-1">
+                                {vehicle.price ? `Rs. ${vehicle.price.toLocaleString()}` : "Negotiable"}
+                              </div>
+
+                              {/* Compatible Vehicle */}
+                              <div className="text-xs text-slate-500">
+                                {compatVehicle || "N/A"}
+                              </div>
+                            </div>
+
+                            {/* Footer - Date and Views */}
+                            <div className="flex items-center justify-between mt-1">
+                              <div className="text-xs text-slate-400">
+                                {format(new Date(vehicle.createdAt), "MMM d, yyyy")}
+                              </div>
+                              <div className="text-xs text-slate-400 flex items-center gap-1">
+                                <Eye className="h-3 w-3" />
+                                {(vehicle as any).analytics?.views || 0}
+                              </div>
                             </div>
                           </div>
-                        </Card>
-                      </Link>
-                    );
-                  })}
-                </div>
-
-                {/* Load More */}
-                {visibleCount < filteredAds.length && (
-                  <div className="text-center mt-8">
-                    <Button variant="outline" onClick={handleLoadMore} className="px-8">
-                      Load More ({filteredAds.length - visibleCount} remaining)
-                    </Button>
-                  </div>
-                )}
-              </>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : !isLoading && (
+              <Card className="p-12 text-center border-dashed border-2 bg-slate-50">
+                <Package className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-slate-900">No auto parts found</h3>
+                <p className="text-slate-500 mt-1 max-w-xs mx-auto">Try adjusting your filters or clearing them to see more parts.</p>
+                <Button onClick={clearFilters} variant="outline" className="mt-6 border-slate-300">
+                  Clear all filters
+                </Button>
+              </Card>
             )}
+
+            {/* Pagination */}
+            {!isLoading && totalPages > 1 && (
+              <div className="flex justify-center items-center gap-4 mt-10">
+                <Button
+                  variant="outline"
+                  disabled={paginationPage === 1}
+                  onClick={() => {
+                    setCurrentPage(paginationPage - 1);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="px-6"
+                >
+                  Previous
+                </Button>
+                <div className="text-sm font-medium text-slate-600">
+                  Page {paginationPage} of {totalPages}
+                </div>
+                <Button
+                  variant="outline"
+                  disabled={paginationPage === totalPages}
+                  onClick={() => {
+                    setCurrentPage(paginationPage + 1);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="px-6"
+                >
+                  Next
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Right Sidebar - Promotions */}
+          <div className="hidden xl:block w-72 flex-shrink-0">
+            <div className="sticky top-6 space-y-4">
+              {/* Sell Faster CTA */}
+              <Card className="p-4 bg-teal-900 text-white overflow-hidden shadow-lg border-none relative">
+                <div className="relative z-10">
+                  <h4 className="font-bold text-lg mb-2">Sell Faster!</h4>
+                  <p className="text-xs text-teal-100 mb-4 leading-relaxed">Boost your auto parts reach to thousands of potential buyers instantly.</p>
+                  <Button onClick={() => user ? router.push('/sell/new') : router.push('/signin?redirect=/sell/new')} className="w-full bg-white text-teal-900 hover:bg-teal-50 font-bold border-none">
+                    Post Free Ad Now
+                  </Button>
+                </div>
+                <Package className="absolute -right-4 -bottom-4 h-24 w-24 text-white/10 rotate-12" />
+              </Card>
+
+              {/* Ad Placeholder */}
+              <Card className="p-4 bg-white border-slate-200 overflow-hidden text-center shadow-none">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Advertisement</div>
+                <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-lg h-64 flex flex-col items-center justify-center text-slate-400 p-6">
+                  <TrendingUp className="h-8 w-8 mb-2 opacity-50" />
+                  <p className="text-xs font-medium">Your Ad Here</p>
+                </div>
+              </Card>
+            </div>
           </div>
         </div>
       </div>

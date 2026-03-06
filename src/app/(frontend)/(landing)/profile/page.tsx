@@ -13,6 +13,7 @@ import { useGetFavorites } from "@/features/saved-ads/api/use-get-favorites";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
 import { MediaGallery } from "@/modules/media/components/media-gallery";
 import type { MediaFile } from "@/modules/media/types";
+import { buildAdUrl } from "@/lib/ad-url";
 import { betterFetch } from "@better-fetch/fetch";
 import { format } from "date-fns";
 import { Building2, Car, CheckCircle, ChevronRight, CreditCard, Edit, Heart, Loader2, Lock, MapPin, MessageCircle, Phone, Shield, Trash2, Camera, Zap, Star } from "lucide-react";
@@ -1238,7 +1239,7 @@ export default function ProfilePage() {
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
                               <div
                                 className="font-semibold text-lg text-slate-800 hover:text-[#0D5C63] cursor-pointer transition-colors duration-300"
-                                onClick={() => router.push(`/${ad.id}`)}
+                                onClick={() => router.push(buildAdUrl(ad))}
                               >
                                 {ad.title}
                               </div>
@@ -1374,7 +1375,7 @@ export default function ProfilePage() {
                         <div
                           key={favorite.id}
                           className="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative"
-                          onClick={() => router.push(`/${ad.id}`)}
+                          onClick={() => router.push(buildAdUrl(ad))}
                         >
                           {/* Favorite Button */}
                           <div className="absolute top-2 right-2 z-10">

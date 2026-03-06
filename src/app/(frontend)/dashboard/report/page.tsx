@@ -540,7 +540,7 @@ export default function ReportPage() {
                         <TableRow
                           key={ad.id}
                           className="cursor-pointer hover:bg-muted/60"
-                          onClick={() => window.open(`/${ad.id}`, "_blank")}
+                          onClick={() => window.open(`/ads/${ad.id}`, "_blank")}
                         >
                           <TableCell className="font-bold text-muted-foreground">{idx + 1}</TableCell>
                           <TableCell>
@@ -1111,6 +1111,114 @@ export default function ReportPage() {
                   </Card>
                 )}
               </div>
+
+              {/* Last 10 Ads Table */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Last 10 Ads</CardTitle>
+                  <CardDescription>Recent listings from this {selectedEntity?.type === 'user' ? 'user' : 'organization'}</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {loadingHistory ? (
+                    <div className="h-[200px] flex items-center justify-center">
+                      <p className="text-muted-foreground">Loading ads...</p>
+                    </div>
+                  ) : !entityHistory?.ads || entityHistory.ads.length === 0 ? (
+                    <div className="h-[100px] flex items-center justify-center">
+                      <p className="text-muted-foreground">No ads found</p>
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-20">Image</TableHead>
+                          <TableHead>Ad Title / Vehicle Type</TableHead>
+                          <TableHead className="w-24">Status</TableHead>
+                          <TableHead>Contact / WhatsApp</TableHead>
+                          <TableHead className="w-32">Created At</TableHead>
+                          <TableHead className="w-24 text-right">Action</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {entityHistory.ads.map((ad: any) => {
+                          const imageUrl = ad.media?.[0]?.url ?? ad.media?.[0]?.media?.url ?? null;
+                          const title = ad.title || [ad.brand, ad.model].filter(Boolean).join(" ") || "Untitled Ad";
+                          const vehicleType = ad.type || "N/A";
+                          const isPublished = ad.published && ad.status === "ACTIVE";
+                          const createdDate = ad.createdAt ? new Date(ad.createdAt).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric"
+                          }) : "N/A";
+
+                          return (
+                            <TableRow key={ad.id}>
+                              <TableCell>
+                                {imageUrl ? (
+                                  <img
+                                    src={imageUrl}
+                                    alt={title}
+                                    className="w-16 h-12 object-cover rounded"
+                                  />
+                                ) : (
+                                  <div className="w-16 h-12 bg-muted rounded flex items-center justify-center text-muted-foreground text-xs">No Image</div>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-col gap-1">
+                                  <span className="font-medium line-clamp-1">{title}</span>
+                                  <span className="text-xs text-muted-foreground">{vehicleType}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant={
+                                    ad.status === "ACTIVE"
+                                      ? "default"
+                                      : ad.status === "PENDING_REVIEW"
+                                      ? "secondary"
+                                      : ad.status === "REJECTED"
+                                      ? "destructive"
+                                      : "outline"
+                                  }
+                                  className={
+                                    ad.status === "ACTIVE" ? "bg-green-600" :
+                                    ad.status === "PENDING_REVIEW" ? "bg-yellow-600" :
+                                    ad.status === "REJECTED" ? "bg-red-600" :
+                                    "bg-gray-600"
+                                  }
+                                >
+                                  {ad.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-col gap-1">
+                                  <span className="text-sm">{ad.phoneNumber || "N/A"}</span>
+                                  <span className="text-xs text-muted-foreground">{ad.whatsappNumber || "N/A"}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-sm">{createdDate}</TableCell>
+                              <TableCell className="text-right">
+                                {isPublished ? (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => window.open(`/ads/${ad.id}`, "_blank")}
+                                  >
+                                    View Ad
+                                  </Button>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">Unpublished</span>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
 
               <Card>
                 <CardHeader>

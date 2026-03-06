@@ -6,6 +6,7 @@ import { TrendingUp, TrendingDown, Minus, AlertCircle, ExternalLink, Gauge, Fuel
 import { useGetSimilarVehicles } from "@/features/ads/api/use-get-similar-vehicles";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { buildAdUrl } from "@/lib/ad-url";
 
 interface SimilarVehicleComparisonProps {
   adId: string;
@@ -265,7 +266,7 @@ export function SimilarVehicleComparison({
           <Button
             variant="outline"
             className="w-full mt-4 border-[#024950] text-[#024950] hover:bg-[#024950] hover:text-white"
-            onClick={() => router.push(`/${selectedVehicle.id}`)}
+            onClick={() => router.push(buildAdUrl(selectedVehicle))}
           >
             View Similar Vehicle
             <ExternalLink className="w-4 h-4 ml-2" />

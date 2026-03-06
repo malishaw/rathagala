@@ -3,6 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { buildAdUrl } from "@/lib/ad-url";
+import { BrandCarouselSection } from "@/components/ui/brand-carousel-section";
 import {
   Select,
   SelectContent,
@@ -70,6 +72,22 @@ import { locationData, getAllCities, getAllDistricts } from "@/lib/location-data
 
 const sriLankanCities = getAllCities();
 const sriLankanDistricts = getAllDistricts();
+
+// Helper function to format ad title with special handling for AUTO_PARTS
+const formatAdTitle = (ad: any): string => {
+  // AUTO_PARTS: use part-specific title format
+  if (ad.type === 'AUTO_PARTS') {
+    const partName = ad.partName || 'Auto Part';
+    const compatLabel = vehicleTypeLabels[ad.compatibleVehicleType || ''] || ad.compatibleVehicleType || '';
+    const forParts = [ad.brand, ad.model, compatLabel].filter(Boolean).join(' ');
+    return forParts ? `${partName} for ${forParts}` : partName;
+  }
+
+  // Vehicle: build standard title (brand model year)
+  return [ad.brand, ad.model, ad.manufacturedYear]
+    .filter(Boolean)
+    .join(' ');
+};
 
 // Define filter state interface with updated fields
 interface FilterState {
@@ -1231,7 +1249,7 @@ export default function VehicleMarketplace() {
                           ? "bg-yellow-50/80 border-yellow-200 hover:border-yellow-300" 
                           : "bg-white border-slate-200 hover:border-slate-300"
                       }`}
-                      onClick={() => (window.location.href = `/${vehicle.id}`)}
+                      onClick={() => (window.location.href = buildAdUrl(vehicle))}
                     >
                       {/* Boosted Label */}
                       {isBoosted && (
@@ -1254,16 +1272,14 @@ export default function VehicleMarketplace() {
                       )}
 
                       {/* Favorite Button */}
-                      <div className="absolute top-2 right-2 z-10">
+                      <div className="absolute top-10 right-2 z-10">
                         <FavoriteButton adId={vehicle.id} />
                       </div>
 
                       <div className="p-3">
                         {/* Vehicle Title - Centered */}
                         <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
-                          {[vehicle.brand, vehicle.model, vehicle.manufacturedYear, vehicleTypeLabels[vehicle.type] || vehicle.type]
-                            .filter(Boolean)
-                            .join(' ')}
+                          {formatAdTitle(vehicle)}
                         </h3>
 
                         <div className="flex">
@@ -1296,7 +1312,9 @@ export default function VehicleMarketplace() {
                               </div>
 
                               <div className="text-xs text-slate-500">
-                                {vehicleTypeLabels[vehicle.type] || vehicle.type}
+                                {vehicle.type === 'AUTO_PARTS' 
+                                  ? (vehicle as any).partCategory?.name || 'Auto Part'
+                                  : vehicleTypeLabels[vehicle.type] || vehicle.type}
                               </div>
                             </div>
 
@@ -1406,7 +1424,7 @@ export default function VehicleMarketplace() {
                     <div
                       key={vehicle.id}
                       className="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group"
-                      onClick={() => (window.location.href = `/${vehicle.id}`)}
+                      onClick={() => (window.location.href = buildAdUrl(vehicle))}
                     >
 
 
@@ -1434,9 +1452,7 @@ export default function VehicleMarketplace() {
                       {/* Vehicle Details */}
                       <div className="p-3">
                         <h3 className="font-semibold text-sm text-slate-800 mb-2 line-clamp-2 group-hover:text-teal-700">
-                          {[vehicle.brand, vehicle.model, vehicle.manufacturedYear]
-                            .filter(Boolean)
-                            .join(' ')}
+                          {formatAdTitle(vehicle)}
                         </h3>
 
                         <div className="text-xs text-slate-600 mb-2">{vehicle.city || vehicle.location || ""}</div>
@@ -1452,6 +1468,9 @@ export default function VehicleMarketplace() {
           </div>
         </div>
       </section>
+
+      {/* Brand Carousel Section */}
+      <BrandCarouselSection />
 
       {/* Banner Ad Space */}
       <div className="bg-white py-6">

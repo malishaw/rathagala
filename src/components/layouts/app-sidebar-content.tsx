@@ -18,6 +18,7 @@ import {
   Trash2,
   MailIcon,
   WrenchIcon,
+  SlidersHorizontal,
 } from "lucide-react";
 
 import { type Session } from "@/lib/auth";
@@ -119,6 +120,11 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
         title: "Auto Parts",
         url: "/dashboard/auto-parts",
         icon: WrenchIcon
+      },
+      {
+        title: "Carousel",
+        url: "/dashboard/carousel",
+        icon: SlidersHorizontal
       }
     ],
     agentManagement: [

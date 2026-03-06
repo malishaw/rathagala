@@ -1,14 +1,14 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useMemo } from "react";
+import { useRouter, useParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ChevronDown, ChevronUp, MapPin, TrendingUp, Sparkles, Loader2, Car, Search, Filter, Eye, Star, Zap } from "lucide-react";
+import { ChevronDown, ChevronUp, TrendingUp, Loader2, Car, Search, Filter, Eye, Star, Zap } from "lucide-react";
 import { format } from "date-fns";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
@@ -58,23 +58,14 @@ const formatAdTitle = (ad: any): string => {
   return vehicleInfo;
 };
 
-// Vehicle makes
-const vehicleMakes = [
-  "Toyota", "Honda", "Nissan", "BYD", "BMW", "Mercedes-Benz", "Audi", "Hyundai", "Kia",
-  "Volkswagen", "Ford", "Chevrolet", "Mazda", "Subaru", "Mitsubishi", "Suzuki",
-  "Isuzu", "Bajaj", "Hero", "Yamaha", "Kawasaki", "KTM", "TVS", "Other"
-];
-
 const sriLankanCities = getAllCities();
 const sriLankanDistricts = getAllDistricts();
 
-// Search filter interface
-interface SearchFilters {
+// Filter interface (brand is pre-set from URL)
+interface BrandPageFilters {
   query: string;
-  globalSearch: string;
   listingType: string;
   vehicleType: string;
-  brand: string;
   model: string;
   grade: string;
   condition: string;
@@ -86,64 +77,48 @@ interface SearchFilters {
   transmission: string;
   district: string;
   city: string;
-  seller: string;
   page: number;
 }
 
-export default function SearchPage() {
+export default function BrandPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const params = useParams();
   const { data: session } = authClient.useSession();
 
-  // Initialize filters from URL params
-  const [filters, setFilters] = useState<SearchFilters>({
-    query: searchParams.get('q') || '',
-    globalSearch: '',
-    listingType: searchParams.get('listingType') || 'all',
-    vehicleType: searchParams.get('type') || 'all',
-    brand: searchParams.get('brand') || 'all',
-    model: searchParams.get('model') || '',
-    grade: searchParams.get('grade') || 'all',
-    condition: searchParams.get('condition') || 'all',
-    minPrice: searchParams.get('minPrice') || '',
-    maxPrice: searchParams.get('maxPrice') || '',
-    minYear: searchParams.get('minYear') || 'any',
-    maxYear: searchParams.get('maxYear') || 'any',
-    fuelType: searchParams.get('fuelType') || 'all',
-    transmission: searchParams.get('transmission') || 'all',
-    district: searchParams.get('district') || 'all',
-    city: searchParams.get('city') || 'all',
-    seller: searchParams.get('seller') || 'all',
-    page: parseInt(searchParams.get('page') || '1')
+  // Decode brand name from URL
+  const brandName = decodeURIComponent((params.name as string) || "");
+
+  // Initialize filters
+  const [filters, setFilters] = useState<BrandPageFilters>({
+    query: '',
+    listingType: 'all',
+    vehicleType: 'all',
+    model: '',
+    grade: 'all',
+    condition: 'all',
+    minPrice: '',
+    maxPrice: '',
+    minYear: 'any',
+    maxYear: 'any',
+    fuelType: 'all',
+    transmission: 'all',
+    district: 'all',
+    city: 'all',
+    page: 1
   });
 
   // Search states for dropdown filtering
   const [districtSearch, setDistrictSearch] = useState('');
   const [citySearch, setCitySearch] = useState('');
   const [vehicleTypeSearch, setVehicleTypeSearch] = useState('');
-  const [brandSearch, setBrandSearch] = useState('');
 
   // Mobile sidebar state
   const [isFiltersOpen, setIsFiltersOpen] = useState(true);
-
-  // Keep filters in sync with URL search params
-  useEffect(() => {
-    const lt = searchParams.get('listingType') || 'all';
-    setFilters((prev) => {
-      // Only update if listingType changed
-      if (prev.listingType !== lt) {
-        return { ...prev, listingType: lt, page: 1 };
-      }
-      return prev;
-
-    });
-  }, [searchParams]);
 
   // Derive available cities based on district selection
   const availableCities = useMemo(() => {
     if (!filters.district || filters.district === "all" || filters.district === "any") return sriLankanCities;
 
-    // Find province for district
     let districtCities: string[] = [];
     Object.values(locationData).forEach(province => {
       Object.entries(province).forEach(([district, cities]) => {
@@ -180,69 +155,47 @@ export default function SearchPage() {
     );
   }, [vehicleTypeSearch]);
 
-  // Filter brands based on search input
-  const filteredBrands = useMemo(() => {
-    if (!brandSearch) return vehicleMakes;
-    return vehicleMakes.filter(brand =>
-      brand.toLowerCase().includes(brandSearch.toLowerCase())
-    );
-  }, [brandSearch]);
-
-  // Fetch ads with current filters - fetch all ads to enable comprehensive search
-  // (pagination will be handled client-side after filtering)
+  // Fetch all ads (same pattern as search page)
   const { data, isLoading, error } = useGetAds({
-    page: 1, // Always fetch from page 1
-    limit: 10000, // Fetch large number to get all ads for comprehensive search
+    page: 1,
+    limit: 10000,
     search: filters.query,
     listingType: filters.listingType,
-    // Add other filter parameters as supported by your API
   });
 
-  // Filter results based on local filters (client-side filtering for now)
+  // Filter results client-side — always filter by brand from URL
   const filteredAds = useMemo(() => {
     if (!data?.ads) return [];
 
-    // Split search query into individual terms for comprehensive search
     const queryTerms = filters.query
       .toLowerCase()
       .trim()
       .split(/\s+/)
       .filter(term => term.length > 0);
 
-    // Split global search into individual terms
-    const globalSearchTerms = filters.globalSearch
-      .toLowerCase()
-      .trim()
-      .split(/\s+/)
-      .filter(term => term.length > 0);
-
     return data.ads.filter((ad) => {
-      // Only show published ads (status must be ACTIVE and published flag must be true)
+      // Only show published ads
       if ((ad as any).status !== "ACTIVE" || (ad as any).published !== true) {
         return false;
       }
 
-      // Query filter - ALL search terms must match (AND logic)
+      // Brand filter — always applied from URL param (case-insensitive)
+      if (!ad.brand || ad.brand.toLowerCase() !== brandName.toLowerCase()) {
+        return false;
+      }
+
+      // Query filter — ALL search terms must match (AND logic)
       if (queryTerms.length > 0) {
         const matchesAllQueryTerms = queryTerms.every(term => {
           return (
-            // Ad ID
             ad.id?.toLowerCase().includes(term) ||
-            // Title
             ad.title?.toLowerCase().includes(term) ||
-            // Brand
             ad.brand?.toLowerCase().includes(term) ||
-            // Model
             ad.model?.toLowerCase().includes(term) ||
-            // Vehicle Type
             vehicleTypeLabels[ad.type as keyof typeof vehicleTypeLabels]?.toLowerCase().includes(term) ||
-            // City
             ad.city?.toLowerCase().includes(term) ||
-            // Location
             ad.location?.toLowerCase().includes(term) ||
-            // District (if available in ad object)
             (ad as any).district?.toLowerCase().includes(term) ||
-            // Manufacture Year
             ad.manufacturedYear?.toString().includes(term)
           );
         });
@@ -252,39 +205,8 @@ export default function SearchPage() {
         }
       }
 
-      // Global search filter - ALL search terms must match (AND logic)
-      if (globalSearchTerms.length > 0) {
-        const matchesAllGlobalTerms = globalSearchTerms.every(term => {
-          return (
-            ad.id?.toLowerCase().includes(term) ||
-            ad.brand?.toLowerCase().includes(term) ||
-            ad.model?.toLowerCase().includes(term) ||
-            ad.city?.toLowerCase().includes(term) ||
-            ad.description?.toLowerCase().includes(term) ||
-            (ad as any).phoneNumber?.toString().includes(term) ||
-            (ad as any).whatsappNumber?.toString().includes(term) ||
-            (ad as any).creator?.name?.toLowerCase().includes(term) ||
-            (ad as any).creator?.email?.toLowerCase().includes(term) ||
-            vehicleTypeLabels[ad.type as keyof typeof vehicleTypeLabels]?.toLowerCase().includes(term) ||
-            ad.title?.toLowerCase().includes(term) ||
-            ad.location?.toLowerCase().includes(term) ||
-            (ad as any).district?.toLowerCase().includes(term) ||
-            ad.manufacturedYear?.toString().includes(term)
-          );
-        });
-
-        if (!matchesAllGlobalTerms) {
-          return false;
-        }
-      }
-
       // Vehicle type filter
       if (filters.vehicleType && filters.vehicleType !== 'all' && ad.type !== filters.vehicleType) {
-        return false;
-      }
-
-      // Brand filter
-      if (filters.brand && filters.brand !== 'all' && ad.brand?.toLowerCase() !== filters.brand.toLowerCase()) {
         return false;
       }
 
@@ -353,14 +275,6 @@ export default function SearchPage() {
         return false;
       }
 
-      // Seller filter (match common seller fields)
-      if (filters.seller && filters.seller !== 'all') {
-        const sid = String((ad as any).userId || (ad as any).user_id || (ad as any).sellerId || (ad as any).ownerId || (ad as any).user?.id || (ad as any).seller?.id || (ad as any).createdBy || "");
-        if (!sid || sid !== filters.seller) {
-          return false;
-        }
-      }
-
       return true;
     }).sort((a, b) => {
       // Sort boosted ads to the top
@@ -371,25 +285,23 @@ export default function SearchPage() {
       if (aIsBoosted && !bIsBoosted) return -1;
       if (!aIsBoosted && bIsBoosted) return 1;
 
-      // If both are boosted or both are not, maintain original order
       return 0;
     });
-  }, [data?.ads, filters.query, filters.vehicleType, filters.brand, filters.model, filters.condition, filters.grade, filters.minPrice, filters.maxPrice, filters.minYear, filters.maxYear, filters.fuelType, filters.transmission, filters.district, filters.city, filters.globalSearch, filters.seller]);
+  }, [data?.ads, brandName, filters.query, filters.vehicleType, filters.model, filters.condition, filters.grade, filters.minPrice, filters.maxPrice, filters.minYear, filters.maxYear, filters.fuelType, filters.transmission, filters.district, filters.city]);
 
   // Handle filter changes
-  const handleFilterChange = (key: keyof SearchFilters, value: any) => {
+  const handleFilterChange = (key: keyof BrandPageFilters, value: any) => {
     setFilters(prev => {
       const newFilters = { ...prev, [key]: value, page: key === 'page' ? (value as number) : 1 };
 
-      // Auto-correct Year Range logic
       if (key === 'minYear' && value !== 'any') {
         if (prev.maxYear && prev.maxYear !== 'any' && parseInt(prev.maxYear) < parseInt(value)) {
-          newFilters.maxYear = 'any'; // Reset max year if invalid
+          newFilters.maxYear = 'any';
         }
       }
       if (key === 'maxYear' && value !== 'any') {
         if (prev.minYear && prev.minYear !== 'any' && parseInt(prev.minYear) > parseInt(value)) {
-          newFilters.minYear = 'any'; // Reset min year if invalid
+          newFilters.minYear = 'any';
         }
       }
 
@@ -397,14 +309,12 @@ export default function SearchPage() {
     });
   };
 
-  // Clear all filters
+  // Clear all filters (brand stays from URL)
   const clearFilters = () => {
     setFilters({
       query: '',
-      globalSearch: '',
       listingType: 'all',
       vehicleType: 'all',
-      brand: 'all',
       model: '',
       grade: 'all',
       condition: 'all',
@@ -416,7 +326,6 @@ export default function SearchPage() {
       transmission: 'all',
       district: 'all',
       city: 'all',
-      seller: 'all',
       page: 1
     });
   };
@@ -456,7 +365,6 @@ export default function SearchPage() {
   // Pagination logic
   const limit = 20;
   const totalPages = Math.ceil(filteredAds.length / limit);
-  // Ensure we don't go to page 0, and don't go past total pages unless filteredAds is empty
   const currentPage = Math.max(1, Math.min(filters.page, Math.max(1, totalPages)));
 
   const paginatedAds = useMemo(() => {
@@ -490,9 +398,9 @@ export default function SearchPage() {
               ← Back
             </Button>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-slate-900">Search Vehicles</h1>
+              <h1 className="text-2xl font-bold text-slate-900">{brandName} Vehicles</h1>
               <p className="text-slate-600">
-                {filteredAds.length} results found
+                {isLoading ? "Loading..." : `${filteredAds.length} results found`}
                 {activeFilterCount > 0 && ` with ${activeFilterCount} filter${activeFilterCount > 1 ? 's' : ''} applied`}
               </p>
             </div>
@@ -502,7 +410,7 @@ export default function SearchPage() {
 
       <div className="max-w-[1600px] mx-auto px-4 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Left Sidebar - Search Filters */}
+          {/* Left Sidebar - Filters */}
           <div className="w-full lg:w-72 flex-shrink-0">
             <Card className="p-4 shadow-sm border-slate-200">
               <div
@@ -527,7 +435,6 @@ export default function SearchPage() {
                       Clear
                     </Button>
                   )}
-                  {/* Mobile Toggle Icon */}
                   <div className="lg:hidden text-slate-400">
                     {isFiltersOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
                   </div>
@@ -535,24 +442,35 @@ export default function SearchPage() {
               </div>
 
               <div className={`${isFiltersOpen ? 'block' : 'hidden'} lg:block space-y-4`}>
-                {/* Global Search Bar */}
+                {/* Brand (read-only indicator) */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
-                    <Search className="h-4 w-4 inline mr-1" />
-                    Search
+                    Brand
                   </label>
-                  <Input
-                    placeholder="Search by ID, make, model, city, phone..."
-                    value={filters.globalSearch}
-                    onChange={(e) => handleFilterChange('globalSearch', e.target.value)}
-                    className="h-10 text-sm border-slate-200 focus:ring-teal-500"
-                  />
-                  <p className="text-xs text-slate-500 mt-1">Search by ad ID, make, model, city, title</p>
+                  <div className="h-10 px-3 flex items-center rounded-md border border-teal-200 bg-teal-50 text-sm font-medium text-teal-800">
+                    {brandName}
+                  </div>
                 </div>
 
                 <Separator className="my-3" />
 
-                {/* Row 1: Location */}
+                {/* Search within brand */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
+                    <Search className="h-4 w-4 inline mr-1" />
+                    Search within {brandName}
+                  </label>
+                  <Input
+                    placeholder="Search by model, year..."
+                    value={filters.query}
+                    onChange={(e) => handleFilterChange('query', e.target.value)}
+                    className="h-10 text-sm border-slate-200 focus:ring-teal-500"
+                  />
+                </div>
+
+                <Separator className="my-3" />
+
+                {/* Location */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
@@ -630,7 +548,7 @@ export default function SearchPage() {
 
                 <Separator className="my-3" />
 
-                {/* Row 2: Listing Type & Vehicle Type */}
+                {/* Listing Type & Vehicle Type */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
@@ -692,44 +610,8 @@ export default function SearchPage() {
 
                 <Separator className="my-3" />
 
-                {/* Row 3: Brand & Model */}
+                {/* Model & Condition */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
-                      Brand
-                    </label>
-                    <Select
-                      value={filters.brand}
-                      onValueChange={(value) => {
-                        handleFilterChange('brand', value);
-                        setBrandSearch('');
-                      }}
-                    >
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue placeholder="All" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-[250px]">
-                        <div className="p-2 border-b sticky top-0 bg-white z-10">
-                          <Input
-                            autoFocus
-                            placeholder="Search brands..."
-                            value={brandSearch}
-                            onChange={(e) => setBrandSearch(e.target.value)}
-                            className="h-8 text-sm"
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onKeyDown={(e) => e.stopPropagation()}
-                          />
-                        </div>
-                        <SelectItem value="all">All</SelectItem>
-                        {filteredBrands.map((make) => (
-                          <SelectItem key={make} value={make}>{make}</SelectItem>
-                        ))}
-                        {filteredBrands.length === 0 && (
-                          <div className="p-2 text-sm text-slate-500 text-center">No brands found</div>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
                       Model
@@ -740,32 +622,6 @@ export default function SearchPage() {
                       onChange={(e) => handleFilterChange('model', e.target.value)}
                       className="h-9 text-sm"
                     />
-                  </div>
-                </div>
-
-                <Separator className="my-3" />
-
-                {/* Row 4: Grade & Condition */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
-                      Grade
-                    </label>
-                    <Select
-                      value={filters.grade}
-                      onValueChange={(value) => handleFilterChange('grade', value)}
-                    >
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue placeholder="All" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All</SelectItem>
-                        <SelectItem value="A">Grade A</SelectItem>
-                        <SelectItem value="B">Grade B</SelectItem>
-                        <SelectItem value="C">Grade C</SelectItem>
-                        <SelectItem value="S">Grade S</SelectItem>
-                      </SelectContent>
-                    </Select>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
@@ -790,7 +646,31 @@ export default function SearchPage() {
 
                 <Separator className="my-3" />
 
-                {/* Row 5: Price Range */}
+                {/* Grade */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
+                    Grade
+                  </label>
+                  <Select
+                    value={filters.grade}
+                    onValueChange={(value) => handleFilterChange('grade', value)}
+                  >
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder="All" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="A">Grade A</SelectItem>
+                      <SelectItem value="B">Grade B</SelectItem>
+                      <SelectItem value="C">Grade C</SelectItem>
+                      <SelectItem value="S">Grade S</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Separator className="my-3" />
+
+                {/* Price Range */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
                     Price Range (Rs.)
@@ -818,7 +698,7 @@ export default function SearchPage() {
 
                 <Separator className="my-3" />
 
-                {/* Row 6: Year Range */}
+                {/* Year Range */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
                     Manufacture Year
@@ -857,7 +737,7 @@ export default function SearchPage() {
 
                 <Separator className="my-3" />
 
-                {/* Row 7: Fuel Type & Transmission */}
+                {/* Fuel Type & Transmission */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
@@ -903,20 +783,8 @@ export default function SearchPage() {
             </Card>
           </div>
 
-          {/* Center Column - Search Results */}
+          {/* Center Column - Results */}
           <div className="flex-1 min-w-0">
-            {/* Seller Name Display */}
-            {filters.seller && filters.seller !== 'all' && filteredAds.length > 0 && (
-              <div className="mb-6 pb-4 border-b border-slate-200">
-                <h3 className="text-xl font-bold text-slate-900">
-                  {filteredAds[0] && ((filteredAds[0] as any).creator?.name || (filteredAds[0] as any).seller?.name || 'Seller')}'s Listings
-                </h3>
-                <p className="text-slate-600 text-sm mt-1">
-                  {filteredAds.length} vehicle{filteredAds.length !== 1 ? 's' : ''} available
-                </p>
-              </div>
-            )}
-
             {/* Active Filters Display */}
             {activeFilterCount > 0 && (
               <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
@@ -927,10 +795,10 @@ export default function SearchPage() {
                     <button onClick={() => handleFilterChange('listingType', 'all')} className="ml-1.5">×</button>
                   </Badge>
                 )}
-                {filters.brand && filters.brand !== 'all' && (
+                {filters.vehicleType && filters.vehicleType !== 'all' && (
                   <Badge variant="secondary" className="bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-100 py-1">
-                    {filters.brand}
-                    <button onClick={() => handleFilterChange('brand', 'all')} className="ml-1.5">×</button>
+                    {vehicleTypeLabels[filters.vehicleType] || filters.vehicleType}
+                    <button onClick={() => handleFilterChange('vehicleType', 'all')} className="ml-1.5">×</button>
                   </Badge>
                 )}
                 {filters.district && filters.district !== 'all' && (
@@ -939,6 +807,20 @@ export default function SearchPage() {
                     <button onClick={() => handleFilterChange('district', 'all')} className="ml-1.5">×</button>
                   </Badge>
                 )}
+                {filters.condition && filters.condition !== 'all' && (
+                  <Badge variant="secondary" className="bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-100 py-1">
+                    {filters.condition}
+                    <button onClick={() => handleFilterChange('condition', 'all')} className="ml-1.5">×</button>
+                  </Badge>
+                )}
+              </div>
+            )}
+
+            {/* Loading State */}
+            {isLoading && (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+                <span className="ml-3 text-slate-600">Loading {brandName} vehicles...</span>
               </div>
             )}
 
@@ -982,12 +864,12 @@ export default function SearchPage() {
                       )}
 
                       {/* Favorite Button */}
-                      <div className="absolute top-10 right-2 z-10">
+                      <div className="absolute top-2 right-2 z-10">
                         <FavoriteButton adId={vehicle.id} />
                       </div>
 
                       <div className="p-3">
-                        {/* Vehicle Title - Centered */}
+                        {/* Vehicle Title */}
                         <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
                           {formatAdTitle(vehicle)}
                         </h3>
@@ -1045,7 +927,7 @@ export default function SearchPage() {
             ) : !isLoading && (
               <Card className="p-12 text-center border-dashed border-2 bg-slate-50">
                 <Search className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-slate-900">No results found</h3>
+                <h3 className="text-lg font-semibold text-slate-900">No {brandName} vehicles found</h3>
                 <p className="text-slate-500 mt-1 max-w-xs mx-auto">Try adjusting your filters or clearing them to see more vehicles.</p>
                 <Button onClick={clearFilters} variant="outline" className="mt-6 border-slate-300">
                   Clear all filters
@@ -1085,19 +967,10 @@ export default function SearchPage() {
             )}
           </div>
 
-          {/* Right Sidebar - Ad Space */}
+          {/* Right Sidebar - Promotions */}
           <div className="hidden xl:block w-72 flex-shrink-0">
             <div className="sticky top-6 space-y-4">
-              {/* Ad Placeholder 1 */}
-              <Card className="p-4 bg-white border-slate-200 overflow-hidden text-center shadow-none">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Advertisement</div>
-                <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-lg h-64 flex flex-col items-center justify-center text-slate-400 p-6">
-                  <TrendingUp className="h-8 w-8 mb-2 opacity-50" />
-                  <p className="text-xs font-medium">Your Ad Here</p>
-                </div>
-              </Card>
-
-              {/* Ad Placeholder 2 */}
+              {/* Sell Faster CTA */}
               <Card className="p-4 bg-teal-900 text-white overflow-hidden shadow-lg border-none relative">
                 <div className="relative z-10">
                   <h4 className="font-bold text-lg mb-2">Sell Faster!</h4>
@@ -1109,22 +982,18 @@ export default function SearchPage() {
                 <Car className="absolute -right-4 -bottom-4 h-24 w-24 text-white/10 rotate-12" />
               </Card>
 
-              {/* Ad Placeholder 3 */}
+              {/* Ad Placeholder */}
               <Card className="p-4 bg-white border-slate-200 overflow-hidden text-center shadow-none">
                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Advertisement</div>
-                <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-lg h-[400px] flex flex-col items-center justify-center text-slate-400 p-6">
-                  <div className="mb-4 flex gap-1">
-                    <Sparkles className="h-4 w-4" />
-                    <Sparkles className="h-4 w-4" />
-                    <Sparkles className="h-4 w-4" />
-                  </div>
-                  <p className="text-xs font-medium leading-relaxed">Promote your business<br />on Rathagala.lk</p>
+                <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-lg h-64 flex flex-col items-center justify-center text-slate-400 p-6">
+                  <TrendingUp className="h-8 w-8 mb-2 opacity-50" />
+                  <p className="text-xs font-medium">Your Ad Here</p>
                 </div>
               </Card>
             </div>
           </div>
         </div>
       </div>
-    </div >
+    </div>
   );
 }

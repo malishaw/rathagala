@@ -394,7 +394,7 @@ export default function ReportsManagementPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => window.open(`/${report.adId}`, '_blank')}
+                              onClick={() => window.open(`/ads/${report.adId}`, '_blank')}
                               disabled={!report.ad}
                             >
                               View
