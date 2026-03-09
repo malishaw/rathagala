@@ -114,6 +114,8 @@ export const NewsletterScalarFieldEnumSchema = z.enum(['id','subject','htmlConte
 
 export const BrandCarouselScalarFieldEnumSchema = z.enum(['id','name','imageUrl','order','createdAt','updatedAt']);
 
+export const VehicleModelScalarFieldEnumSchema = z.enum(['id','name','brand','isActive','createdAt','updatedAt']);
+
 export const SortOrderSchema = z.enum(['asc','desc']);
 
 export const QueryModeSchema = z.enum(['default','insensitive']);
@@ -696,6 +698,21 @@ export const BrandCarouselSchema = z.object({
 })
 
 export type BrandCarousel = z.infer<typeof BrandCarouselSchema>
+
+/////////////////////////////////////////
+// VEHICLE MODEL SCHEMA
+/////////////////////////////////////////
+
+export const VehicleModelSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  brand: z.string().nullable(),
+  isActive: z.boolean(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+})
+
+export type VehicleModel = z.infer<typeof VehicleModelSchema>
 
 /////////////////////////////////////////
 // SELECT & INCLUDE
@@ -1492,6 +1509,22 @@ export const BrandCarouselSelectSchema: z.ZodType<Prisma.BrandCarouselSelect> = 
   name: z.boolean().optional(),
   imageUrl: z.boolean().optional(),
   order: z.boolean().optional(),
+  createdAt: z.boolean().optional(),
+  updatedAt: z.boolean().optional(),
+}).strict()
+
+// VEHICLE MODEL
+//------------------------------------------------------
+
+export const VehicleModelArgsSchema: z.ZodType<Prisma.VehicleModelDefaultArgs> = z.object({
+  select: z.lazy(() => VehicleModelSelectSchema).optional(),
+}).strict();
+
+export const VehicleModelSelectSchema: z.ZodType<Prisma.VehicleModelSelect> = z.object({
+  id: z.boolean().optional(),
+  name: z.boolean().optional(),
+  brand: z.boolean().optional(),
+  isActive: z.boolean().optional(),
   createdAt: z.boolean().optional(),
   updatedAt: z.boolean().optional(),
 }).strict()
@@ -4025,6 +4058,76 @@ export const BrandCarouselScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma
   updatedAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
 }).strict();
 
+export const VehicleModelWhereInputSchema: z.ZodType<Prisma.VehicleModelWhereInput> = z.object({
+  AND: z.union([ z.lazy(() => VehicleModelWhereInputSchema), z.lazy(() => VehicleModelWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => VehicleModelWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => VehicleModelWhereInputSchema), z.lazy(() => VehicleModelWhereInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  brand: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
+  isActive: z.union([ z.lazy(() => BoolFilterSchema), z.boolean() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+}).strict();
+
+export const VehicleModelOrderByWithRelationInputSchema: z.ZodType<Prisma.VehicleModelOrderByWithRelationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  brand: z.lazy(() => SortOrderSchema).optional(),
+  isActive: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const VehicleModelWhereUniqueInputSchema: z.ZodType<Prisma.VehicleModelWhereUniqueInput> = z.union([
+  z.object({
+    id: z.string(),
+    name_brand: z.lazy(() => VehicleModelNameBrandCompoundUniqueInputSchema),
+  }),
+  z.object({
+    id: z.string(),
+  }),
+  z.object({
+    name_brand: z.lazy(() => VehicleModelNameBrandCompoundUniqueInputSchema),
+  }),
+])
+.and(z.object({
+  id: z.string().optional(),
+  name_brand: z.lazy(() => VehicleModelNameBrandCompoundUniqueInputSchema).optional(),
+  AND: z.union([ z.lazy(() => VehicleModelWhereInputSchema), z.lazy(() => VehicleModelWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => VehicleModelWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => VehicleModelWhereInputSchema), z.lazy(() => VehicleModelWhereInputSchema).array() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  brand: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
+  isActive: z.union([ z.lazy(() => BoolFilterSchema), z.boolean() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+}).strict());
+
+export const VehicleModelOrderByWithAggregationInputSchema: z.ZodType<Prisma.VehicleModelOrderByWithAggregationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  brand: z.lazy(() => SortOrderSchema).optional(),
+  isActive: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+  _count: z.lazy(() => VehicleModelCountOrderByAggregateInputSchema).optional(),
+  _max: z.lazy(() => VehicleModelMaxOrderByAggregateInputSchema).optional(),
+  _min: z.lazy(() => VehicleModelMinOrderByAggregateInputSchema).optional(),
+}).strict();
+
+export const VehicleModelScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.VehicleModelScalarWhereWithAggregatesInput> = z.object({
+  AND: z.union([ z.lazy(() => VehicleModelScalarWhereWithAggregatesInputSchema), z.lazy(() => VehicleModelScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  OR: z.lazy(() => VehicleModelScalarWhereWithAggregatesInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => VehicleModelScalarWhereWithAggregatesInputSchema), z.lazy(() => VehicleModelScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
+  name: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
+  brand: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema), z.string() ]).optional().nullable(),
+  isActive: z.union([ z.lazy(() => BoolWithAggregatesFilterSchema), z.boolean() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
+}).strict();
+
 export const UserCreateInputSchema: z.ZodType<Prisma.UserCreateInput> = z.object({
   id: z.string(),
   name: z.string(),
@@ -6405,6 +6508,65 @@ export const BrandCarouselUncheckedUpdateManyInputSchema: z.ZodType<Prisma.Brand
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
+export const VehicleModelCreateInputSchema: z.ZodType<Prisma.VehicleModelCreateInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  brand: z.string().optional().nullable(),
+  isActive: z.boolean().optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const VehicleModelUncheckedCreateInputSchema: z.ZodType<Prisma.VehicleModelUncheckedCreateInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  brand: z.string().optional().nullable(),
+  isActive: z.boolean().optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const VehicleModelUpdateInputSchema: z.ZodType<Prisma.VehicleModelUpdateInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  isActive: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const VehicleModelUncheckedUpdateInputSchema: z.ZodType<Prisma.VehicleModelUncheckedUpdateInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  isActive: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const VehicleModelCreateManyInputSchema: z.ZodType<Prisma.VehicleModelCreateManyInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  brand: z.string().optional().nullable(),
+  isActive: z.boolean().optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const VehicleModelUpdateManyMutationInputSchema: z.ZodType<Prisma.VehicleModelUpdateManyMutationInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  isActive: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const VehicleModelUncheckedUpdateManyInputSchema: z.ZodType<Prisma.VehicleModelUncheckedUpdateManyInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  isActive: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
 export const StringFilterSchema: z.ZodType<Prisma.StringFilter> = z.object({
   equals: z.string().optional(),
   in: z.string().array().optional(),
@@ -8285,6 +8447,38 @@ export const BrandCarouselMinOrderByAggregateInputSchema: z.ZodType<Prisma.Brand
 
 export const BrandCarouselSumOrderByAggregateInputSchema: z.ZodType<Prisma.BrandCarouselSumOrderByAggregateInput> = z.object({
   order: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const VehicleModelNameBrandCompoundUniqueInputSchema: z.ZodType<Prisma.VehicleModelNameBrandCompoundUniqueInput> = z.object({
+  name: z.string(),
+  brand: z.string(),
+}).strict();
+
+export const VehicleModelCountOrderByAggregateInputSchema: z.ZodType<Prisma.VehicleModelCountOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  brand: z.lazy(() => SortOrderSchema).optional(),
+  isActive: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const VehicleModelMaxOrderByAggregateInputSchema: z.ZodType<Prisma.VehicleModelMaxOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  brand: z.lazy(() => SortOrderSchema).optional(),
+  isActive: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const VehicleModelMinOrderByAggregateInputSchema: z.ZodType<Prisma.VehicleModelMinOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  brand: z.lazy(() => SortOrderSchema).optional(),
+  isActive: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
 }).strict();
 
 export const OrganizationCreateNestedOneWithoutUsersInputSchema: z.ZodType<Prisma.OrganizationCreateNestedOneWithoutUsersInput> = z.object({
@@ -22203,6 +22397,63 @@ export const BrandCarouselFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.BrandCar
   where: BrandCarouselWhereUniqueInputSchema, 
 }).strict();
 
+export const VehicleModelFindFirstArgsSchema: z.ZodType<Prisma.VehicleModelFindFirstArgs> = z.object({
+  select: VehicleModelSelectSchema.optional(),
+  where: VehicleModelWhereInputSchema.optional(), 
+  orderBy: z.union([ VehicleModelOrderByWithRelationInputSchema.array(), VehicleModelOrderByWithRelationInputSchema ]).optional(),
+  cursor: VehicleModelWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ VehicleModelScalarFieldEnumSchema, VehicleModelScalarFieldEnumSchema.array() ]).optional(),
+}).strict();
+
+export const VehicleModelFindFirstOrThrowArgsSchema: z.ZodType<Prisma.VehicleModelFindFirstOrThrowArgs> = z.object({
+  select: VehicleModelSelectSchema.optional(),
+  where: VehicleModelWhereInputSchema.optional(), 
+  orderBy: z.union([ VehicleModelOrderByWithRelationInputSchema.array(), VehicleModelOrderByWithRelationInputSchema ]).optional(),
+  cursor: VehicleModelWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ VehicleModelScalarFieldEnumSchema, VehicleModelScalarFieldEnumSchema.array() ]).optional(),
+}).strict();
+
+export const VehicleModelFindManyArgsSchema: z.ZodType<Prisma.VehicleModelFindManyArgs> = z.object({
+  select: VehicleModelSelectSchema.optional(),
+  where: VehicleModelWhereInputSchema.optional(), 
+  orderBy: z.union([ VehicleModelOrderByWithRelationInputSchema.array(), VehicleModelOrderByWithRelationInputSchema ]).optional(),
+  cursor: VehicleModelWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ VehicleModelScalarFieldEnumSchema, VehicleModelScalarFieldEnumSchema.array() ]).optional(),
+}).strict();
+
+export const VehicleModelAggregateArgsSchema: z.ZodType<Prisma.VehicleModelAggregateArgs> = z.object({
+  where: VehicleModelWhereInputSchema.optional(), 
+  orderBy: z.union([ VehicleModelOrderByWithRelationInputSchema.array(), VehicleModelOrderByWithRelationInputSchema ]).optional(),
+  cursor: VehicleModelWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict();
+
+export const VehicleModelGroupByArgsSchema: z.ZodType<Prisma.VehicleModelGroupByArgs> = z.object({
+  where: VehicleModelWhereInputSchema.optional(), 
+  orderBy: z.union([ VehicleModelOrderByWithAggregationInputSchema.array(), VehicleModelOrderByWithAggregationInputSchema ]).optional(),
+  by: VehicleModelScalarFieldEnumSchema.array(), 
+  having: VehicleModelScalarWhereWithAggregatesInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict();
+
+export const VehicleModelFindUniqueArgsSchema: z.ZodType<Prisma.VehicleModelFindUniqueArgs> = z.object({
+  select: VehicleModelSelectSchema.optional(),
+  where: VehicleModelWhereUniqueInputSchema, 
+}).strict();
+
+export const VehicleModelFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.VehicleModelFindUniqueOrThrowArgs> = z.object({
+  select: VehicleModelSelectSchema.optional(),
+  where: VehicleModelWhereUniqueInputSchema, 
+}).strict();
+
 export const UserCreateArgsSchema: z.ZodType<Prisma.UserCreateArgs> = z.object({
   select: UserSelectSchema.optional(),
   include: UserIncludeSchema.optional(),
@@ -23436,5 +23687,43 @@ export const BrandCarouselUpdateManyArgsSchema: z.ZodType<Prisma.BrandCarouselUp
 
 export const BrandCarouselDeleteManyArgsSchema: z.ZodType<Prisma.BrandCarouselDeleteManyArgs> = z.object({
   where: BrandCarouselWhereInputSchema.optional(), 
+  limit: z.number().optional(),
+}).strict();
+
+export const VehicleModelCreateArgsSchema: z.ZodType<Prisma.VehicleModelCreateArgs> = z.object({
+  select: VehicleModelSelectSchema.optional(),
+  data: z.union([ VehicleModelCreateInputSchema, VehicleModelUncheckedCreateInputSchema ]),
+}).strict();
+
+export const VehicleModelUpsertArgsSchema: z.ZodType<Prisma.VehicleModelUpsertArgs> = z.object({
+  select: VehicleModelSelectSchema.optional(),
+  where: VehicleModelWhereUniqueInputSchema, 
+  create: z.union([ VehicleModelCreateInputSchema, VehicleModelUncheckedCreateInputSchema ]),
+  update: z.union([ VehicleModelUpdateInputSchema, VehicleModelUncheckedUpdateInputSchema ]),
+}).strict();
+
+export const VehicleModelCreateManyArgsSchema: z.ZodType<Prisma.VehicleModelCreateManyArgs> = z.object({
+  data: z.union([ VehicleModelCreateManyInputSchema, VehicleModelCreateManyInputSchema.array() ]),
+}).strict();
+
+export const VehicleModelDeleteArgsSchema: z.ZodType<Prisma.VehicleModelDeleteArgs> = z.object({
+  select: VehicleModelSelectSchema.optional(),
+  where: VehicleModelWhereUniqueInputSchema, 
+}).strict();
+
+export const VehicleModelUpdateArgsSchema: z.ZodType<Prisma.VehicleModelUpdateArgs> = z.object({
+  select: VehicleModelSelectSchema.optional(),
+  data: z.union([ VehicleModelUpdateInputSchema, VehicleModelUncheckedUpdateInputSchema ]),
+  where: VehicleModelWhereUniqueInputSchema, 
+}).strict();
+
+export const VehicleModelUpdateManyArgsSchema: z.ZodType<Prisma.VehicleModelUpdateManyArgs> = z.object({
+  data: z.union([ VehicleModelUpdateManyMutationInputSchema, VehicleModelUncheckedUpdateManyInputSchema ]),
+  where: VehicleModelWhereInputSchema.optional(), 
+  limit: z.number().optional(),
+}).strict();
+
+export const VehicleModelDeleteManyArgsSchema: z.ZodType<Prisma.VehicleModelDeleteManyArgs> = z.object({
+  where: VehicleModelWhereInputSchema.optional(), 
   limit: z.number().optional(),
 }).strict();

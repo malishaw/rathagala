@@ -645,3 +645,15 @@ model BrandCarousel {
 
   @@map("brandCarousel")
 }
+
+model VehicleModel {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  brand     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, brand])
+  @@map("vehicleModel")
+}

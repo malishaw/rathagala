@@ -63,6 +63,7 @@ import { CreateAdSchema } from "@/server/routes/ad/ad.schemas";
 import { authClient } from "@/lib/auth-client";
 import { locationData, getManufactureYears } from "@/lib/location-data";
 import { CitySearchDropdown } from "@/components/ui/city-search-dropdown";
+import { ModelSearchDropdown } from "@/components/ui/model-search-dropdown";
 import { useGetAutoPartCategories } from "@/features/ads/api/use-get-auto-part-categories";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
@@ -748,11 +749,12 @@ export function AdForm({
                             </FormField>
 
                             <FormField label="Model" required={formData.listingType === "SELL"}>
-                              <Input
-                                placeholder="e.g., Camry"
+                              <ModelSearchDropdown
                                 value={formData.model || ""}
-                                onChange={(e) => handleInputChange("model", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
+                                onChange={(v) => handleInputChange("model", v)}
+                                brand={formData.brand}
+                                placeholder="Select or type model"
+                                className="border border-gray-300 bg-white rounded-md shadow-none"
                               />
                             </FormField>
 
@@ -874,11 +876,12 @@ export function AdForm({
                             </FormField>
 
                             <FormField label="Model" required={formData.listingType === "SELL"}>
-                              <Input
-                                placeholder="e.g., Hiace"
+                              <ModelSearchDropdown
                                 value={formData.model || ""}
-                                onChange={(e) => handleInputChange("model", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
+                                onChange={(v) => handleInputChange("model", v)}
+                                brand={formData.brand}
+                                placeholder="Select or type model"
+                                className="border border-gray-300 bg-white rounded-md shadow-none"
                               />
                             </FormField>
 
@@ -971,11 +974,12 @@ export function AdForm({
                             </FormField>
 
                             <FormField label="Model" required={formData.listingType === "SELL"}>
-                              <Input
-                                placeholder="e.g., CBR 250R"
+                              <ModelSearchDropdown
                                 value={formData.model || ""}
-                                onChange={(e) => handleInputChange("model", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
+                                onChange={(v) => handleInputChange("model", v)}
+                                brand={formData.brand}
+                                placeholder="Select or type model"
+                                className="border border-gray-300 bg-white rounded-md shadow-none"
                               />
                             </FormField>
 
@@ -1185,11 +1189,12 @@ export function AdForm({
                             </FormField>
 
                             <FormField label="Compatible Model">
-                              <Input
-                                placeholder="e.g., Corolla, Civic"
+                              <ModelSearchDropdown
                                 value={formData.model || ""}
-                                onChange={(e) => handleInputChange("model", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
+                                onChange={(v) => handleInputChange("model", v)}
+                                brand={formData.brand}
+                                placeholder="Select or type model"
+                                className="border border-gray-300 bg-white rounded-md shadow-none"
                               />
                             </FormField>
                           </>
@@ -1260,11 +1265,12 @@ export function AdForm({
                             </FormField>
 
                             <FormField label="Model" required={formData.listingType === "SELL"}>
-                              <Input
-                                placeholder="e.g., Bajaj RE"
+                              <ModelSearchDropdown
                                 value={formData.model || ""}
-                                onChange={(e) => handleInputChange("model", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
+                                onChange={(v) => handleInputChange("model", v)}
+                                brand={formData.brand}
+                                placeholder="Select or type model"
+                                className="border border-gray-300 bg-white rounded-md shadow-none"
                               />
                             </FormField>
 
@@ -1349,11 +1355,12 @@ export function AdForm({
                             </FormField>
 
                             <FormField label="Model" required={formData.listingType === "SELL"}>
-                              <Input
-                                placeholder="e.g., Rosa"
+                              <ModelSearchDropdown
                                 value={formData.model || ""}
-                                onChange={(e) => handleInputChange("model", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
+                                onChange={(v) => handleInputChange("model", v)}
+                                brand={formData.brand}
+                                placeholder="Select or type model"
+                                className="border border-gray-300 bg-white rounded-md shadow-none"
                               />
                             </FormField>
 
@@ -1449,11 +1456,12 @@ export function AdForm({
                             </FormField>
 
                             <FormField label="Model" required={formData.listingType === "SELL"}>
-                              <Input
-                                placeholder="e.g., Canter"
+                              <ModelSearchDropdown
                                 value={formData.model || ""}
-                                onChange={(e) => handleInputChange("model", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
+                                onChange={(v) => handleInputChange("model", v)}
+                                brand={formData.brand}
+                                placeholder="Select or type model"
+                                className="border border-gray-300 bg-white rounded-md shadow-none"
                               />
                             </FormField>
 
@@ -1566,11 +1574,12 @@ export function AdForm({
                             </FormField>
 
                             <FormField label="Model" required={formData.listingType === "SELL"}>
-                              <Input
-                                placeholder="e.g., PC200"
+                              <ModelSearchDropdown
                                 value={formData.model || ""}
-                                onChange={(e) => handleInputChange("model", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
+                                onChange={(v) => handleInputChange("model", v)}
+                                brand={formData.brand}
+                                placeholder="Select or type model"
+                                className="border border-gray-300 bg-white rounded-md shadow-none"
                               />
                             </FormField>
 
@@ -1655,11 +1664,12 @@ export function AdForm({
                             </FormField>
 
                             <FormField label="Model" required={formData.listingType === "SELL"}>
-                              <Input
-                                placeholder="e.g., MF240"
+                              <ModelSearchDropdown
                                 value={formData.model || ""}
-                                onChange={(e) => handleInputChange("model", e.target.value)}
-                                className="border border-gray-300 bg-white h-10 rounded-md shadow-none"
+                                onChange={(v) => handleInputChange("model", v)}
+                                brand={formData.brand}
+                                placeholder="Select or type model"
+                                className="border border-gray-300 bg-white rounded-md shadow-none"
                               />
                             </FormField>
 

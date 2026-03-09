@@ -28,6 +28,7 @@ import { PendingAdModal } from "@/features/ads/components/pending-ad-modal";
 import { AdSubmissionSuccessModal } from "@/features/ads/components/ad-submission-success-modal";
 import { locationData, getManufactureYears } from "@/lib/location-data";
 import { CitySearchDropdown } from "@/components/ui/city-search-dropdown";
+import { ModelSearchDropdown } from "@/components/ui/model-search-dropdown";
 import { useGetAutoPartCategories } from "@/features/ads/api/use-get-auto-part-categories";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
@@ -525,10 +526,11 @@ export default function QuickAdCreatePage() {
 
           <div>
             <label className="block text-sm font-medium mb-1">Model (optional)</label>
-            <Input
-              placeholder="Enter model"
+            <ModelSearchDropdown
               value={formData.model}
-              onChange={(e) => handleInputChange("model", e.target.value)}
+              onChange={(v) => handleInputChange("model", v)}
+              brand={formData.brand}
+              placeholder="Select or type model"
             />
           </div>
 
@@ -583,10 +585,11 @@ export default function QuickAdCreatePage() {
             {/* Model */}
             <div>
               <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
-              <Input
-                placeholder="e.g., Camry"
+              <ModelSearchDropdown
                 value={formData.model}
-                onChange={(e) => handleInputChange("model", e.target.value)}
+                onChange={(v) => handleInputChange("model", v)}
+                brand={formData.brand}
+                placeholder="Select or type model"
               />
             </div>
 
@@ -649,10 +652,11 @@ export default function QuickAdCreatePage() {
             {/* Model */}
             <div>
               <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
-              <Input
-                placeholder="e.g., Hiace"
+              <ModelSearchDropdown
                 value={formData.model}
-                onChange={(e) => handleInputChange("model", e.target.value)}
+                onChange={(v) => handleInputChange("model", v)}
+                brand={formData.brand}
+                placeholder="Select or type model"
               />
             </div>
 
@@ -730,10 +734,11 @@ export default function QuickAdCreatePage() {
             {/* Model */}
             <div>
               <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
-              <Input
-                placeholder="e.g., CBR 250R"
+              <ModelSearchDropdown
                 value={formData.model}
-                onChange={(e) => handleInputChange("model", e.target.value)}
+                onChange={(v) => handleInputChange("model", v)}
+                brand={formData.brand}
+                placeholder="Select or type model"
               />
             </div>
 
@@ -815,10 +820,11 @@ export default function QuickAdCreatePage() {
             {/* Model */}
             <div>
               <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
-              <Input
-                placeholder="e.g., Bajaj RE"
+              <ModelSearchDropdown
                 value={formData.model}
-                onChange={(e) => handleInputChange("model", e.target.value)}
+                onChange={(v) => handleInputChange("model", v)}
+                brand={formData.brand}
+                placeholder="Select or type model"
               />
             </div>
 
@@ -873,10 +879,11 @@ export default function QuickAdCreatePage() {
             {/* Model */}
             <div>
               <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
-              <Input
-                placeholder={formData.type === "BUS" ? "e.g., Rosa" : formData.type === "LORRY" ? "e.g., Canter" : "e.g., MF240"}
+              <ModelSearchDropdown
                 value={formData.model}
-                onChange={(e) => handleInputChange("model", e.target.value)}
+                onChange={(v) => handleInputChange("model", v)}
+                brand={formData.brand}
+                placeholder="Select or type model"
               />
             </div>
 
@@ -949,10 +956,11 @@ export default function QuickAdCreatePage() {
             {/* Model */}
             <div>
               <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
-              <Input
-                placeholder="e.g., PC200"
+              <ModelSearchDropdown
                 value={formData.model}
-                onChange={(e) => handleInputChange("model", e.target.value)}
+                onChange={(v) => handleInputChange("model", v)}
+                brand={formData.brand}
+                placeholder="Select or type model"
               />
             </div>
 
@@ -1563,10 +1571,11 @@ export default function QuickAdCreatePage() {
             {/* Compatible Vehicle Model */}
             <div>
               <label className="block text-sm font-medium mb-1">Compatible Vehicle Model (optional)</label>
-              <Input
-                placeholder="e.g., Camry, WagonR, Civic"
+              <ModelSearchDropdown
                 value={formData.model}
-                onChange={(e) => handleInputChange("model", e.target.value)}
+                onChange={(v) => handleInputChange("model", v)}
+                brand={formData.brand}
+                placeholder="Select or type model"
               />
             </div>
           </>
