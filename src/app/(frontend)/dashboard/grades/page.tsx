@@ -46,139 +46,167 @@ import {
   Plus,
   Pencil,
   Trash2,
-  Car,
+  Sparkles,
   RefreshCw,
 } from "lucide-react";
 import { vehicleMakes, motorbikeBrands } from "@/constants/brands";
 import { CitySearchDropdown } from "@/components/ui/city-search-dropdown";
+import { ModelSearchDropdown } from "@/components/ui/model-search-dropdown";
 
-interface VehicleModel {
+interface VehicleGrade {
   id: string;
   name: string;
+  model?: string | null;
   brand: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
-const QUERY_KEY = ["vehicle-models", "admin"];
+interface VehicleModel {
+  id: string;
+  name: string;
+  brand: string;
+}
+
+const QUERY_KEY = ["vehicle-grades", "admin"];
 const allBrands = [...new Set([...vehicleMakes, ...motorbikeBrands])].sort();
 
-export default function VehicleModelsAdminPage() {
+export default function VehicleGradesAdminPage() {
   const queryClient = useQueryClient();
 
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<{ id: string; name: string } | null>(null);
-  const [editModel, setEditModel] = useState<VehicleModel | null>(null);
+  const [editGrade, setEditGrade] = useState<VehicleGrade | null>(null);
   const [search, setSearch] = useState("");
   const [brandFilter, setBrandFilter] = useState("");
+  const [searchBrand, setSearchBrand] = useState("");
+  const [searchModel, setSearchModel] = useState("");
+  const [searchModelInput, setSearchModelInput] = useState("");
 
-  const [form, setForm] = useState({ name: "", brand: "", isActive: true });
+  const [form, setForm] = useState({ name: "", brand: "", model: "", isActive: true });
 
   // ─── Queries ───────────────────────────────────────────────────────────────
 
-  const { data: models, isLoading, refetch } = useQuery({
+  const { data: grades, isLoading, refetch } = useQuery({
     queryKey: [...QUERY_KEY, brandFilter],
     queryFn: async () => {
       const params = new URLSearchParams({ limit: "500" });
       if (brandFilter) params.set("brand", brandFilter);
-      params.set("includeUserModels", "true");
+      params.set("includeUserGrades", "true");
+      const res = await fetch(`/api/vehicle-grade?${params}`);
+      if (!res.ok) throw new Error("Failed to fetch vehicle grades");
+      const json = await res.json() as { grades: VehicleGrade[] };
+      return json.grades;
+    },
+  });
+
+  const { data: models = [] } = useQuery({
+    queryKey: ["vehicle-models", searchBrand],
+    queryFn: async () => {
+      if (!searchBrand) return [];
+      const params = new URLSearchParams({ limit: "500", brand: searchBrand, includeUserModels: "true" });
       const res = await fetch(`/api/vehicle-model?${params}`);
-      if (!res.ok) throw new Error("Failed to fetch vehicle models");
+      if (!res.ok) throw new Error("Failed to fetch models");
       const json = await res.json() as { models: VehicleModel[] };
       return json.models;
     },
+    enabled: !!searchBrand,
   });
 
   // ─── Mutations ─────────────────────────────────────────────────────────────
 
   const createMutation = useMutation({
-    mutationFn: async (data: { name: string; brand?: string | null; isActive: boolean }) => {
-      const res = await fetch("/api/vehicle-model", {
+    mutationFn: async (data: { name: string; brand?: string | null; model?: string | null; isActive: boolean }) => {
+      const res = await fetch("/api/vehicle-grade", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.message || "Failed to create vehicle model");
+        throw new Error(err.message || "Failed to create vehicle grade");
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Vehicle model created");
+      toast.success("Vehicle grade created");
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setAddOpen(false);
-      setForm({ name: "", brand: "", isActive: true });
+      setForm({ name: "", brand: "", model: "", isActive: true });
+      setSearchBrand("");
+      setSearchModel("");
+      setSearchModelInput("");
     },
     onError: (err: Error) => toast.error(err.message),
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data, previousName }: { id: string; data: Partial<VehicleModel>; previousName?: string }) => {
-      // For user-added models, use the create endpoint to promote them to database records
+    mutationFn: async ({ id, data, previousName }: { id: string; data: Partial<VehicleGrade>; previousName?: string }) => {
+      // For user-added grades, use the create endpoint to promote them to database records
       if (id.startsWith("user:")) {
-        const res = await fetch("/api/vehicle-model", {
+        const res = await fetch("/api/vehicle-grade", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             name: data.name || previousName,
             brand: data.brand || null,
+            model: data.model || null,
             isActive: data.isActive ?? true,
-            previousModelName: previousName,
-            isUserAdded: true, // Flag to indicate this is promoting a user-added model
+            previousGradeName: previousName,
+            isUserAdded: true, // Flag to indicate this is promoting a user-added grade
           }),
         });
         if (!res.ok) {
           const err = await res.json();
-          throw new Error(err.message || "Failed to update vehicle model");
+          throw new Error(err.message || "Failed to update vehicle grade");
         }
         return res.json();
       }
-      const res = await fetch(`/api/vehicle-model/${id}`, {
+      const res = await fetch(`/api/vehicle-grade/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.message || "Failed to update vehicle model");
+        throw new Error(err.message || "Failed to update vehicle grade");
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Vehicle model updated");
+      toast.success("Vehicle grade updated");
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setEditOpen(false);
-      setEditModel(null);
+      setEditGrade(null);
     },
     onError: (err: Error) => toast.error(err.message),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async ({ id, modelName }: { id: string; modelName: string }) => {
-      // For user-added models, clear them from all ads
+    mutationFn: async ({ id, gradeName }: { id: string; gradeName: string }) => {
+      // For user-added grades, clear them from all ads
       if (id.startsWith("user:")) {
-        const res = await fetch("/api/vehicle-model/clear-user-model", {
+        const res = await fetch("/api/vehicle-grade/clear-user-grade", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ modelName }),
+          body: JSON.stringify({ gradeName }),
         });
         if (!res.ok) {
           const err = await res.json();
-          throw new Error(err.message || "Failed to delete vehicle model");
+          throw new Error(err.message || "Failed to delete vehicle grade");
         }
         return;
       }
-      const res = await fetch(`/api/vehicle-model/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/vehicle-grade/${id}`, { method: "DELETE" });
       if (!res.ok && res.status !== 204) {
         const err = await res.json();
-        throw new Error(err.message || "Failed to delete vehicle model");
+        throw new Error(err.message || "Failed to delete vehicle grade");
       }
     },
     onSuccess: () => {
-      toast.success("Vehicle model deleted");
+      toast.success("Vehicle grade deleted");
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setDeleteId(null);
     },
@@ -187,14 +215,17 @@ export default function VehicleModelsAdminPage() {
 
   // ─── Helpers ───────────────────────────────────────────────────────────────
 
-  const filteredModels = (models || []).filter((m) =>
-    m.name.toLowerCase().includes(search.toLowerCase()) ||
-    (m.brand || "").toLowerCase().includes(search.toLowerCase())
+  const filteredGrades = (grades || []).filter((g) =>
+    g.name.toLowerCase().includes(search.toLowerCase()) ||
+    (g.brand || "").toLowerCase().includes(search.toLowerCase())
   );
 
-  const openEdit = (m: VehicleModel) => {
-    setEditModel(m);
-    setForm({ name: m.name, brand: m.brand || "", isActive: m.isActive });
+  const openEdit = (g: VehicleGrade) => {
+    setEditGrade(g);
+    setForm({ name: g.name, brand: g.brand || "", model: g.model || "", isActive: g.isActive });
+    setSearchBrand(g.brand || "");
+    setSearchModel(g.model || "");
+    setSearchModelInput(g.model || "");
     setEditOpen(true);
   };
 
@@ -205,11 +236,11 @@ export default function VehicleModelsAdminPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Car className="h-6 w-6" />
-            Vehicle Models
+            <Sparkles className="h-6 w-6" />
+            Vehicle Grades
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Manage vehicle model suggestions shown in the ad forms
+            Manage vehicle grade suggestions shown in the ad forms
           </p>
         </div>
         <div className="flex gap-2">
@@ -217,25 +248,31 @@ export default function VehicleModelsAdminPage() {
             <RefreshCw className="h-4 w-4 mr-1" />
             Refresh
           </Button>
-          <Button size="sm" onClick={() => { setForm({ name: "", brand: "", isActive: true }); setAddOpen(true); }}>
+          <Button size="sm" onClick={() => { 
+            setForm({ name: "", brand: "", model: "", isActive: true }); 
+            setSearchBrand("");
+            setSearchModel("");
+            setSearchModelInput("");
+            setAddOpen(true); 
+          }}>
             <Plus className="h-4 w-4 mr-1" />
-            Add Model
+            Add Grade
           </Button>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>All Models</CardTitle>
+          <CardTitle>All Grades</CardTitle>
           <CardDescription>
-            {models?.length ?? 0} models total
+            {grades?.length ?? 0} grades total
           </CardDescription>
         </CardHeader>
         <CardContent>
           {/* Filters */}
           <div className="flex gap-3 mb-4">
             <Input
-              placeholder="Search models..."
+              placeholder="Search grades..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="max-w-xs"
@@ -266,11 +303,17 @@ export default function VehicleModelsAdminPage() {
                 <Skeleton key={i} className="h-10 w-full" />
               ))}
             </div>
-          ) : filteredModels.length === 0 ? (
+          ) : filteredGrades.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              No vehicle models found.{" "}
+              No vehicle grades found.{" "}
               <button
-                onClick={() => { setForm({ name: "", brand: "", isActive: true }); setAddOpen(true); }}
+                onClick={() => { 
+                  setForm({ name: "", brand: "", model: "", isActive: true }); 
+                  setSearchBrand("");
+                  setSearchModel("");
+                  setSearchModelInput("");
+                  setAddOpen(true); 
+                }}
                 className="text-primary underline"
               >
                 Add the first one
@@ -280,24 +323,26 @@ export default function VehicleModelsAdminPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Model Name</TableHead>
+                  <TableHead>Grade Name</TableHead>
                   <TableHead>Brand</TableHead>
+                  <TableHead>Model</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredModels.map((m) => (
-                  <TableRow key={m.id}>
-                    <TableCell className="font-medium">{m.name}</TableCell>
-                    <TableCell>{m.brand || <span className="text-muted-foreground text-xs">Any</span>}</TableCell>
+                {filteredGrades.map((g) => (
+                  <TableRow key={g.id}>
+                    <TableCell className="font-medium">{g.name}</TableCell>
+                    <TableCell>{g.brand || <span className="text-muted-foreground text-xs">Any</span>}</TableCell>
+                    <TableCell>{g.model || <span className="text-muted-foreground text-xs">Any</span>}</TableCell>
                     <TableCell className="space-y-1">
                       <div className="flex gap-2">
-                        <Badge variant={m.isActive ? "default" : "secondary"}>
-                          {m.isActive ? "Active" : "Inactive"}
+                        <Badge variant={g.isActive ? "default" : "secondary"}>
+                          {g.isActive ? "Active" : "Inactive"}
                         </Badge>
-                        {m.id.startsWith("user:") && (
+                        {g.id.startsWith("user:") && (
                           <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                             User Added
                           </Badge>
@@ -305,14 +350,14 @@ export default function VehicleModelsAdminPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {new Date(m.createdAt).toLocaleDateString()}
+                      {new Date(g.createdAt).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          onClick={() => openEdit(m)}
+                          onClick={() => openEdit(g)}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -320,7 +365,7 @@ export default function VehicleModelsAdminPage() {
                           variant="ghost"
                           size="icon"
                           className="text-destructive "
-                          onClick={() => setDeleteId({ id: m.id, name: m.name })}
+                          onClick={() => setDeleteId({ id: g.id, name: g.name })}
                         >
                           <Trash2 className="h-4 w-4 hover:text-white" />
                         </Button>
@@ -336,36 +381,59 @@ export default function VehicleModelsAdminPage() {
 
       {/* Add Dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-screen overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Add Vehicle Model</DialogTitle>
+            <DialogTitle>Add Vehicle Grade</DialogTitle>
             <DialogDescription>
-              Add a new model to the suggestion list. Users can still type any model not in this list.
+              Select a brand and model, then add a grade. Users can still type any grade not in this list.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="add-name">Model Name *</Label>
+              <Label htmlFor="add-brand">Brand *</Label>
+              <CitySearchDropdown
+                cities={allBrands}
+                value={searchBrand}
+                onChange={(v) => {
+                  setSearchBrand(v);
+                  setForm((f) => ({ ...f, brand: v }));
+                  setSearchModel("");
+                  setSearchModelInput("");
+                }}
+                placeholder="Select a brand"
+                triggerClassName="w-full"
+              />
+            </div>
+
+            {searchBrand && (
+              <div className="space-y-2">
+                <Label htmlFor="add-model">Model *</Label>
+                <ModelSearchDropdown
+                  value={searchModel}
+                  onChange={(v) => {
+                    setSearchModel(v);
+                    setForm((f) => ({ ...f, model: v }));
+                    setSearchModelInput(v);
+                  }}
+                  brand={searchBrand}
+                  placeholder="Select or type model"
+                />
+                {models.length === 0 && (
+                  <p className="text-xs text-muted-foreground">No models available for this brand</p>
+                )}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="add-name">Grade Name *</Label>
               <Input
                 id="add-name"
-                placeholder="e.g., Camry"
+                placeholder="e.g., A Grade, B Grade, Fair"
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="add-brand">Brand (optional)</Label>
-              <CitySearchDropdown
-                cities={allBrands}
-                value={form.brand}
-                onChange={(v) => setForm((f) => ({ ...f, brand: v }))}
-                placeholder="Any brand"
-                triggerClassName="w-full"
-              />
-              <p className="text-xs text-muted-foreground">
-                Leave blank to show for all brands.
-              </p>
-            </div>
+
             <div className="flex items-center gap-2">
               <Switch
                 id="add-active"
@@ -376,19 +444,30 @@ export default function VehicleModelsAdminPage() {
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setAddOpen(false);
+                setSearchBrand("");
+                setSearchModel("");
+                setSearchModelInput("");
+              }}
+            >
+              Cancel
+            </Button>
             <Button
-              disabled={!form.name.trim() || createMutation.isPending}
+              disabled={!form.name.trim() || !searchBrand || createMutation.isPending}
               onClick={() =>
                 createMutation.mutate({
                   name: form.name.trim(),
-                  brand: form.brand || null,
+                  brand: searchBrand || null,
+                  model: searchModel || null,
                   isActive: form.isActive,
                 })
               }
             >
               {createMutation.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-              Add Model
+              Add Grade
             </Button>
           </div>
         </DialogContent>
@@ -396,30 +475,56 @@ export default function VehicleModelsAdminPage() {
 
       {/* Edit Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-screen overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Vehicle Model</DialogTitle>
-            <DialogDescription>Update the vehicle model details.</DialogDescription>
+            <DialogTitle>Edit Vehicle Grade</DialogTitle>
+            <DialogDescription>Update the vehicle grade details.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-name">Model Name *</Label>
+              <Label htmlFor="edit-brand">Brand *</Label>
+              <CitySearchDropdown
+                cities={allBrands}
+                value={searchBrand}
+                onChange={(v) => {
+                  setSearchBrand(v);
+                  setForm((f) => ({ ...f, brand: v }));
+                  setSearchModel("");
+                  setSearchModelInput("");
+                }}
+                placeholder="Select a brand"
+                triggerClassName="w-full"
+              />
+            </div>
+
+            {searchBrand && (
+              <div className="space-y-2">
+                <Label htmlFor="edit-model">Model *</Label>
+                <ModelSearchDropdown
+                  value={searchModel}
+                  onChange={(v) => {
+                    setSearchModel(v);
+                    setForm((f) => ({ ...f, model: v }));
+                    setSearchModelInput(v);
+                  }}
+                  brand={searchBrand}
+                  placeholder="Select or type model"
+                />
+                {models.length === 0 && (
+                  <p className="text-xs text-muted-foreground">No models available for this brand</p>
+                )}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Grade Name *</Label>
               <Input
                 id="edit-name"
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-brand">Brand (optional)</Label>
-              <CitySearchDropdown
-                cities={allBrands}
-                value={form.brand}
-                onChange={(v) => setForm((f) => ({ ...f, brand: v }))}
-                placeholder="Any brand"
-                triggerClassName="w-full"
-              />
-            </div>
+
             <div className="flex items-center gap-2">
               <Switch
                 id="edit-active"
@@ -432,13 +537,13 @@ export default function VehicleModelsAdminPage() {
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
             <Button
-              disabled={!form.name.trim() || updateMutation.isPending}
+              disabled={!form.name.trim() || !searchBrand || updateMutation.isPending}
               onClick={() =>
-                editModel &&
+                editGrade &&
                 updateMutation.mutate({
-                  id: editModel.id,
-                  data: { name: form.name.trim(), brand: form.brand || null, isActive: form.isActive },
-                  previousName: editModel.name,
+                  id: editGrade.id,
+                  data: { name: form.name.trim(), brand: searchBrand || null, model: searchModel || null, isActive: form.isActive },
+                  previousName: editGrade.name,
                 })
               }
             >
@@ -453,16 +558,16 @@ export default function VehicleModelsAdminPage() {
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Vehicle Model</AlertDialogTitle>
+            <AlertDialogTitle>Delete Vehicle Grade</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove the model from suggestions. Existing ads using this model will not be affected.
+              This will remove the grade from suggestions. Existing ads using this grade will not be affected.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => deleteId && deleteMutation.mutate({ id: deleteId.id, modelName: deleteId.name })}
+              onClick={() => deleteId && deleteMutation.mutate({ id: deleteId.id, gradeName: deleteId.name })}
             >
               {deleteMutation.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
               Delete

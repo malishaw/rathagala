@@ -64,6 +64,7 @@ import { authClient } from "@/lib/auth-client";
 import { locationData, getManufactureYears } from "@/lib/location-data";
 import { CitySearchDropdown } from "@/components/ui/city-search-dropdown";
 import { ModelSearchDropdown } from "@/components/ui/model-search-dropdown";
+import { GradeSearchDropdown } from "@/components/ui/grade-search-dropdown";
 import { useGetAutoPartCategories } from "@/features/ads/api/use-get-auto-part-categories";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
@@ -177,6 +178,7 @@ export function AdForm({
     condition: "",
     brand: "",
     model: "",
+    grade: "",
     trimEdition: "",
 
     // Year fields
@@ -240,6 +242,7 @@ export function AdForm({
         condition: initialData.condition || "",
         brand: initialData.brand || "",
         model: initialData.model || "",
+        grade: initialData.grade || "",
         trimEdition: initialData.trimEdition || "",
 
         // Year fields
@@ -541,6 +544,7 @@ export function AdForm({
       condition: formData.condition || undefined,
       brand: formData.brand || undefined,
       model: formData.model || undefined,
+      grade: formData.grade || undefined,
       trimEdition: formData.trimEdition || undefined,
       manufacturedYear: formData.manufacturedYear || undefined,
       modelYear: formData.modelYear || undefined,
@@ -758,6 +762,17 @@ export function AdForm({
                               />
                             </FormField>
 
+                            <FormField label="Grade">
+                              <GradeSearchDropdown
+                                value={formData.grade || ""}
+                                onChange={(v) => handleInputChange("grade", v)}
+                                model={formData.model}
+                                brand={formData.brand}
+                                placeholder="Select or type grade (optional)"
+                                className="border border-gray-300 bg-white rounded-md shadow-none"
+                              />
+                            </FormField>
+
                             <FormField label="Trim / Edition">
                               <Input
                                 placeholder="e.g., Sport"
@@ -885,6 +900,17 @@ export function AdForm({
                               />
                             </FormField>
 
+                            <FormField label="Grade">
+                              <GradeSearchDropdown
+                                value={formData.grade || ""}
+                                onChange={(v) => handleInputChange("grade", v)}
+                                model={formData.model}
+                                brand={formData.brand}
+                                placeholder="Select or type grade (optional)"
+                                className="border border-gray-300 bg-white rounded-md shadow-none"
+                              />
+                            </FormField>
+
                             <FormField label="Trim / Edition">
                               <Input
                                 placeholder="e.g., GL"
@@ -979,6 +1005,17 @@ export function AdForm({
                                 onChange={(v) => handleInputChange("model", v)}
                                 brand={formData.brand}
                                 placeholder="Select or type model"
+                                className="border border-gray-300 bg-white rounded-md shadow-none"
+                              />
+                            </FormField>
+
+                            <FormField label="Grade">
+                              <GradeSearchDropdown
+                                value={formData.grade || ""}
+                                onChange={(v) => handleInputChange("grade", v)}
+                                model={formData.model}
+                                brand={formData.brand}
+                                placeholder="Select or type grade (optional)"
                                 className="border border-gray-300 bg-white rounded-md shadow-none"
                               />
                             </FormField>
@@ -1274,6 +1311,17 @@ export function AdForm({
                               />
                             </FormField>
 
+                            <FormField label="Grade">
+                              <GradeSearchDropdown
+                                value={formData.grade || ""}
+                                onChange={(v) => handleInputChange("grade", v)}
+                                model={formData.model}
+                                brand={formData.brand}
+                                placeholder="Select or type grade (optional)"
+                                className="border border-gray-300 bg-white rounded-md shadow-none"
+                              />
+                            </FormField>
+
                             <FormField label="Year of Manufacture" required={formData.listingType === "SELL"}>
                               <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
@@ -1360,6 +1408,17 @@ export function AdForm({
                                 onChange={(v) => handleInputChange("model", v)}
                                 brand={formData.brand}
                                 placeholder="Select or type model"
+                                className="border border-gray-300 bg-white rounded-md shadow-none"
+                              />
+                            </FormField>
+
+                            <FormField label="Grade">
+                              <GradeSearchDropdown
+                                value={formData.grade || ""}
+                                onChange={(v) => handleInputChange("grade", v)}
+                                model={formData.model}
+                                brand={formData.brand}
+                                placeholder="Select or type grade (optional)"
                                 className="border border-gray-300 bg-white rounded-md shadow-none"
                               />
                             </FormField>
@@ -1461,6 +1520,17 @@ export function AdForm({
                                 onChange={(v) => handleInputChange("model", v)}
                                 brand={formData.brand}
                                 placeholder="Select or type model"
+                                className="border border-gray-300 bg-white rounded-md shadow-none"
+                              />
+                            </FormField>
+
+                            <FormField label="Grade">
+                              <GradeSearchDropdown
+                                value={formData.grade || ""}
+                                onChange={(v) => handleInputChange("grade", v)}
+                                model={formData.model}
+                                brand={formData.brand}
+                                placeholder="Select or type grade (optional)"
                                 className="border border-gray-300 bg-white rounded-md shadow-none"
                               />
                             </FormField>
@@ -1583,6 +1653,17 @@ export function AdForm({
                               />
                             </FormField>
 
+                            <FormField label="Grade">
+                              <GradeSearchDropdown
+                                value={formData.grade || ""}
+                                onChange={(v) => handleInputChange("grade", v)}
+                                model={formData.model}
+                                brand={formData.brand}
+                                placeholder="Select or type grade (optional)"
+                                className="border border-gray-300 bg-white rounded-md shadow-none"
+                              />
+                            </FormField>
+
                             <FormField label="Year of Manufacture" required={formData.listingType === "SELL"}>
                               <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
                                 <SelectTrigger className="border border-gray-300 bg-white h-10 rounded-md shadow-none">
@@ -1669,6 +1750,17 @@ export function AdForm({
                                 onChange={(v) => handleInputChange("model", v)}
                                 brand={formData.brand}
                                 placeholder="Select or type model"
+                                className="border border-gray-300 bg-white rounded-md shadow-none"
+                              />
+                            </FormField>
+
+                            <FormField label="Grade">
+                              <GradeSearchDropdown
+                                value={formData.grade || ""}
+                                onChange={(v) => handleInputChange("grade", v)}
+                                model={formData.model}
+                                brand={formData.brand}
+                                placeholder="Select or type grade (optional)"
                                 className="border border-gray-300 bg-white rounded-md shadow-none"
                               />
                             </FormField>

@@ -20,6 +20,7 @@ import {
   WrenchIcon,
   SlidersHorizontal,
   Car,
+  Sparkles,
 } from "lucide-react";
 
 import { type Session } from "@/lib/auth";
@@ -126,6 +127,11 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
         title: "Models",
         url: "/dashboard/models",
         icon: Car
+      },
+      {
+        title: "Grades",
+        url: "/dashboard/grades",
+        icon: Sparkles
       },
       {
         title: "Carousel",

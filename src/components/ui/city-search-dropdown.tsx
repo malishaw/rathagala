@@ -75,12 +75,12 @@ export function CitySearchDropdown({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="p-0 w-[var(--radix-popover-trigger-width)] min-w-[220px]"
+        className="p-0 w-[var(--radix-popover-trigger-width)] min-w-[220px] max-h-[400px] flex flex-col"
         align="start"
         sideOffset={4}
       >
         {/* Search input */}
-        <div className="flex items-center border-b px-3 py-2 gap-2">
+        <div className="flex items-center border-b px-3 py-2 gap-2 shrink-0">
           <Search className="h-4 w-4 text-muted-foreground shrink-0" />
           <input
             ref={inputRef}
@@ -101,7 +101,7 @@ export function CitySearchDropdown({
         </div>
 
         {/* City list */}
-        <div className="max-h-[220px] overflow-y-auto py-1">
+        <div className="flex-1 overflow-y-auto py-1">
           {filtered.length === 0 ? (
             <div className="px-3 py-4 text-center text-sm text-muted-foreground">
               No city found.

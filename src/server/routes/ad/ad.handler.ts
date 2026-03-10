@@ -379,6 +379,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       condition: ad.condition ?? null,
       brand: ad.brand ?? null,
       model: ad.model ?? null,
+      grade: ad.grade ?? null,
       trimEdition: ad.trimEdition ?? null,
       manufacturedYear: ad.manufacturedYear ?? null,
       modelYear: ad.modelYear ?? null,
@@ -534,6 +535,7 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
         condition: adDetails.condition || null,
         brand: adDetails.brand || null,
         model: adDetails.model || null,
+        grade: adDetails.grade || null,
         trimEdition: adDetails.trimEdition || null,
 
         // Year Fields (different names for different types)
@@ -805,6 +807,7 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
       condition: ad.condition ?? null,
       brand: ad.brand ?? null,
       model: ad.model ?? null,
+      grade: ad.grade ?? null,
       trimEdition: ad.trimEdition ?? null,
       manufacturedYear: ad.manufacturedYear ?? null,
       modelYear: ad.modelYear ?? null,
@@ -946,6 +949,7 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
       updateData.condition = adUpdates.condition;
     if (adUpdates.brand !== undefined) updateData.brand = adUpdates.brand;
     if (adUpdates.model !== undefined) updateData.model = adUpdates.model;
+    if (adUpdates.grade !== undefined) updateData.grade = adUpdates.grade;
     if (adUpdates.trimEdition !== undefined)
       updateData.trimEdition = adUpdates.trimEdition;
 

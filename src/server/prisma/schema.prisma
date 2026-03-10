@@ -337,6 +337,7 @@ model Ad {
   condition         String?     // New/Reconditioned/Used - Used by: Car, Van, Motor Bike, Bicycle, Three Wheeler, Bus, Lorry, Heavy Duty, Tractor, Auto Parts, Boat
   brand             String?     // Used by: Car, Van, Motor Bike, Bicycle, Three Wheeler, Bus, Lorry, Heavy Duty, Tractor, Auto Parts
   model             String?     // Used by: Car, Van, Motor Bike, Three Wheeler, Bus, Lorry, Heavy Duty, Tractor, Auto Parts
+  grade             String?     // Used by: Car, Van, Motor Bike, Three Wheeler, Bus, Lorry, Heavy Duty, Tractor (optional, depends on model)
   trimEdition       String?     // Used by: Car, Van, Motor Bike, Three Wheeler, Bus, Lorry, Heavy Duty, Tractor
 
   // Year Fields (different names for different types)
@@ -656,4 +657,17 @@ model VehicleModel {
 
   @@unique([name, brand])
   @@map("vehicleModel")
+}
+
+model VehicleGrade {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  model     String?  // Associated model name
+  brand     String?  // Associated brand name
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, model, brand])
+  @@map("vehicleGrade")
 }

@@ -790,6 +790,18 @@ export default function AdDetailPage() {
                         <div className="font-semibold">{ad.model}</div>
                       </div>
                     )}
+                    {ad.grade && (
+                      <div>
+                        <div className="text-sm text-gray-500">Compatible Grade</div>
+                        <div className="font-semibold">{ad.grade}</div>
+                      </div>
+                    )}
+                    {!ad.grade && (
+                      <div>
+                        <div className="text-sm text-gray-500">Compatible Grade</div>
+                        <div className="font-semibold text-gray-400">Not available</div>
+                      </div>
+                    )}
                     {ad.condition && (
                       <div>
                         <div className="text-sm text-gray-500">Condition</div>
@@ -881,6 +893,20 @@ export default function AdDetailPage() {
                     <div>
                       <div className="text-sm text-gray-500">Model</div>
                       <div className="font-semibold">{ad.model}</div>
+                    </div>
+                  )}
+
+                  {ad.grade && (
+                    <div>
+                      <div className="text-sm text-gray-500">Grade</div>
+                      <div className="font-semibold">{ad.grade}</div>
+                    </div>
+                  )}
+
+                  {!ad.grade && (
+                    <div>
+                      <div className="text-sm text-gray-500">Grade</div>
+                      <div className="font-semibold text-gray-400">Not available</div>
                     </div>
                   )}
                 </div>

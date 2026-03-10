@@ -98,6 +98,7 @@ export const createAdBaseSchema = z
     condition: z.string().optional(),
     brand: z.string().optional(),
     model: z.string().optional(),
+    grade: z.string().optional(),
     trimEdition: z.string().optional(),
 
     // Year fields (different names for different types)

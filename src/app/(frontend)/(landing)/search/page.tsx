@@ -122,6 +122,41 @@ export default function SearchPage() {
   const [citySearch, setCitySearch] = useState('');
   const [vehicleTypeSearch, setVehicleTypeSearch] = useState('');
   const [brandSearch, setBrandSearch] = useState('');
+  const [availableGrades, setAvailableGrades] = useState<{ id: string; name: string }[]>([]);
+  const [loadingGrades, setLoadingGrades] = useState(false);
+
+  // Fetch available grades when brand or model changes
+  useEffect(() => {
+    const fetchGrades = async () => {
+      if (!filters.brand || filters.brand === 'all') {
+        setAvailableGrades([]);
+        return;
+      }
+
+      setLoadingGrades(true);
+      try {
+        const params = new URLSearchParams({ limit: "500", isActive: "true" });
+        if (filters.brand && filters.brand !== 'all') {
+          params.set("brand", filters.brand);
+        }
+        if (filters.model) {
+          params.set("model", filters.model);
+        }
+        const url = `/api/vehicle-grade?${params}`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json() as { grades: { id: string; name: string; isActive?: boolean }[] };
+          setAvailableGrades(data.grades.filter((g) => g.isActive !== false));
+        }
+      } catch (error) {
+        console.error("Failed to fetch grades:", error);
+      } finally {
+        setLoadingGrades(false);
+      }
+    };
+
+    fetchGrades();
+  }, [filters.brand, filters.model]);
 
   // Mobile sidebar state
   const [isFiltersOpen, setIsFiltersOpen] = useState(true);
@@ -754,18 +789,23 @@ export default function SearchPage() {
                     <Select
                       value={filters.grade}
                       onValueChange={(value) => handleFilterChange('grade', value)}
+                      disabled={!filters.brand || filters.brand === 'all' || loadingGrades}
                     >
                       <SelectTrigger className="h-9 text-sm">
-                        <SelectValue placeholder="All" />
+                        <SelectValue placeholder={loadingGrades ? "Loading..." : "All"} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All</SelectItem>
-                        <SelectItem value="A">Grade A</SelectItem>
-                        <SelectItem value="B">Grade B</SelectItem>
-                        <SelectItem value="C">Grade C</SelectItem>
-                        <SelectItem value="S">Grade S</SelectItem>
+                        {availableGrades.map((grade) => (
+                          <SelectItem key={grade.id} value={grade.name}>
+                            {grade.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
+                    {(!filters.brand || filters.brand === 'all') && (
+                      <p className="text-xs text-muted-foreground mt-1">Select a brand first</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">

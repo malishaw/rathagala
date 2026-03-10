@@ -74,7 +74,7 @@ export const TwoFactorScalarFieldEnumSchema = z.enum(['id','secret','backupCodes
 
 export const TasksScalarFieldEnumSchema = z.enum(['id','name','done']);
 
-export const AdScalarFieldEnumSchema = z.enum(['id','orgId','createdBy','title','description','type','listingType','price','published','isDraft','boosted','featured','boostExpiry','featureExpiry','status','expiryDate','rejectionDescription','seoTitle','seoDescription','seoSlug','categoryId','tags','condition','brand','model','trimEdition','manufacturedYear','modelYear','mileage','engineCapacity','fuelType','transmission','bodyType','bikeType','vehicleType','serviceType','partType','partName','partCategoryId','compatibleVehicleType','maintenanceType','name','phoneNumber','whatsappNumber','termsAndConditions','location','address','province','district','city','specialNote','metadata','createdAt','updatedAt']);
+export const AdScalarFieldEnumSchema = z.enum(['id','orgId','createdBy','title','description','type','listingType','price','published','isDraft','boosted','featured','boostExpiry','featureExpiry','status','expiryDate','rejectionDescription','seoTitle','seoDescription','seoSlug','categoryId','tags','condition','brand','model','grade','trimEdition','manufacturedYear','modelYear','mileage','engineCapacity','fuelType','transmission','bodyType','bikeType','vehicleType','serviceType','partType','partName','partCategoryId','compatibleVehicleType','maintenanceType','name','phoneNumber','whatsappNumber','termsAndConditions','location','address','province','district','city','specialNote','metadata','createdAt','updatedAt']);
 
 export const AdRevisionScalarFieldEnumSchema = z.enum(['id','adId','version','data','createdAt']);
 
@@ -115,6 +115,8 @@ export const NewsletterScalarFieldEnumSchema = z.enum(['id','subject','htmlConte
 export const BrandCarouselScalarFieldEnumSchema = z.enum(['id','name','imageUrl','order','createdAt','updatedAt']);
 
 export const VehicleModelScalarFieldEnumSchema = z.enum(['id','name','brand','isActive','createdAt','updatedAt']);
+
+export const VehicleGradeScalarFieldEnumSchema = z.enum(['id','name','model','brand','isActive','createdAt','updatedAt']);
 
 export const SortOrderSchema = z.enum(['asc','desc']);
 
@@ -380,6 +382,7 @@ export const AdSchema = z.object({
   condition: z.string().nullable(),
   brand: z.string().nullable(),
   model: z.string().nullable(),
+  grade: z.string().nullable(),
   trimEdition: z.string().nullable(),
   manufacturedYear: z.string().nullable(),
   modelYear: z.string().nullable(),
@@ -713,6 +716,22 @@ export const VehicleModelSchema = z.object({
 })
 
 export type VehicleModel = z.infer<typeof VehicleModelSchema>
+
+/////////////////////////////////////////
+// VEHICLE GRADE SCHEMA
+/////////////////////////////////////////
+
+export const VehicleGradeSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  model: z.string().nullable(),
+  brand: z.string().nullable(),
+  isActive: z.boolean(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+})
+
+export type VehicleGrade = z.infer<typeof VehicleGradeSchema>
 
 /////////////////////////////////////////
 // SELECT & INCLUDE
@@ -1050,6 +1069,7 @@ export const AdSelectSchema: z.ZodType<Prisma.AdSelect> = z.object({
   condition: z.boolean().optional(),
   brand: z.boolean().optional(),
   model: z.boolean().optional(),
+  grade: z.boolean().optional(),
   trimEdition: z.boolean().optional(),
   manufacturedYear: z.boolean().optional(),
   modelYear: z.boolean().optional(),
@@ -1523,6 +1543,23 @@ export const VehicleModelArgsSchema: z.ZodType<Prisma.VehicleModelDefaultArgs> =
 export const VehicleModelSelectSchema: z.ZodType<Prisma.VehicleModelSelect> = z.object({
   id: z.boolean().optional(),
   name: z.boolean().optional(),
+  brand: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+  createdAt: z.boolean().optional(),
+  updatedAt: z.boolean().optional(),
+}).strict()
+
+// VEHICLE GRADE
+//------------------------------------------------------
+
+export const VehicleGradeArgsSchema: z.ZodType<Prisma.VehicleGradeDefaultArgs> = z.object({
+  select: z.lazy(() => VehicleGradeSelectSchema).optional(),
+}).strict();
+
+export const VehicleGradeSelectSchema: z.ZodType<Prisma.VehicleGradeSelect> = z.object({
+  id: z.boolean().optional(),
+  name: z.boolean().optional(),
+  model: z.boolean().optional(),
   brand: z.boolean().optional(),
   isActive: z.boolean().optional(),
   createdAt: z.boolean().optional(),
@@ -2391,6 +2428,7 @@ export const AdWhereInputSchema: z.ZodType<Prisma.AdWhereInput> = z.object({
   condition: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   brand: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   model: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
+  grade: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   trimEdition: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   manufacturedYear: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   modelYear: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
@@ -2460,6 +2498,7 @@ export const AdOrderByWithRelationInputSchema: z.ZodType<Prisma.AdOrderByWithRel
   condition: z.lazy(() => SortOrderSchema).optional(),
   brand: z.lazy(() => SortOrderSchema).optional(),
   model: z.lazy(() => SortOrderSchema).optional(),
+  grade: z.lazy(() => SortOrderSchema).optional(),
   trimEdition: z.lazy(() => SortOrderSchema).optional(),
   manufacturedYear: z.lazy(() => SortOrderSchema).optional(),
   modelYear: z.lazy(() => SortOrderSchema).optional(),
@@ -2544,6 +2583,7 @@ export const AdWhereUniqueInputSchema: z.ZodType<Prisma.AdWhereUniqueInput> = z.
   condition: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   brand: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   model: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
+  grade: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   trimEdition: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   manufacturedYear: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   modelYear: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
@@ -2613,6 +2653,7 @@ export const AdOrderByWithAggregationInputSchema: z.ZodType<Prisma.AdOrderByWith
   condition: z.lazy(() => SortOrderSchema).optional(),
   brand: z.lazy(() => SortOrderSchema).optional(),
   model: z.lazy(() => SortOrderSchema).optional(),
+  grade: z.lazy(() => SortOrderSchema).optional(),
   trimEdition: z.lazy(() => SortOrderSchema).optional(),
   manufacturedYear: z.lazy(() => SortOrderSchema).optional(),
   modelYear: z.lazy(() => SortOrderSchema).optional(),
@@ -2678,6 +2719,7 @@ export const AdScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.AdScalarWh
   condition: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema), z.string() ]).optional().nullable(),
   brand: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema), z.string() ]).optional().nullable(),
   model: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema), z.string() ]).optional().nullable(),
+  grade: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema), z.string() ]).optional().nullable(),
   trimEdition: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema), z.string() ]).optional().nullable(),
   manufacturedYear: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema), z.string() ]).optional().nullable(),
   modelYear: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema), z.string() ]).optional().nullable(),
@@ -4128,6 +4170,81 @@ export const VehicleModelScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.
   updatedAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
 }).strict();
 
+export const VehicleGradeWhereInputSchema: z.ZodType<Prisma.VehicleGradeWhereInput> = z.object({
+  AND: z.union([ z.lazy(() => VehicleGradeWhereInputSchema), z.lazy(() => VehicleGradeWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => VehicleGradeWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => VehicleGradeWhereInputSchema), z.lazy(() => VehicleGradeWhereInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  model: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
+  brand: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
+  isActive: z.union([ z.lazy(() => BoolFilterSchema), z.boolean() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+}).strict();
+
+export const VehicleGradeOrderByWithRelationInputSchema: z.ZodType<Prisma.VehicleGradeOrderByWithRelationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  model: z.lazy(() => SortOrderSchema).optional(),
+  brand: z.lazy(() => SortOrderSchema).optional(),
+  isActive: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const VehicleGradeWhereUniqueInputSchema: z.ZodType<Prisma.VehicleGradeWhereUniqueInput> = z.union([
+  z.object({
+    id: z.string(),
+    name_model_brand: z.lazy(() => VehicleGradeNameModelBrandCompoundUniqueInputSchema),
+  }),
+  z.object({
+    id: z.string(),
+  }),
+  z.object({
+    name_model_brand: z.lazy(() => VehicleGradeNameModelBrandCompoundUniqueInputSchema),
+  }),
+])
+.and(z.object({
+  id: z.string().optional(),
+  name_model_brand: z.lazy(() => VehicleGradeNameModelBrandCompoundUniqueInputSchema).optional(),
+  AND: z.union([ z.lazy(() => VehicleGradeWhereInputSchema), z.lazy(() => VehicleGradeWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => VehicleGradeWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => VehicleGradeWhereInputSchema), z.lazy(() => VehicleGradeWhereInputSchema).array() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  model: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
+  brand: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
+  isActive: z.union([ z.lazy(() => BoolFilterSchema), z.boolean() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+}).strict());
+
+export const VehicleGradeOrderByWithAggregationInputSchema: z.ZodType<Prisma.VehicleGradeOrderByWithAggregationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  model: z.lazy(() => SortOrderSchema).optional(),
+  brand: z.lazy(() => SortOrderSchema).optional(),
+  isActive: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+  _count: z.lazy(() => VehicleGradeCountOrderByAggregateInputSchema).optional(),
+  _max: z.lazy(() => VehicleGradeMaxOrderByAggregateInputSchema).optional(),
+  _min: z.lazy(() => VehicleGradeMinOrderByAggregateInputSchema).optional(),
+}).strict();
+
+export const VehicleGradeScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.VehicleGradeScalarWhereWithAggregatesInput> = z.object({
+  AND: z.union([ z.lazy(() => VehicleGradeScalarWhereWithAggregatesInputSchema), z.lazy(() => VehicleGradeScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  OR: z.lazy(() => VehicleGradeScalarWhereWithAggregatesInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => VehicleGradeScalarWhereWithAggregatesInputSchema), z.lazy(() => VehicleGradeScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
+  name: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
+  model: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema), z.string() ]).optional().nullable(),
+  brand: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema), z.string() ]).optional().nullable(),
+  isActive: z.union([ z.lazy(() => BoolWithAggregatesFilterSchema), z.boolean() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
+}).strict();
+
 export const UserCreateInputSchema: z.ZodType<Prisma.UserCreateInput> = z.object({
   id: z.string(),
   name: z.string(),
@@ -4952,6 +5069,7 @@ export const AdCreateInputSchema: z.ZodType<Prisma.AdCreateInput> = z.object({
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -5020,6 +5138,7 @@ export const AdUncheckedCreateInputSchema: z.ZodType<Prisma.AdUncheckedCreateInp
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -5081,6 +5200,7 @@ export const AdUpdateInputSchema: z.ZodType<Prisma.AdUpdateInput> = z.object({
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -5148,6 +5268,7 @@ export const AdUncheckedUpdateInputSchema: z.ZodType<Prisma.AdUncheckedUpdateInp
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -5213,6 +5334,7 @@ export const AdCreateManyInputSchema: z.ZodType<Prisma.AdCreateManyInput> = z.ob
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -5266,6 +5388,7 @@ export const AdUpdateManyMutationInputSchema: z.ZodType<Prisma.AdUpdateManyMutat
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -5321,6 +5444,7 @@ export const AdUncheckedUpdateManyInputSchema: z.ZodType<Prisma.AdUncheckedUpdat
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -6567,6 +6691,72 @@ export const VehicleModelUncheckedUpdateManyInputSchema: z.ZodType<Prisma.Vehicl
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
+export const VehicleGradeCreateInputSchema: z.ZodType<Prisma.VehicleGradeCreateInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  model: z.string().optional().nullable(),
+  brand: z.string().optional().nullable(),
+  isActive: z.boolean().optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const VehicleGradeUncheckedCreateInputSchema: z.ZodType<Prisma.VehicleGradeUncheckedCreateInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  model: z.string().optional().nullable(),
+  brand: z.string().optional().nullable(),
+  isActive: z.boolean().optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const VehicleGradeUpdateInputSchema: z.ZodType<Prisma.VehicleGradeUpdateInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  isActive: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const VehicleGradeUncheckedUpdateInputSchema: z.ZodType<Prisma.VehicleGradeUncheckedUpdateInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  isActive: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const VehicleGradeCreateManyInputSchema: z.ZodType<Prisma.VehicleGradeCreateManyInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  model: z.string().optional().nullable(),
+  brand: z.string().optional().nullable(),
+  isActive: z.boolean().optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const VehicleGradeUpdateManyMutationInputSchema: z.ZodType<Prisma.VehicleGradeUpdateManyMutationInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  isActive: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const VehicleGradeUncheckedUpdateManyInputSchema: z.ZodType<Prisma.VehicleGradeUncheckedUpdateManyInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  isActive: z.union([ z.boolean(),z.lazy(() => BoolFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
 export const StringFilterSchema: z.ZodType<Prisma.StringFilter> = z.object({
   equals: z.string().optional(),
   in: z.string().array().optional(),
@@ -7390,6 +7580,7 @@ export const AdCountOrderByAggregateInputSchema: z.ZodType<Prisma.AdCountOrderBy
   condition: z.lazy(() => SortOrderSchema).optional(),
   brand: z.lazy(() => SortOrderSchema).optional(),
   model: z.lazy(() => SortOrderSchema).optional(),
+  grade: z.lazy(() => SortOrderSchema).optional(),
   trimEdition: z.lazy(() => SortOrderSchema).optional(),
   manufacturedYear: z.lazy(() => SortOrderSchema).optional(),
   modelYear: z.lazy(() => SortOrderSchema).optional(),
@@ -7452,6 +7643,7 @@ export const AdMaxOrderByAggregateInputSchema: z.ZodType<Prisma.AdMaxOrderByAggr
   condition: z.lazy(() => SortOrderSchema).optional(),
   brand: z.lazy(() => SortOrderSchema).optional(),
   model: z.lazy(() => SortOrderSchema).optional(),
+  grade: z.lazy(() => SortOrderSchema).optional(),
   trimEdition: z.lazy(() => SortOrderSchema).optional(),
   manufacturedYear: z.lazy(() => SortOrderSchema).optional(),
   modelYear: z.lazy(() => SortOrderSchema).optional(),
@@ -7507,6 +7699,7 @@ export const AdMinOrderByAggregateInputSchema: z.ZodType<Prisma.AdMinOrderByAggr
   condition: z.lazy(() => SortOrderSchema).optional(),
   brand: z.lazy(() => SortOrderSchema).optional(),
   model: z.lazy(() => SortOrderSchema).optional(),
+  grade: z.lazy(() => SortOrderSchema).optional(),
   trimEdition: z.lazy(() => SortOrderSchema).optional(),
   manufacturedYear: z.lazy(() => SortOrderSchema).optional(),
   modelYear: z.lazy(() => SortOrderSchema).optional(),
@@ -8475,6 +8668,42 @@ export const VehicleModelMaxOrderByAggregateInputSchema: z.ZodType<Prisma.Vehicl
 export const VehicleModelMinOrderByAggregateInputSchema: z.ZodType<Prisma.VehicleModelMinOrderByAggregateInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
+  brand: z.lazy(() => SortOrderSchema).optional(),
+  isActive: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const VehicleGradeNameModelBrandCompoundUniqueInputSchema: z.ZodType<Prisma.VehicleGradeNameModelBrandCompoundUniqueInput> = z.object({
+  name: z.string(),
+  model: z.string(),
+  brand: z.string(),
+}).strict();
+
+export const VehicleGradeCountOrderByAggregateInputSchema: z.ZodType<Prisma.VehicleGradeCountOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  model: z.lazy(() => SortOrderSchema).optional(),
+  brand: z.lazy(() => SortOrderSchema).optional(),
+  isActive: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const VehicleGradeMaxOrderByAggregateInputSchema: z.ZodType<Prisma.VehicleGradeMaxOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  model: z.lazy(() => SortOrderSchema).optional(),
+  brand: z.lazy(() => SortOrderSchema).optional(),
+  isActive: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const VehicleGradeMinOrderByAggregateInputSchema: z.ZodType<Prisma.VehicleGradeMinOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  model: z.lazy(() => SortOrderSchema).optional(),
   brand: z.lazy(() => SortOrderSchema).optional(),
   isActive: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
@@ -11162,6 +11391,7 @@ export const AdCreateWithoutCreatorInputSchema: z.ZodType<Prisma.AdCreateWithout
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -11228,6 +11458,7 @@ export const AdUncheckedCreateWithoutCreatorInputSchema: z.ZodType<Prisma.AdUnch
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -11775,6 +12006,7 @@ export const AdScalarWhereInputSchema: z.ZodType<Prisma.AdScalarWhereInput> = z.
   condition: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   brand: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   model: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
+  grade: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   trimEdition: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   manufacturedYear: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   modelYear: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
@@ -12581,6 +12813,7 @@ export const AdCreateWithoutOrgInputSchema: z.ZodType<Prisma.AdCreateWithoutOrgI
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -12647,6 +12880,7 @@ export const AdUncheckedCreateWithoutOrgInputSchema: z.ZodType<Prisma.AdUnchecke
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -14503,6 +14737,7 @@ export const AdCreateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdCreateWitho
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -14570,6 +14805,7 @@ export const AdUncheckedCreateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdUn
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -14646,6 +14882,7 @@ export const AdUpdateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdUpdateWitho
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -14712,6 +14949,7 @@ export const AdUncheckedUpdateWithoutRevisionsInputSchema: z.ZodType<Prisma.AdUn
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -14773,6 +15011,7 @@ export const AdCreateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdCreateWitho
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -14840,6 +15079,7 @@ export const AdUncheckedCreateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdUn
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -14916,6 +15156,7 @@ export const AdUpdateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdUpdateWitho
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -14982,6 +15223,7 @@ export const AdUncheckedUpdateWithoutAnalyticsInputSchema: z.ZodType<Prisma.AdUn
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -15043,6 +15285,7 @@ export const AdCreateWithoutCategoryInputSchema: z.ZodType<Prisma.AdCreateWithou
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -15109,6 +15352,7 @@ export const AdUncheckedCreateWithoutCategoryInputSchema: z.ZodType<Prisma.AdUnc
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -15403,6 +15647,7 @@ export const AdCreateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdCreateWithou
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -15470,6 +15715,7 @@ export const AdUncheckedCreateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdUnc
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -15629,6 +15875,7 @@ export const AdUpdateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdUpdateWithou
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -15695,6 +15942,7 @@ export const AdUncheckedUpdateWithoutPaymentsInputSchema: z.ZodType<Prisma.AdUnc
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -15926,6 +16174,7 @@ export const AdCreateWithoutFavoritesInputSchema: z.ZodType<Prisma.AdCreateWitho
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -15993,6 +16242,7 @@ export const AdUncheckedCreateWithoutFavoritesInputSchema: z.ZodType<Prisma.AdUn
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -16156,6 +16406,7 @@ export const AdUpdateWithoutFavoritesInputSchema: z.ZodType<Prisma.AdUpdateWitho
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -16222,6 +16473,7 @@ export const AdUncheckedUpdateWithoutFavoritesInputSchema: z.ZodType<Prisma.AdUn
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -16453,6 +16705,7 @@ export const AdCreateWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdCreateWithou
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -16520,6 +16773,7 @@ export const AdUncheckedCreateWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdUnc
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -16596,6 +16850,7 @@ export const AdUpdateWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdUpdateWithou
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -16662,6 +16917,7 @@ export const AdUncheckedUpdateWithoutGeoViewsInputSchema: z.ZodType<Prisma.AdUnc
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -17233,6 +17489,7 @@ export const AdCreateWithoutShareEventsInputSchema: z.ZodType<Prisma.AdCreateWit
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -17300,6 +17557,7 @@ export const AdUncheckedCreateWithoutShareEventsInputSchema: z.ZodType<Prisma.Ad
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -17376,6 +17634,7 @@ export const AdUpdateWithoutShareEventsInputSchema: z.ZodType<Prisma.AdUpdateWit
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -17442,6 +17701,7 @@ export const AdUncheckedUpdateWithoutShareEventsInputSchema: z.ZodType<Prisma.Ad
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -17586,6 +17846,7 @@ export const AdCreateWithoutReportsInputSchema: z.ZodType<Prisma.AdCreateWithout
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -17653,6 +17914,7 @@ export const AdUncheckedCreateWithoutReportsInputSchema: z.ZodType<Prisma.AdUnch
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -17816,6 +18078,7 @@ export const AdUpdateWithoutReportsInputSchema: z.ZodType<Prisma.AdUpdateWithout
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -17882,6 +18145,7 @@ export const AdUncheckedUpdateWithoutReportsInputSchema: z.ZodType<Prisma.AdUnch
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -18183,6 +18447,7 @@ export const AdCreateWithoutMediaInputSchema: z.ZodType<Prisma.AdCreateWithoutMe
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -18250,6 +18515,7 @@ export const AdUncheckedCreateWithoutMediaInputSchema: z.ZodType<Prisma.AdUnchec
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -18351,6 +18617,7 @@ export const AdUpdateWithoutMediaInputSchema: z.ZodType<Prisma.AdUpdateWithoutMe
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -18417,6 +18684,7 @@ export const AdUncheckedUpdateWithoutMediaInputSchema: z.ZodType<Prisma.AdUnchec
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -18507,6 +18775,7 @@ export const AdCreateWithoutPartCategoryInputSchema: z.ZodType<Prisma.AdCreateWi
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -18574,6 +18843,7 @@ export const AdUncheckedCreateWithoutPartCategoryInputSchema: z.ZodType<Prisma.A
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -18711,6 +18981,7 @@ export const AdCreateManyCreatorInputSchema: z.ZodType<Prisma.AdCreateManyCreato
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -18984,6 +19255,7 @@ export const AdUpdateWithoutCreatorInputSchema: z.ZodType<Prisma.AdUpdateWithout
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -19049,6 +19321,7 @@ export const AdUncheckedUpdateWithoutCreatorInputSchema: z.ZodType<Prisma.AdUnch
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -19112,6 +19385,7 @@ export const AdUncheckedUpdateManyWithoutCreatorInputSchema: z.ZodType<Prisma.Ad
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -19443,6 +19717,7 @@ export const AdCreateManyOrgInputSchema: z.ZodType<Prisma.AdCreateManyOrgInput> 
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -19654,6 +19929,7 @@ export const AdUpdateWithoutOrgInputSchema: z.ZodType<Prisma.AdUpdateWithoutOrgI
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -19719,6 +19995,7 @@ export const AdUncheckedUpdateWithoutOrgInputSchema: z.ZodType<Prisma.AdUnchecke
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -19782,6 +20059,7 @@ export const AdUncheckedUpdateManyWithoutOrgInputSchema: z.ZodType<Prisma.AdUnch
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -20093,6 +20371,7 @@ export const AdCreateManyCategoryInputSchema: z.ZodType<Prisma.AdCreateManyCateg
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -20146,6 +20425,7 @@ export const AdUpdateWithoutCategoryInputSchema: z.ZodType<Prisma.AdUpdateWithou
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -20211,6 +20491,7 @@ export const AdUncheckedUpdateWithoutCategoryInputSchema: z.ZodType<Prisma.AdUnc
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -20274,6 +20555,7 @@ export const AdUncheckedUpdateManyWithoutCategoryInputSchema: z.ZodType<Prisma.A
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -20352,6 +20634,7 @@ export const AdCreateManyPartCategoryInputSchema: z.ZodType<Prisma.AdCreateManyP
   condition: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
   model: z.string().optional().nullable(),
+  grade: z.string().optional().nullable(),
   trimEdition: z.string().optional().nullable(),
   manufacturedYear: z.string().optional().nullable(),
   modelYear: z.string().optional().nullable(),
@@ -20404,6 +20687,7 @@ export const AdUpdateWithoutPartCategoryInputSchema: z.ZodType<Prisma.AdUpdateWi
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -20470,6 +20754,7 @@ export const AdUncheckedUpdateWithoutPartCategoryInputSchema: z.ZodType<Prisma.A
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -20533,6 +20818,7 @@ export const AdUncheckedUpdateManyWithoutPartCategoryInputSchema: z.ZodType<Pris
   condition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   brand: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   model: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  grade: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   trimEdition: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   manufacturedYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   modelYear: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -22454,6 +22740,63 @@ export const VehicleModelFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.VehicleMo
   where: VehicleModelWhereUniqueInputSchema, 
 }).strict();
 
+export const VehicleGradeFindFirstArgsSchema: z.ZodType<Prisma.VehicleGradeFindFirstArgs> = z.object({
+  select: VehicleGradeSelectSchema.optional(),
+  where: VehicleGradeWhereInputSchema.optional(), 
+  orderBy: z.union([ VehicleGradeOrderByWithRelationInputSchema.array(), VehicleGradeOrderByWithRelationInputSchema ]).optional(),
+  cursor: VehicleGradeWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ VehicleGradeScalarFieldEnumSchema, VehicleGradeScalarFieldEnumSchema.array() ]).optional(),
+}).strict();
+
+export const VehicleGradeFindFirstOrThrowArgsSchema: z.ZodType<Prisma.VehicleGradeFindFirstOrThrowArgs> = z.object({
+  select: VehicleGradeSelectSchema.optional(),
+  where: VehicleGradeWhereInputSchema.optional(), 
+  orderBy: z.union([ VehicleGradeOrderByWithRelationInputSchema.array(), VehicleGradeOrderByWithRelationInputSchema ]).optional(),
+  cursor: VehicleGradeWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ VehicleGradeScalarFieldEnumSchema, VehicleGradeScalarFieldEnumSchema.array() ]).optional(),
+}).strict();
+
+export const VehicleGradeFindManyArgsSchema: z.ZodType<Prisma.VehicleGradeFindManyArgs> = z.object({
+  select: VehicleGradeSelectSchema.optional(),
+  where: VehicleGradeWhereInputSchema.optional(), 
+  orderBy: z.union([ VehicleGradeOrderByWithRelationInputSchema.array(), VehicleGradeOrderByWithRelationInputSchema ]).optional(),
+  cursor: VehicleGradeWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ VehicleGradeScalarFieldEnumSchema, VehicleGradeScalarFieldEnumSchema.array() ]).optional(),
+}).strict();
+
+export const VehicleGradeAggregateArgsSchema: z.ZodType<Prisma.VehicleGradeAggregateArgs> = z.object({
+  where: VehicleGradeWhereInputSchema.optional(), 
+  orderBy: z.union([ VehicleGradeOrderByWithRelationInputSchema.array(), VehicleGradeOrderByWithRelationInputSchema ]).optional(),
+  cursor: VehicleGradeWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict();
+
+export const VehicleGradeGroupByArgsSchema: z.ZodType<Prisma.VehicleGradeGroupByArgs> = z.object({
+  where: VehicleGradeWhereInputSchema.optional(), 
+  orderBy: z.union([ VehicleGradeOrderByWithAggregationInputSchema.array(), VehicleGradeOrderByWithAggregationInputSchema ]).optional(),
+  by: VehicleGradeScalarFieldEnumSchema.array(), 
+  having: VehicleGradeScalarWhereWithAggregatesInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict();
+
+export const VehicleGradeFindUniqueArgsSchema: z.ZodType<Prisma.VehicleGradeFindUniqueArgs> = z.object({
+  select: VehicleGradeSelectSchema.optional(),
+  where: VehicleGradeWhereUniqueInputSchema, 
+}).strict();
+
+export const VehicleGradeFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.VehicleGradeFindUniqueOrThrowArgs> = z.object({
+  select: VehicleGradeSelectSchema.optional(),
+  where: VehicleGradeWhereUniqueInputSchema, 
+}).strict();
+
 export const UserCreateArgsSchema: z.ZodType<Prisma.UserCreateArgs> = z.object({
   select: UserSelectSchema.optional(),
   include: UserIncludeSchema.optional(),
@@ -23725,5 +24068,43 @@ export const VehicleModelUpdateManyArgsSchema: z.ZodType<Prisma.VehicleModelUpda
 
 export const VehicleModelDeleteManyArgsSchema: z.ZodType<Prisma.VehicleModelDeleteManyArgs> = z.object({
   where: VehicleModelWhereInputSchema.optional(), 
+  limit: z.number().optional(),
+}).strict();
+
+export const VehicleGradeCreateArgsSchema: z.ZodType<Prisma.VehicleGradeCreateArgs> = z.object({
+  select: VehicleGradeSelectSchema.optional(),
+  data: z.union([ VehicleGradeCreateInputSchema, VehicleGradeUncheckedCreateInputSchema ]),
+}).strict();
+
+export const VehicleGradeUpsertArgsSchema: z.ZodType<Prisma.VehicleGradeUpsertArgs> = z.object({
+  select: VehicleGradeSelectSchema.optional(),
+  where: VehicleGradeWhereUniqueInputSchema, 
+  create: z.union([ VehicleGradeCreateInputSchema, VehicleGradeUncheckedCreateInputSchema ]),
+  update: z.union([ VehicleGradeUpdateInputSchema, VehicleGradeUncheckedUpdateInputSchema ]),
+}).strict();
+
+export const VehicleGradeCreateManyArgsSchema: z.ZodType<Prisma.VehicleGradeCreateManyArgs> = z.object({
+  data: z.union([ VehicleGradeCreateManyInputSchema, VehicleGradeCreateManyInputSchema.array() ]),
+}).strict();
+
+export const VehicleGradeDeleteArgsSchema: z.ZodType<Prisma.VehicleGradeDeleteArgs> = z.object({
+  select: VehicleGradeSelectSchema.optional(),
+  where: VehicleGradeWhereUniqueInputSchema, 
+}).strict();
+
+export const VehicleGradeUpdateArgsSchema: z.ZodType<Prisma.VehicleGradeUpdateArgs> = z.object({
+  select: VehicleGradeSelectSchema.optional(),
+  data: z.union([ VehicleGradeUpdateInputSchema, VehicleGradeUncheckedUpdateInputSchema ]),
+  where: VehicleGradeWhereUniqueInputSchema, 
+}).strict();
+
+export const VehicleGradeUpdateManyArgsSchema: z.ZodType<Prisma.VehicleGradeUpdateManyArgs> = z.object({
+  data: z.union([ VehicleGradeUpdateManyMutationInputSchema, VehicleGradeUncheckedUpdateManyInputSchema ]),
+  where: VehicleGradeWhereInputSchema.optional(), 
+  limit: z.number().optional(),
+}).strict();
+
+export const VehicleGradeDeleteManyArgsSchema: z.ZodType<Prisma.VehicleGradeDeleteManyArgs> = z.object({
+  where: VehicleGradeWhereInputSchema.optional(), 
   limit: z.number().optional(),
 }).strict();

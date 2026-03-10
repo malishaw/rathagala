@@ -871,6 +871,10 @@ function AdDetailsModal({ ad, open, onOpenChange }: { ad: AdType; open: boolean;
                 <p className="text-sm text-slate-800">{ad.model || "—"}</p>
               </div>
               <div>
+                <label className="text-xs font-semibold text-slate-600">Compatible Grade</label>
+                <p className="text-sm text-slate-800">{(ad as any).grade || "—"}</p>
+              </div>
+              <div>
                 <label className="text-xs font-semibold text-slate-600">Price</label>
                 <p className="text-sm font-semibold text-teal-700">
                   {ad.price

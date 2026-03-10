@@ -18,6 +18,7 @@ import newsletterRoute from "@/server/routes/newsletter/newsletter.index";
 import autoPartCategoryRoute from "@/server/routes/auto-part-category/auto-part-category.index";
 import brandCarouselRoute from "@/server/routes/brand-carousel/brand-carousel.index";
 import vehicleModelRoute from "@/server/routes/vehicle-model/vehicle-model.index";
+import vehicleGradeRoute from "@/server/routes/vehicle-grade/vehicle-grade.index";
 
 const app = createApp();
 
@@ -43,7 +44,8 @@ const routes = app
   .route("/newsletter", newsletterRoute)
   .route("/auto-part-category", autoPartCategoryRoute)
   .route("/brand-carousel", brandCarouselRoute)
-  .route("/vehicle-model", vehicleModelRoute);
+  .route("/vehicle-model", vehicleModelRoute)
+  .route("/vehicle-grade", vehicleGradeRoute);
 
 export type AppType = typeof routes;
 

@@ -71,7 +71,11 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     for (const a of ads) {
       if (a.model && typeof a.model === "string") set.add(a.model);
     }
-    userModels = Array.from(set).sort((a, b) => a.localeCompare(b));
+    // Exclude names already present in DB models (case-insensitive) to prevent duplicates
+    const dbModelNames = new Set(models.map((m) => m.name.toLowerCase()));
+    userModels = Array.from(set)
+      .filter((name) => !dbModelNames.has(name.toLowerCase()))
+      .sort((a, b) => a.localeCompare(b));
   }
 
   return c.json(

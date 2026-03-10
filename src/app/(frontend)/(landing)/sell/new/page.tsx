@@ -29,6 +29,7 @@ import { AdSubmissionSuccessModal } from "@/features/ads/components/ad-submissio
 import { locationData, getManufactureYears } from "@/lib/location-data";
 import { CitySearchDropdown } from "@/components/ui/city-search-dropdown";
 import { ModelSearchDropdown } from "@/components/ui/model-search-dropdown";
+import { GradeSearchDropdown } from "@/components/ui/grade-search-dropdown";
 import { useGetAutoPartCategories } from "@/features/ads/api/use-get-auto-part-categories";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
@@ -65,6 +66,7 @@ export default function QuickAdCreatePage() {
     type: "CAR", // API enum value
     brand: "",
     model: "",
+    grade: "",
     manufacturedYear: "",
     modelYear: "",
     price: "",
@@ -212,6 +214,13 @@ export default function QuickAdCreatePage() {
         newData.city = "";
       } else if (field === "district") {
         newData.city = "";
+      } else if (field === "brand") {
+        // Reset model and grade when brand changes
+        newData.model = "";
+        newData.grade = "";
+      } else if (field === "model") {
+        // Reset grade when model changes
+        newData.grade = "";
       }
 
       return newData;
@@ -362,6 +371,7 @@ export default function QuickAdCreatePage() {
       condition: formData.condition || undefined,
       brand: formData.brand || undefined,
       model: formData.model || undefined,
+      grade: formData.grade || undefined,
       trimEdition: formData.trimEdition || undefined,
 
       // Year fields (use appropriate field based on type)
@@ -535,6 +545,17 @@ export default function QuickAdCreatePage() {
           </div>
 
           <div>
+            <label className="block text-sm font-medium mb-1">Grade (optional)</label>
+            <GradeSearchDropdown
+              value={formData.grade}
+              onChange={(v) => handleInputChange("grade", v)}
+              model={formData.model}
+              brand={formData.brand}
+              placeholder="Select or type grade"
+            />
+          </div>
+
+          <div>
             <label className="block text-sm font-medium mb-1">Manufacture Year (optional)</label>
             <Select value={formData.manufacturedYear || formData.modelYear} onValueChange={(value) => handleInputChange(formData.type === "VAN" ? "modelYear" : "manufacturedYear", value)}>
               <SelectTrigger className="w-full">
@@ -590,6 +611,18 @@ export default function QuickAdCreatePage() {
                 onChange={(v) => handleInputChange("model", v)}
                 brand={formData.brand}
                 placeholder="Select or type model"
+              />
+            </div>
+
+            {/* Grade */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Grade</label>
+              <GradeSearchDropdown
+                value={formData.grade}
+                onChange={(v) => handleInputChange("grade", v)}
+                model={formData.model}
+                brand={formData.brand}
+                placeholder="Select or type grade"
               />
             </div>
 
@@ -657,6 +690,18 @@ export default function QuickAdCreatePage() {
                 onChange={(v) => handleInputChange("model", v)}
                 brand={formData.brand}
                 placeholder="Select or type model"
+              />
+            </div>
+
+            {/* Grade */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Grade</label>
+              <GradeSearchDropdown
+                value={formData.grade}
+                onChange={(v) => handleInputChange("grade", v)}
+                model={formData.model}
+                brand={formData.brand}
+                placeholder="Select or type grade"
               />
             </div>
 
@@ -739,6 +784,18 @@ export default function QuickAdCreatePage() {
                 onChange={(v) => handleInputChange("model", v)}
                 brand={formData.brand}
                 placeholder="Select or type model"
+              />
+            </div>
+
+            {/* Grade */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Grade</label>
+              <GradeSearchDropdown
+                value={formData.grade}
+                onChange={(v) => handleInputChange("grade", v)}
+                model={formData.model}
+                brand={formData.brand}
+                placeholder="Select or type grade"
               />
             </div>
 
@@ -828,6 +885,18 @@ export default function QuickAdCreatePage() {
               />
             </div>
 
+            {/* Grade */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Grade</label>
+              <GradeSearchDropdown
+                value={formData.grade}
+                onChange={(v) => handleInputChange("grade", v)}
+                model={formData.model}
+                brand={formData.brand}
+                placeholder="Select or type grade"
+              />
+            </div>
+
             {/* Year of Manufacture */}
             <div>
               <label className="block text-sm font-medium mb-1">Year of Manufacture<span className="text-red-500">*</span></label>
@@ -884,6 +953,18 @@ export default function QuickAdCreatePage() {
                 onChange={(v) => handleInputChange("model", v)}
                 brand={formData.brand}
                 placeholder="Select or type model"
+              />
+            </div>
+
+            {/* Grade */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Grade</label>
+              <GradeSearchDropdown
+                value={formData.grade}
+                onChange={(v) => handleInputChange("grade", v)}
+                model={formData.model}
+                brand={formData.brand}
+                placeholder="Select or type grade"
               />
             </div>
 
@@ -2090,6 +2171,7 @@ export default function QuickAdCreatePage() {
             type: "CAR",
             brand: "",
             model: "",
+            grade: "",
             manufacturedYear: "",
             modelYear: "",
             price: "",
