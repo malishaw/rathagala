@@ -249,42 +249,15 @@ export default function AdsManagePage() {
       // Use the generated title for consistency, fallback to original title if needed
       title: generatedTitle || ad.title || "Untitled Ad",
       expiryDate: ad?.expiryDate ? new Date(ad?.expiryDate) : new Date(),
-      featureExpiry: ad?.featureExpiry ? new Date(ad?.featureExpiry) : new Date(),
-      boostExpiry: ad?.boostExpiry ? new Date(ad?.boostExpiry) : new Date(),
       updatedAt: new Date(ad.updatedAt)
     };
   });
 
   // Compute stat counts from full dataset (independent of current filter/page)
-  const statsNow = new Date();
   const statsAds: AdType[] = (statsData?.ads ?? []) as AdType[];
   const activeCount = statsAds.filter((ad) => ad.status === "ACTIVE").length;
-  const boostedCount = statsAds.filter((ad) =>
-    ad.boosted && ad.boostExpiry && new Date(ad.boostExpiry) > statsNow
-  ).length;
-  const featuredCount = statsAds.filter((ad) =>
-    ad.featured && ad.featureExpiry && new Date(ad.featureExpiry) > statsNow
-  ).length;
 
-  // Client-side filter for BOOSTED / FEATURED (not real Ad status values)
-  // Only show ads whose promotion is currently active (expiry in the future)
-  const now = new Date();
-  const filteredAds =
-    statusFilter === "BOOSTED"
-      ? formattedAds.filter(
-          (ad) =>
-            (ad as Record<string, unknown>).boosted === true &&
-            ad.boostExpiry instanceof Date &&
-            ad.boostExpiry > now
-        )
-      : statusFilter === "FEATURED"
-      ? formattedAds.filter(
-          (ad) =>
-            (ad as Record<string, unknown>).featured === true &&
-            ad.featureExpiry instanceof Date &&
-            ad.featureExpiry > now
-        )
-      : formattedAds;
+  const filteredAds = formattedAds;
 
   return (
     <PageContainer scrollable={false}>
@@ -321,8 +294,6 @@ export default function AdsManagePage() {
                 <SelectItem value="ACTIVE">Active</SelectItem>
                 <SelectItem value="PENDING_REVIEW">Pending</SelectItem>
                 <SelectItem value="REJECTED">Rejected</SelectItem>
-                <SelectItem value="BOOSTED">Boosted</SelectItem>
-                <SelectItem value="FEATURED">Featured</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -331,14 +302,6 @@ export default function AdsManagePage() {
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-50 border border-teal-200 cursor-pointer hover:bg-teal-100 transition-colors" onClick={() => { setStatusFilter("ACTIVE"); setPage(1); }}>
               <span className="text-xs font-medium text-teal-600">Active</span>
               <span className="text-sm font-bold text-teal-700">{activeCount}</span>
-            </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-200 cursor-pointer hover:bg-blue-100 transition-colors" onClick={() => { setStatusFilter("BOOSTED"); setPage(1); }}>
-              <span className="text-xs font-medium text-blue-600">Boosted</span>
-              <span className="text-sm font-bold text-blue-700">{boostedCount}</span>
-            </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-yellow-50 border border-yellow-200 cursor-pointer hover:bg-yellow-100 transition-colors" onClick={() => { setStatusFilter("FEATURED"); setPage(1); }}>
-              <span className="text-xs font-medium text-yellow-600">Featured</span>
-              <span className="text-sm font-bold text-yellow-700">{featuredCount}</span>
             </div>
           </div>
           {selectedRows.length > 0 && (

@@ -95,16 +95,12 @@ export default function ExpiredAdsPage() {
       expiryThreshold.setDate(expiryThreshold.getDate() - AD_EXPIRY_DAYS);
       const now = new Date();
 
-      // Filter: ads older than 60 days, not soft-deleted, and no active promotion
+      // Filter: ads older than 60 days, not soft-deleted
       const expiredAds = result.ads.filter((ad: Record<string, unknown>) => {
         const createdAt = new Date(ad.createdAt as string);
         const metadata = (ad.metadata as Record<string, unknown>) || {};
         const isDeletedByUser = metadata.deletedByUser === true;
-        const isActiveBoosted =
-          ad.boosted && ad.boostExpiry && new Date(ad.boostExpiry as string) > now;
-        const isActiveFeatured =
-          ad.featured && ad.featureExpiry && new Date(ad.featureExpiry as string) > now;
-        return createdAt < expiryThreshold && !isDeletedByUser && !isActiveBoosted && !isActiveFeatured;
+        return createdAt < expiryThreshold && !isDeletedByUser;
       });
 
       // Apply client-side pagination
@@ -171,12 +167,6 @@ export default function ExpiredAdsPage() {
       ...(ad as unknown as ExpiredAdType),
       title: generatedTitle || (ad.title as string) || "Untitled Ad",
       expiryDate: ad.expiryDate ? new Date(ad.expiryDate as string) : new Date(),
-      featureExpiry: ad.featureExpiry
-        ? new Date(ad.featureExpiry as string)
-        : new Date(),
-      boostExpiry: ad.boostExpiry
-        ? new Date(ad.boostExpiry as string)
-        : new Date(),
       updatedAt: new Date(ad.updatedAt as string),
     };
   });

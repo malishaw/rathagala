@@ -133,23 +133,10 @@ export function DataTable<TData, TValue>({
               <TableBody>
                 {table.getRowModel().rows?.length ? (
                   table.getRowModel().rows.map((row) => {
-                    // Check for boost/featured status
-                    const rowData = row.original as any;
-                    const now = new Date();
-                    const isBoosted = rowData?.boosted && rowData?.boostExpiry && new Date(rowData.boostExpiry) > now;
-                    const isFeatured = rowData?.featured && rowData?.featureExpiry && new Date(rowData.featureExpiry) > now;
-                    
                     return (
                       <TableRow
                         key={row.id}
                         data-state={row.getIsSelected() && "selected"}
-                        className={
-                          isBoosted 
-                            ? "bg-blue-50 hover:bg-blue-100" 
-                            : isFeatured 
-                            ? "bg-yellow-50 hover:bg-yellow-100" 
-                            : ""
-                        }
                       >
                         {row.getVisibleCells().map((cell) => (
                           <TableCell key={cell.id}>

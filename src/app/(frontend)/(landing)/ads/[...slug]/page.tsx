@@ -712,14 +712,6 @@ export default function AdDetailPage() {
                 )}
 
                 {/* Status Badges */}
-                <div className="absolute top-4 left-4 flex space-x-2 z-20">
-                  {ad.featured && (
-                    <Badge className="bg-orange-500 text-white">Featured</Badge>
-                  )}
-                  {ad.boosted && (
-                    <Badge className="bg-blue-500 text-white">Boosted</Badge>
-                  )}
-                </div>
               </div>
 
               {/* Thumbnail Reel */}

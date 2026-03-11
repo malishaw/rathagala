@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { format } from "date-fns";
-import { Filter, Loader2, Search, X, Eye, TrendingUp, Star, Zap } from "lucide-react";
+import { Filter, Loader2, Search, X, Eye, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -343,17 +343,6 @@ export default function VehicleMarketplace() {
       }
 
       return true;
-    }).sort((a, b) => {
-      // Sort boosted ads to the top
-      const now = new Date();
-      const aIsBoosted = a.boosted && a.boostExpiry && new Date(a.boostExpiry) > now;
-      const bIsBoosted = b.boosted && b.boostExpiry && new Date(b.boostExpiry) > now;
-      
-      if (aIsBoosted && !bIsBoosted) return -1;
-      if (!aIsBoosted && bIsBoosted) return 1;
-      
-      // If both are boosted or both are not, maintain original order
-      return 0;
     });
   }, [allAds, activeFilters, searchQuery]);
 
@@ -362,8 +351,6 @@ export default function VehicleMarketplace() {
     if (!filteredAds || filteredAds.length === 0) return [];
     
     const ads = [...filteredAds];
-    const now = new Date();
-    
     switch (sortBy) {
       case "price-low":
         return ads.sort((a, b) => (a.price || 0) - (b.price || 0));
@@ -372,18 +359,7 @@ export default function VehicleMarketplace() {
       case "year":
         return ads.sort((a, b) => (b.manufacturedYear || 0) - (a.manufacturedYear || 0));
       case "default":
-        // Show boosted ads first, then rest by newest
-        return ads.sort((a, b) => {
-          const aIsBoosted = a.boosted && a.boostExpiry && new Date(a.boostExpiry) > now;
-          const bIsBoosted = b.boosted && b.boostExpiry && new Date(b.boostExpiry) > now;
-          
-          // If one is boosted and the other isn't, boosted comes first
-          if (aIsBoosted && !bIsBoosted) return -1;
-          if (!aIsBoosted && bIsBoosted) return 1;
-          
-          // Otherwise sort by newest
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        });
+        return ads.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       case "newest":
       default:
         return ads.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -1235,42 +1211,12 @@ export default function VehicleMarketplace() {
               {sortedAds.length > 0 && !isLoading && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {sortedAds.slice(0, visibleCount).map((vehicle) => {
-                    const now = new Date();
-                    const isBoosted = vehicle.boosted && vehicle.boostExpiry && new Date(vehicle.boostExpiry) > now;
-                    const isFeatured = vehicle.featured && vehicle.featureExpiry && new Date(vehicle.featureExpiry) > now;
-                    
                     return (
                     <div
                       key={vehicle.id}
-                      className={`rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative ${
-                        isBoosted
-                          ? "bg-blue-50 border-blue-200 hover:border-blue-300"
-                          : isFeatured 
-                          ? "bg-yellow-50/80 border-yellow-200 hover:border-yellow-300" 
-                          : "bg-white border-slate-200 hover:border-slate-300"
-                      }`}
+                      className="rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative bg-white border-slate-200 hover:border-slate-300"
                       onClick={() => (window.location.href = buildAdUrl(vehicle))}
                     >
-                      {/* Boosted Label */}
-                      {isBoosted && (
-                        <div className="absolute  z-20">
-                          <div className="bg-orange-500 text-white px-2 font-semibold text-xs flex rounded-full items-center gap-1">
-                            <Zap className="h-3 w-3" />
-                            Boosted
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Featured Label */}
-                      {isFeatured && (
-                        <div className="absolute  z-20">
-                          <div className="bg-yellow-500 text-white px-2 font-semibold text-xs flex rounded-full items-center gap-1">
-                            <Star className="h-3 w-3" />
-                            Featured
-                          </div>
-                        </div>
-                      )}
-
                       {/* Favorite Button */}
                       <div className="absolute top-10 right-2 z-10">
                         <FavoriteButton adId={vehicle.id} />

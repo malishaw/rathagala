@@ -16,7 +16,7 @@ import type { MediaFile } from "@/modules/media/types";
 import { buildAdUrl } from "@/lib/ad-url";
 import { betterFetch } from "@better-fetch/fetch";
 import { format } from "date-fns";
-import { Building2, Car, CheckCircle, ChevronRight, CreditCard, Edit, Heart, Loader2, Lock, MapPin, MessageCircle, Phone, Shield, Trash2, Camera, Zap, Star } from "lucide-react";
+import { Building2, Car, CheckCircle, ChevronRight, CreditCard, Edit, Heart, Loader2, Lock, MapPin, MessageCircle, Phone, Shield, Trash2, Camera } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
@@ -61,10 +61,6 @@ interface UserAd {
     }
   }>;
   views?: number;
-  boosted?: boolean;
-  featured?: boolean;
-  boostExpiry?: string | null;
-  featureExpiry?: string | null;
   brand?: string | null;
   model?: string | null;
   manufacturedYear?: string | null;
@@ -553,34 +549,12 @@ export default function ProfilePage() {
     }
   };
 
-  // Sort boosted ads to the top - must be before all conditional returns
   const userAds = useMemo(() => {
     const rawUserAds = userAdsQuery.data || [];
-    const adsArray = Array.isArray(rawUserAds) ? rawUserAds : rawUserAds.ads || [];
-
-    return [...adsArray].sort((a, b) => {
-      const now = new Date();
-      const aIsBoosted = a.boosted && a.boostExpiry && new Date(a.boostExpiry) > now;
-      const bIsBoosted = b.boosted && b.boostExpiry && new Date(b.boostExpiry) > now;
-
-      if (aIsBoosted && !bIsBoosted) return -1;
-      if (!aIsBoosted && bIsBoosted) return 1;
-
-      return 0;
-    });
+    return Array.isArray(rawUserAds) ? rawUserAds : rawUserAds.ads || [];
   }, [userAdsQuery.data]);
 
-  // Filter ads based on selected filter
-  const filteredAds = useMemo(() => {
-    const now = new Date();
-    if (adsFilter === "boosted") {
-      return userAds.filter((ad) => ad.boosted && ad.boostExpiry && new Date(ad.boostExpiry) > now);
-    }
-    if (adsFilter === "featured") {
-      return userAds.filter((ad) => ad.featured && ad.featureExpiry && new Date(ad.featureExpiry) > now);
-    }
-    return userAds;
-  }, [userAds, adsFilter]);
+  const filteredAds = userAds;
 
   // Loading state for the entire page
   if (isLoading) {
@@ -1163,8 +1137,6 @@ export default function ProfilePage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Ads</SelectItem>
-                      <SelectItem value="boosted">Boosted Ads</SelectItem>
-                      <SelectItem value="featured">Featured Ads</SelectItem>
                     </SelectContent>
                   </Select>
                   {adsFilter !== "all" && (
@@ -1199,25 +1171,16 @@ export default function ProfilePage() {
                         </>
                       ) : (
                         <p className="text-slate-600 text-lg font-medium">
-                          No {adsFilter === "boosted" ? "boosted" : "featured"} ads found
+                          No ads found
                         </p>
                       )}
                     </div>
                   ) : (
                     filteredAds.map((ad: UserAd) => {
-                      const now = new Date();
-                      const isBoosted = ad.boosted && ad.boostExpiry && new Date(ad.boostExpiry) > now;
-                      const isFeatured = ad.featured && ad.featureExpiry && new Date(ad.featureExpiry) > now;
-
                       return (
                         <div
                           key={ad.id}
-                          className={`rounded-xl border-2 p-5 flex items-center transition-all duration-300 group relative ${isBoosted
-                            ? "bg-blue-50/50 backdrop-blur-md border-blue-100 hover:border-blue-200"
-                            : isFeatured
-                              ? "bg-yellow-50/50 backdrop-blur-md border-yellow-100 hover:border-yellow-200"
-                              : "bg-white/60 backdrop-blur-md border-white/30 hover:bg-white/70 hover:border-[#0D5C63]/30"
-                            }`}
+                          className="rounded-xl border-2 p-5 flex items-center transition-all duration-300 group relative bg-white/60 backdrop-blur-md border-white/30 hover:bg-white/70 hover:border-[#0D5C63]/30"
                         >
 
 
@@ -1244,32 +1207,6 @@ export default function ProfilePage() {
                                 {ad.title}
                               </div>
                               {getStatusBadge(ad.status)}
-                              {/* Promotion Badges */}
-                              {(() => {
-                                const now = new Date();
-                                const isBoosted = ad.boosted && ad.boostExpiry && new Date(ad.boostExpiry) > now;
-                                const isFeatured = ad.featured && ad.featureExpiry && new Date(ad.featureExpiry) > now;
-
-                                if (isBoosted) {
-                                  const daysLeft = Math.ceil((new Date(ad.boostExpiry!).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                                  return (
-                                    <Badge className="bg-orange-100 text-orange-700 border border-orange-300 flex items-center gap-1">
-                                      <Zap className="w-3 h-3" />
-                                      Boosted ({daysLeft}d left)
-                                    </Badge>
-                                  );
-                                }
-                                if (isFeatured) {
-                                  const daysLeft = Math.ceil((new Date(ad.featureExpiry!).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                                  return (
-                                    <Badge className="bg-yellow-100 text-yellow-700 border border-yellow-300 flex items-center gap-1">
-                                      <Star className="w-3 h-3" />
-                                      Featured ({daysLeft}d left)
-                                    </Badge>
-                                  );
-                                }
-                                return null;
-                              })()}
                             </div>
                             <div className="text-base font-bold text-[#0D5C63] mt-1">Rs {formatPrice(ad.price, (ad as any).metadata?.isNegotiable)}</div>
                             <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-500 mt-2">
@@ -1297,16 +1234,6 @@ export default function ProfilePage() {
                           </div>
 
                           <div className="flex flex-col gap-2 items-end shrink-0">
-                            <Button
-                              size="sm"
-                              className={`text-xs px-3 h-8 border-0 ${isBoosted || isFeatured
-                                ? "bg-orange-500 text-white hover:bg-orange-600"
-                                : "bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700"
-                                }`}
-                              onClick={() => router.push("/payments")}
-                            >
-                              {isBoosted || isFeatured ? "Pay Now" : "Promote Ad"}
-                            </Button>
                             <div className="flex gap-2">
                               <Button
                                 variant="ghost"

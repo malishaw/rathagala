@@ -82,8 +82,6 @@ export function AdsTable() {
       // Use the generated title for consistency, fallback to original title if needed
       title: generatedTitle || ad.title || "Untitled Ad",
       expiryDate: ad?.expiryDate ? new Date(ad?.expiryDate) : new Date(),
-      featureExpiry: ad?.featureExpiry ? new Date(ad?.featureExpiry) : new Date(),
-      boostExpiry: ad?.boostExpiry ? new Date(ad?.boostExpiry) : new Date(),
       updatedAt: new Date(ad.updatedAt)
     };
   });

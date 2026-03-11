@@ -28,10 +28,8 @@ import { FaMobileAlt, FaWhatsapp } from "react-icons/fa";
 import { usePermanentDeleteAd } from "../../api/use-permanent-delete-ad";
 
 // This type is used to define the shape of our data.
-export type ExpiredAdType = Omit<Ad, "createdAt" | "boostExpiry" | "featureExpiry" | "expiryDate"> & {
+export type ExpiredAdType = Omit<Ad, "createdAt" | "expiryDate"> & {
   createdAt: string;
-  boostExpiry?: string | Date | null;
-  featureExpiry?: string | Date | null;
   expiryDate?: string | Date | null;
   grade?: string | null;
   district?: string | null;

@@ -20,8 +20,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Loader2, Camera, ChevronRight, CheckCircle2, X, PlusCircle, Zap, Star, ChevronsUpDown, Check } from "lucide-react";
+import { Loader2, Camera, ChevronRight, CheckCircle2, X, PlusCircle, ChevronsUpDown, Check } from "lucide-react";
 import { MediaGallery } from "@/modules/media/components/media-gallery";
 import type { MediaFile } from "@/modules/media/types";
 import { PendingAdModal } from "@/features/ads/components/pending-ad-modal";
@@ -56,8 +55,6 @@ export default function QuickAdCreatePage() {
   const [categoryOpen, setCategoryOpen] = useState(false);
 
   // Promotion state
-  const [promotionType, setPromotionType] = useState<"boost" | "featured" | "none">("none");
-  const [promotionDuration, setPromotionDuration] = useState<"1week" | "2weeks" | "1month">("1week");
   const [formData, setFormData] = useState({
     // Listing type
     listingType: "SELL",
@@ -244,38 +241,6 @@ export default function QuickAdCreatePage() {
 
   // Handle form submission
   const handleSubmit = () => {
-    // Calculate boost/featured expiry dates based on selection
-    let boostExpiry: Date | undefined = undefined;
-    let featureExpiry: Date | undefined = undefined;
-    let boosted = false;
-    let featured = false;
-
-    if (promotionType !== "none") {
-      const now = new Date();
-      let expiryDate: Date;
-
-      switch (promotionDuration) {
-        case "1week":
-          expiryDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-          break;
-        case "2weeks":
-          expiryDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
-          break;
-        case "1month":
-          expiryDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-          break;
-        default:
-          expiryDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-      }
-
-      if (promotionType === "boost") {
-        boosted = true;
-        boostExpiry = expiryDate;
-      } else if (promotionType === "featured") {
-        featured = true;
-        featureExpiry = expiryDate;
-      }
-    }
     // Validate at least 1 image is selected
     // if (selectedImages.length === 0) {
     //   alert("Please upload at least 1 image for your ad");
@@ -412,10 +377,6 @@ export default function QuickAdCreatePage() {
       termsAndConditions: formData.termsAndConditions || undefined,
       published: formData.published,
       isDraft: formData.isDraft,
-      boosted: boosted,
-      featured: featured,
-      boostExpiry: boostExpiry,
-      featureExpiry: featureExpiry,
       metadata: { isNegotiable: formData.isNegotiable },
     };
 
@@ -1966,67 +1927,6 @@ export default function QuickAdCreatePage() {
                 <Label htmlFor="terms" className="text-sm">
                   I agree to the Terms & Conditions<span className="text-red-500">*</span>
                 </Label>
-              </div>
-
-              {/* Boost Ad Selection */}
-              <div className="pt-4 border-t border-slate-200">
-                <label className="block text-sm font-medium mb-3">Promote Your Ad (Optional)</label>
-                <Card className="border-amber-200">
-                  <div className="p-4">
-                    <div className="space-y-4">
-                      <div>
-                        <Label className="text-sm font-semibold mb-2 block">Promotion Type</Label>
-                        <RadioGroup value={promotionType} onValueChange={(value) => setPromotionType(value as any)}>
-                          <div className="flex items-center space-x-2 mb-2">
-                            <RadioGroupItem value="none" id="sell-promo-none" />
-                            <Label htmlFor="sell-promo-none" className="font-normal cursor-pointer text-sm">
-                              No Promotion
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2 mb-2">
-                            <RadioGroupItem value="boost" id="sell-promo-boost" />
-                            <Label htmlFor="sell-promo-boost" className="font-normal cursor-pointer flex items-center gap-2 text-sm">
-                              <Zap className="w-4 h-4 text-orange-600" />
-                              <span>Boost Ad</span>
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="featured" id="sell-promo-featured" />
-                            <Label htmlFor="sell-promo-featured" className="font-normal cursor-pointer flex items-center gap-2 text-sm">
-                              <Star className="w-4 h-4 text-yellow-600" />
-                              <span>Featured Ad</span>
-                            </Label>
-                          </div>
-                        </RadioGroup>
-                      </div>
-
-                      {promotionType !== "none" && (
-                        <div>
-                          <Label className="text-sm font-semibold mb-2 block">Duration & Pricing</Label>
-                          <Select value={promotionDuration} onValueChange={(value) => setPromotionDuration(value as any)}>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select duration" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="1week">
-                                1 Week - Rs {promotionType === "boost" ? "1,500" : "2,000"}
-                              </SelectItem>
-                              <SelectItem value="2weeks">
-                                2 Weeks - Rs {promotionType === "boost" ? "2,500" : "3,000"}
-                              </SelectItem>
-                              <SelectItem value="1month">
-                                1 Month - Rs {promotionType === "boost" ? "3,500" : "4,000"}
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-                <p className="text-xs text-slate-500 mt-2">
-                  Boost or feature your ad for better visibility
-                </p>
               </div>
 
               {/* Image Selection Section */}

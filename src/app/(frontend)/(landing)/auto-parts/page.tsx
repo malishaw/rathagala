@@ -28,8 +28,6 @@ import {
   Car,
   Sparkles,
   Eye,
-  Zap,
-  Star,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
@@ -400,36 +398,12 @@ export default function AutoPartsPage() {
                   const forParts = [vehicle.brand, vehicle.model, compatVehicle].filter(Boolean).join(" ");
                   const displayTitle = forParts ? `${partName} for ${forParts}` : partName;
 
-                  const now = new Date();
-                  const isBoosted = vehicle.boosted && vehicle.boostExpiry && new Date(vehicle.boostExpiry) > now;
-                  const isFeatured = vehicle.featured && vehicle.featureExpiry && new Date(vehicle.featureExpiry) > now;
-
                   return (
                     <div
                       key={vehicle.id}
                       className="rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative bg-white"
                       onClick={() => router.push(buildAdUrl(vehicle))}
                     >
-                      {/* Boosted Badge */}
-                      {isBoosted && (
-                        <div className="absolute top-0 left-0 z-10">
-                          <div className="bg-orange-500 text-white px-2 font-semibold text-xs flex rounded-full items-center gap-1">
-                            <Zap className="h-3 w-3" />
-                            Boosted
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Featured Badge */}
-                      {isFeatured && (
-                        <div className="absolute top-0 left-0 z-10">
-                          <div className="bg-yellow-500 text-white px-2 font-semibold text-xs flex rounded-full items-center gap-1">
-                            <Star className="h-3 w-3" />
-                            Featured
-                          </div>
-                        </div>
-                      )}
-
                       {/* Favorite Button */}
                       <div className="absolute top-10 right-2 z-10">
                         <FavoriteButton adId={vehicle.id} />

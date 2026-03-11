@@ -25,9 +25,7 @@ const formattedAdSchema = AdSchema.extend({
   metadata: z.record(z.any()).nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
-  boostExpiry: z.string().nullable(),
-  featureExpiry: z.string().nullable(),
-  expiryDate: z.string().nullable(),
+expiryDate: z.string().nullable(),
   analytics: z.object({
     views: z.number(),
     clicks: z.number(),
@@ -83,11 +81,6 @@ export const createAdBaseSchema = z
     price: z.number().positive().optional(),
     published: z.boolean().default(false),
     isDraft: z.boolean().default(true),
-    boosted: z.boolean().default(false),
-    featured: z.boolean().default(false),
-    boostExpiry: z.coerce.date().optional(),
-    featureExpiry: z.coerce.date().optional(),
-
     // SEO fields
     seoTitle: z.string().optional(),
     seoDescription: z.string().optional(),

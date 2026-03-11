@@ -13,7 +13,6 @@ import {
   BulkPermanentDeleteRoute,
   ApproveRoute,
   RejectRoute,
-  UpdatePromotionRoute,
   BulkCreateRoute,
   IncrementViewRoute,
   TrendingRoute,
@@ -171,13 +170,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
               AND: [
                 { status: AdStatus.ACTIVE },
                 { published: true },
-                {
-                  OR: [
-                    { createdAt: { gte: sixtyDaysAgo } },
-                    { boosted: true, boostExpiry: { gt: now } },
-                    { featured: true, featureExpiry: { gt: now } },
-                  ],
-                },
+                { createdAt: { gte: sixtyDaysAgo } },
               ],
             },
             { status: AdStatus.EXPIRED },
@@ -187,14 +180,8 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
         andFilters.push({ status: AdStatus.ACTIVE });
         // Also exclude soft-deleted ads (published = false, metadata.deletedByUser = true)
         andFilters.push({ published: true });
-        // Exclude ads older than 60 days UNLESS they still have an active promotion
-        andFilters.push({
-          OR: [
-            { createdAt: { gte: sixtyDaysAgo } },
-            { boosted: true, boostExpiry: { gt: now } },
-            { featured: true, featureExpiry: { gt: now } },
-          ],
-        });
+        // Exclude ads older than 60 days
+        andFilters.push({ createdAt: { gte: sixtyDaysAgo } });
       }
     }
 
@@ -925,14 +912,6 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
       // Ad is being saved as draft, set status to DRAFT
       updateData.status = AdStatus.DRAFT;
     }
-    if (adUpdates.boosted !== undefined) updateData.boosted = adUpdates.boosted;
-    if (adUpdates.featured !== undefined)
-      updateData.featured = adUpdates.featured;
-    if (adUpdates.boostExpiry !== undefined)
-      updateData.boostExpiry = adUpdates.boostExpiry;
-    if (adUpdates.featureExpiry !== undefined)
-      updateData.featureExpiry = adUpdates.featureExpiry;
-
     // SEO fields
     if (adUpdates.seoTitle !== undefined)
       updateData.seoTitle = adUpdates.seoTitle;
@@ -1558,107 +1537,6 @@ export const reject: AppRouteHandler<RejectRoute> = async (c) => {
   }
 };
 
-// ---- Update Promotion Status Handler ----
-export const updatePromotion: AppRouteHandler<UpdatePromotionRoute> = async (c) => {
-  try {
-    const adId = c.req.valid("param").id;
-    const user = c.get("user");
-
-    if (!user) {
-      return c.json(
-        { message: HttpStatusPhrases.UNAUTHORIZED },
-        HttpStatusCodes.UNAUTHORIZED
-      );
-    }
-
-    // Check if user is admin
-    const userRole = (user as any)?.role;
-    if (userRole !== "admin") {
-      return c.json(
-        { message: "Admin access required" },
-        HttpStatusCodes.FORBIDDEN
-      );
-    }
-
-    // Check if ad exists
-    const existingAd = await prisma.ad.findUnique({
-      where: { id: adId },
-    });
-
-    if (!existingAd) {
-      return c.json(
-        { message: HttpStatusPhrases.NOT_FOUND },
-        HttpStatusCodes.NOT_FOUND
-      );
-    }
-
-    // Get promotion details from request body
-    const body = c.req.valid("json");
-    const { promotionType, duration } = body;
-
-    // Calculate expiry date based on duration
-    let boostExpiry: Date | null = null;
-    let featureExpiry: Date | null = null;
-    let boosted = false;
-    let featured = false;
-
-    if (promotionType !== "none" && duration) {
-      const now = new Date();
-      let expiryDate: Date;
-
-      switch (duration) {
-        case "1week":
-          expiryDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-          break;
-        case "2weeks":
-          expiryDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
-          break;
-        case "1month":
-          expiryDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-          break;
-        default:
-          expiryDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-      }
-
-      if (promotionType === "boost") {
-        boosted = true;
-        boostExpiry = expiryDate;
-      } else if (promotionType === "featured") {
-        featured = true;
-        featureExpiry = expiryDate;
-      }
-    }
-
-    // Update ad promotion status
-    const updatedAd = await prisma.ad.update({
-      where: { id: adId },
-      data: {
-        boosted,
-        featured,
-        boostExpiry,
-        featureExpiry,
-      },
-    });
-
-    // Format response
-    const formattedAd = {
-      ...updatedAd,
-      createdAt: updatedAd.createdAt.toISOString(),
-      updatedAt: updatedAd.updatedAt.toISOString(),
-      boostExpiry: updatedAd.boostExpiry?.toISOString() ?? null,
-      featureExpiry: updatedAd.featureExpiry?.toISOString() ?? null,
-      expiryDate: updatedAd.expiryDate?.toISOString() ?? null,
-    };
-
-    return c.json(formattedAd, HttpStatusCodes.OK);
-  } catch (error: any) {
-    console.error("[UPDATE PROMOTION] Error:", error);
-    return c.json(
-      { message: error.message || "Failed to update promotion status" },
-      HttpStatusCodes.INTERNAL_SERVER_ERROR
-    );
-  }
-};
 
 export const bulkCreate: AppRouteHandler<BulkCreateRoute> = async (c) => {
   try {
