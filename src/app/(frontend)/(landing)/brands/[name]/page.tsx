@@ -950,7 +950,7 @@ export default function BrandPage() {
                   <Zap className="h-4 w-4 text-purple-500" />
                   <span className="text-sm font-semibold text-slate-700">Featured Ads</span>
                 </div>
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {displayedFeaturedAds.map((vehicle) => (
                     <FeaturedAdCard
                       key={`featured-${vehicle.id}`}

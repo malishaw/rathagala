@@ -13,9 +13,11 @@ interface TopAdCardProps {
 }
 
 export function TopAdCard({ vehicle, vehicleTypeLabels, formatPrice, formatAdTitle }: TopAdCardProps) {
+  const isFeatured = (vehicle as any).featuredActive;
+  
   return (
     <div
-      className="rounded-lg border-2 border-yellow-400 overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group relative bg-yellow-50"
+      className={`rounded-lg border-2 overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group relative ${isFeatured ? 'bg-yellow-50 border-yellow-400 hover:border-yellow-500' : 'bg-white border-slate-200 hover:border-slate-300'}`}
       onClick={() => (window.location.href = buildAdUrl(vehicle))}
     >
       <div className="absolute bottom-2 right-2 z-10">
@@ -31,12 +33,22 @@ export function TopAdCard({ vehicle, vehicleTypeLabels, formatPrice, formatAdTit
           {formatAdTitle(vehicle)}
         </h3>
         <div className="flex gap-3">
-          <div className="w-32 h-20 flex-shrink-0">
-            <img
-              src={vehicle?.media?.[0]?.media?.url || "/placeholder-image.jpg"}
-              alt={vehicle.title || "Vehicle"}
-              className="w-full h-full object-cover rounded-md"
-            />
+          <div className="w-32 h-20 flex-shrink-0 flex flex-col">
+            <div className="flex-1">
+              <img
+                src={vehicle?.media?.[0]?.media?.url || "/placeholder-image.jpg"}
+                alt={vehicle.title || "Vehicle"}
+                className="w-full h-full object-cover rounded-md"
+              />
+            </div>
+            {/* Time and Views Below Image */}
+            <div className="flex items-center gap-1 mt-1 text-xs text-slate-400">
+              <span>{getRelativeTime(vehicle.createdAt)}</span>
+              <span className="flex items-center gap-0.5">
+                <Eye className="h-3 w-3" />
+                {(vehicle as any).analytics?.views || 0}
+              </span>
+            </div>
           </div>
           <div className="flex-1 flex flex-col justify-between min-w-0">
             <div>
@@ -47,13 +59,6 @@ export function TopAdCard({ vehicle, vehicleTypeLabels, formatPrice, formatAdTit
                   ? (vehicle as any).partCategory?.name || "Auto Part"
                   : vehicleTypeLabels[vehicle.type] || vehicle.type}
               </div>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-slate-400">
-              <span>{getRelativeTime(vehicle.createdAt)}</span>
-              <span className="flex items-center gap-0.5">
-                <Eye className="h-3 w-3" />
-                {(vehicle as any).analytics?.views || 0}
-              </span>
             </div>
           </div>
         </div>
