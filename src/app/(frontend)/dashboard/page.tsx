@@ -15,7 +15,7 @@ import { useGetAds } from "@/features/ads/api/use-get-ads";
 import { useGetOrganizations } from "@/features/organizations/api/use-get-orgs";
 import { buildAdUrl } from "@/lib/ad-url";
 import { useGetUsers } from "@/features/users/api/use-get-users";
-import { format } from "date-fns";
+import { getRelativeTime } from "@/lib/utils";
 import { Bell, Car, Clock, Lightbulb, Building2, Users, ArrowRight, Star, TrendingUp } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -237,7 +237,7 @@ export default function DashboardPage() {
                                       ? <>{`LKR ${Number(ad.price).toLocaleString()}`}{(ad as any).metadata?.isNegotiable && <div className="text-lg font-normal opacity-70"> Negotiable</div>}</>
                                       : ((ad as any).metadata?.isNegotiable ? "Negotiable" : "Price on request")}
                                   </div>
-                                  <div className="text-[10px] text-slate-400">{ad.updatedAt ? format(new Date(ad.updatedAt), "MMM d, yyyy") : "—"}</div>
+                                  <div className="text-[10px] text-slate-400">{ad.updatedAt ? getRelativeTime(ad.updatedAt) : "—"}</div>
                                 </div>
                               </div>
                             </div>
@@ -359,7 +359,7 @@ export default function DashboardPage() {
                               <div>
                                 <div className="font-semibold text-slate-800 text-lg">{org.name}</div>
                                 <div className="text-sm text-slate-500 mt-1">
-                                  {org.createdAt ? format(new Date(org.createdAt), "MMM d, yyyy") : "—"}
+                                  {org.createdAt ? getRelativeTime(org.createdAt) : "—"}
                                 </div>
                               </div>
                               <Link

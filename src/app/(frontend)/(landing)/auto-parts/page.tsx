@@ -36,7 +36,7 @@ import { useGetAutoPartCategories } from "@/features/ads/api/use-get-auto-part-c
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { format } from "date-fns";
+import { getRelativeTime } from "@/lib/utils";
 
 const vehicleTypeLabels: Record<string, string> = {
   CAR: "Car",
@@ -453,14 +453,12 @@ export default function AutoPartsPage() {
                             </div>
 
                             {/* Footer - Date and Views */}
-                            <div className="flex items-center justify-between mt-1">
-                              <div className="text-xs text-slate-400">
-                                {format(new Date(vehicle.createdAt), "MMM d, yyyy")}
-                              </div>
-                              <div className="text-xs text-slate-400 flex items-center gap-1">
+                            <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
+                              <span>{getRelativeTime(vehicle.createdAt)}</span>
+                              <span className="flex items-center gap-0.5">
                                 <Eye className="h-3 w-3" />
                                 {(vehicle as any).analytics?.views || 0}
-                              </div>
+                              </span>
                             </div>
                           </div>
                         </div>

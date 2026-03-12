@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { format } from "date-fns";
+import { getRelativeTime } from "@/lib/utils";
 import { betterFetch } from "@better-fetch/fetch";
 import { toast } from "sonner";
 import {
@@ -165,7 +165,7 @@ export default function OrganizationDashboardPage() {
                 <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground pt-2">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
-                    <span>Created {format(new Date(organization.createdAt), "MMM d, yyyy")}</span>
+                    <span>Created {getRelativeTime(organization.createdAt)}</span>
                   </div>
                 </div>
               </div>
@@ -326,7 +326,7 @@ export default function OrganizationDashboardPage() {
                             {ad.price ? `LKR ${Number(ad.price).toLocaleString()}` : "Price on request"}
                           </div>
                           <div className="text-xs text-muted-foreground mt-1">
-                            {ad.updatedAt ? format(new Date(ad.updatedAt), "MMM d, yyyy") : "—"}
+                            {ad.updatedAt ? getRelativeTime(ad.updatedAt) : "—"}
                           </div>
                         </div>
                       </div>

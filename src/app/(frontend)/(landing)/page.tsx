@@ -20,8 +20,12 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
-import { format } from "date-fns";
-import { Filter, Loader2, Search, X, Eye, TrendingUp } from "lucide-react";
+import { getRelativeTime } from "@/lib/utils";
+import { Filter, Loader2, Search, X, Eye, TrendingUp, Star, AlertCircle, Zap } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { BoostBadges } from "@/features/boost/components/boost-badges";
+import { TopAdCard } from "@/features/ads/components/top-ad-card";
+import { FeaturedAdCard } from "@/features/ads/components/featured-ad-card";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -1130,6 +1134,51 @@ export default function VehicleMarketplace() {
                 </div>
               </div>
 
+              {/* Top Ad Section */}
+              {!isLoading && allAds.filter((ad) => (ad as any).topAdActive && ad.status === "ACTIVE" && (ad as any).published).length > 0 && (
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Star className="h-4 w-4 text-yellow-500" />
+                    <span className="text-sm font-semibold text-slate-700">Top Ads</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {allAds
+                      .filter((ad) => (ad as any).topAdActive && ad.status === "ACTIVE" && (ad as any).published)
+                      .slice(0, 4)
+                      .map((vehicle) => (
+                        <TopAdCard key={vehicle.id} vehicle={vehicle} vehicleTypeLabels={vehicleTypeLabels} formatPrice={formatPrice} formatAdTitle={formatAdTitle} />
+                      ))}
+                  </div>
+                  <hr className="my-4 border-slate-200" />
+                </div>
+              )}
+
+              {/* Featured Ad Section */}
+              {!isLoading && allAds.filter((ad) => (ad as any).featuredActive && ad.status === "ACTIVE" && (ad as any).published).length > 0 && (
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Zap className="h-4 w-4 text-purple-500" />
+                    <span className="text-sm font-semibold text-slate-700">Featured Ads</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                    {allAds
+                      .filter((ad) => (ad as any).featuredActive && ad.status === "ACTIVE" && (ad as any).published)
+                      .slice(0, 4)
+                      .map((vehicle) => (
+                        <FeaturedAdCard
+                          key={vehicle.id}
+                          vehicle={vehicle}
+                          vehicleTypeLabels={vehicleTypeLabels}
+                          formatPrice={formatPrice}
+                          formatAdTitle={formatAdTitle}
+                          isUrgent={(vehicle as any).urgentActive}
+                        />
+                      ))}
+                  </div>
+                  <hr className="my-4 border-slate-200" />
+                </div>
+              )}
+
               {/* Loading state with shimmer effect */}
               {isLoading && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1222,6 +1271,12 @@ export default function VehicleMarketplace() {
                         <FavoriteButton adId={vehicle.id} />
                       </div>
 
+                      {((vehicle as any).bumpActive || (vehicle as any).urgentActive || (vehicle as any).topAdActive) && (
+                        <div className="absolute bottom-2 right-2 z-10">
+                          <BoostBadges bumpActive={(vehicle as any).bumpActive} urgentActive={(vehicle as any).urgentActive} topAdActive={(vehicle as any).topAdActive} />
+                        </div>
+                      )}
+
                       <div className="p-3">
                         {/* Vehicle Title - Centered */}
                         <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
@@ -1264,14 +1319,12 @@ export default function VehicleMarketplace() {
                               </div>
                             </div>
 
-                            <div className="flex items-center justify-between mt-1">
-                              <div className="text-xs text-slate-400">
-                                {format(new Date(vehicle.createdAt), "MMM d, yyyy")}
-                              </div>
-                              <div className="text-xs text-slate-400 flex items-center gap-1">
+                            <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
+                              <span>{getRelativeTime(vehicle.createdAt)}</span>
+                              <span className="flex items-center gap-0.5">
                                 <Eye className="h-3 w-3" />
                                 {(vehicle as any).analytics?.views || 0}
-                              </div>
+                              </span>
                             </div>
                           </div>
                         </div>

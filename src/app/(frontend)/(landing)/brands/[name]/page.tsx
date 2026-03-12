@@ -8,8 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ChevronDown, ChevronUp, TrendingUp, Loader2, Car, Search, Filter, Eye } from "lucide-react";
-import { format } from "date-fns";
+import { ChevronDown, ChevronUp, TrendingUp, Loader2, Car, Search, Filter, Eye, Star, Zap, AlertCircle } from "lucide-react";
+import { BoostBadges } from "@/features/boost/components/boost-badges";
+import { TopAdCard } from "@/features/ads/components/top-ad-card";
+import { FeaturedAdCard } from "@/features/ads/components/featured-ad-card";
+import { getRelativeTime } from "@/lib/utils";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
 import { authClient } from "@/lib/auth-client";
@@ -846,20 +849,65 @@ export default function BrandPage() {
               </div>
             )}
 
+            {/* Top Ad Slots */}
+            {!isLoading && filteredAds.filter((ad) => (ad as any).topAdActive).length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Star className="h-4 w-4 text-yellow-500" />
+                  <span className="text-sm font-semibold text-slate-700">Top Ads</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {filteredAds.filter((ad) => (ad as any).topAdActive).slice(0, 4).map((vehicle) => (
+                    <TopAdCard
+                      key={`top-${vehicle.id}`}
+                      vehicle={vehicle}
+                      vehicleTypeLabels={vehicleTypeLabels}
+                      formatPrice={formatPrice}
+                      formatAdTitle={formatAdTitle}
+                    />
+                  ))}
+                </div>
+                <Separator className="mt-4" />
+              </div>
+            )}
+
             {/* Results Grid */}
             {!isLoading && !error && paginatedAds.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {paginatedAds.map((vehicle) => {
+                  const isFeatured = (vehicle as any).featuredActive;
+                  const isUrgent = (vehicle as any).urgentActive;
+                  const isBump = (vehicle as any).bumpActive;
+                  if (isFeatured) {
+                    return (
+                      <FeaturedAdCard
+                        key={vehicle.id}
+                        vehicle={vehicle}
+                        vehicleTypeLabels={vehicleTypeLabels}
+                        formatPrice={formatPrice}
+                        formatAdTitle={formatAdTitle}
+                        isBump={isBump}
+                        isTopAd={false}
+                        isUrgent={isUrgent}
+                      />
+                    );
+                  }
                   return (
                     <div
                       key={vehicle.id}
-                      className="rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative bg-white border-slate-200 hover:border-slate-300"
+                      className={`rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative bg-white border-slate-200 hover:border-slate-300 ${isUrgent ? 'border-l-4 border-l-red-400' : ''}`}
                       onClick={() => router.push(buildAdUrl(vehicle))}
                     >
                       {/* Favorite Button */}
                       <div className="absolute top-2 right-2 z-10">
                         <FavoriteButton adId={vehicle.id} />
                       </div>
+
+                      {(isBump || isUrgent) && (
+                        <div className="absolute bottom-2 right-2 z-10">
+                          <BoostBadges bumpActive={isBump} urgentActive={isUrgent} />
+                        </div>
+                      )}
 
                       <div className="p-3">
                         {/* Vehicle Title */}
@@ -870,9 +918,9 @@ export default function BrandPage() {
                         <div className="flex">
                           {/* Vehicle Image */}
                           <div className="w-32 h-20 flex-shrink-0">
-                            {vehicle?.media && vehicle.media.length > 0 && vehicle.media[0]?.media?.url ? (
+                            {(vehicle as any)?.media && (vehicle as any).media.length > 0 && (vehicle as any).media[0]?.media?.url ? (
                               <img
-                                src={vehicle.media[0].media.url}
+                                src={(vehicle as any).media[0].media.url}
                                 alt={vehicle.title || 'Vehicle'}
                                 className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
                               />
@@ -901,14 +949,12 @@ export default function BrandPage() {
                               </div>
                             </div>
 
-                            <div className="flex items-center justify-between mt-1">
-                              <div className="text-xs text-slate-400">
-                                {format(new Date(vehicle.createdAt), "MMM d, yyyy")}
-                              </div>
-                              <div className="text-xs text-slate-400 flex items-center gap-1">
+                            <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
+                              <span>{getRelativeTime(vehicle.createdAt)}</span>
+                              <span className="flex items-center gap-0.5">
                                 <Eye className="h-3 w-3" />
                                 {(vehicle as any).analytics?.views || 0}
-                              </div>
+                              </span>
                             </div>
                           </div>
                         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getRelativeTime } from "@/lib/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { client } from "@/lib/rpc";
 import { toast } from "sonner";
@@ -504,13 +505,7 @@ function SentEmailsTab() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {new Date(nl.sentAt).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {getRelativeTime(nl.sentAt)}
                       </TableCell>
                       <TableCell className="text-center">
                         <Button
@@ -572,13 +567,7 @@ function SentEmailsTab() {
               Sent to {selectedNewsletter?.recipientCount} recipient
               {selectedNewsletter?.recipientCount !== 1 ? "s" : ""} on{" "}
               {selectedNewsletter &&
-                new Date(selectedNewsletter.sentAt).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                getRelativeTime(selectedNewsletter.sentAt)}
             </DialogDescription>
           </DialogHeader>
 

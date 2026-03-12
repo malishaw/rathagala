@@ -180,8 +180,13 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
         andFilters.push({ status: AdStatus.ACTIVE });
         // Also exclude soft-deleted ads (published = false, metadata.deletedByUser = true)
         andFilters.push({ published: true });
-        // Exclude ads older than 60 days
-        andFilters.push({ createdAt: { gte: sixtyDaysAgo } });
+        // Exclude ads older than 60 days UNLESS they have an active boost (boost extends life)
+        andFilters.push({
+          OR: [
+            { createdAt: { gte: sixtyDaysAgo } },
+            { boostStatus: "ACTIVE" }, // ads with active boost skip the 60-day limit
+          ],
+        });
       }
     }
 

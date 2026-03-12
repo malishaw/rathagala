@@ -24,7 +24,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FaMobileAlt, FaWhatsapp } from "react-icons/fa";
-import { format } from "date-fns";
+import { getRelativeTime } from "@/lib/utils";
 
 // Vehicle type labels mapping
 const vehicleTypeLabels: Record<string, string> = {
@@ -265,7 +265,7 @@ function AdDetailsModal({ ad, open, onOpenChange }: { ad: DeletedAdType; open: b
               <div>
                 <p className="text-xs text-slate-600">Deleted At</p>
                 <p className="text-sm text-slate-800">
-                  {deletedAt ? format(new Date(deletedAt), "PPP") : "—"}
+                  {deletedAt ? getRelativeTime(deletedAt) : "—"}
                 </p>
               </div>
               <div>
@@ -274,7 +274,7 @@ function AdDetailsModal({ ad, open, onOpenChange }: { ad: DeletedAdType; open: b
               </div>
               <div>
                 <p className="text-xs text-slate-600">Created At</p>
-                <p className="text-sm text-slate-800">{format(new Date(ad.createdAt), "PPP")}</p>
+                <p className="text-sm text-slate-800">{getRelativeTime(ad.createdAt)}</p>
               </div>
             </div>
           </div>
@@ -504,8 +504,7 @@ export const createDeletedAdColumns = (onDelete: (id: string) => void): ColumnDe
       
       return (
         <div className="flex flex-col gap-1 text-sm">
-          <div>{date.toLocaleDateString()}</div>
-          <div className="text-muted-foreground text-xs">at {date.toLocaleTimeString()}</div>
+          <div>{getRelativeTime(deletedAt)}</div>
         </div>
       );
     }
@@ -519,8 +518,7 @@ export const createDeletedAdColumns = (onDelete: (id: string) => void): ColumnDe
       
       return (
         <div className="flex flex-col gap-1 text-sm">
-          <div>{date.toLocaleDateString()}</div>
-          <div className="text-muted-foreground text-xs">at {date.toLocaleTimeString()}</div>
+          <div>{getRelativeTime(ad.createdAt)}</div>
         </div>
       );
     }

@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, MapPin, Phone, Mail, Globe, Calendar, Users, Building2, CheckCircle2, ShieldCheck, LayoutDashboard } from "lucide-react";
-import { format } from "date-fns";
+import { getRelativeTime } from "@/lib/utils";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 
@@ -149,7 +149,7 @@ export default function OrganizationDetailPage() {
   // Format date helper
   const formatDate = (dateStr: string) => {
     try {
-      return format(new Date(dateStr), "MMM d, yyyy");
+      return getRelativeTime(dateStr);
     } catch (e) {
       return dateStr;
     }

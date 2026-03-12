@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getRelativeTime } from "@/lib/utils";
 import { useGetReports } from "@/features/report/api/use-get-reports";
 import { useUpdateReport } from "@/features/report/api/use-update-report";
 import { usePublishAd } from "@/features/ads/api/use-publish-ad";
@@ -195,13 +196,7 @@ export default function ReportsManagementPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return getRelativeTime(dateString);
   };
 
   // Filter reports based on search query

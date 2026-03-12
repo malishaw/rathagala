@@ -16,7 +16,11 @@ import type { MediaFile } from "@/modules/media/types";
 import { buildAdUrl } from "@/lib/ad-url";
 import { betterFetch } from "@better-fetch/fetch";
 import { format } from "date-fns";
-import { Building2, Car, CheckCircle, ChevronRight, CreditCard, Edit, Heart, Loader2, Lock, MapPin, MessageCircle, Phone, Shield, Trash2, Camera } from "lucide-react";
+import { getRelativeTime } from "@/lib/utils";
+import { Building2, Car, CheckCircle, ChevronRight, CreditCard, Edit, Heart, Loader2, Lock, MapPin, MessageCircle, Phone, Shield, Trash2, Camera, Zap, TrendingUp, Star, AlertCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { BoostSelector, type BoostSelection } from "@/features/boost/components/boost-selector";
+import { useRequestBoost } from "@/features/boost/api/use-request-boost";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
@@ -84,6 +88,9 @@ export default function ProfilePage() {
   const [sidebarActive, setSidebarActive] = useState("personal");
   const [isSavingPhoto, setIsSavingPhoto] = useState(false);
   const [adsFilter, setAdsFilter] = useState<string>("all");
+  const [boostDialog, setBoostDialog] = useState<{ open: boolean; adId: string | null }>({ open: false, adId: null });
+  const [boostSelection, setBoostSelection] = useState<BoostSelection | null>(null);
+  const { mutate: requestBoost, isPending: isBoostPending } = useRequestBoost();
 
   // Fetch user ads with the new hook
   const userAdsQuery = useGetUserAds();
@@ -515,7 +522,7 @@ export default function ProfilePage() {
   // Format date helper
   const formatDate = (dateStr: string) => {
     try {
-      return format(new Date(dateStr), "MMM d, yyyy");
+      return getRelativeTime(dateStr);
     } catch (e) {
       return dateStr;
     }
@@ -575,6 +582,45 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-slate-100 py-20 px-4">
       <div className="max-w-6xl mx-auto">
+        {/* Boost Now Dialog */}
+        <Dialog open={boostDialog.open} onOpenChange={(open) => setBoostDialog({ open, adId: open ? boostDialog.adId : null })}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Zap className="h-5 w-5 text-teal-600" />
+                Boost Your Ad
+              </DialogTitle>
+            </DialogHeader>
+            <BoostSelector onChange={setBoostSelection} showPaymentDetails={true} />
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setBoostDialog({ open: false, adId: null })}>
+                Cancel
+              </Button>
+              <Button
+                className="bg-teal-600 hover:bg-teal-700 text-white"
+                disabled={!boostSelection || boostSelection.boostTypes.length === 0 || isBoostPending}
+                onClick={() => {
+                  if (!boostDialog.adId || !boostSelection || boostSelection.boostTypes.length === 0) return;
+                  requestBoost(
+                    {
+                      adId: boostDialog.adId,
+                      boostTypes: boostSelection.boostTypes,
+                      bumpDays: boostSelection.bumpDays,
+                      topAdDays: boostSelection.topAdDays,
+                      urgentDays: boostSelection.urgentDays,
+                      featuredDays: boostSelection.featuredDays,
+                    },
+                    { onSuccess: () => setBoostDialog({ open: false, adId: null }) }
+                  );
+                }}
+              >
+                {isBoostPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Zap className="h-4 w-4 mr-2" />}
+                Boost Now
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={deleteDialog.open} onOpenChange={open => setDeleteDialog(d => ({ ...d, open }))}>
           <AlertDialogContent className="bg-white/95 backdrop-blur-xl border-2 border-white/20">
@@ -1252,6 +1298,34 @@ export default function ProfilePage() {
                                 <Trash2 className="h-5 w-5" />
                               </Button>
                             </div>
+                            {/* Boost status or Boost Now button */}
+                            {(ad as any).boostStatus === "PENDING" ? (
+                              <div className="text-right">
+                                <Badge className="bg-orange-100 text-orange-700 border-orange-200 text-xs mb-1">Boost Requested</Badge>
+                                <div className="text-xs text-orange-600 font-medium">Total: Rs. {(ad as any).boostTotalAmount || "—"}</div>
+                                <p className="text-xs text-slate-500 mt-1 max-w-[180px] text-right">Pay and WhatsApp the slip to <strong>0766220170</strong>. Please wait for admin approval.</p>
+                              </div>
+                            ) : (ad as any).boostStatus === "ACTIVE" ? (
+                              <div className="text-right">
+                                <Badge className="bg-green-100 text-green-700 border-green-200 text-xs mb-1">Boost Active</Badge>
+                                {(ad as any).boostEndAt && (
+                                  <div className="text-xs text-slate-500">Until {format(new Date((ad as any).boostEndAt), "MMM d, yyyy HH:mm")}</div>
+                                )}
+                              </div>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-teal-300 text-teal-700 hover:bg-teal-50 text-xs"
+                                onClick={() => {
+                                  setBoostDialog({ open: true, adId: ad.id });
+                                  setBoostSelection(null);
+                                }}
+                              >
+                                <Zap className="h-3 w-3 mr-1" />
+                                Boost Now
+                              </Button>
+                            )}
                           </div>
                         </div>
                       );
@@ -1350,7 +1424,7 @@ export default function ProfilePage() {
                                 </div>
 
                                 <div className="text-xs text-slate-400 mt-1">
-                                  {format(new Date(ad.createdAt || favorite.createdAt), "MMM d, yyyy")}
+                                  {getRelativeTime(ad.createdAt || favorite.createdAt)}
                                 </div>
                               </div>
                             </div>

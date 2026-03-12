@@ -57,7 +57,7 @@ import { FaFacebookSquare, FaWhatsappSquare, FaYoutubeSquare } from "react-icons
 import { FaSquareXTwitter, FaTelegram } from "react-icons/fa6";
 import { AdIdDisplay } from "./ad-id-display";
 import { client } from "@/lib/rpc";
-import { buildAdUrl } from "@/lib/ad-url";
+import { getRelativeTime } from "@/lib/utils";
 import VehicleAnalyticsContent from "./vehicle-analytics";
 
 export default function AdDetailPage() {
@@ -464,11 +464,7 @@ export default function AdDetailPage() {
 
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric"
-    });
+    return getRelativeTime(dateString);
   };
 
   // Get similar vehicles from database

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 
+import { getRelativeTime } from "@/lib/utils";
 import type { Ad } from "@/types/schema-types/index";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -160,8 +161,7 @@ export const expiredAdColumns: ColumnDef<ExpiredAdType>[] = [
       const date = new Date(row.original.createdAt);
       return (
         <div className="flex flex-col gap-1 text-sm">
-          <div>{date.toLocaleDateString()}</div>
-          <div className="text-muted-foreground text-xs">at {date.toLocaleTimeString()}</div>
+          <div>{getRelativeTime(row.original.createdAt)}</div>
         </div>
       );
     },

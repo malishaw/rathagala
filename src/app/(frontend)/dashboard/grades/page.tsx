@@ -49,6 +49,7 @@ import {
   Sparkles,
   RefreshCw,
 } from "lucide-react";
+import { getRelativeTime } from "@/lib/utils";
 import { vehicleMakes, motorbikeBrands } from "@/constants/brands";
 import { CitySearchDropdown } from "@/components/ui/city-search-dropdown";
 import { ModelSearchDropdown } from "@/components/ui/model-search-dropdown";
@@ -350,7 +351,7 @@ export default function VehicleGradesAdminPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {new Date(g.createdAt).toLocaleDateString()}
+                      {getRelativeTime(g.createdAt)}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">

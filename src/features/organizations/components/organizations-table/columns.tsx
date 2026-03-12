@@ -6,6 +6,7 @@ import { ColumnDef } from "@tanstack/react-table";
 
 import type { Organization } from "@/types/schema-types/index";
 import { CellAction } from "./cell-action";
+import { getRelativeTime } from "@/lib/utils";
 
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
@@ -60,7 +61,7 @@ export const columns: ColumnDef<OrganizationT>[] = [
   {
     accessorKey: "createdAt",
     header: "Created At",
-    cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString()
+    cell: ({ row }) => getRelativeTime(row.original.createdAt)
   },
   {
     id: "actions",

@@ -49,6 +49,7 @@ import {
   Car,
   RefreshCw,
 } from "lucide-react";
+import { getRelativeTime } from "@/lib/utils";
 import { vehicleMakes, motorbikeBrands } from "@/constants/brands";
 import { CitySearchDropdown } from "@/components/ui/city-search-dropdown";
 
@@ -305,7 +306,7 @@ export default function VehicleModelsAdminPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {new Date(m.createdAt).toLocaleDateString()}
+                      {getRelativeTime(m.createdAt)}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">

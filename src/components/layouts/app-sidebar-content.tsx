@@ -21,6 +21,8 @@ import {
   SlidersHorizontal,
   Car,
   Sparkles,
+  Zap,
+  DollarSign,
 } from "lucide-react";
 
 import { type Session } from "@/lib/auth";
@@ -137,6 +139,16 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
         title: "Carousel",
         url: "/dashboard/carousel",
         icon: SlidersHorizontal
+      },
+      {
+        title: "Promotion",
+        url: "/dashboard/promotion",
+        icon: Zap
+      },
+      {
+        title: "Revenue",
+        url: "/dashboard/revenue",
+        icon: DollarSign
       }
     ],
     agentManagement: [

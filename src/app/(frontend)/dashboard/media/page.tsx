@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { useQuery } from "@tanstack/react-query";
 import JSZip from "jszip";
 import { format, subMonths, startOfMonth, endOfMonth, startOfDay, endOfDay, isBefore, startOfYear, endOfYear } from "date-fns";
+import { getRelativeTime } from "@/lib/utils";
 import Image from "next/image";
 import { toast } from "sonner";
 import {
@@ -947,7 +948,7 @@ export default function AdminGalleryPage() {
                   </p>
                   <div className="flex items-center justify-between mt-1">
                     <span className="text-[10px] text-slate-400">{formatFileSize(media.size)}</span>
-                    <span className="text-[10px] text-slate-400">{format(new Date(media.createdAt), "MMM d, yy")}</span>
+                    <span className="text-[10px] text-slate-400">{getRelativeTime(media.createdAt)}</span>
                   </div>
                 </div>
               </div>
@@ -1008,7 +1009,7 @@ export default function AdminGalleryPage() {
                       </td>
                       <td className="p-3 text-sm text-slate-600">{formatFileSize(media.size)}</td>
                       <td className="p-3 text-sm text-slate-600">{media.uploader?.name || media.uploader?.email || "Unknown"}</td>
-                      <td className="p-3 text-sm text-slate-500">{format(new Date(media.createdAt), "MMM d, yyyy HH:mm")}</td>
+                      <td className="p-3 text-sm text-slate-500">{getRelativeTime(media.createdAt)}</td>
                       <td className="p-3">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -1103,7 +1104,7 @@ export default function AdminGalleryPage() {
                 <span className="flex items-center gap-3 text-xs">
                   <Badge variant="outline">{previewMedia.type}</Badge>
                   <span>{formatFileSize(previewMedia.size)}</span>
-                  <span>{format(new Date(previewMedia.createdAt), "PPpp")}</span>
+                  <span>{getRelativeTime(previewMedia.createdAt)}</span>
                   {previewMedia.uploader && (
                     <span>by {previewMedia.uploader.name || previewMedia.uploader.email}</span>
                   )}

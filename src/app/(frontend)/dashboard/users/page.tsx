@@ -5,6 +5,7 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useGetUsers } from "@/features/users/api/use-get-users";
 import { useGetOrganizations } from "@/features/organizations/api/use-get-orgs";
+import { getRelativeTime } from "@/lib/utils";
 import { locationData } from "@/lib/location-data";
 import { CitySearchDropdown } from "@/components/ui/city-search-dropdown";
 import {
@@ -608,11 +609,7 @@ export default function UsersPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+    return getRelativeTime(dateString);
   };
 
   const getPhoneVerificationBadge = (status: "verified" | "not_verified" | "rejected" | null, phone: string | null) => {

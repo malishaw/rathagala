@@ -56,6 +56,20 @@ enum PaymentType {
   FEATURE
 }
 
+enum BoostType {
+  BUMP
+  TOP_AD
+  URGENT
+  FEATURED
+}
+
+enum BoostStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  REJECTED
+}
+
 enum PaymentStatus {
   PENDING
   PAID
@@ -172,6 +186,7 @@ model User {
   reports          Report[]
   auditLogs        AuditLog[]
   followedOrganizations OrganizationFollower[]
+  boostRequests         BoostRequest[]         @relation("UserBoostRequests")
 
   @@unique([email])
   @@map("user")
@@ -385,6 +400,17 @@ model Ad {
   specialNote       String?
   metadata          Json?
 
+  // Boost fields
+  boostTypes        BoostType[]  // Active boost types on this ad
+  bumpActive        Boolean      @default(false)
+  topAdActive       Boolean      @default(false)
+  urgentActive      Boolean      @default(false)
+  featuredActive    Boolean      @default(false)
+  boostStatus       BoostStatus? // Overall boost status (PENDING/ACTIVE/EXPIRED)
+  boostRequestedAt  DateTime?    // When boost was first requested
+  boostStartAt      DateTime?    // When boost was activated by admin
+  boostEndAt        DateTime?    // When ALL boosts expire
+
   // Timestamps
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
@@ -398,10 +424,78 @@ model Ad {
   geoViews          GeoHeatmap[]
   shareEvents       ShareEvent[]
   media             AdMedia[]
+  boostRequests     BoostRequest[]
 
   @@map("ad")
 }
 
+
+model BoostRequest {
+  id           String      @id @default(auto()) @map("_id") @db.ObjectId
+  adId         String
+  ad           Ad          @relation(fields: [adId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User        @relation("UserBoostRequests", fields: [userId], references: [id])
+
+  // Which boost types were selected (can be up to 3)
+  boostTypes   BoostType[]
+  // Duration in days for each boost type
+  bumpDays     Int?
+  topAdDays    Int?
+  urgentDays   Int?
+  featuredDays Int?
+
+  // Pricing snapshot at time of request
+  totalAmount  Float
+  bumpAmount   Float?
+  topAdAmount  Float?
+  urgentAmount Float?
+  featuredAmount Float?
+
+  status       BoostStatus @default(PENDING)
+  // Admin who approved
+  approvedBy   String?
+
+  // Timestamps
+  requestedAt  DateTime    @default(now())
+  activatedAt  DateTime?
+  expiresAt    DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  revenueRecord RevenueRecord?
+
+  @@map("boostRequest")
+}
+
+model BoostPricing {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  boostType BoostType
+  days      Int       // 3, 7, or 15
+  price     Float
+  updatedAt DateTime  @updatedAt
+  createdAt DateTime  @default(now())
+
+  @@unique([boostType, days])
+  @@map("boostPricing")
+}
+
+model RevenueRecord {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  boostRequestId String       @unique
+  boostRequest   BoostRequest @relation(fields: [boostRequestId], references: [id], onDelete: Cascade)
+  adId           String
+  userId         String
+  boostTypes     BoostType[]
+  totalAmount    Float
+  bumpAmount     Float?
+  topAdAmount    Float?
+  urgentAmount   Float?
+  featuredAmount Float?
+  recordedAt     DateTime     @default(now())
+
+  @@map("revenueRecord")
+}
 
 model AdRevision {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId

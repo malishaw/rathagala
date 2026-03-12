@@ -77,12 +77,13 @@ export default function AdsManagePage() {
   );
 
   const isPromoFilter = statusFilter === "BOOSTED" || statusFilter === "FEATURED";
+  const isPendingBoostFilter = statusFilter === "PENDING_BOOST";
 
   const { data, error, isPending } = useGetAds({
-    limit: isPromoFilter ? 10000 : limit || 10,
-    page: isPromoFilter ? 1 : page || 1,
+    limit: isPromoFilter || isPendingBoostFilter ? 10000 : limit || 10,
+    page: isPromoFilter || isPendingBoostFilter ? 1 : page || 1,
     search: searchQuery || "",
-    status: statusFilter && statusFilter !== "all" && !isPromoFilter ? statusFilter : null,
+    status: statusFilter && statusFilter !== "all" && !isPromoFilter && !isPendingBoostFilter ? statusFilter : null,
   });
 
   // Separate fetch for always-accurate stat counts (ignores current filter/page)
@@ -124,7 +125,7 @@ export default function AdsManagePage() {
       }
 
       // Format data for Excel
-      const excelData = reportData.ads.map((ad: AdType) => ({
+      const excelData = (reportData.ads as any[]).map((ad: AdType) => ({
         "Title": ad.title,
         "Type": vehicleTypeLabels[ad.type] || ad.type,
         "Brand": ad.brand,
@@ -254,10 +255,12 @@ export default function AdsManagePage() {
   });
 
   // Compute stat counts from full dataset (independent of current filter/page)
-  const statsAds: AdType[] = (statsData?.ads ?? []) as AdType[];
+  const statsAds: AdType[] = (statsData?.ads ?? []) as unknown as AdType[];
   const activeCount = statsAds.filter((ad) => ad.status === "ACTIVE").length;
 
-  const filteredAds = formattedAds;
+  const filteredAds = isPendingBoostFilter
+    ? formattedAds.filter((ad) => (ad as any).boostStatus === "PENDING")
+    : formattedAds;
 
   return (
     <PageContainer scrollable={false}>
@@ -294,6 +297,7 @@ export default function AdsManagePage() {
                 <SelectItem value="ACTIVE">Active</SelectItem>
                 <SelectItem value="PENDING_REVIEW">Pending</SelectItem>
                 <SelectItem value="REJECTED">Rejected</SelectItem>
+                <SelectItem value="PENDING_BOOST">Pending Boost</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -331,7 +335,7 @@ export default function AdsManagePage() {
         </div>
         <DataTable
           columns={adminColumns}
-          data={filteredAds}
+          data={filteredAds as unknown as AdType[]}
           totalItems={data.pagination.total}
           enableRowSelection={true}
           onRowSelectionChange={setSelectedRows}

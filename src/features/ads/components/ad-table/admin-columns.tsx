@@ -36,7 +36,8 @@ import { Label } from "@/components/ui/label";
 import { useApproveAd } from "@/features/ads/api/use-approve-ad";
 import { useRejectAd } from "@/features/ads/api/use-reject-ad";
 import { useDeleteAd } from "@/features/ads/api/use-delete-ad";
-import { Check, X, Eye, Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { BoostApproveDialog } from "@/features/boost/components/boost-approve-dialog";
+import { Check, X, Eye, Edit, Trash2, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -45,18 +46,27 @@ import {
 } from "@/components/ui/tooltip";
 import { useRouter } from "next/navigation";
 import { FaInfoCircle, FaMobileAlt, FaWhatsapp } from "react-icons/fa";
-import { format } from "date-fns";
+import { getRelativeTime } from "@/lib/utils";
 import { DELETE_AD_REASONS, type DeleteAdReason } from "@/constants/delete-reasons";
 
 // This type is used to define the shape of our data.
-export type AdType = Omit<Ad, "createdAt"> & {
+export type AdType = Omit<Ad, "createdAt" | "updatedAt" | "boostExpiry" | "boostRequestedAt" | "boostStartAt" | "boostEndAt"> & {
   createdAt: string;
+  updatedAt: string | Date;
+  boostExpiry?: string | Date | null;
+  boostRequestedAt?: string | Date | null;
+  boostStartAt?: string | Date | null;
+  boostEndAt?: string | Date | null;
   creator?: {
     id: string;
     name?: string | null;
     email?: string | null;
     image?: string | null;
     avatar?: string | null;
+  };
+  user?: {
+    name?: string | null;
+    phone?: string | null;
   };
 };
 
@@ -147,19 +157,46 @@ export const adminColumns: ColumnDef<AdType>[] = [
       const type = ad.type;
       const displayType = vehicleTypeLabels[type] || type;
 
+      const [showBoostDialog, setShowBoostDialog] = useState(false);
+      const hasBoostRequest = (ad as any).boostStatus === "PENDING" || (ad as any).boostStatus === "ACTIVE";
+
       return (
         <div className="flex flex-col gap-2">
-          <Link
-            href={`/dashboard/ads/${ad.id}`}
-            className="hover:underline font-medium text-sm"
-          >
-            {displayTitle}
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/dashboard/ads/${ad.id}`}
+              className="hover:underline font-medium text-sm"
+            >
+              {displayTitle}
+            </Link>
+            {hasBoostRequest && (
+              <button
+                onClick={() => setShowBoostDialog(true)}
+                title="View/Approve Boost"
+                className="text-yellow-500 hover:text-yellow-600 transition-colors"
+              >
+                <Sparkles className="h-4 w-4" />
+              </button>
+            )}
+          </div>
           <div className="flex gap-2 flex-wrap items-center">
             <Badge variant="outline" className="bg-slate-100 text-slate-800 border-1 w-fit border-amber-200">
               {displayType}
             </Badge>
+            {(ad as any).boostStatus === "PENDING" && (
+              <Badge className="bg-orange-100 text-orange-700 border-orange-200 text-xs">Boost Pending</Badge>
+            )}
+            {(ad as any).boostStatus === "ACTIVE" && (
+              <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">Boost Active</Badge>
+            )}
           </div>
+          {showBoostDialog && (
+            <BoostApproveDialog
+              adId={ad.id}
+              open={showBoostDialog}
+              onOpenChange={setShowBoostDialog}
+            />
+          )}
         </div>
       );
     }
@@ -286,8 +323,7 @@ export const adminColumns: ColumnDef<AdType>[] = [
       
       return (
         <div className="flex flex-col gap-1 text-sm">
-          <div>{date.toLocaleDateString()}</div>
-          <div className="text-muted-foreground text-xs">at {date.toLocaleTimeString()}</div>
+          <div>{getRelativeTime(ad.createdAt)}</div>
         </div>
       );
     }
@@ -697,7 +733,7 @@ function AdDetailsModal({ ad, open, onOpenChange }: { ad: AdType; open: boolean;
               </div>
               <div>
                 <p className="text-xs text-slate-600">Created</p>
-                <p className="text-sm text-slate-800">{format(new Date(ad.createdAt), "PPP")}</p>
+                <p className="text-sm text-slate-800">{getRelativeTime(ad.createdAt)}</p>
               </div>
             </div>
           </div>

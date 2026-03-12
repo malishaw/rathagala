@@ -20,7 +20,15 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Camera, ChevronRight, CheckCircle2, X, PlusCircle, ChevronsUpDown, Check } from "lucide-react";
+import { Loader2, Camera, ChevronRight, CheckCircle2, X, PlusCircle, ChevronsUpDown, Check, Zap } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { BoostSelector, type BoostSelection } from "@/features/boost/components/boost-selector";
+import { useRequestBoost } from "@/features/boost/api/use-request-boost";
 import { MediaGallery } from "@/modules/media/components/media-gallery";
 import type { MediaFile } from "@/modules/media/types";
 import { PendingAdModal } from "@/features/ads/components/pending-ad-modal";
@@ -37,6 +45,10 @@ import { cn } from "@/lib/utils";
 export default function QuickAdCreatePage() {
   const router = useRouter();
   const { mutate: createAd, isPending } = useSetupAd();
+  const { mutate: requestBoost, isPending: isBoostPending } = useRequestBoost();
+  const [showBoostDialog, setShowBoostDialog] = useState(false);
+  const [boostSelection, setBoostSelection] = useState<BoostSelection | null>(null);
+  const [createdAdId, setCreatedAdId] = useState<string | null>(null);
   const { data: session } = authClient.useSession();
   const [currentStep, setCurrentStep] = useState(1);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -384,6 +396,18 @@ export default function QuickAdCreatePage() {
       { values: adData },
       {
         onSuccess: (data) => {
+          setCreatedAdId(data.id);
+          // If boost was selected, request it
+          if (showBoostDialog && boostSelection && boostSelection.boostTypes.length > 0) {
+            requestBoost({
+              adId: data.id,
+              boostTypes: boostSelection.boostTypes,
+              bumpDays: boostSelection.bumpDays,
+              topAdDays: boostSelection.topAdDays,
+              urgentDays: boostSelection.urgentDays,
+              featuredDays: boostSelection.featuredDays,
+            });
+          }
           // Check if user is admin
           const isAdmin = (session?.user as any)?.role === "admin";
           const isPublished = !adData.isDraft && adData.published;
@@ -395,7 +419,6 @@ export default function QuickAdCreatePage() {
             // Admin or draft - redirect normally
             if (isAdmin) {
               router.push(`/dashboard/ads/${data.id}`);
-
             } else {
               router.push('/profile#my-ads');
             }
@@ -2013,26 +2036,53 @@ export default function QuickAdCreatePage() {
                 )}
               </div>
 
-              <div className="flex space-x-3">
-                <Button
-                  variant="outline"
-                  className="w-1/2"
-                  onClick={() => setCurrentStep(2)}
-                >
-                  Back
-                </Button>
-                <Button
-                  className="w-1/2 bg-teal-700 hover:bg-teal-800"
-                  onClick={handleSubmit}
-                  disabled={isPending || !canProceed()}
-                >
-                  {isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Posting...
-                    </>
-                  ) : "Post Ad"}
-                </Button>
+              {/* Boost Selector - shown when boost now dialog is active */}
+              {showBoostDialog && (
+                <div className="mb-4 border rounded-lg p-4 bg-slate-50">
+                  <h3 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-teal-600" />
+                    Select Boost Options
+                  </h3>
+                  <BoostSelector
+                    onChange={setBoostSelection}
+                    showPaymentDetails={true}
+                  />
+                </div>
+              )}
+
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setCurrentStep(2)}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    className="flex-1 bg-teal-700 hover:bg-teal-800"
+                    onClick={handleSubmit}
+                    disabled={isPending || !canProceed()}
+                  >
+                    {isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Posting...
+                      </>
+                    ) : showBoostDialog ? "Post Ad" : "Post Ad"}
+                  </Button>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1 border-teal-300 text-teal-700 hover:bg-teal-50"
+                    onClick={() => setShowBoostDialog((v) => !v)}
+                    disabled={isPending}
+                  >
+                    <Zap className="h-4 w-4 mr-2" />
+                    {showBoostDialog ? "Hide Boost Options" : "Boost Now"}
+                  </Button>
+                </div>
               </div>
             </div>
           )}
@@ -2104,8 +2154,6 @@ export default function QuickAdCreatePage() {
             isDraft: false,
           });
           setSelectedImages([]);
-          setPromotionType("none");
-          setPromotionDuration("1week");
         }}
       />
     </div>

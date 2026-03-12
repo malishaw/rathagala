@@ -8,8 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ChevronDown, ChevronUp, MapPin, TrendingUp, Sparkles, Loader2, Car, Search, Filter, Eye } from "lucide-react";
-import { format } from "date-fns";
+import { ChevronDown, ChevronUp, MapPin, TrendingUp, Sparkles, Loader2, Car, Search, Filter, Eye, Star, AlertCircle, Zap } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { BoostBadges } from "@/features/boost/components/boost-badges";
+import { TopAdCard } from "@/features/ads/components/top-ad-card";
+import { FeaturedAdCard } from "@/features/ads/components/featured-ad-card";
+import { getRelativeTime } from "@/lib/utils";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
 import { authClient } from "@/lib/auth-client";
@@ -87,6 +91,7 @@ interface SearchFilters {
   district: string;
   city: string;
   seller: string;
+  urgentOnly: boolean;
   page: number;
 }
 
@@ -114,6 +119,7 @@ export default function SearchPage() {
     district: searchParams.get('district') || 'all',
     city: searchParams.get('city') || 'all',
     seller: searchParams.get('seller') || 'all',
+    urgentOnly: searchParams.get('urgent') === 'true',
     page: parseInt(searchParams.get('page') || '1')
   });
 
@@ -396,6 +402,11 @@ export default function SearchPage() {
         }
       }
 
+      // Urgent filter
+      if (filters.urgentOnly && !(ad as any).urgentActive) {
+        return false;
+      }
+
       return true;
     });
   }, [data?.ads, filters.query, filters.vehicleType, filters.brand, filters.model, filters.condition, filters.grade, filters.minPrice, filters.maxPrice, filters.minYear, filters.maxYear, filters.fuelType, filters.transmission, filters.district, filters.city, filters.globalSearch, filters.seller]);
@@ -441,6 +452,7 @@ export default function SearchPage() {
       district: 'all',
       city: 'all',
       seller: 'all',
+      urgentOnly: false,
       page: 1
     });
   };
@@ -477,16 +489,58 @@ export default function SearchPage() {
     return years.filter(year => year >= minYearValue);
   }, [years, filters.minYear]);
 
+  // Top Ad rotation state (rotates every 10 minutes client-side)
+  const [topAdRotationIndex, setTopAdRotationIndex] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTopAdRotationIndex((i) => i + 1);
+    }, 5 * 60 * 1000); // 5 minutes
+    return () => clearInterval(interval);
+  }, []);
+
+  // Derive Top Ads (all active topAd ads)
+  const topAds = useMemo(() => {
+    if (!data?.ads) return [];
+    return data.ads.filter(
+      (ad) => (ad as any).topAdActive && (ad as any).status === "ACTIVE" && (ad as any).published
+    );
+  }, [data?.ads]);
+
+  // The 4 Top Ad slots (rotated from the pool)
+  const displayedTopAds = useMemo(() => {
+    if (topAds.length === 0) return [];
+    const result = [];
+    for (let i = 0; i < Math.min(4, topAds.length); i++) {
+      result.push(topAds[(topAdRotationIndex + i) % topAds.length]);
+    }
+    return result;
+  }, [topAds, topAdRotationIndex]);
+
+  // Sort filteredAds: bump ads to top (below top ads), then featured, then normal
+  const sortedFilteredAds = useMemo(() => {
+    return [...filteredAds].sort((a, b) => {
+      // Featured ads before normal
+      const aFeatured = (a as any).featuredActive ? 1 : 0;
+      const bFeatured = (b as any).featuredActive ? 1 : 0;
+      if (bFeatured !== aFeatured) return bFeatured - aFeatured;
+      // Bump ads sorted by boostStartAt desc (most recent bump first)
+      const aBump = (a as any).bumpActive ? 1 : 0;
+      const bBump = (b as any).bumpActive ? 1 : 0;
+      if (bBump !== aBump) return bBump - aBump;
+      return 0;
+    });
+  }, [filteredAds]);
+
   // Pagination logic
   const limit = 20;
-  const totalPages = Math.ceil(filteredAds.length / limit);
-  // Ensure we don't go to page 0, and don't go past total pages unless filteredAds is empty
+  const totalPages = Math.ceil(sortedFilteredAds.length / limit);
+  // Ensure we don't go to page 0, and don't go past total pages unless sortedFilteredAds is empty
   const currentPage = Math.max(1, Math.min(filters.page, Math.max(1, totalPages)));
 
   const paginatedAds = useMemo(() => {
     const startIndex = (currentPage - 1) * limit;
-    return filteredAds.slice(startIndex, startIndex + limit);
-  }, [filteredAds, currentPage, limit]);
+    return sortedFilteredAds.slice(startIndex, startIndex + limit);
+  }, [sortedFilteredAds, currentPage, limit]);
 
   // Validate price range
   const isPriceRangeInvalid = useMemo(() => {
@@ -928,6 +982,21 @@ export default function SearchPage() {
                     </Select>
                   </div>
                 </div>
+
+                <Separator className="my-3" />
+
+                {/* Urgent Filter */}
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="urgentOnly"
+                    checked={filters.urgentOnly}
+                    onCheckedChange={(checked) => handleFilterChange('urgentOnly', !!checked)}
+                  />
+                  <label htmlFor="urgentOnly" className="text-sm font-medium text-red-600 cursor-pointer flex items-center gap-1">
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    Urgent Ads Only
+                  </label>
+                </div>
               </div>
             </Card>
           </div>
@@ -971,20 +1040,70 @@ export default function SearchPage() {
               </div>
             )}
 
+            {/* Top Ad Slots */}
+            {!isLoading && displayedTopAds.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Star className="h-4 w-4 text-yellow-500" />
+                  <span className="text-sm font-semibold text-slate-700">Top Ads</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {displayedTopAds.map((vehicle) => (
+                    <TopAdCard
+                      key={vehicle.id}
+                      vehicle={vehicle}
+                      vehicleTypeLabels={vehicleTypeLabels}
+                      formatPrice={formatPrice}
+                      formatAdTitle={formatAdTitle}
+                    />
+                  ))}
+                </div>
+                <Separator className="mt-6" />
+              </div>
+            )}
+
             {/* Results Grid */}
             {!isLoading && !error && paginatedAds.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {paginatedAds.map((vehicle) => {
+                  const isFeatured = (vehicle as any).featuredActive;
+                  const isUrgent = (vehicle as any).urgentActive;
+                  const isBump = (vehicle as any).bumpActive;
+                  const isTopAd = (vehicle as any).topAdActive;
+                  const featuredImages = (vehicle as any)?.media?.slice(0, 3) || [];
+
+                  // Featured ad layout
+                  if (isFeatured) {
+                    return (
+                      <FeaturedAdCard
+                        key={vehicle.id}
+                        vehicle={vehicle}
+                        vehicleTypeLabels={vehicleTypeLabels}
+                        formatPrice={formatPrice}
+                        formatAdTitle={formatAdTitle}
+                        isBump={isBump}
+                        isTopAd={isTopAd}
+                        isUrgent={isUrgent}
+                      />
+                    );
+                  }
+
                   return (
                     <div
                       key={vehicle.id}
-                      className="rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative bg-white border-slate-200 hover:border-slate-300"
+                      className={`rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative bg-white border-slate-200 hover:border-slate-300 ${isUrgent ? 'border-l-4 border-l-red-400' : ''}`}
                       onClick={() => router.push(buildAdUrl(vehicle))}
                     >
                       {/* Favorite Button */}
                       <div className="absolute top-10 right-2 z-10">
                         <FavoriteButton adId={vehicle.id} />
                       </div>
+
+                      {(isBump || isUrgent) && (
+                        <div className="absolute bottom-2 right-2 z-10">
+                          <BoostBadges bumpActive={isBump} urgentActive={isUrgent} />
+                        </div>
+                      )}
 
                       <div className="p-3">
                         {/* Vehicle Title - Centered */}
@@ -995,9 +1114,9 @@ export default function SearchPage() {
                         <div className="flex">
                           {/* Vehicle Image */}
                           <div className="w-32 h-20 flex-shrink-0">
-                            {vehicle?.media && vehicle.media.length > 0 && vehicle.media[0]?.media?.url ? (
+                            {(vehicle as any)?.media && (vehicle as any).media.length > 0 && (vehicle as any).media[0]?.media?.url ? (
                               <img
-                                src={vehicle.media[0].media.url}
+                                src={(vehicle as any).media[0].media.url}
                                 alt={vehicle.title || 'Vehicle'}
                                 className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
                               />
@@ -1026,14 +1145,12 @@ export default function SearchPage() {
                               </div>
                             </div>
 
-                            <div className="flex items-center justify-between mt-1">
-                              <div className="text-xs text-slate-400">
-                                {format(new Date(vehicle.createdAt), "MMM d, yyyy")}
-                              </div>
-                              <div className="text-xs text-slate-400 flex items-center gap-1">
+                            <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
+                              <span>{getRelativeTime(vehicle.createdAt)}</span>
+                              <span className="flex items-center gap-0.5">
                                 <Eye className="h-3 w-3" />
                                 {(vehicle as any).analytics?.views || 0}
-                              </div>
+                              </span>
                             </div>
                           </div>
                         </div>
