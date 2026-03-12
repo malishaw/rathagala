@@ -28,11 +28,13 @@ import {
   Car,
   Sparkles,
   Eye,
+  Star,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
 import { useGetAutoPartCategories } from "@/features/ads/api/use-get-auto-part-categories";
+import { BoostBadges } from "@/features/boost/components/boost-badges";
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -65,6 +67,7 @@ export default function AutoPartsPage() {
   const [maxPrice, setMaxPrice] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isFiltersOpen, setIsFiltersOpen] = useState(true);
+  const [urgentOnly, setUrgentOnly] = useState(false);
 
   const { data: categories = [] } = useGetAutoPartCategories(true);
 
@@ -121,9 +124,73 @@ export default function AutoPartsPage() {
         if (!searchTerms.every((term) => searchText.includes(term))) return false;
       }
 
+      if (urgentOnly && !(ad as any).urgentActive) return false;
+
       return true;
     });
-  }, [data, searchQuery, selectedCategory, selectedVehicleType, selectedCondition, selectedDistrict, minPrice, maxPrice]);
+  }, [data, searchQuery, selectedCategory, selectedVehicleType, selectedCondition, selectedDistrict, minPrice, maxPrice, urgentOnly]);
+
+  // Boost scoring
+  const getBoostScore = (ad: any): number => {
+    let score = 0;
+    if ((ad as any).featuredActive) score += 8;
+    if ((ad as any).topAdActive) score += 4;
+    if ((ad as any).bumpActive) score += 2;
+    if ((ad as any).urgentActive) score += 1;
+    return score;
+  };
+
+  const getBumpEffectiveTime = (ad: any): number => {
+    if (!(ad as any).bumpActive || !(ad as any).boostStartAt) return new Date(ad.createdAt).getTime();
+    const start = new Date((ad as any).boostStartAt).getTime();
+    const now = Date.now();
+    const cycleMs = 24 * 60 * 60 * 1000;
+    return start + Math.floor((now - start) / cycleMs) * cycleMs;
+  };
+
+  // Top ad rotation (5 minutes)
+  const [topAdRotationIndex, setTopAdRotationIndex] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setTopAdRotationIndex((i) => i + 1), 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Featured ad rotation (5 minutes)
+  const [featuredRotationIndex, setFeaturedRotationIndex] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setFeaturedRotationIndex((i) => i + 1), 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Top ads pool
+  const topAdsPool = useMemo(() => {
+    return filteredAds
+      .filter((ad) => (ad as any).topAdActive)
+      .sort((a, b) => new Date((b as any).boostStartAt || b.createdAt).getTime() - new Date((a as any).boostStartAt || a.createdAt).getTime());
+  }, [filteredAds]);
+
+  // Featured ads pool
+  const featuredAdsPool = useMemo(() => {
+    return filteredAds
+      .filter((ad) => (ad as any).featuredActive)
+      .sort((a, b) => new Date((b as any).boostStartAt || b.createdAt).getTime() - new Date((a as any).boostStartAt || a.createdAt).getTime());
+  }, [filteredAds]);
+
+  // 2 rotating top ads
+  const displayedTopAds = useMemo(() => {
+    if (topAdsPool.length === 0) return [];
+    return Array.from({ length: Math.min(2, topAdsPool.length) }, (_, i) =>
+      topAdsPool[(topAdRotationIndex + i) % topAdsPool.length]
+    );
+  }, [topAdsPool, topAdRotationIndex]);
+
+  // 2 rotating featured ads
+  const displayedFeaturedAds = useMemo(() => {
+    if (featuredAdsPool.length === 0) return [];
+    return Array.from({ length: Math.min(2, featuredAdsPool.length) }, (_, i) =>
+      featuredAdsPool[(featuredRotationIndex + i) % featuredAdsPool.length]
+    );
+  }, [featuredAdsPool, featuredRotationIndex]);
 
   const handleFilterChange = (key: string, value: any) => {
     if (key === "searchQuery") setSearchQuery(value);
@@ -144,6 +211,7 @@ export default function AutoPartsPage() {
     setSelectedDistrict("all");
     setMinPrice("");
     setMaxPrice("");
+    setUrgentOnly(false);
     setCurrentPage(1);
   };
 
@@ -155,6 +223,7 @@ export default function AutoPartsPage() {
     selectedDistrict !== "all" ? selectedDistrict : null,
     minPrice,
     maxPrice,
+    urgentOnly ? "urgent" : null,
   ].filter(Boolean).length;
 
   const getCategoryName = (categoryId: string) => {
@@ -167,8 +236,17 @@ export default function AutoPartsPage() {
   const paginationPage = Math.max(1, Math.min(currentPage, Math.max(1, totalPages)));
 
   const paginatedAds = useMemo(() => {
+    const sorted = [...filteredAds].sort((a, b) => {
+      const scoreA = getBoostScore(a);
+      const scoreB = getBoostScore(b);
+      if (scoreB !== scoreA) return scoreB - scoreA;
+      const timeA = getBumpEffectiveTime(a);
+      const timeB = getBumpEffectiveTime(b);
+      if (timeB !== timeA) return timeB - timeA;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
     const startIndex = (paginationPage - 1) * limit;
-    return filteredAds.slice(startIndex, startIndex + limit);
+    return sorted.slice(startIndex, startIndex + limit);
   }, [filteredAds, paginationPage, limit]);
 
   return (
@@ -364,12 +442,110 @@ export default function AutoPartsPage() {
                     </div>
                   </>
                 )}
+
+                <Separator className="my-3" />
+
+                {/* Urgent Ads Filter */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="urgentOnlyParts"
+                    checked={urgentOnly}
+                    onChange={(e) => { setUrgentOnly(e.target.checked); setCurrentPage(1); }}
+                    className="h-4 w-4 rounded border-slate-300 text-red-600 cursor-pointer"
+                  />
+                  <label htmlFor="urgentOnlyParts" className="text-sm font-medium text-red-600 cursor-pointer flex items-center gap-1">
+                    Urgent Ads Only
+                  </label>
+                </div>
               </div>
             </Card>
           </div>
 
           {/* Center Column - Results */}
           <div className="flex-1 min-w-0">
+            {/* Top Ad Slots - 2 rotating */}
+            {!isLoading && displayedTopAds.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Star className="h-4 w-4 text-yellow-500" />
+                  <span className="text-sm font-semibold text-slate-700">Top Ads</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {displayedTopAds.map((vehicle) => {
+                    const adExt = vehicle as typeof vehicle & { partCategoryId?: string; partName?: string };
+                    const formatAdTitle = (ad: any) => ad.partName || ad.title || "Auto Part";
+                    const formatPrice = (price: number | null) => price ? `Rs. ${price.toLocaleString()}` : "Negotiable";
+                    return (
+                      <div
+                        key={`top-${vehicle.id}`}
+                        className="rounded-lg border-2 border-yellow-400 overflow-hidden hover:shadow-lg cursor-pointer group relative bg-yellow-50"
+                        onClick={() => router.push(buildAdUrl(vehicle))}
+                      >
+                        <div className="p-3">
+                          <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 line-clamp-1 group-hover:text-teal-700">{formatAdTitle(vehicle)}</h3>
+                          <div className="flex gap-3">
+                            <div className="w-32 h-20 flex-shrink-0">
+                              <img src={(vehicle as any)?.media?.[0]?.media?.url || "/placeholder-image.jpg"} alt={vehicle.title || "Part"} className="w-full h-full object-cover rounded-md" />
+                            </div>
+                            <div className="flex-1 flex flex-col justify-between min-w-0">
+                              <div>
+                                <div className="text-xs text-slate-600 mb-1 truncate">{vehicle.city || vehicle.location || ""}</div>
+                                <div className="text-sm font-semibold text-teal-700">{formatPrice(vehicle.price)}</div>
+                              </div>
+                              <BoostBadges topAdActive bumpActive={(vehicle as any).bumpActive} urgentActive={(vehicle as any).urgentActive} featuredActive={(vehicle as any).featuredActive} />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <Separator className="mt-4 mb-4" />
+              </div>
+            )}
+
+            {/* Featured Ad Slots - 2 rotating */}
+            {!isLoading && displayedFeaturedAds.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles className="h-4 w-4 text-purple-500" />
+                  <span className="text-sm font-semibold text-slate-700">Featured Ads</span>
+                </div>
+                <div className="grid grid-cols-1 gap-4">
+                  {displayedFeaturedAds.map((vehicle) => {
+                    const adExt = vehicle as typeof vehicle & { partCategoryId?: string; partName?: string; media?: Array<{ media?: { url?: string } }> };
+                    const mainImage = adExt.media?.[0]?.media?.url;
+                    const partName = adExt.partName || vehicle.title || "Auto Part";
+                    return (
+                      <div
+                        key={`feat-${vehicle.id}`}
+                        className="rounded-lg border-2 border-purple-300 overflow-hidden hover:shadow-lg cursor-pointer group relative bg-purple-50"
+                        onClick={() => router.push(buildAdUrl(vehicle))}
+                      >
+                        <div className="grid grid-cols-3 gap-1 h-28 overflow-hidden">
+                          {adExt.media && adExt.media.length > 0
+                            ? adExt.media.slice(0, 3).map((m, idx) => <img key={idx} src={m.media?.url || "/placeholder-image.jpg"} alt={partName} className="w-full h-full object-cover" />)
+                            : [0,1,2].map(i => <img key={i} src="/placeholder-image.jpg" alt={partName} className="w-full h-full object-cover" />)}
+                        </div>
+                        <div className="p-3 flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-sm text-slate-800 group-hover:text-teal-700 line-clamp-1">{partName}</h3>
+                            <p className="text-xs text-slate-500 mt-1 truncate">{vehicle.city || vehicle.location || ""}</p>
+                          </div>
+                          <div className="text-sm font-bold text-teal-700 flex-shrink-0">{vehicle.price ? `Rs. ${vehicle.price.toLocaleString()}` : "Negotiable"}</div>
+                        </div>
+                        <div className="absolute bottom-2 right-2">
+                          <BoostBadges featuredActive bumpActive={(vehicle as any).bumpActive} urgentActive={(vehicle as any).urgentActive} topAdActive={(vehicle as any).topAdActive} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <Separator className="mt-4 mb-4" />
+              </div>
+            )}
+
             {/* Loading State */}
             {isLoading && (
               <div className="flex items-center justify-center py-20">
@@ -401,13 +577,24 @@ export default function AutoPartsPage() {
                   return (
                     <div
                       key={vehicle.id}
-                      className="rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative bg-white"
+                      className={`rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative bg-white ${(vehicle as any).urgentActive ? 'border-l-4 border-l-red-400 border-slate-200' : 'border-slate-200'}`}
                       onClick={() => router.push(buildAdUrl(vehicle))}
                     >
                       {/* Favorite Button */}
                       <div className="absolute top-10 right-2 z-10">
                         <FavoriteButton adId={vehicle.id} />
                       </div>
+
+                      {((vehicle as any).bumpActive || (vehicle as any).urgentActive || (vehicle as any).topAdActive || (vehicle as any).featuredActive) && (
+                        <div className="absolute bottom-2 right-2 z-10">
+                          <BoostBadges
+                            bumpActive={(vehicle as any).bumpActive}
+                            urgentActive={(vehicle as any).urgentActive}
+                            topAdActive={(vehicle as any).topAdActive}
+                            featuredActive={(vehicle as any).featuredActive}
+                          />
+                        </div>
+                      )}
 
                       <div className="p-3 mt-3">
                         {/* Part Title */}

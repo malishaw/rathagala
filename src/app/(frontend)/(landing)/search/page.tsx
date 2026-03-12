@@ -409,7 +409,7 @@ export default function SearchPage() {
 
       return true;
     });
-  }, [data?.ads, filters.query, filters.vehicleType, filters.brand, filters.model, filters.condition, filters.grade, filters.minPrice, filters.maxPrice, filters.minYear, filters.maxYear, filters.fuelType, filters.transmission, filters.district, filters.city, filters.globalSearch, filters.seller]);
+  }, [data?.ads, filters.query, filters.vehicleType, filters.brand, filters.model, filters.condition, filters.grade, filters.minPrice, filters.maxPrice, filters.minYear, filters.maxYear, filters.fuelType, filters.transmission, filters.district, filters.city, filters.globalSearch, filters.seller, filters.urgentOnly]);
 
   // Handle filter changes
   const handleFilterChange = (key: keyof SearchFilters, value: any) => {
@@ -489,45 +489,86 @@ export default function SearchPage() {
     return years.filter(year => year >= minYearValue);
   }, [years, filters.minYear]);
 
-  // Top Ad rotation state (rotates every 10 minutes client-side)
+  // Top Ad rotation state (5 minutes)
   const [topAdRotationIndex, setTopAdRotationIndex] = useState(0);
   useEffect(() => {
     const interval = setInterval(() => {
       setTopAdRotationIndex((i) => i + 1);
-    }, 5 * 60 * 1000); // 5 minutes
+    }, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // Derive Top Ads (all active topAd ads)
+  // Featured ad rotation (5 minutes)
+  const [featuredRotationIndex, setFeaturedRotationIndex] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFeaturedRotationIndex((i) => i + 1);
+    }, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Boost scoring: featured(8) > top(4) > bump(2) > urgent(1)
+  const getBoostScore = (ad: any): number => {
+    let score = 0;
+    if ((ad as any).featuredActive) score += 8;
+    if ((ad as any).topAdActive) score += 4;
+    if ((ad as any).bumpActive) score += 2;
+    if ((ad as any).urgentActive) score += 1;
+    return score;
+  };
+
+  // Bump effective time: resets to top every 24h from boostStartAt
+  const getBumpEffectiveTime = (ad: any): number => {
+    if (!(ad as any).bumpActive || !(ad as any).boostStartAt) return new Date(ad.createdAt).getTime();
+    const start = new Date((ad as any).boostStartAt).getTime();
+    const now = Date.now();
+    const cycleMs = 24 * 60 * 60 * 1000;
+    const elapsedCycles = Math.floor((now - start) / cycleMs);
+    return start + elapsedCycles * cycleMs;
+  };
+
+  // Top ads pool (sorted by boostStartAt desc)
   const topAds = useMemo(() => {
     if (!data?.ads) return [];
-    return data.ads.filter(
-      (ad) => (ad as any).topAdActive && (ad as any).status === "ACTIVE" && (ad as any).published
-    );
+    return data.ads
+      .filter((ad) => (ad as any).topAdActive && (ad as any).status === "ACTIVE" && (ad as any).published)
+      .sort((a, b) => new Date((b as any).boostStartAt || b.createdAt).getTime() - new Date((a as any).boostStartAt || a.createdAt).getTime());
   }, [data?.ads]);
 
-  // The 4 Top Ad slots (rotated from the pool)
+  // Featured ads pool (sorted by boostStartAt desc)
+  const featuredAdsPool = useMemo(() => {
+    if (!filteredAds) return [];
+    return filteredAds
+      .filter((ad) => (ad as any).featuredActive)
+      .sort((a, b) => new Date((b as any).boostStartAt || b.createdAt).getTime() - new Date((a as any).boostStartAt || a.createdAt).getTime());
+  }, [filteredAds]);
+
+  // 2 rotating top ads
   const displayedTopAds = useMemo(() => {
     if (topAds.length === 0) return [];
-    const result = [];
-    for (let i = 0; i < Math.min(4, topAds.length); i++) {
-      result.push(topAds[(topAdRotationIndex + i) % topAds.length]);
-    }
-    return result;
+    return Array.from({ length: Math.min(2, topAds.length) }, (_, i) =>
+      topAds[(topAdRotationIndex + i) % topAds.length]
+    );
   }, [topAds, topAdRotationIndex]);
 
-  // Sort filteredAds: bump ads to top (below top ads), then featured, then normal
+  // 2 rotating featured ads
+  const displayedFeaturedAds = useMemo(() => {
+    if (featuredAdsPool.length === 0) return [];
+    return Array.from({ length: Math.min(2, featuredAdsPool.length) }, (_, i) =>
+      featuredAdsPool[(featuredRotationIndex + i) % featuredAdsPool.length]
+    );
+  }, [featuredAdsPool, featuredRotationIndex]);
+
+  // Sort with full boost scoring: featured > top > bump > urgent > normal
   const sortedFilteredAds = useMemo(() => {
     return [...filteredAds].sort((a, b) => {
-      // Featured ads before normal
-      const aFeatured = (a as any).featuredActive ? 1 : 0;
-      const bFeatured = (b as any).featuredActive ? 1 : 0;
-      if (bFeatured !== aFeatured) return bFeatured - aFeatured;
-      // Bump ads sorted by boostStartAt desc (most recent bump first)
-      const aBump = (a as any).bumpActive ? 1 : 0;
-      const bBump = (b as any).bumpActive ? 1 : 0;
-      if (bBump !== aBump) return bBump - aBump;
-      return 0;
+      const scoreA = getBoostScore(a);
+      const scoreB = getBoostScore(b);
+      if (scoreB !== scoreA) return scoreB - scoreA;
+      const timeA = getBumpEffectiveTime(a);
+      const timeB = getBumpEffectiveTime(b);
+      if (timeB !== timeA) return timeB - timeA;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
   }, [filteredAds]);
 
@@ -1055,6 +1096,31 @@ export default function SearchPage() {
                       vehicleTypeLabels={vehicleTypeLabels}
                       formatPrice={formatPrice}
                       formatAdTitle={formatAdTitle}
+                    />
+                  ))}
+                </div>
+                <Separator className="mt-6" />
+              </div>
+            )}
+
+            {/* Featured Ad Slots - 2 rotating, shown after top ads */}
+            {!isLoading && displayedFeaturedAds.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Zap className="h-4 w-4 text-purple-500" />
+                  <span className="text-sm font-semibold text-slate-700">Featured Ads</span>
+                </div>
+                <div className="grid grid-cols-1 gap-4">
+                  {displayedFeaturedAds.map((vehicle) => (
+                    <FeaturedAdCard
+                      key={`featured-${vehicle.id}`}
+                      vehicle={vehicle}
+                      vehicleTypeLabels={vehicleTypeLabels}
+                      formatPrice={formatPrice}
+                      formatAdTitle={formatAdTitle}
+                      isBump={(vehicle as any).bumpActive}
+                      isTopAd={(vehicle as any).topAdActive}
+                      isUrgent={(vehicle as any).urgentActive}
                     />
                   ))}
                 </div>

@@ -19,7 +19,12 @@ export function TopAdCard({ vehicle, vehicleTypeLabels, formatPrice, formatAdTit
       onClick={() => (window.location.href = buildAdUrl(vehicle))}
     >
       <div className="absolute bottom-2 right-2 z-10">
-        <BoostBadges topAdActive />
+        <BoostBadges
+          topAdActive
+          featuredActive={(vehicle as any).featuredActive}
+          bumpActive={(vehicle as any).bumpActive}
+          urgentActive={(vehicle as any).urgentActive}
+        />
       </div>
       <div className="p-3">
         <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 group-hover:text-teal-700 line-clamp-1">
