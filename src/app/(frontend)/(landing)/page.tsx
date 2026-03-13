@@ -390,7 +390,7 @@ export default function VehicleMarketplace() {
     const dayMs = 24 * 60 * 60 * 1000;
     const isBumpOnly = (ad: any) =>
       Boolean(ad?.bumpActive && !ad?.topAdActive && !ad?.featuredActive && !ad?.urgentActive);
-    const getBumpSortTime = (ad: any) => {
+    const getSortTime = (ad: any) => {
       const createdAtMs = ad?.createdAt ? new Date(ad.createdAt).getTime() : 0;
       if (!isBumpOnly(ad)) return createdAtMs;
       const bumpStart = ad?.bumpStartAt || ad?.boostStartAt || ad?.boostRequestedAt || ad?.updatedAt || ad?.createdAt;
@@ -413,12 +413,9 @@ export default function VehicleMarketplace() {
       case "newest":
       default:
         return ads.sort((a, b) => {
-          const aBump = isBumpOnly(a);
-          const bBump = isBumpOnly(b);
-          if (aBump !== bBump) {
-            return aBump ? -1 : 1;
-          }
-          return getBumpSortTime(b) - getBumpSortTime(a);
+          const timeDiff = getSortTime(b) - getSortTime(a);
+          if (timeDiff !== 0) return timeDiff;
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         });
     }
   }, [filteredAds, sortBy]);
