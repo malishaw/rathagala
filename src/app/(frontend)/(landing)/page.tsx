@@ -101,6 +101,22 @@ const formatAdTitle = (ad: any): string => {
     .join(' ');
 };
 
+const shuffleArray = <T,>(items: T[]): T[] => {
+  const result = [...items];
+  for (let i = result.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+};
+
+const getRotatingSlice = <T,>(items: T[], startIndex: number, count: number): T[] => {
+  if (items.length === 0 || count <= 0) return [];
+  const normalizedStart = ((startIndex % items.length) + items.length) % items.length;
+  const limit = Math.min(count, items.length);
+  return Array.from({ length: limit }, (_, i) => items[(normalizedStart + i) % items.length]);
+};
+
 // Define filter state interface with updated fields
 interface FilterState {
   make: string | null;
@@ -370,6 +386,22 @@ export default function VehicleMarketplace() {
     if (!filteredAds || filteredAds.length === 0) return [];
     
     const ads = [...filteredAds];
+    const now = Date.now();
+    const dayMs = 24 * 60 * 60 * 1000;
+    const isBumpOnly = (ad: any) =>
+      Boolean(ad?.bumpActive && !ad?.topAdActive && !ad?.featuredActive && !ad?.urgentActive);
+    const getBumpSortTime = (ad: any) => {
+      const createdAtMs = ad?.createdAt ? new Date(ad.createdAt).getTime() : 0;
+      if (!isBumpOnly(ad)) return createdAtMs;
+      const bumpStart = ad?.bumpStartAt || ad?.boostStartAt || ad?.boostRequestedAt || ad?.updatedAt || ad?.createdAt;
+      const bumpStartMs = bumpStart ? new Date(bumpStart).getTime() : createdAtMs;
+      if (!Number.isFinite(bumpStartMs)) return createdAtMs;
+      const elapsed = Math.max(0, now - bumpStartMs);
+      const cycles = Math.floor(elapsed / dayMs);
+      const lastBumpMs = bumpStartMs + cycles * dayMs;
+      return Math.max(createdAtMs, lastBumpMs);
+    };
+
     switch (sortBy) {
       case "price-low":
         return ads.sort((a, b) => (a.price || 0) - (b.price || 0));
@@ -378,25 +410,74 @@ export default function VehicleMarketplace() {
       case "year":
         return ads.sort((a, b) => (b.manufacturedYear || 0) - (a.manufacturedYear || 0));
       case "default":
-        return ads.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       case "newest":
       default:
-        return ads.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        return ads.sort((a, b) => {
+          const aBump = isBumpOnly(a);
+          const bBump = isBumpOnly(b);
+          if (aBump !== bBump) {
+            return aBump ? -1 : 1;
+          }
+          return getBumpSortTime(b) - getBumpSortTime(a);
+        });
     }
   }, [filteredAds, sortBy]);
+
+  const topAdsPool = useMemo(() => {
+    return allAds.filter((ad) => (ad as any).topAdActive && ad.status === "ACTIVE" && (ad as any).published);
+  }, [allAds]);
+
+  const shuffledTopAdsPool = useMemo(() => shuffleArray(topAdsPool), [topAdsPool]);
+
+  const displayedTopAds = useMemo(() => {
+    if (shuffledTopAdsPool.length === 0) return [];
+    return getRotatingSlice(shuffledTopAdsPool, featuredRotationIndex, 2);
+  }, [shuffledTopAdsPool, featuredRotationIndex]);
 
   // Featured ads pool (for rotation)
   const featuredAdsPool = useMemo(() => {
     return allAds.filter((ad) => (ad as any).featuredActive && ad.status === "ACTIVE" && (ad as any).published);
   }, [allAds]);
 
+  const shuffledFeaturedAdsPool = useMemo(() => shuffleArray(featuredAdsPool), [featuredAdsPool]);
+
   // 2 rotating featured ads
   const displayedFeaturedAds = useMemo(() => {
-    if (featuredAdsPool.length === 0) return [];
-    return Array.from({ length: Math.min(2, featuredAdsPool.length) }, (_, i) =>
-      featuredAdsPool[(featuredRotationIndex + i) % featuredAdsPool.length]
-    );
-  }, [featuredAdsPool, featuredRotationIndex]);
+    if (shuffledFeaturedAdsPool.length === 0) return [];
+    return getRotatingSlice(shuffledFeaturedAdsPool, featuredRotationIndex, 2);
+  }, [shuffledFeaturedAdsPool, featuredRotationIndex]);
+
+  const featuredInsertPool = useMemo(() => {
+    return shuffledFeaturedAdsPool.filter((ad) => !(ad as any).topAdActive);
+  }, [shuffledFeaturedAdsPool]);
+
+  const baseAds = useMemo(() => {
+    return sortedAds.filter((ad) => !(ad as any).featuredActive && !(ad as any).topAdActive);
+  }, [sortedAds]);
+
+  const interleavedAds = useMemo(() => {
+    if (baseAds.length === 0) return [];
+    if (featuredInsertPool.length === 0) return baseAds;
+
+    const result: any[] = [];
+    const insertCount = Math.min(2, featuredInsertPool.length);
+    const poolLength = featuredInsertPool.length;
+    const startOffset = (featuredRotationIndex * insertCount) % poolLength;
+    let insertOffset = 0;
+
+    baseAds.forEach((ad, index) => {
+      result.push(ad);
+      if ((index + 1) % 16 === 0) {
+        for (let i = 0; i < insertCount; i += 1) {
+          const pos = (startOffset + insertOffset + i) % poolLength;
+          result.push(featuredInsertPool[pos]);
+        }
+        insertOffset += insertCount;
+      }
+    });
+
+    return result;
+  }, [baseAds, featuredInsertPool, featuredRotationIndex]);
 
   // Featured Ads Carousel (latest 6 - featured only, no other promotions)
   const featuredBoostedAds = useMemo(() => {
@@ -1175,26 +1256,19 @@ export default function VehicleMarketplace() {
               </div>
 
               {/* Top Ad Section */}
-              {!isLoading && allAds.filter((ad) => (ad as any).topAdActive && ad.status === "ACTIVE" && (ad as any).published).length > 0 && (
-                <div className="mb-6">
+              {!isLoading && displayedTopAds.length > 0 && (
+                <div className="mb-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {allAds
-                      .filter((ad) => (ad as any).topAdActive && ad.status === "ACTIVE" && (ad as any).published)
-                      .slice(0, 4)
-                      .map((vehicle) => (
-                        <TopAdCard key={vehicle.id} vehicle={vehicle} vehicleTypeLabels={vehicleTypeLabels} formatPrice={formatPrice} formatAdTitle={formatAdTitle} />
-                      ))}
+                    {displayedTopAds.map((vehicle) => (
+                      <TopAdCard key={vehicle.id} vehicle={vehicle} vehicleTypeLabels={vehicleTypeLabels} formatPrice={formatPrice} formatAdTitle={formatAdTitle} />
+                    ))}
                   </div>
                 </div>
               )}
 
               {/* Featured Ad Section */}
               {!isLoading && displayedFeaturedAds.length > 0 && (
-                <div className="mb-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Zap className="h-4 w-4 text-purple-500" />
-                    <span className="text-sm font-semibold text-slate-700">Featured Ads</span>
-                  </div>
+                <div className="mb-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {displayedFeaturedAds.map((vehicle) => (
                         <FeaturedAdCard
@@ -1209,7 +1283,6 @@ export default function VehicleMarketplace() {
                         />
                       ))}
                   </div>
-                  <hr className="my-4 border-slate-200" />
                 </div>
               )}
 
@@ -1291,91 +1364,107 @@ export default function VehicleMarketplace() {
               )}
 
               {/* Vehicle Grid - Using Real Data */}
-              {sortedAds.length > 0 && !isLoading && (
+              {interleavedAds.length > 0 && !isLoading && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {sortedAds.slice(0, visibleCount).map((vehicle) => {
+                  {interleavedAds.slice(0, visibleCount).map((vehicle) => {
                     const isFeatured = (vehicle as any).featuredActive;
+
+                    if (isFeatured) {
+                      return (
+                        <FeaturedAdCard
+                          key={`featured-${vehicle.id}`}
+                          vehicle={vehicle}
+                          vehicleTypeLabels={vehicleTypeLabels}
+                          formatPrice={formatPrice}
+                          formatAdTitle={formatAdTitle}
+                          isBump={(vehicle as any).bumpActive}
+                          isTopAd={(vehicle as any).topAdActive}
+                          isUrgent={(vehicle as any).urgentActive}
+                        />
+                      );
+                    }
+
                     return (
-                    <div
-                      key={vehicle.id}
-                      className={`rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative ${isFeatured ? 'bg-yellow-50 border-yellow-300 hover:border-yellow-400' : 'bg-white border-slate-200 hover:border-slate-300'}`}
-                      onClick={() => (window.location.href = buildAdUrl(vehicle))}
-                    >
-                      {/* Favorite Button */}
-                      <div className="absolute top-10 right-2 z-10">
-                        <FavoriteButton adId={vehicle.id} />
-                      </div>
-
-                      {((vehicle as any).bumpActive || (vehicle as any).urgentActive || (vehicle as any).topAdActive || (vehicle as any).featuredActive) && (
-                        <div className="absolute bottom-2 right-2 z-10">
-                          <BoostBadges bumpActive={(vehicle as any).bumpActive} urgentActive={(vehicle as any).urgentActive} topAdActive={(vehicle as any).topAdActive} featuredActive={(vehicle as any).featuredActive} />
+                      <div
+                        key={vehicle.id}
+                        className={`rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative bg-white border-slate-200 hover:border-slate-300`}
+                        onClick={() => (window.location.href = buildAdUrl(vehicle))}
+                      >
+                        {/* Favorite Button */}
+                        <div className="absolute top-10 right-2 z-10">
+                          <FavoriteButton adId={vehicle.id} />
                         </div>
-                      )}
 
-                      <div className="p-3">
-                        {/* Vehicle Title - Centered */}
-                        <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
-                          {formatAdTitle(vehicle)}
-                        </h3>
+                        {((vehicle as any).bumpActive || (vehicle as any).urgentActive || (vehicle as any).topAdActive || (vehicle as any).featuredActive) && (
+                          <div className="absolute bottom-2 right-2 z-10">
+                            <BoostBadges bumpActive={(vehicle as any).bumpActive} urgentActive={(vehicle as any).urgentActive} topAdActive={(vehicle as any).topAdActive} featuredActive={(vehicle as any).featuredActive} />
+                          </div>
+                        )}
 
-                        <div className="flex">
-                          {/* Vehicle Image with Time and Views Below */}
-                          <div className="w-32 h-20 flex-shrink-0 flex flex-col">
-                            <div className="flex-1">
-                              {vehicle?.media && vehicle.media.length > 0 && vehicle.media[0]?.media?.url ? (
-                                <img
-                                  src={vehicle.media[0].media.url}
-                                  alt={vehicle.title}
-                                  className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
-                                />
-                              ) : (
-                                <img
-                                  src="/placeholder-image.jpg"
-                                  alt={vehicle.title}
-                                  className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
-                                />
-                              )}
+                        <div className="p-3 pb-5">
+                          {/* Vehicle Title - Centered */}
+                          <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
+                            {formatAdTitle(vehicle)}
+                          </h3>
+
+                          <div className="flex">
+                            {/* Vehicle Image with Time and Views Below */}
+                            <div className="w-32 h-20 flex-shrink-0 flex flex-col">
+                              <div className="flex-1">
+                                {vehicle?.media && vehicle.media.length > 0 && vehicle.media[0]?.media?.url ? (
+                                  <img
+                                    src={vehicle.media[0].media.url}
+                                    alt={vehicle.title}
+                                    className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                                  />
+                                ) : (
+                                  <img
+                                    src="/placeholder-image.jpg"
+                                    alt={vehicle.title}
+                                    className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                                  />
+                                )}
+                              </div>
+                              {/* Time and Views Below Image */}
+                              <div className="flex items-center gap-1 mt-1 text-xs text-slate-400">
+                                <span>{getRelativeTime(vehicle.createdAt)}</span>
+                                <span className="flex items-center gap-0.5">
+                                  <Eye className="h-3 w-3" />
+                                  {(vehicle as any).analytics?.views || 0}
+                                </span>
+                              </div>
                             </div>
-                            {/* Time and Views Below Image */}
-                            <div className="flex items-center gap-1 mt-1 text-xs text-slate-400">
-                              <span>{getRelativeTime(vehicle.createdAt)}</span>
-                              <span className="flex items-center gap-0.5">
-                                <Eye className="h-3 w-3" />
-                                {(vehicle as any).analytics?.views || 0}
-                              </span>
+
+                            {/* Vehicle Details */}
+                            <div className="flex-1 pl-3 flex flex-col justify-between">
+                              <div>
+                                <div className="text-xs text-slate-600 mb-1 line-clamp-1">
+                                  {vehicle.city || vehicle.location || ""}
+                                </div>
+
+                                <div className="text-sm font-semibold text-teal-700 mb-1">
+                                  {formatPrice(vehicle.price, (vehicle as any).metadata?.isNegotiable)}
+                                </div>
+
+                                <div className="text-xs text-slate-500">
+                                  {vehicle.type === 'AUTO_PARTS' 
+                                    ? (vehicle as any).partCategory?.name || 'Auto Part'
+                                    : vehicleTypeLabels[vehicle.type] || vehicle.type}
+                                </div>
+                              </div>
                             </div>
                           </div>
-
-                          {/* Vehicle Details */}
-                          <div className="flex-1 pl-3 flex flex-col justify-between">
-                            <div>
-                              <div className="text-xs text-slate-600 mb-1 line-clamp-1">
-                                {vehicle.city || vehicle.location || ""}
-                              </div>
-
-                              <div className="text-sm font-semibold text-teal-700 mb-1">
-                                {formatPrice(vehicle.price, (vehicle as any).metadata?.isNegotiable)}
-                              </div>
-
-                              <div className="text-xs text-slate-500">
-                                {vehicle.type === 'AUTO_PARTS' 
-                                  ? (vehicle as any).partCategory?.name || 'Auto Part'
-                                  : vehicleTypeLabels[vehicle.type] || vehicle.type}
-                              </div>
-                            </div>
-                          </div>
                         </div>
                       </div>
-                    </div>
                     );
                   })}
                 </div>
               )}
 
               {/* Load More */}
-              {sortedAds.length > 0 && (
+              {interleavedAds.length > 0 && (
                 <div className="text-center mt-8">
-                  {visibleCount < sortedAds.length ? (
+                  {visibleCount < interleavedAds.length ? (
                     <Button
                       size="lg"
                       variant="outline"
@@ -1384,7 +1473,7 @@ export default function VehicleMarketplace() {
                     >
                       Load More Vehicles
                     </Button>
-                  ) : sortedAds.length > 12 ? (
+                  ) : interleavedAds.length > 12 ? (
                     <p className="text-slate-500 text-sm">No more vehicles to load</p>
                   ) : null}
                 </div>
@@ -1445,8 +1534,8 @@ export default function VehicleMarketplace() {
               plugins={[
                 Autoplay({
                   delay: 4000,
-                  stopOnInteraction: true,
-                  stopOnMouseEnter: true,
+                  stopOnInteraction: false,
+                  stopOnMouseEnter: false,
                 }),
               ]}
               className="w-full"
@@ -1469,6 +1558,7 @@ export default function VehicleMarketplace() {
                       vehicleTypeLabels={vehicleTypeLabels}
                       formatPrice={formatPrice}
                       formatAdTitle={formatAdTitle}
+                      titleClampClass="line-clamp-1"
                       isBump={(vehicle as any).bumpActive}
                       isTopAd={(vehicle as any).topAdActive}
                       isUrgent={(vehicle as any).urgentActive}
@@ -1534,21 +1624,22 @@ export default function VehicleMarketplace() {
                         <div className="absolute top-2 left-2 bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-md flex items-center gap-1">
                           <TrendingUp className="w-3 h-3" /><span className="font-semibold italic" >Trending</span>
                         </div>
-                        {/* Boost Badges */}
-                        {((vehicle as any).bumpActive || (vehicle as any).urgentActive || (vehicle as any).topAdActive || (vehicle as any).featuredActive) && (
-                          <div className="absolute bottom-2 right-2 z-10">
-                            <BoostBadges
-                              bumpActive={(vehicle as any).bumpActive}
-                              urgentActive={(vehicle as any).urgentActive}
-                              topAdActive={(vehicle as any).topAdActive}
-                              featuredActive={(vehicle as any).featuredActive}
-                            />
-                          </div>
-                        )}
                       </div>
 
+                      {/* Boost Badges */}
+                      {((vehicle as any).bumpActive || (vehicle as any).urgentActive || (vehicle as any).topAdActive || (vehicle as any).featuredActive) && (
+                        <div className="absolute bottom-2 right-2 z-10">
+                          <BoostBadges
+                            bumpActive={(vehicle as any).bumpActive}
+                            urgentActive={(vehicle as any).urgentActive}
+                            topAdActive={(vehicle as any).topAdActive}
+                            featuredActive={(vehicle as any).featuredActive}
+                          />
+                        </div>
+                      )}
+
                       {/* Vehicle Details */}
-                      <div className="p-3">
+                      <div className="p-3 pb-5">
                         <h3 className="font-semibold text-sm text-slate-800 mb-2 line-clamp-2 group-hover:text-teal-700">
                           {formatAdTitle(vehicle)}
                         </h3>

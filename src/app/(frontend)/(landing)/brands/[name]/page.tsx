@@ -390,7 +390,8 @@ export default function BrandPage() {
   const totalPages = Math.ceil(filteredAds.length / limit);
   const currentPage = Math.max(1, Math.min(filters.page, Math.max(1, totalPages)));
 
-  // Boost scoring: featured(8) > top(4) > bump(2) > urgent(1)\n  const getBoostScore = (ad: any): number => {
+  // Boost scoring: featured(8) > top(4) > bump(2) > urgent(1)
+  const getBoostScore = (ad: any): number => {
     let score = 0;
     if ((ad as any).featuredActive) score += 8;
     if ((ad as any).topAdActive) score += 4;

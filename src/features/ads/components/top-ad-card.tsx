@@ -17,7 +17,7 @@ export function TopAdCard({ vehicle, vehicleTypeLabels, formatPrice, formatAdTit
   
   return (
     <div
-      className={`rounded-lg border-2 overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group relative ${isFeatured ? 'bg-yellow-50 border-yellow-400 hover:border-yellow-500' : 'bg-white border-slate-200 hover:border-slate-300'}`}
+      className={`rounded-lg border-2 overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group relative ${isFeatured ? 'bg-yellow-50 border-yellow-200 hover:border-yellow-300' : 'bg-white border-slate-200 hover:border-slate-300'}`}
       onClick={() => (window.location.href = buildAdUrl(vehicle))}
     >
       <div className="absolute bottom-2 right-2 z-10">
@@ -28,12 +28,12 @@ export function TopAdCard({ vehicle, vehicleTypeLabels, formatPrice, formatAdTit
           urgentActive={(vehicle as any).urgentActive}
         />
       </div>
-      <div className="p-3">
+      <div className="ps-2">
         <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 group-hover:text-teal-700 line-clamp-1">
           {formatAdTitle(vehicle)}
         </h3>
         <div className="flex gap-3">
-          <div className="w-32 h-20 flex-shrink-0 flex flex-col">
+          <div className="w-36 h-30 flex-shrink-0 flex flex-col">
             <div className="flex-1">
               <img
                 src={vehicle?.media?.[0]?.media?.url || "/placeholder-image.jpg"}
@@ -42,7 +42,7 @@ export function TopAdCard({ vehicle, vehicleTypeLabels, formatPrice, formatAdTit
               />
             </div>
             {/* Time and Views Below Image */}
-            <div className="flex items-center gap-1 mt-1 text-xs text-slate-400">
+            <div className="flex items-center gap-1 mt-1 mb-2 text-xs text-slate-400">
               <span>{getRelativeTime(vehicle.createdAt)}</span>
               <span className="flex items-center gap-0.5">
                 <Eye className="h-3 w-3" />
