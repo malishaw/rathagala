@@ -1398,7 +1398,7 @@ export default function VehicleMarketplace() {
                           </div>
                         )}
 
-                        <div className="p-3 pb-5">
+                        <div className="p-2 pb-5">
                           {/* Vehicle Title - Centered */}
                           <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
                             {formatAdTitle(vehicle)}
@@ -1406,7 +1406,7 @@ export default function VehicleMarketplace() {
 
                           <div className="flex">
                             {/* Vehicle Image with Time and Views Below */}
-                            <div className="w-32 h-20 flex-shrink-0 flex flex-col">
+                            <div className="w-36 h-30 flex-shrink-0 flex flex-col">
                               <div className="flex-1">
                                 {vehicle?.media && vehicle.media.length > 0 && vehicle.media[0]?.media?.url ? (
                                   <img

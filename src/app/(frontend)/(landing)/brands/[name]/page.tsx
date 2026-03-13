@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ChevronDown, ChevronUp, TrendingUp, Loader2, Car, Search, Filter, Eye, Star, Zap, AlertCircle } from "lucide-react";
+import { ChevronDown, ChevronUp, TrendingUp, Car, Search, Filter, Eye } from "lucide-react";
 import { BoostBadges } from "@/features/boost/components/boost-badges";
 import { TopAdCard } from "@/features/ads/components/top-ad-card";
 import { FeaturedAdCard } from "@/features/ads/components/featured-ad-card";
@@ -61,6 +61,33 @@ const formatAdTitle = (ad: any): string => {
   return vehicleInfo;
 };
 
+/**
+ * Fisher-Yates shuffle — equal probability for every permutation.
+ * Called once per pool change so every ad starts with the same chance of
+ * landing in any slot.
+ */
+const shuffleArray = <T,>(items: T[]): T[] => {
+  const result = [...items];
+  for (let i = result.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+};
+
+/**
+ * Pick `count` items starting at a rotating offset.
+ * Because the source array is already shuffled, every item gets an equal
+ * chance of appearing. The offset advances each rotation tick so the
+ * displayed pair cycles through the full pool before repeating.
+ */
+const getRotatingSlice = <T,>(items: T[], startIndex: number, count: number): T[] => {
+  if (items.length === 0 || count <= 0) return [];
+  const normalizedStart = ((startIndex % items.length) + items.length) % items.length;
+  const limit = Math.min(count, items.length);
+  return Array.from({ length: limit }, (_, i) => items[(normalizedStart + i) % items.length]);
+};
+
 const sriLankanCities = getAllCities();
 const sriLankanDistricts = getAllDistricts();
 
@@ -80,7 +107,6 @@ interface BrandPageFilters {
   transmission: string;
   district: string;
   city: string;
-  page: number;
 }
 
 export default function BrandPage() {
@@ -107,7 +133,6 @@ export default function BrandPage() {
     transmission: 'all',
     district: 'all',
     city: 'all',
-    page: 1
   });
 
   // Search states for dropdown filtering
@@ -116,18 +141,19 @@ export default function BrandPage() {
   const [vehicleTypeSearch, setVehicleTypeSearch] = useState('');
   const [availableGrades, setAvailableGrades] = useState<{ id: string; name: string }[]>([]);
   const [loadingGrades, setLoadingGrades] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(12);
 
   // Fetch available grades when brand changes
   useEffect(() => {
     const fetchGrades = async () => {
       setLoadingGrades(true);
       try {
-        const params = new URLSearchParams({ limit: "500", isActive: "true" });
-        params.set("brand", brandName);
+        const gradeParams = new URLSearchParams({ limit: "500", isActive: "true" });
+        gradeParams.set("brand", brandName);
         if (filters.model) {
-          params.set("model", filters.model);
+          gradeParams.set("model", filters.model);
         }
-        const url = `/api/vehicle-grade?${params}`;
+        const url = `/api/vehicle-grade?${gradeParams}`;
         const res = await fetch(url);
         if (res.ok) {
           const data = await res.json() as { grades: { id: string; name: string; isActive?: boolean }[] };
@@ -147,6 +173,13 @@ export default function BrandPage() {
 
   // Mobile sidebar state
   const [isFiltersOpen, setIsFiltersOpen] = useState(true);
+
+  // Rotation index — drives both top-ad and featured-ad rotation (every 1 minute)
+  const [rotationIndex, setRotationIndex] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setRotationIndex((i) => i + 1), 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Derive available cities based on district selection
   const availableCities = useMemo(() => {
@@ -183,12 +216,12 @@ export default function BrandPage() {
   // Filter vehicle types based on search input
   const filteredVehicleTypes = useMemo(() => {
     if (!vehicleTypeSearch) return Object.entries(vehicleTypeLabels);
-    return Object.entries(vehicleTypeLabels).filter(([_, label]) =>
+    return Object.entries(vehicleTypeLabels).filter(([, label]) =>
       label.toLowerCase().includes(vehicleTypeSearch.toLowerCase())
     );
   }, [vehicleTypeSearch]);
 
-  // Fetch all ads (same pattern as search page)
+  // Fetch all ads
   const { data, isLoading, error } = useGetAds({
     page: 1,
     limit: 10000,
@@ -315,7 +348,7 @@ export default function BrandPage() {
   // Handle filter changes
   const handleFilterChange = (key: keyof BrandPageFilters, value: any) => {
     setFilters(prev => {
-      const newFilters = { ...prev, [key]: value, page: key === 'page' ? (value as number) : 1 };
+      const newFilters = { ...prev, [key]: value };
 
       if (key === 'minYear' && value !== 'any') {
         if (prev.maxYear && prev.maxYear !== 'any' && parseInt(prev.maxYear) < parseInt(value)) {
@@ -330,6 +363,7 @@ export default function BrandPage() {
 
       return newFilters;
     });
+    setVisibleCount(12);
   };
 
   // Clear all filters (brand stays from URL)
@@ -349,13 +383,13 @@ export default function BrandPage() {
       transmission: 'all',
       district: 'all',
       city: 'all',
-      page: 1
     });
+    setVisibleCount(12);
   };
 
   // Count active filters
-  const activeFilterCount = Object.entries(filters).filter(([key, value]) =>
-    key !== 'page' && value && value.toString().trim() !== '' &&
+  const activeFilterCount = Object.entries(filters).filter(([, value]) =>
+    value && value.toString().trim() !== '' &&
     value !== 'all' && value !== 'any'
   ).length;
 
@@ -385,89 +419,6 @@ export default function BrandPage() {
     return years.filter(year => year >= minYearValue);
   }, [years, filters.minYear]);
 
-  // Pagination logic
-  const limit = 20;
-  const totalPages = Math.ceil(filteredAds.length / limit);
-  const currentPage = Math.max(1, Math.min(filters.page, Math.max(1, totalPages)));
-
-  // Boost scoring: featured(8) > top(4) > bump(2) > urgent(1)
-  const getBoostScore = (ad: any): number => {
-    let score = 0;
-    if ((ad as any).featuredActive) score += 8;
-    if ((ad as any).topAdActive) score += 4;
-    if ((ad as any).bumpActive) score += 2;
-    if ((ad as any).urgentActive) score += 1;
-    return score;
-  };
-
-  // Bump effective time resets every 24h from boostStartAt
-  const getBumpEffectiveTime = (ad: any): number => {
-    if (!(ad as any).bumpActive || !(ad as any).boostStartAt) return new Date(ad.createdAt).getTime();
-    const start = new Date((ad as any).boostStartAt).getTime();
-    const now = Date.now();
-    const cycleMs = 24 * 60 * 60 * 1000;
-    return start + Math.floor((now - start) / cycleMs) * cycleMs;
-  };
-
-  // Top ad rotation (5 minutes)
-  const [topAdRotationIndex, setTopAdRotationIndex] = useState(0);
-  useEffect(() => {
-    const interval = setInterval(() => setTopAdRotationIndex((i) => i + 1), 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Featured ad rotation (5 minutes)
-  const [featuredRotationIndex, setFeaturedRotationIndex] = useState(0);
-  useEffect(() => {
-    const interval = setInterval(() => setFeaturedRotationIndex((i) => i + 1), 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Top ads pool from filteredAds (newest boost first)
-  const topAdsPool = useMemo(() => {
-    return filteredAds
-      .filter((ad) => (ad as any).topAdActive)
-      .sort((a, b) => new Date((b as any).boostStartAt || b.createdAt).getTime() - new Date((a as any).boostStartAt || a.createdAt).getTime());
-  }, [filteredAds]);
-
-  // Featured ads pool from filteredAds (newest boost first)
-  const featuredAdsPool = useMemo(() => {
-    return filteredAds
-      .filter((ad) => (ad as any).featuredActive)
-      .sort((a, b) => new Date((b as any).boostStartAt || b.createdAt).getTime() - new Date((a as any).boostStartAt || a.createdAt).getTime());
-  }, [filteredAds]);
-
-  // 2 rotating top ads
-  const displayedTopAds = useMemo(() => {
-    if (topAdsPool.length === 0) return [];
-    return Array.from({ length: Math.min(2, topAdsPool.length) }, (_, i) =>
-      topAdsPool[(topAdRotationIndex + i) % topAdsPool.length]
-    );
-  }, [topAdsPool, topAdRotationIndex]);
-
-  // 2 rotating featured ads
-  const displayedFeaturedAds = useMemo(() => {
-    if (featuredAdsPool.length === 0) return [];
-    return Array.from({ length: Math.min(2, featuredAdsPool.length) }, (_, i) =>
-      featuredAdsPool[(featuredRotationIndex + i) % featuredAdsPool.length]
-    );
-  }, [featuredAdsPool, featuredRotationIndex]);
-
-  // Paginated ads with boost scoring
-  const paginatedAds = useMemo(() => {
-    const sorted = [...filteredAds].sort((a, b) => {
-      const scoreA = getBoostScore(a);
-      const scoreB = getBoostScore(b);
-      if (scoreB !== scoreA) return scoreB - scoreA;
-      const timeA = getBumpEffectiveTime(a);
-      const timeB = getBumpEffectiveTime(b);
-      if (timeB !== timeA) return timeB - timeA;
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-    const startIndex = (currentPage - 1) * limit;
-    return sorted.slice(startIndex, startIndex + limit);
-  }, [filteredAds, currentPage, limit]);
-
   // Validate price range
   const isPriceRangeInvalid = useMemo(() => {
     if (filters.minPrice && filters.maxPrice) {
@@ -479,6 +430,116 @@ export default function BrandPage() {
     }
     return false;
   }, [filters.minPrice, filters.maxPrice]);
+
+  // ──────────────────────────────────────────────────────────
+  // TOP ADS — 2 positions, 1-minute rotation, equal probability
+  // ──────────────────────────────────────────────────────────
+  const topAdsPool = useMemo(() => {
+    return filteredAds.filter((ad) => (ad as any).topAdActive);
+  }, [filteredAds]);
+
+  // Shuffle once per pool change → equal probability for every ad
+  const shuffledTopAdsPool = useMemo(() => shuffleArray(topAdsPool), [topAdsPool]);
+
+  // Rotate through the shuffled pool — every ad is displayed before repeating
+  const displayedTopAds = useMemo(() => {
+    if (shuffledTopAdsPool.length === 0) return [];
+    return getRotatingSlice(shuffledTopAdsPool, rotationIndex, 2);
+  }, [shuffledTopAdsPool, rotationIndex]);
+
+  // ──────────────────────────────────────────────────────────
+  // FEATURED ADS — 2 positions, 1-minute rotation, equal probability
+  // ──────────────────────────────────────────────────────────
+  const featuredAdsPool = useMemo(() => {
+    // Exclude topAdActive — top-ad ads only show in Top Ad cards + normal cards
+    return filteredAds.filter((ad) => (ad as any).featuredActive && !(ad as any).topAdActive);
+  }, [filteredAds]);
+
+  const shuffledFeaturedAdsPool = useMemo(() => shuffleArray(featuredAdsPool), [featuredAdsPool]);
+
+  const displayedFeaturedAds = useMemo(() => {
+    if (shuffledFeaturedAdsPool.length === 0) return [];
+    return getRotatingSlice(shuffledFeaturedAdsPool, rotationIndex, 2);
+  }, [shuffledFeaturedAdsPool, rotationIndex]);
+
+  // ──────────────────────────────────────────────────────────
+  // FEATURED INSERT POOL — for interleaving every 16 base ads
+  // Excludes ads that are also top-ads (they have their own section)
+  // ──────────────────────────────────────────────────────────
+  const featuredInsertPool = useMemo(() => {
+    return shuffledFeaturedAdsPool.filter((ad) => !(ad as any).topAdActive);
+  }, [shuffledFeaturedAdsPool]);
+
+  // ──────────────────────────────────────────────────────────
+  // BASE ADS — exclude featured & top-ad boosted
+  // Only: normal, bump, urgent
+  // Sorted with bump-to-top logic (24h auto-cycle)
+  // ──────────────────────────────────────────────────────────
+  const baseAds = useMemo(() => {
+    // Exclude only featuredActive — topAdActive ads appear here as normal cards
+    const nonPromoted = filteredAds.filter(
+      (ad) => !(ad as any).featuredActive
+    );
+
+    const now = Date.now();
+    const dayMs = 24 * 60 * 60 * 1000;
+
+    /**
+     * Bump-only = bumpActive AND not topAd, not featured, not urgent.
+     * These ads jump to the top instantly and re-jump every 24h.
+     */
+    const isBumpOnly = (ad: any) =>
+      Boolean(ad?.bumpActive && !ad?.topAdActive && !ad?.featuredActive && !ad?.urgentActive);
+
+    const getSortTime = (ad: any) => {
+      const createdAtMs = ad?.createdAt ? new Date(ad.createdAt).getTime() : 0;
+      if (!isBumpOnly(ad)) return createdAtMs;
+
+      // Bump effective time: resets to "now-like" every 24h from boostStartAt
+      const bumpStart =
+        ad?.bumpStartAt || ad?.boostStartAt || ad?.boostRequestedAt || ad?.updatedAt || ad?.createdAt;
+      const bumpStartMs = bumpStart ? new Date(bumpStart).getTime() : createdAtMs;
+      if (!Number.isFinite(bumpStartMs)) return createdAtMs;
+
+      const elapsed = Math.max(0, now - bumpStartMs);
+      const cycles = Math.floor(elapsed / dayMs);
+      const lastBumpMs = bumpStartMs + cycles * dayMs;
+      return Math.max(createdAtMs, lastBumpMs);
+    };
+
+    return [...nonPromoted].sort((a, b) => {
+      const timeDiff = getSortTime(b) - getSortTime(a);
+      if (timeDiff !== 0) return timeDiff;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  }, [filteredAds]);
+
+  // ──────────────────────────────────────────────────────────
+  // INTERLEAVED ADS — insert 2 featured ads after every 16 base ads
+  // ──────────────────────────────────────────────────────────
+  const interleavedAds = useMemo(() => {
+    if (baseAds.length === 0) return [];
+    if (featuredInsertPool.length === 0) return baseAds;
+
+    const result: any[] = [];
+    const insertCount = Math.min(2, featuredInsertPool.length);
+    const poolLength = featuredInsertPool.length;
+    const startOffset = (rotationIndex * insertCount) % poolLength;
+    let insertOffset = 0;
+
+    baseAds.forEach((ad, index) => {
+      result.push(ad);
+      if ((index + 1) % 16 === 0) {
+        for (let i = 0; i < insertCount; i += 1) {
+          const pos = (startOffset + insertOffset + i) % poolLength;
+          result.push(featuredInsertPool[pos]);
+        }
+        insertOffset += insertCount;
+      }
+    });
+
+    return result;
+  }, [baseAds, featuredInsertPool, rotationIndex]);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -504,7 +565,7 @@ export default function BrandPage() {
         </div>
       </div>
 
-      <div className="max-w-[1600px] mx-auto px-4 py-6">
+      <div className="px-4 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left Sidebar - Filters */}
           <div className="w-full lg:w-72 flex-shrink-0">
@@ -916,23 +977,35 @@ export default function BrandPage() {
 
             {/* Loading State */}
             {isLoading && (
-              <div className="flex items-center justify-center py-20">
-                <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
-                <span className="ml-3 text-slate-600">Loading {brandName} vehicles...</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[...Array(6)].map((_, index) => (
+                  <div key={index} className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                    <div className="p-3">
+                      <div className="h-4 bg-slate-200 rounded w-3/4 mx-auto mb-3 animate-pulse"></div>
+                      <div className="flex">
+                        <div className="w-36 h-20 flex-shrink-0 bg-slate-200 rounded-md animate-pulse"></div>
+                        <div className="flex-1 pl-3 flex flex-col justify-between">
+                          <div>
+                            <div className="h-2 bg-slate-200 rounded w-1/2 mb-2 animate-pulse"></div>
+                            <div className="h-3 bg-slate-200 rounded w-1/3 mb-2 animate-pulse"></div>
+                            <div className="h-2 bg-slate-200 rounded w-1/4 animate-pulse"></div>
+                          </div>
+                          <div className="h-2 bg-slate-200 rounded w-1/3 mt-1 animate-pulse"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 
-            {/* Top Ad Slots - 2 rotating */}
+            {/* Top Ad Section — 2 positions, rotating every 1 min */}
             {!isLoading && displayedTopAds.length > 0 && (
-              <div className="mb-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <Star className="h-4 w-4 text-yellow-500" />
-                  <span className="text-sm font-semibold text-slate-700">Top Ads</span>
-                </div>
+              <div className="mb-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {displayedTopAds.map((vehicle) => (
                     <TopAdCard
-                      key={`top-${vehicle.id}`}
+                      key={vehicle.id}
                       vehicle={vehicle}
                       vehicleTypeLabels={vehicleTypeLabels}
                       formatPrice={formatPrice}
@@ -940,21 +1013,16 @@ export default function BrandPage() {
                     />
                   ))}
                 </div>
-                <Separator className="mt-4" />
               </div>
             )}
 
-            {/* Featured Ad Slots - 2 rotating, after top ads */}
+            {/* Featured Ad Section — 2 positions, rotating every 1 min */}
             {!isLoading && displayedFeaturedAds.length > 0 && (
-              <div className="mb-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <Zap className="h-4 w-4 text-purple-500" />
-                  <span className="text-sm font-semibold text-slate-700">Featured Ads</span>
-                </div>
+              <div className="mb-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {displayedFeaturedAds.map((vehicle) => (
                     <FeaturedAdCard
-                      key={`featured-${vehicle.id}`}
+                      key={vehicle.id}
                       vehicle={vehicle}
                       vehicleTypeLabels={vehicleTypeLabels}
                       formatPrice={formatPrice}
@@ -965,70 +1033,93 @@ export default function BrandPage() {
                     />
                   ))}
                 </div>
-                <Separator className="mt-4" />
               </div>
             )}
 
-            {/* Results Grid */}
-            {!isLoading && !error && paginatedAds.length > 0 ? (
+            {/* No results */}
+            {!isLoading && !error && interleavedAds.length === 0 && displayedTopAds.length === 0 && displayedFeaturedAds.length === 0 && (
+              <Card className="p-12 text-center border-dashed border-2 bg-slate-50">
+                <Search className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-slate-900">No {brandName} vehicles found</h3>
+                <p className="text-slate-500 mt-1 max-w-xs mx-auto">Try adjusting your filters or clearing them to see more vehicles.</p>
+                <Button onClick={clearFilters} variant="outline" className="mt-6 border-slate-300">
+                  Clear all filters
+                </Button>
+              </Card>
+            )}
+
+            {/* Main Vehicle Grid — urgent, bump, normal + interleaved featured every 16 */}
+            {interleavedAds.length > 0 && !isLoading && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {paginatedAds.map((vehicle) => {
+                {interleavedAds.slice(0, visibleCount).map((vehicle) => {
                   const isFeatured = (vehicle as any).featuredActive;
-                  const isUrgent = (vehicle as any).urgentActive;
-                  const isBump = (vehicle as any).bumpActive;
+
+                  // Interleaved featured ads render as FeaturedAdCard
                   if (isFeatured) {
                     return (
                       <FeaturedAdCard
-                        key={vehicle.id}
+                        key={`featured-${vehicle.id}`}
                         vehicle={vehicle}
                         vehicleTypeLabels={vehicleTypeLabels}
                         formatPrice={formatPrice}
                         formatAdTitle={formatAdTitle}
-                        isBump={isBump}
-                        isTopAd={false}
-                        isUrgent={isUrgent}
+                        isBump={(vehicle as any).bumpActive}
+                        isTopAd={(vehicle as any).topAdActive}
+                        isUrgent={(vehicle as any).urgentActive}
                       />
                     );
                   }
+
+                  // Normal / bump / urgent ads
                   return (
                     <div
                       key={vehicle.id}
-                      className={`rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative bg-white border-slate-200 hover:border-slate-300 ${isUrgent ? 'border-l-4 border-l-red-400' : ''}`}
-                      onClick={() => router.push(buildAdUrl(vehicle))}
+                      className="rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative bg-white border-slate-200 hover:border-slate-300"
+                      onClick={() => (window.location.href = buildAdUrl(vehicle))}
                     >
                       {/* Favorite Button */}
-                      <div className="absolute top-2 right-2 z-10">
+                      <div className="absolute top-10 right-2 z-10">
                         <FavoriteButton adId={vehicle.id} />
                       </div>
 
-                      {(isBump || isUrgent) && (
+                      {((vehicle as any).bumpActive || (vehicle as any).urgentActive) && (
                         <div className="absolute bottom-2 right-2 z-10">
-                          <BoostBadges bumpActive={isBump} urgentActive={isUrgent} />
+                          <BoostBadges bumpActive={(vehicle as any).bumpActive} urgentActive={(vehicle as any).urgentActive} />
                         </div>
                       )}
 
-                      <div className="p-3">
-                        {/* Vehicle Title */}
+                      <div className="p-2 pb-5">
+                        {/* Vehicle Title - Centered */}
                         <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
                           {formatAdTitle(vehicle)}
                         </h3>
 
                         <div className="flex">
-                          {/* Vehicle Image */}
-                          <div className="w-32 h-20 flex-shrink-0">
-                            {(vehicle as any)?.media && (vehicle as any).media.length > 0 && (vehicle as any).media[0]?.media?.url ? (
-                              <img
-                                src={(vehicle as any).media[0].media.url}
-                                alt={vehicle.title || 'Vehicle'}
-                                className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
-                              />
-                            ) : (
-                              <img
-                                src="/placeholder-image.jpg"
-                                alt={vehicle.title || 'Vehicle'}
-                                className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
-                              />
-                            )}
+                          {/* Vehicle Image with Time and Views Below */}
+                          <div className="w-36 h-30 flex-shrink-0 flex flex-col">
+                            <div className="flex-1">
+                              {(vehicle as any)?.media && (vehicle as any).media.length > 0 && (vehicle as any).media[0]?.media?.url ? (
+                                <img
+                                  src={(vehicle as any).media[0].media.url}
+                                  alt={vehicle.title || 'Vehicle'}
+                                  className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                                />
+                              ) : (
+                                <img
+                                  src="/placeholder-image.jpg"
+                                  alt={vehicle.title || 'Vehicle'}
+                                  className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                                />
+                              )}
+                            </div>
+                            {/* Time and Views Below Image */}
+                            <div className="flex items-center gap-1 mt-1 text-xs text-slate-400">
+                              <span>{getRelativeTime(vehicle.createdAt)}</span>
+                              <span className="flex items-center gap-0.5">
+                                <Eye className="h-3 w-3" />
+                                {(vehicle as any).analytics?.views || 0}
+                              </span>
+                            </div>
                           </div>
 
                           {/* Vehicle Details */}
@@ -1043,16 +1134,8 @@ export default function BrandPage() {
                               </div>
 
                               <div className="text-xs text-slate-500">
-                                {vehicle.condition || vehicle.type}
+                                {vehicleTypeLabels[vehicle.type] || vehicle.type}
                               </div>
-                            </div>
-
-                            <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
-                              <span>{getRelativeTime(vehicle.createdAt)}</span>
-                              <span className="flex items-center gap-0.5">
-                                <Eye className="h-3 w-3" />
-                                {(vehicle as any).analytics?.views || 0}
-                              </span>
                             </div>
                           </div>
                         </div>
@@ -1061,51 +1144,29 @@ export default function BrandPage() {
                   );
                 })}
               </div>
-            ) : !isLoading && (
-              <Card className="p-12 text-center border-dashed border-2 bg-slate-50">
-                <Search className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-slate-900">No {brandName} vehicles found</h3>
-                <p className="text-slate-500 mt-1 max-w-xs mx-auto">Try adjusting your filters or clearing them to see more vehicles.</p>
-                <Button onClick={clearFilters} variant="outline" className="mt-6 border-slate-300">
-                  Clear all filters
-                </Button>
-              </Card>
             )}
 
-            {/* Pagination */}
-            {!isLoading && totalPages > 1 && (
-              <div className="flex justify-center items-center gap-4 mt-10">
-                <Button
-                  variant="outline"
-                  disabled={currentPage === 1}
-                  onClick={() => {
-                    handleFilterChange('page', currentPage - 1);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  className="px-6"
-                >
-                  Previous
-                </Button>
-                <div className="text-sm font-medium text-slate-600">
-                  Page {currentPage} of {totalPages}
-                </div>
-                <Button
-                  variant="outline"
-                  disabled={currentPage === totalPages}
-                  onClick={() => {
-                    handleFilterChange('page', currentPage + 1);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  className="px-6"
-                >
-                  Next
-                </Button>
+            {/* Load More */}
+            {interleavedAds.length > 0 && (
+              <div className="text-center mt-8">
+                {visibleCount < interleavedAds.length ? (
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="px-8 py-5 border-teal-700 text-teal-700 hover:bg-teal-700 hover:text-white transition-all duration-300"
+                    onClick={() => setVisibleCount((prev) => prev + 12)}
+                  >
+                    Load More Vehicles
+                  </Button>
+                ) : interleavedAds.length > 12 ? (
+                  <p className="text-slate-500 text-sm">No more vehicles to load</p>
+                ) : null}
               </div>
             )}
           </div>
 
           {/* Right Sidebar - Promotions */}
-          <div className="hidden xl:block w-72 flex-shrink-0">
+          <div className="hidden xl:block w-80 flex-shrink-0">
             <div className="sticky top-6 space-y-4">
               {/* Sell Faster CTA */}
               <Card className="p-4 bg-teal-900 text-white overflow-hidden shadow-lg border-none relative">
