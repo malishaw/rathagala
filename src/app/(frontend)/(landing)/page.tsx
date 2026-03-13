@@ -26,6 +26,14 @@ import { Badge } from "@/components/ui/badge";
 import { BoostBadges } from "@/features/boost/components/boost-badges";
 import { TopAdCard } from "@/features/ads/components/top-ad-card";
 import { FeaturedAdCard } from "@/features/ads/components/featured-ad-card";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselPrevious,
+  CarouselNext,
+} from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -162,6 +170,13 @@ export default function VehicleMarketplace() {
   const [currentPage, setCurrentPage] = useState(1);
   const [allAds, setAllAds] = useState<any[]>([]);
   const [visibleCount, setVisibleCount] = useState(12); // State to track how many vehicles to show
+
+  // Featured ad rotation (every 1 minute)
+  const [featuredRotationIndex, setFeaturedRotationIndex] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setFeaturedRotationIndex((i) => i + 1), 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Use the existing hook to fetch real vehicle data
   // Don't use backend search - we'll do comprehensive client-side search instead
@@ -369,6 +384,31 @@ export default function VehicleMarketplace() {
         return ads.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
   }, [filteredAds, sortBy]);
+
+  // Featured ads pool (for rotation)
+  const featuredAdsPool = useMemo(() => {
+    return allAds.filter((ad) => (ad as any).featuredActive && ad.status === "ACTIVE" && (ad as any).published);
+  }, [allAds]);
+
+  // 2 rotating featured ads
+  const displayedFeaturedAds = useMemo(() => {
+    if (featuredAdsPool.length === 0) return [];
+    return Array.from({ length: Math.min(2, featuredAdsPool.length) }, (_, i) =>
+      featuredAdsPool[(featuredRotationIndex + i) % featuredAdsPool.length]
+    );
+  }, [featuredAdsPool, featuredRotationIndex]);
+
+  // Featured Ads Carousel (latest 6 - featured only, no other promotions)
+  const featuredBoostedAds = useMemo(() => {
+    return allAds
+      .filter((ad) => {
+        const isFeatured = (ad as any).featuredActive;
+        const hasOtherPromotion = (ad as any).topAdActive || (ad as any).bumpActive || (ad as any).urgentActive;
+        return isFeatured && !hasOtherPromotion && ad.status === "ACTIVE" && (ad as any).published;
+      })
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 6);
+  }, [allAds]);
 
   // Handle filter changes - only updates pending filters
   const handleFilterChange = (
@@ -1149,13 +1189,14 @@ export default function VehicleMarketplace() {
               )}
 
               {/* Featured Ad Section */}
-              {!isLoading && allAds.filter((ad) => (ad as any).featuredActive && ad.status === "ACTIVE" && (ad as any).published).length > 0 && (
+              {!isLoading && displayedFeaturedAds.length > 0 && (
                 <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Zap className="h-4 w-4 text-purple-500" />
+                    <span className="text-sm font-semibold text-slate-700">Featured Ads</span>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {allAds
-                      .filter((ad) => (ad as any).featuredActive && ad.status === "ACTIVE" && (ad as any).published)
-                      .slice(0, 2)
-                      .map((vehicle) => (
+                    {displayedFeaturedAds.map((vehicle) => (
                         <FeaturedAdCard
                           key={vehicle.id}
                           vehicle={vehicle}
@@ -1168,6 +1209,7 @@ export default function VehicleMarketplace() {
                         />
                       ))}
                   </div>
+                  <hr className="my-4 border-slate-200" />
                 </div>
               )}
 
@@ -1389,6 +1431,55 @@ export default function VehicleMarketplace() {
           </div>
         </div>
       </div>
+
+      {/* Featured Ads Carousel Section */}
+      {!isLoading && featuredBoostedAds.length > 0 && (
+        <section className="bg-white py-12 md:py-16 border-b border-slate-100">
+          <div className="max-w-6xl mx-auto px-4">
+            <Carousel
+              opts={{
+                align: "start",
+                loop: true,
+                slidesToScroll: 1,
+              }}
+              plugins={[
+                Autoplay({
+                  delay: 4000,
+                  stopOnInteraction: true,
+                  stopOnMouseEnter: true,
+                }),
+              ]}
+              className="w-full"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-amber-500" />
+                  <h2 className="text-2xl font-bold text-slate-800">Featured Ads</h2>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CarouselPrevious className="static translate-y-0 h-8 w-8" />
+                  <CarouselNext className="static translate-y-0 h-8 w-8" />
+                </div>
+              </div>
+              <CarouselContent>
+                {featuredBoostedAds.map((vehicle) => (
+                  <CarouselItem key={vehicle.id} className="basis-[85%] sm:basis-[49%]">
+                    <FeaturedAdCard
+                      vehicle={vehicle}
+                      vehicleTypeLabels={vehicleTypeLabels}
+                      formatPrice={formatPrice}
+                      formatAdTitle={formatAdTitle}
+                      isBump={(vehicle as any).bumpActive}
+                      isTopAd={(vehicle as any).topAdActive}
+                      isUrgent={(vehicle as any).urgentActive}
+                    />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
+          </div>
+        </section>
+      )}
 
       {/* Trending Vehicles Section */}
       <section className="bg-white py-12 md:py-16 border-b border-slate-100">
