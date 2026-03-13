@@ -62,6 +62,22 @@ const formatAdTitle = (ad: any): string => {
   return vehicleInfo;
 };
 
+const shuffleArray = <T,>(items: T[]): T[] => {
+  const result = [...items];
+  for (let i = result.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+};
+
+const getRotatingSlice = <T,>(items: T[], startIndex: number, count: number): T[] => {
+  if (items.length === 0 || count <= 0) return [];
+  const normalizedStart = ((startIndex % items.length) + items.length) % items.length;
+  const limit = Math.min(count, items.length);
+  return Array.from({ length: limit }, (_, i) => items[(normalizedStart + i) % items.length]);
+};
+
 // Vehicle makes
 const vehicleMakes = [
   "Toyota", "Honda", "Nissan", "BYD", "BMW", "Mercedes-Benz", "Audi", "Hyundai", "Kia",
@@ -130,6 +146,7 @@ export default function SearchPage() {
   const [brandSearch, setBrandSearch] = useState('');
   const [availableGrades, setAvailableGrades] = useState<{ id: string; name: string }[]>([]);
   const [loadingGrades, setLoadingGrades] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(12);
 
   // Fetch available grades when brand or model changes
   useEffect(() => {
@@ -430,6 +447,9 @@ export default function SearchPage() {
 
       return newFilters;
     });
+    if (key !== 'page') {
+      setVisibleCount(12);
+    }
   };
 
   // Clear all filters
@@ -489,99 +509,106 @@ export default function SearchPage() {
     return years.filter(year => year >= minYearValue);
   }, [years, filters.minYear]);
 
-  // Top Ad rotation state (5 minutes)
+  // Top Ad rotation state (1 minute)
   const [topAdRotationIndex, setTopAdRotationIndex] = useState(0);
   useEffect(() => {
     const interval = setInterval(() => {
       setTopAdRotationIndex((i) => i + 1);
-    }, 5 * 60 * 1000);
+    }, 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // Featured ad rotation (5 minutes)
+  // Featured ad rotation (1 minute)
   const [featuredRotationIndex, setFeaturedRotationIndex] = useState(0);
   useEffect(() => {
     const interval = setInterval(() => {
       setFeaturedRotationIndex((i) => i + 1);
-    }, 5 * 60 * 1000);
+    }, 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // Boost scoring: featured(8) > top(4) > bump(2) > urgent(1)
-  const getBoostScore = (ad: any): number => {
-    let score = 0;
-    if ((ad as any).featuredActive) score += 8;
-    if ((ad as any).topAdActive) score += 4;
-    if ((ad as any).bumpActive) score += 2;
-    if ((ad as any).urgentActive) score += 1;
-    return score;
-  };
+  const sortedAds = useMemo(() => {
+    if (!filteredAds.length) return [];
 
-  // Bump effective time: resets to top every 24h from boostStartAt
-  const getBumpEffectiveTime = (ad: any): number => {
-    if (!(ad as any).bumpActive || !(ad as any).boostStartAt) return new Date(ad.createdAt).getTime();
-    const start = new Date((ad as any).boostStartAt).getTime();
+    const ads = [...filteredAds];
     const now = Date.now();
-    const cycleMs = 24 * 60 * 60 * 1000;
-    const elapsedCycles = Math.floor((now - start) / cycleMs);
-    return start + elapsedCycles * cycleMs;
-  };
+    const dayMs = 24 * 60 * 60 * 1000;
+    const isBumpOnly = (ad: any) =>
+      Boolean(ad?.bumpActive && !ad?.topAdActive && !ad?.featuredActive && !ad?.urgentActive);
+    const getSortTime = (ad: any) => {
+      const createdAtMs = ad?.createdAt ? new Date(ad.createdAt).getTime() : 0;
+      if (!isBumpOnly(ad)) return createdAtMs;
+      const bumpStart = ad?.bumpStartAt || ad?.boostStartAt || ad?.boostRequestedAt || ad?.updatedAt || ad?.createdAt;
+      const bumpStartMs = bumpStart ? new Date(bumpStart).getTime() : createdAtMs;
+      if (!Number.isFinite(bumpStartMs)) return createdAtMs;
+      const elapsed = Math.max(0, now - bumpStartMs);
+      const cycles = Math.floor(elapsed / dayMs);
+      const lastBumpMs = bumpStartMs + cycles * dayMs;
+      return Math.max(createdAtMs, lastBumpMs);
+    };
 
-  // Top ads pool (sorted by boostStartAt desc)
-  const topAds = useMemo(() => {
-    if (!data?.ads) return [];
-    return data.ads
-      .filter((ad) => (ad as any).topAdActive && (ad as any).status === "ACTIVE" && (ad as any).published)
-      .sort((a, b) => new Date((b as any).boostStartAt || b.createdAt).getTime() - new Date((a as any).boostStartAt || a.createdAt).getTime());
-  }, [data?.ads]);
-
-  // Featured ads pool (sorted by boostStartAt desc)
-  const featuredAdsPool = useMemo(() => {
-    if (!filteredAds) return [];
-    return filteredAds
-      .filter((ad) => (ad as any).featuredActive)
-      .sort((a, b) => new Date((b as any).boostStartAt || b.createdAt).getTime() - new Date((a as any).boostStartAt || a.createdAt).getTime());
-  }, [filteredAds]);
-
-  // 2 rotating top ads
-  const displayedTopAds = useMemo(() => {
-    if (topAds.length === 0) return [];
-    return Array.from({ length: Math.min(2, topAds.length) }, (_, i) =>
-      topAds[(topAdRotationIndex + i) % topAds.length]
-    );
-  }, [topAds, topAdRotationIndex]);
-
-  // 2 rotating featured ads
-  const displayedFeaturedAds = useMemo(() => {
-    if (featuredAdsPool.length === 0) return [];
-    return Array.from({ length: Math.min(2, featuredAdsPool.length) }, (_, i) =>
-      featuredAdsPool[(featuredRotationIndex + i) % featuredAdsPool.length]
-    );
-  }, [featuredAdsPool, featuredRotationIndex]);
-
-  // Sort with full boost scoring: featured > top > bump > urgent > normal
-  const sortedFilteredAds = useMemo(() => {
-    return [...filteredAds].sort((a, b) => {
-      const scoreA = getBoostScore(a);
-      const scoreB = getBoostScore(b);
-      if (scoreB !== scoreA) return scoreB - scoreA;
-      const timeA = getBumpEffectiveTime(a);
-      const timeB = getBumpEffectiveTime(b);
-      if (timeB !== timeA) return timeB - timeA;
+    return ads.sort((a, b) => {
+      const timeDiff = getSortTime(b) - getSortTime(a);
+      if (timeDiff !== 0) return timeDiff;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
   }, [filteredAds]);
 
-  // Pagination logic
-  const limit = 20;
-  const totalPages = Math.ceil(sortedFilteredAds.length / limit);
-  // Ensure we don't go to page 0, and don't go past total pages unless sortedFilteredAds is empty
-  const currentPage = Math.max(1, Math.min(filters.page, Math.max(1, totalPages)));
+  const topAdsPool = useMemo(() => {
+    if (!filteredAds.length) return [];
+    return filteredAds.filter((ad) => (ad as any).topAdActive);
+  }, [filteredAds]);
 
-  const paginatedAds = useMemo(() => {
-    const startIndex = (currentPage - 1) * limit;
-    return sortedFilteredAds.slice(startIndex, startIndex + limit);
-  }, [sortedFilteredAds, currentPage, limit]);
+  const shuffledTopAdsPool = useMemo(() => shuffleArray(topAdsPool), [topAdsPool]);
+
+  const displayedTopAds = useMemo(() => {
+    if (shuffledTopAdsPool.length === 0) return [];
+    return getRotatingSlice(shuffledTopAdsPool, topAdRotationIndex, 2);
+  }, [shuffledTopAdsPool, topAdRotationIndex]);
+
+  const featuredAdsPool = useMemo(() => {
+    if (!filteredAds.length) return [];
+    return filteredAds.filter((ad) => (ad as any).featuredActive);
+  }, [filteredAds]);
+
+  const shuffledFeaturedAdsPool = useMemo(() => shuffleArray(featuredAdsPool), [featuredAdsPool]);
+
+  const displayedFeaturedAds = useMemo(() => {
+    if (shuffledFeaturedAdsPool.length === 0) return [];
+    return getRotatingSlice(shuffledFeaturedAdsPool, featuredRotationIndex, 2);
+  }, [shuffledFeaturedAdsPool, featuredRotationIndex]);
+
+  const featuredInsertPool = useMemo(() => {
+    return shuffledFeaturedAdsPool.filter((ad) => !(ad as any).topAdActive);
+  }, [shuffledFeaturedAdsPool]);
+
+  const baseAds = useMemo(() => {
+    return sortedAds.filter((ad) => !(ad as any).featuredActive && !(ad as any).topAdActive);
+  }, [sortedAds]);
+
+  const interleavedAds = useMemo(() => {
+    if (baseAds.length === 0) return [];
+    if (featuredInsertPool.length === 0) return baseAds;
+
+    const result: any[] = [];
+    const insertCount = Math.min(2, featuredInsertPool.length);
+    const poolLength = featuredInsertPool.length;
+    const startOffset = (featuredRotationIndex * insertCount) % poolLength;
+    let insertOffset = 0;
+
+    baseAds.forEach((ad, index) => {
+      result.push(ad);
+      if ((index + 1) % 16 === 0) {
+        for (let i = 0; i < insertCount; i += 1) {
+          const pos = (startOffset + insertOffset + i) % poolLength;
+          result.push(featuredInsertPool[pos]);
+        }
+        insertOffset += insertCount;
+      }
+    });
+
+    return result;
+  }, [baseAds, featuredInsertPool, featuredRotationIndex]);
 
   // Validate price range
   const isPriceRangeInvalid = useMemo(() => {
@@ -1083,11 +1110,7 @@ export default function SearchPage() {
 
             {/* Top Ad Slots */}
             {!isLoading && displayedTopAds.length > 0 && (
-              <div className="mb-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <Star className="h-4 w-4 text-yellow-500" />
-                  <span className="text-sm font-semibold text-slate-700">Top Ads</span>
-                </div>
+              <div className="mb-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {displayedTopAds.map((vehicle) => (
                     <TopAdCard
@@ -1099,17 +1122,12 @@ export default function SearchPage() {
                     />
                   ))}
                 </div>
-                <Separator className="mt-6" />
               </div>
             )}
 
             {/* Featured Ad Slots - 2 rotating, shown after top ads */}
             {!isLoading && displayedFeaturedAds.length > 0 && (
-              <div className="mb-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <Zap className="h-4 w-4 text-purple-500" />
-                  <span className="text-sm font-semibold text-slate-700">Featured Ads</span>
-                </div>
+              <div className="mb-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {displayedFeaturedAds.map((vehicle) => (
                     <FeaturedAdCard
@@ -1124,107 +1142,120 @@ export default function SearchPage() {
                     />
                   ))}
                 </div>
-                <Separator className="mt-6" />
               </div>
             )}
 
             {/* Results Grid */}
-            {!isLoading && !error && paginatedAds.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {paginatedAds.map((vehicle) => {
-                  const isFeatured = (vehicle as any).featuredActive;
-                  const isUrgent = (vehicle as any).urgentActive;
-                  const isBump = (vehicle as any).bumpActive;
-                  const isTopAd = (vehicle as any).topAdActive;
-                  const featuredImages = (vehicle as any)?.media?.slice(0, 3) || [];
+            {!isLoading && !error && interleavedAds.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {interleavedAds.slice(0, visibleCount).map((vehicle) => {
+                    const isFeatured = (vehicle as any).featuredActive;
+                    const isUrgent = (vehicle as any).urgentActive;
+                    const isBump = (vehicle as any).bumpActive;
+                    const isTopAd = (vehicle as any).topAdActive;
 
-                  // Featured ad layout
-                  if (isFeatured) {
+                    if (isFeatured) {
+                      return (
+                        <FeaturedAdCard
+                          key={`featured-${vehicle.id}`}
+                          vehicle={vehicle}
+                          vehicleTypeLabels={vehicleTypeLabels}
+                          formatPrice={formatPrice}
+                          formatAdTitle={formatAdTitle}
+                          isBump={isBump}
+                          isTopAd={isTopAd}
+                          isUrgent={isUrgent}
+                        />
+                      );
+                    }
+
                     return (
-                      <FeaturedAdCard
+                      <div
                         key={vehicle.id}
-                        vehicle={vehicle}
-                        vehicleTypeLabels={vehicleTypeLabels}
-                        formatPrice={formatPrice}
-                        formatAdTitle={formatAdTitle}
-                        isBump={isBump}
-                        isTopAd={isTopAd}
-                        isUrgent={isUrgent}
-                      />
+                        className={`rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative bg-white border-slate-200 hover:border-slate-300 ${isUrgent ? 'border-l-4 border-l-red-400' : ''}`}
+                        onClick={() => router.push(buildAdUrl(vehicle))}
+                      >
+                        {/* Favorite Button */}
+                        <div className="absolute top-10 right-2 z-10">
+                          <FavoriteButton adId={vehicle.id} />
+                        </div>
+
+                        {(isBump || isUrgent) && (
+                          <div className="absolute bottom-2 right-2 z-10">
+                            <BoostBadges bumpActive={isBump} urgentActive={isUrgent} />
+                          </div>
+                        )}
+
+                        <div className="p-3">
+                          {/* Vehicle Title - Centered */}
+                          <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
+                            {formatAdTitle(vehicle)}
+                          </h3>
+
+                          <div className="flex">
+                            {/* Vehicle Image */}
+                            <div className="w-36 h-30 flex-shrink-0">
+                              {(vehicle as any)?.media && (vehicle as any).media.length > 0 && (vehicle as any).media[0]?.media?.url ? (
+                                <img
+                                  src={(vehicle as any).media[0].media.url}
+                                  alt={vehicle.title || 'Vehicle'}
+                                  className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                                />
+                              ) : (
+                                <img
+                                  src="/placeholder-image.jpg"
+                                  alt={vehicle.title || 'Vehicle'}
+                                  className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                                />
+                              )}
+                            </div>
+
+                            {/* Vehicle Details */}
+                            <div className="flex-1 pl-3 flex flex-col justify-between">
+                              <div>
+                                <div className="text-xs text-slate-600 mb-1 line-clamp-1">
+                                  {vehicle.city || vehicle.location || ""}
+                                </div>
+
+                                <div className="text-sm font-semibold text-teal-700 mb-1">
+                                  {formatPrice(vehicle.price, (vehicle as any).metadata?.isNegotiable)}
+                                </div>
+
+                                <div className="text-xs text-slate-500">
+                                  {vehicle.condition || vehicle.type}
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
+                                <span>{getRelativeTime(vehicle.createdAt)}</span>
+                                <span className="flex items-center gap-0.5">
+                                  <Eye className="h-3 w-3" />
+                                  {(vehicle as any).analytics?.views || 0}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     );
-                  }
-
-                  return (
-                    <div
-                      key={vehicle.id}
-                      className={`rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative bg-white border-slate-200 hover:border-slate-300 ${isUrgent ? 'border-l-4 border-l-red-400' : ''}`}
-                      onClick={() => router.push(buildAdUrl(vehicle))}
+                  })}
+                </div>
+                <div className="text-center mt-8">
+                  {visibleCount < interleavedAds.length ? (
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="px-8 py-5 border-teal-700 text-teal-700 hover:bg-teal-700 hover:text-white transition-all duration-300"
+                      onClick={() => setVisibleCount((prev) => prev + 12)}
                     >
-                      {/* Favorite Button */}
-                      <div className="absolute top-10 right-2 z-10">
-                        <FavoriteButton adId={vehicle.id} />
-                      </div>
-
-                      {(isBump || isUrgent) && (
-                        <div className="absolute bottom-2 right-2 z-10">
-                          <BoostBadges bumpActive={isBump} urgentActive={isUrgent} />
-                        </div>
-                      )}
-
-                      <div className="p-3">
-                        {/* Vehicle Title - Centered */}
-                        <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
-                          {formatAdTitle(vehicle)}
-                        </h3>
-
-                        <div className="flex">
-                          {/* Vehicle Image */}
-                          <div className="w-32 h-20 flex-shrink-0">
-                            {(vehicle as any)?.media && (vehicle as any).media.length > 0 && (vehicle as any).media[0]?.media?.url ? (
-                              <img
-                                src={(vehicle as any).media[0].media.url}
-                                alt={vehicle.title || 'Vehicle'}
-                                className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
-                              />
-                            ) : (
-                              <img
-                                src="/placeholder-image.jpg"
-                                alt={vehicle.title || 'Vehicle'}
-                                className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
-                              />
-                            )}
-                          </div>
-
-                          {/* Vehicle Details */}
-                          <div className="flex-1 pl-3 flex flex-col justify-between">
-                            <div>
-                              <div className="text-xs text-slate-600 mb-1 line-clamp-1">
-                                {vehicle.city || vehicle.location || ""}
-                              </div>
-
-                              <div className="text-sm font-semibold text-teal-700 mb-1">
-                                {formatPrice(vehicle.price, (vehicle as any).metadata?.isNegotiable)}
-                              </div>
-
-                              <div className="text-xs text-slate-500">
-                                {vehicle.condition || vehicle.type}
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
-                              <span>{getRelativeTime(vehicle.createdAt)}</span>
-                              <span className="flex items-center gap-0.5">
-                                <Eye className="h-3 w-3" />
-                                {(vehicle as any).analytics?.views || 0}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                      Load More Vehicles
+                    </Button>
+                  ) : interleavedAds.length > 12 ? (
+                    <p className="text-slate-500 text-sm">No more vehicles to load</p>
+                  ) : null}
+                </div>
+              </>
             ) : !isLoading && (
               <Card className="p-12 text-center border-dashed border-2 bg-slate-50">
                 <Search className="h-12 w-12 text-slate-300 mx-auto mb-4" />
@@ -1236,36 +1267,6 @@ export default function SearchPage() {
               </Card>
             )}
 
-            {/* Pagination */}
-            {!isLoading && totalPages > 1 && (
-              <div className="flex justify-center items-center gap-4 mt-10">
-                <Button
-                  variant="outline"
-                  disabled={currentPage === 1}
-                  onClick={() => {
-                    handleFilterChange('page', currentPage - 1);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  className="px-6"
-                >
-                  Previous
-                </Button>
-                <div className="text-sm font-medium text-slate-600">
-                  Page {currentPage} of {totalPages}
-                </div>
-                <Button
-                  variant="outline"
-                  disabled={currentPage === totalPages}
-                  onClick={() => {
-                    handleFilterChange('page', currentPage + 1);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  className="px-6"
-                >
-                  Next
-                </Button>
-              </div>
-            )}
           </div>
 
           {/* Right Sidebar - Ad Space */}
