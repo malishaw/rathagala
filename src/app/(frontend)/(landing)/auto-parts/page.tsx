@@ -577,7 +577,7 @@ export default function AutoPartsPage() {
                   return (
                     <div
                       key={vehicle.id}
-                      className={`rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative bg-white ${(vehicle as any).urgentActive ? 'border-l-4 border-l-red-400 border-slate-200' : 'border-slate-200'}`}
+                      className="rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative bg-white border-slate-200"
                       onClick={() => router.push(buildAdUrl(vehicle))}
                     >
                       {/* Favorite Button */}

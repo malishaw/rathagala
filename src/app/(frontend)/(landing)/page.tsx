@@ -95,8 +95,9 @@ const formatAdTitle = (ad: any): string => {
     return forParts ? `${partName} for ${forParts}` : partName;
   }
 
-  // Vehicle: build standard title (brand model year)
-  return [ad.brand, ad.model, ad.manufacturedYear]
+  // Vehicle: build standard title (brand model year type)
+  const typeLabel = vehicleTypeLabels[ad.type] || '';
+  return [ad.brand, ad.model, ad.manufacturedYear, typeLabel]
     .filter(Boolean)
     .join(' ');
 };

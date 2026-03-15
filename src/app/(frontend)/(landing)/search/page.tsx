@@ -1173,7 +1173,7 @@ export default function SearchPage() {
                     return (
                       <div
                         key={vehicle.id}
-                        className={`rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative bg-white border-slate-200 hover:border-slate-300 ${isUrgent ? 'border-l-4 border-l-red-400' : ''}`}
+                        className="rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative bg-white border-slate-200 hover:border-slate-300"
                         onClick={() => router.push(buildAdUrl(vehicle))}
                       >
                         {/* Favorite Button */}
