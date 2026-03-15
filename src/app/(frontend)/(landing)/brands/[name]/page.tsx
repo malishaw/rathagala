@@ -435,7 +435,7 @@ export default function BrandPage() {
   // TOP ADS — 2 positions, 1-minute rotation, equal probability
   // ──────────────────────────────────────────────────────────
   const topAdsPool = useMemo(() => {
-    return filteredAds.filter((ad) => (ad as any).topAdActive);
+    return filteredAds.filter((ad) => (ad as any).topAdActive && !(ad as any).featuredActive && !(ad as any).bumpActive);
   }, [filteredAds]);
 
   // Shuffle once per pool change → equal probability for every ad

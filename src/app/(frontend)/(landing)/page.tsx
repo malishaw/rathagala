@@ -421,7 +421,7 @@ export default function VehicleMarketplace() {
   }, [filteredAds, sortBy]);
 
   const topAdsPool = useMemo(() => {
-    return allAds.filter((ad) => (ad as any).topAdActive && ad.status === "ACTIVE" && (ad as any).published);
+    return allAds.filter((ad) => (ad as any).topAdActive && !(ad as any).featuredActive && !(ad as any).bumpActive && ad.status === "ACTIVE" && (ad as any).published);
   }, [allAds]);
 
   const shuffledTopAdsPool = useMemo(() => shuffleArray(topAdsPool), [topAdsPool]);

@@ -556,7 +556,7 @@ export default function SearchPage() {
 
   const topAdsPool = useMemo(() => {
     if (!filteredAds.length) return [];
-    return filteredAds.filter((ad) => (ad as any).topAdActive);
+    return filteredAds.filter((ad) => (ad as any).topAdActive && !(ad as any).featuredActive && !(ad as any).bumpActive);
   }, [filteredAds]);
 
   const shuffledTopAdsPool = useMemo(() => shuffleArray(topAdsPool), [topAdsPool]);
