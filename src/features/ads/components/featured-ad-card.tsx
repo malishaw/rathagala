@@ -76,7 +76,7 @@ export function FeaturedAdCard({
               </span>
             </div>
           </div>
-          <div className="text-sm font-bold text-teal-700 flex-shrink-0">
+          <div className="text-sm font-bold text-teal-700 flex-shrink-0 leading-relaxed">
             {formatPrice(vehicle.price, (vehicle as any).metadata?.isNegotiable)}
           </div>
         </div>

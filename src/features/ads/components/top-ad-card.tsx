@@ -53,7 +53,7 @@ export function TopAdCard({ vehicle, vehicleTypeLabels, formatPrice, formatAdTit
           <div className="flex-1 flex flex-col justify-between min-w-0">
             <div>
               <div className="text-xs text-slate-600 mb-1 truncate">{vehicle.city || vehicle.location || ""}</div>
-              <div className="text-sm font-semibold text-teal-700 mb-1">{formatPrice(vehicle.price, (vehicle as any).metadata?.isNegotiable)}</div>
+              <div className="text-sm font-semibold text-teal-700 mb-1 leading-relaxed">{formatPrice(vehicle.price, (vehicle as any).metadata?.isNegotiable)}</div>
               <div className="text-xs text-slate-500 truncate">
                 {vehicle.type === "AUTO_PARTS"
                   ? (vehicle as any).partCategory?.name || "Auto Part"

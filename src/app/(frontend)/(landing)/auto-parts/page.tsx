@@ -10,33 +10,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { buildAdUrl } from "@/lib/ad-url";
 import {
   Loader2,
   Search,
   X,
-  Tag,
   MapPin,
-  ChevronRight,
   Package,
   Filter,
   ChevronDown,
   ChevronUp,
   TrendingUp,
-  Car,
-  Sparkles,
   Eye,
   Star,
+  Sparkles,
 } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
 import { useGetAutoPartCategories } from "@/features/ads/api/use-get-auto-part-categories";
 import { BoostBadges } from "@/features/boost/components/boost-badges";
+import { TopAdCard } from "@/features/ads/components/top-ad-card";
+import { FeaturedAdCard } from "@/features/ads/components/featured-ad-card";
 import { authClient } from "@/lib/auth-client";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getRelativeTime } from "@/lib/utils";
 
@@ -53,6 +50,44 @@ const vehicleTypeLabels: Record<string, string> = {
   BOAT: "Boat",
 };
 
+const formatPrice = (price: number | null, isNegotiable?: boolean): React.ReactNode => {
+  if (!price) return "Negotiable";
+  return (
+    <>
+      Rs. {price.toLocaleString()}
+      {isNegotiable && (
+        <>
+          <br />
+          <span className="text-sm font-semibold ">Negotiable</span>
+        </>
+      )}
+    </>
+  );
+};
+
+const formatAdTitle = (ad: any): string => {
+  const partName = (ad as any).partName || ad.title || "Auto Part";
+  const compatLabel = vehicleTypeLabels[(ad as any).compatibleVehicleType || ""] || (ad as any).compatibleVehicleType || "";
+  const forParts = [ad.brand, ad.model, compatLabel].filter(Boolean).join(" ");
+  return forParts ? `${partName} for ${forParts}` : partName;
+};
+
+const shuffleArray = <T,>(items: T[]): T[] => {
+  const result = [...items];
+  for (let i = result.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+};
+
+const getRotatingSlice = <T,>(items: T[], startIndex: number, count: number): T[] => {
+  if (items.length === 0 || count <= 0) return [];
+  const normalizedStart = ((startIndex % items.length) + items.length) % items.length;
+  const limit = Math.min(count, items.length);
+  return Array.from({ length: limit }, (_, i) => items[(normalizedStart + i) % items.length]);
+};
+
 export default function AutoPartsPage() {
   const router = useRouter();
   const { data: session } = authClient.useSession();
@@ -65,9 +100,9 @@ export default function AutoPartsPage() {
   const [selectedDistrict, setSelectedDistrict] = useState<string>("all");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
   const [isFiltersOpen, setIsFiltersOpen] = useState(true);
   const [urgentOnly, setUrgentOnly] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(12);
 
   const { data: categories = [] } = useGetAutoPartCategories(true);
 
@@ -130,67 +165,100 @@ export default function AutoPartsPage() {
     });
   }, [data, searchQuery, selectedCategory, selectedVehicleType, selectedCondition, selectedDistrict, minPrice, maxPrice, urgentOnly]);
 
-  // Boost scoring
-  const getBoostScore = (ad: any): number => {
-    let score = 0;
-    if ((ad as any).featuredActive) score += 8;
-    if ((ad as any).topAdActive) score += 4;
-    if ((ad as any).bumpActive) score += 2;
-    if ((ad as any).urgentActive) score += 1;
-    return score;
-  };
-
-  const getBumpEffectiveTime = (ad: any): number => {
-    if (!(ad as any).bumpActive || !(ad as any).boostStartAt) return new Date(ad.createdAt).getTime();
-    const start = new Date((ad as any).boostStartAt).getTime();
-    const now = Date.now();
-    const cycleMs = 24 * 60 * 60 * 1000;
-    return start + Math.floor((now - start) / cycleMs) * cycleMs;
-  };
-
-  // Top ad rotation (5 minutes)
-  const [topAdRotationIndex, setTopAdRotationIndex] = useState(0);
+  // Rotation (1 minute)
+  const [rotationIndex, setRotationIndex] = useState(0);
   useEffect(() => {
-    const interval = setInterval(() => setTopAdRotationIndex((i) => i + 1), 5 * 60 * 1000);
+    const interval = setInterval(() => setRotationIndex((i) => i + 1), 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // Featured ad rotation (5 minutes)
-  const [featuredRotationIndex, setFeaturedRotationIndex] = useState(0);
-  useEffect(() => {
-    const interval = setInterval(() => setFeaturedRotationIndex((i) => i + 1), 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Top ads pool
+  // Top ads pool — topAdActive only, no featuredActive, no bumpActive
   const topAdsPool = useMemo(() => {
-    return filteredAds
-      .filter((ad) => (ad as any).topAdActive)
-      .sort((a, b) => new Date((b as any).boostStartAt || b.createdAt).getTime() - new Date((a as any).boostStartAt || a.createdAt).getTime());
+    return filteredAds.filter(
+      (ad) => (ad as any).topAdActive && !(ad as any).featuredActive && !(ad as any).bumpActive
+    );
   }, [filteredAds]);
+
+  const shuffledTopAdsPool = useMemo(() => shuffleArray(topAdsPool), [topAdsPool]);
+
+  const displayedTopAds = useMemo(() => {
+    if (shuffledTopAdsPool.length === 0) return [];
+    return getRotatingSlice(shuffledTopAdsPool, rotationIndex, 2);
+  }, [shuffledTopAdsPool, rotationIndex]);
 
   // Featured ads pool
   const featuredAdsPool = useMemo(() => {
-    return filteredAds
-      .filter((ad) => (ad as any).featuredActive)
-      .sort((a, b) => new Date((b as any).boostStartAt || b.createdAt).getTime() - new Date((a as any).boostStartAt || a.createdAt).getTime());
+    return filteredAds.filter((ad) => (ad as any).featuredActive);
   }, [filteredAds]);
 
-  // 2 rotating top ads
-  const displayedTopAds = useMemo(() => {
-    if (topAdsPool.length === 0) return [];
-    return Array.from({ length: Math.min(2, topAdsPool.length) }, (_, i) =>
-      topAdsPool[(topAdRotationIndex + i) % topAdsPool.length]
-    );
-  }, [topAdsPool, topAdRotationIndex]);
+  const shuffledFeaturedAdsPool = useMemo(() => shuffleArray(featuredAdsPool), [featuredAdsPool]);
 
-  // 2 rotating featured ads
   const displayedFeaturedAds = useMemo(() => {
-    if (featuredAdsPool.length === 0) return [];
-    return Array.from({ length: Math.min(2, featuredAdsPool.length) }, (_, i) =>
-      featuredAdsPool[(featuredRotationIndex + i) % featuredAdsPool.length]
+    if (shuffledFeaturedAdsPool.length === 0) return [];
+    return getRotatingSlice(shuffledFeaturedAdsPool, rotationIndex, 2);
+  }, [shuffledFeaturedAdsPool, rotationIndex]);
+
+  // Featured insert pool — featured-only or featured+urgent (no topAd, no bump)
+  const featuredInsertPool = useMemo(() => {
+    return shuffledFeaturedAdsPool.filter(
+      (ad) => !(ad as any).topAdActive && !(ad as any).bumpActive
     );
-  }, [featuredAdsPool, featuredRotationIndex]);
+  }, [shuffledFeaturedAdsPool]);
+
+  // Base ads — all filtered ads sorted by newest
+  const baseAds = useMemo(() => {
+    const now = Date.now();
+    const dayMs = 24 * 60 * 60 * 1000;
+
+    const isBumpOnly = (ad: any) =>
+      Boolean(ad?.bumpActive && !ad?.topAdActive && !ad?.featuredActive && !ad?.urgentActive);
+
+    const getSortTime = (ad: any) => {
+      const createdAtMs = ad?.createdAt ? new Date(ad.createdAt).getTime() : 0;
+      if (!isBumpOnly(ad)) return createdAtMs;
+      const bumpStart = ad?.bumpStartAt || ad?.boostStartAt || ad?.boostRequestedAt || ad?.updatedAt || ad?.createdAt;
+      const bumpStartMs = bumpStart ? new Date(bumpStart).getTime() : createdAtMs;
+      if (!Number.isFinite(bumpStartMs)) return createdAtMs;
+      const elapsed = Math.max(0, now - bumpStartMs);
+      const cycles = Math.floor(elapsed / dayMs);
+      const lastBumpMs = bumpStartMs + cycles * dayMs;
+      return Math.max(createdAtMs, lastBumpMs);
+    };
+
+    return [...filteredAds].sort((a, b) => {
+      const timeDiff = getSortTime(b) - getSortTime(a);
+      if (timeDiff !== 0) return timeDiff;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  }, [filteredAds]);
+
+  // Interleave featured inserts every 16 ads, tagged with _isFeaturedInsert
+  const interleavedAds = useMemo(() => {
+    if (baseAds.length === 0) return [];
+    if (featuredInsertPool.length === 0) return baseAds;
+
+    const result: any[] = [];
+    const insertCount = Math.min(2, featuredInsertPool.length);
+    const poolLength = featuredInsertPool.length;
+    const startOffset = (rotationIndex * insertCount) % poolLength;
+    let insertOffset = 0;
+
+    baseAds.forEach((ad, index) => {
+      result.push(ad);
+      if ((index + 1) % 16 === 0) {
+        for (let i = 0; i < insertCount; i += 1) {
+          const pos = (startOffset + insertOffset + i) % poolLength;
+          const insertAd = featuredInsertPool[pos];
+          if (!result.some((r) => r.id === insertAd.id)) {
+            result.push({ ...insertAd, _isFeaturedInsert: true });
+          }
+        }
+        insertOffset += insertCount;
+      }
+    });
+
+    return result;
+  }, [baseAds, featuredInsertPool, rotationIndex]);
 
   const handleFilterChange = (key: string, value: any) => {
     if (key === "searchQuery") setSearchQuery(value);
@@ -200,7 +268,7 @@ export default function AutoPartsPage() {
     else if (key === "selectedDistrict") setSelectedDistrict(value);
     else if (key === "minPrice") setMinPrice(value);
     else if (key === "maxPrice") setMaxPrice(value);
-    setCurrentPage(1);
+    setVisibleCount(12);
   };
 
   const clearFilters = () => {
@@ -212,7 +280,7 @@ export default function AutoPartsPage() {
     setMinPrice("");
     setMaxPrice("");
     setUrgentOnly(false);
-    setCurrentPage(1);
+    setVisibleCount(12);
   };
 
   const activeFilterCount = [
@@ -229,25 +297,6 @@ export default function AutoPartsPage() {
   const getCategoryName = (categoryId: string) => {
     return categories.find((c) => c.id === categoryId)?.name ?? "—";
   };
-
-  // Pagination logic
-  const limit = 20;
-  const totalPages = Math.ceil(filteredAds.length / limit);
-  const paginationPage = Math.max(1, Math.min(currentPage, Math.max(1, totalPages)));
-
-  const paginatedAds = useMemo(() => {
-    const sorted = [...filteredAds].sort((a, b) => {
-      const scoreA = getBoostScore(a);
-      const scoreB = getBoostScore(b);
-      if (scoreB !== scoreA) return scoreB - scoreA;
-      const timeA = getBumpEffectiveTime(a);
-      const timeB = getBumpEffectiveTime(b);
-      if (timeB !== timeA) return timeB - timeA;
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-    const startIndex = (paginationPage - 1) * limit;
-    return sorted.slice(startIndex, startIndex + limit);
-  }, [filteredAds, paginationPage, limit]);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -266,7 +315,7 @@ export default function AutoPartsPage() {
               <h1 className="text-2xl font-bold text-slate-900">Auto Parts & Accessories</h1>
               <p className="text-slate-600">
                 {isLoading ? "Loading..." : `${filteredAds.length} results found`}
-                {activeFilterCount > 0 && ` with ${activeFilterCount} filter${activeFilterCount > 1 ? 's' : ''} applied`}
+                {activeFilterCount > 0 && ` with ${activeFilterCount} filter${activeFilterCount > 1 ? "s" : ""} applied`}
               </p>
             </div>
           </div>
@@ -306,7 +355,7 @@ export default function AutoPartsPage() {
                 </div>
               </div>
 
-              <div className={`${isFiltersOpen ? 'block' : 'hidden'} lg:block space-y-4`}>
+              <div className={`${isFiltersOpen ? "block" : "hidden"} lg:block space-y-4`}>
                 {/* Search */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
@@ -317,12 +366,12 @@ export default function AutoPartsPage() {
                     <Input
                       placeholder="Part name, brand, model..."
                       value={searchQuery}
-                      onChange={(e) => handleFilterChange('searchQuery', e.target.value)}
+                      onChange={(e) => handleFilterChange("searchQuery", e.target.value)}
                       className="h-10 text-sm border-slate-200 pr-8"
                     />
                     {searchQuery && (
                       <button
-                        onClick={() => handleFilterChange('searchQuery', '')}
+                        onClick={() => handleFilterChange("searchQuery", "")}
                         className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                       >
                         <X className="h-4 w-4" />
@@ -338,7 +387,7 @@ export default function AutoPartsPage() {
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
                     Category
                   </label>
-                  <Select value={selectedCategory} onValueChange={(value) => handleFilterChange('selectedCategory', value)}>
+                  <Select value={selectedCategory} onValueChange={(value) => handleFilterChange("selectedCategory", value)}>
                     <SelectTrigger className="h-9 text-sm border-slate-200">
                       <SelectValue placeholder="All Categories" />
                     </SelectTrigger>
@@ -360,7 +409,7 @@ export default function AutoPartsPage() {
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
                     Compatible Vehicle
                   </label>
-                  <Select value={selectedVehicleType} onValueChange={(value) => handleFilterChange('selectedVehicleType', value)}>
+                  <Select value={selectedVehicleType} onValueChange={(value) => handleFilterChange("selectedVehicleType", value)}>
                     <SelectTrigger className="h-9 text-sm border-slate-200">
                       <SelectValue placeholder="All Vehicles" />
                     </SelectTrigger>
@@ -382,7 +431,7 @@ export default function AutoPartsPage() {
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
                     Condition
                   </label>
-                  <Select value={selectedCondition} onValueChange={(value) => handleFilterChange('selectedCondition', value)}>
+                  <Select value={selectedCondition} onValueChange={(value) => handleFilterChange("selectedCondition", value)}>
                     <SelectTrigger className="h-9 text-sm border-slate-200">
                       <SelectValue placeholder="Any Condition" />
                     </SelectTrigger>
@@ -406,14 +455,14 @@ export default function AutoPartsPage() {
                       type="number"
                       placeholder="Min"
                       value={minPrice}
-                      onChange={(e) => handleFilterChange('minPrice', e.target.value)}
+                      onChange={(e) => handleFilterChange("minPrice", e.target.value)}
                       className="h-9 text-sm border-slate-200"
                     />
                     <Input
                       type="number"
                       placeholder="Max"
                       value={maxPrice}
-                      onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+                      onChange={(e) => handleFilterChange("maxPrice", e.target.value)}
                       className="h-9 text-sm border-slate-200"
                     />
                   </div>
@@ -426,7 +475,7 @@ export default function AutoPartsPage() {
                       <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
                         District
                       </label>
-                      <Select value={selectedDistrict} onValueChange={(value) => handleFilterChange('selectedDistrict', value)}>
+                      <Select value={selectedDistrict} onValueChange={(value) => handleFilterChange("selectedDistrict", value)}>
                         <SelectTrigger className="h-9 text-sm border-slate-200">
                           <SelectValue placeholder="All Districts" />
                         </SelectTrigger>
@@ -451,7 +500,7 @@ export default function AutoPartsPage() {
                     type="checkbox"
                     id="urgentOnlyParts"
                     checked={urgentOnly}
-                    onChange={(e) => { setUrgentOnly(e.target.checked); setCurrentPage(1); }}
+                    onChange={(e) => { setUrgentOnly(e.target.checked); setVisibleCount(12); }}
                     className="h-4 w-4 rounded border-slate-300 text-red-600 cursor-pointer"
                   />
                   <label htmlFor="urgentOnlyParts" className="text-sm font-medium text-red-600 cursor-pointer flex items-center gap-1">
@@ -467,39 +516,17 @@ export default function AutoPartsPage() {
             {/* Top Ad Slots - 2 rotating */}
             {!isLoading && displayedTopAds.length > 0 && (
               <div className="mb-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <Star className="h-4 w-4 text-yellow-500" />
-                  <span className="text-sm font-semibold text-slate-700">Top Ads</span>
-                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {displayedTopAds.map((vehicle) => {
-                    const adExt = vehicle as typeof vehicle & { partCategoryId?: string; partName?: string };
-                    const formatAdTitle = (ad: any) => ad.partName || ad.title || "Auto Part";
-                    const formatPrice = (price: number | null) => price ? `Rs. ${price.toLocaleString()}` : "Negotiable";
-                    return (
-                      <div
-                        key={`top-${vehicle.id}`}
-                        className="rounded-lg border-2 border-yellow-400 overflow-hidden hover:shadow-lg cursor-pointer group relative bg-yellow-50"
-                        onClick={() => router.push(buildAdUrl(vehicle))}
-                      >
-                        <div className="p-3">
-                          <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 line-clamp-1 group-hover:text-teal-700">{formatAdTitle(vehicle)}</h3>
-                          <div className="flex gap-3">
-                            <div className="w-32 h-20 flex-shrink-0">
-                              <img src={(vehicle as any)?.media?.[0]?.media?.url || "/placeholder-image.jpg"} alt={vehicle.title || "Part"} className="w-full h-full object-cover rounded-md" />
-                            </div>
-                            <div className="flex-1 flex flex-col justify-between min-w-0">
-                              <div>
-                                <div className="text-xs text-slate-600 mb-1 truncate">{vehicle.city || vehicle.location || ""}</div>
-                                <div className="text-sm font-semibold text-teal-700">{formatPrice(vehicle.price)}</div>
-                              </div>
-                              <BoostBadges topAdActive bumpActive={(vehicle as any).bumpActive} urgentActive={(vehicle as any).urgentActive} featuredActive={(vehicle as any).featuredActive} />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {displayedTopAds.map((vehicle) => (
+                    <TopAdCard
+                      key={`top-${vehicle.id}`}
+                      vehicle={vehicle}
+                      vehicleTypeLabels={vehicleTypeLabels}
+                      formatPrice={formatPrice}
+                      formatAdTitle={formatAdTitle}
+                    />
+                  ))}
                 </div>
                 <Separator className="mt-4 mb-4" />
               </div>
@@ -508,39 +535,18 @@ export default function AutoPartsPage() {
             {/* Featured Ad Slots - 2 rotating */}
             {!isLoading && displayedFeaturedAds.length > 0 && (
               <div className="mb-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <Sparkles className="h-4 w-4 text-purple-500" />
-                  <span className="text-sm font-semibold text-slate-700">Featured Ads</span>
-                </div>
-                <div className="grid grid-cols-1 gap-4">
-                  {displayedFeaturedAds.map((vehicle) => {
-                    const adExt = vehicle as typeof vehicle & { partCategoryId?: string; partName?: string; media?: Array<{ media?: { url?: string } }> };
-                    const mainImage = adExt.media?.[0]?.media?.url;
-                    const partName = adExt.partName || vehicle.title || "Auto Part";
-                    return (
-                      <div
-                        key={`feat-${vehicle.id}`}
-                        className="rounded-lg border-2 border-purple-300 overflow-hidden hover:shadow-lg cursor-pointer group relative bg-purple-50"
-                        onClick={() => router.push(buildAdUrl(vehicle))}
-                      >
-                        <div className="grid grid-cols-3 gap-1 h-28 overflow-hidden">
-                          {adExt.media && adExt.media.length > 0
-                            ? adExt.media.slice(0, 3).map((m, idx) => <img key={idx} src={m.media?.url || "/placeholder-image.jpg"} alt={partName} className="w-full h-full object-cover" />)
-                            : [0,1,2].map(i => <img key={i} src="/placeholder-image.jpg" alt={partName} className="w-full h-full object-cover" />)}
-                        </div>
-                        <div className="p-3 flex items-start justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-sm text-slate-800 group-hover:text-teal-700 line-clamp-1">{partName}</h3>
-                            <p className="text-xs text-slate-500 mt-1 truncate">{vehicle.city || vehicle.location || ""}</p>
-                          </div>
-                          <div className="text-sm font-bold text-teal-700 flex-shrink-0">{vehicle.price ? `Rs. ${vehicle.price.toLocaleString()}` : "Negotiable"}</div>
-                        </div>
-                        <div className="absolute bottom-2 right-2">
-                          <BoostBadges featuredActive bumpActive={(vehicle as any).bumpActive} urgentActive={(vehicle as any).urgentActive} topAdActive={(vehicle as any).topAdActive} />
-                        </div>
-                      </div>
-                    );
-                  })}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {displayedFeaturedAds.map((vehicle) => (
+                    <FeaturedAdCard
+                      key={`feat-${vehicle.id}`}
+                      vehicle={vehicle}
+                      vehicleTypeLabels={vehicleTypeLabels}
+                      formatPrice={formatPrice}
+                      formatAdTitle={formatAdTitle}
+                      isUrgent={(vehicle as any).urgentActive}
+                    />
+                  ))}
                 </div>
                 <Separator className="mt-4 mb-4" />
               </div>
@@ -555,105 +561,127 @@ export default function AutoPartsPage() {
             )}
 
             {/* Results Grid */}
-            {!isLoading && !error && paginatedAds.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {paginatedAds.map((vehicle) => {
-                  const adExt = vehicle as typeof vehicle & {
-                    partCategoryId?: string;
-                    compatibleVehicleType?: string;
-                    partName?: string;
-                    media?: Array<{ media?: { url?: string } }>;
-                  };
-                  const mainImage = adExt.media?.[0]?.media?.url;
-                  const categoryName = adExt.partCategoryId ? getCategoryName(adExt.partCategoryId) : null;
-                  const compatVehicle = adExt.compatibleVehicleType
-                    ? vehicleTypeLabels[adExt.compatibleVehicleType] || adExt.compatibleVehicleType
-                    : null;
+            {!isLoading && !error && interleavedAds.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {interleavedAds.slice(0, visibleCount).map((vehicle) => {
+                    const adExt = vehicle as typeof vehicle & {
+                      partCategoryId?: string;
+                      compatibleVehicleType?: string;
+                      partName?: string;
+                      media?: Array<{ media?: { url?: string } }>;
+                    };
 
-                  const partName = adExt.partName || vehicle.title || "Auto Part";
-                  const forParts = [vehicle.brand, vehicle.model, compatVehicle].filter(Boolean).join(" ");
-                  const displayTitle = forParts ? `${partName} for ${forParts}` : partName;
+                    if (vehicle._isFeaturedInsert) {
+                      return (
+                        <FeaturedAdCard
+                          key={`insert-${vehicle.id}`}
+                          vehicle={vehicle}
+                          vehicleTypeLabels={vehicleTypeLabels}
+                          formatPrice={formatPrice}
+                          formatAdTitle={formatAdTitle}
+                          isUrgent={(vehicle as any).urgentActive}
+                        />
+                      );
+                    }
 
-                  return (
-                    <div
-                      key={vehicle.id}
-                      className="rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative bg-white border-slate-200"
-                      onClick={() => router.push(buildAdUrl(vehicle))}
-                    >
-                      {/* Favorite Button */}
-                      <div className="absolute top-10 right-2 z-10">
-                        <FavoriteButton adId={vehicle.id} />
-                      </div>
+                    const categoryName = adExt.partCategoryId ? getCategoryName(adExt.partCategoryId) : null;
+                    const compatVehicle = adExt.compatibleVehicleType
+                      ? vehicleTypeLabels[adExt.compatibleVehicleType] || adExt.compatibleVehicleType
+                      : null;
+                    const mainImage = adExt.media?.[0]?.media?.url;
+                    const displayTitle = formatAdTitle(vehicle);
 
-                      {((vehicle as any).bumpActive || (vehicle as any).urgentActive || (vehicle as any).topAdActive || (vehicle as any).featuredActive) && (
-                        <div className="absolute bottom-2 right-2 z-10">
-                          <BoostBadges
-                            bumpActive={(vehicle as any).bumpActive}
-                            urgentActive={(vehicle as any).urgentActive}
-                            topAdActive={(vehicle as any).topAdActive}
-                            featuredActive={(vehicle as any).featuredActive}
-                          />
+                    return (
+                      <div
+                        key={vehicle.id}
+                        className="rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative bg-white border-slate-200 hover:border-slate-300"
+                        onClick={() => router.push(buildAdUrl(vehicle))}
+                      >
+                        {/* Favorite Button */}
+                        <div className="absolute top-10 right-2 z-10">
+                          <FavoriteButton adId={vehicle.id} />
                         </div>
-                      )}
 
-                      <div className="p-3 mt-3">
-                        {/* Part Title */}
-                        <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
-                          {displayTitle}
-                        </h3>
-
-                        <div className="flex">
-                          {/* Image */}
-                          <div className="w-32 h-20 flex-shrink-0">
-                            {mainImage ? (
-                              <img
-                                src={mainImage}
-                                alt={displayTitle}
-                                className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-slate-100 rounded-md">
-                                <Package className="h-8 w-8 text-slate-300" />
-                              </div>
-                            )}
+                        {((vehicle as any).bumpActive || (vehicle as any).urgentActive || (vehicle as any).topAdActive || (vehicle as any).featuredActive) && (
+                          <div className="absolute bottom-2 right-2 z-10">
+                            <BoostBadges
+                              bumpActive={(vehicle as any).bumpActive}
+                              urgentActive={(vehicle as any).urgentActive}
+                              topAdActive={(vehicle as any).topAdActive}
+                              featuredActive={(vehicle as any).featuredActive}
+                            />
                           </div>
+                        )}
 
-                          {/* Details */}
-                          <div className="flex-1 pl-3 flex flex-col justify-between">
-                            <div>
-                              {/* Category */}
-                              {categoryName && (
+                        <div className="p-2 pb-5">
+                          <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
+                            {displayTitle}
+                          </h3>
+
+                          <div className="flex">
+                            <div className="w-36 h-30 flex-shrink-0 flex flex-col">
+                              <div className="flex-1">
+                                {mainImage ? (
+                                  <img
+                                    src={mainImage}
+                                    alt={displayTitle}
+                                    className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center bg-slate-100 rounded-md">
+                                    <Package className="h-8 w-8 text-slate-300" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1 mt-1 text-xs text-slate-400">
+                                <span>{getRelativeTime(vehicle.createdAt)}</span>
+                                <span className="flex items-center gap-0.5">
+                                  <Eye className="h-3 w-3" />
+                                  {(vehicle as any).analytics?.views || 0}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex-1 pl-3 flex flex-col justify-between">
+                              <div>
                                 <div className="text-xs text-slate-600 mb-1 line-clamp-1">
-                                  {categoryName}
+                                  {vehicle.city || vehicle.location || ""}
                                 </div>
-                              )}
-
-                              {/* Price */}
-                              <div className="text-sm font-semibold text-teal-700 mb-1">
-                                {vehicle.price ? `Rs. ${vehicle.price.toLocaleString()}` : "Negotiable"}
+                                <div className="text-sm font-semibold text-teal-700 mb-1">
+                                  {formatPrice(vehicle.price, (vehicle as any).metadata?.isNegotiable)}
+                                </div>
+                                {categoryName && (
+                                  <div className="text-xs text-slate-500 truncate">{categoryName}</div>
+                                )}
+                                {compatVehicle && (
+                                  <div className="text-xs text-slate-400 truncate">{compatVehicle}</div>
+                                )}
                               </div>
-
-                              {/* Compatible Vehicle */}
-                              <div className="text-xs text-slate-500">
-                                {compatVehicle || "N/A"}
-                              </div>
-                            </div>
-
-                            {/* Footer - Date and Views */}
-                            <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
-                              <span>{getRelativeTime(vehicle.createdAt)}</span>
-                              <span className="flex items-center gap-0.5">
-                                <Eye className="h-3 w-3" />
-                                {(vehicle as any).analytics?.views || 0}
-                              </span>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+
+                {/* Load More */}
+                <div className="text-center mt-8">
+                  {visibleCount < interleavedAds.length ? (
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="px-8 py-5 border-teal-700 text-teal-700 hover:bg-teal-700 hover:text-white transition-all duration-300"
+                      onClick={() => setVisibleCount((prev) => prev + 12)}
+                    >
+                      Load More Parts
+                    </Button>
+                  ) : interleavedAds.length > 12 ? (
+                    <p className="text-slate-500 text-sm">No more parts to load</p>
+                  ) : null}
+                </div>
+              </>
             ) : !isLoading && (
               <Card className="p-12 text-center border-dashed border-2 bg-slate-50">
                 <Package className="h-12 w-12 text-slate-300 mx-auto mb-4" />
@@ -664,55 +692,25 @@ export default function AutoPartsPage() {
                 </Button>
               </Card>
             )}
-
-            {/* Pagination */}
-            {!isLoading && totalPages > 1 && (
-              <div className="flex justify-center items-center gap-4 mt-10">
-                <Button
-                  variant="outline"
-                  disabled={paginationPage === 1}
-                  onClick={() => {
-                    setCurrentPage(paginationPage - 1);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  className="px-6"
-                >
-                  Previous
-                </Button>
-                <div className="text-sm font-medium text-slate-600">
-                  Page {paginationPage} of {totalPages}
-                </div>
-                <Button
-                  variant="outline"
-                  disabled={paginationPage === totalPages}
-                  onClick={() => {
-                    setCurrentPage(paginationPage + 1);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  className="px-6"
-                >
-                  Next
-                </Button>
-              </div>
-            )}
           </div>
 
-          {/* Right Sidebar - Promotions */}
+          {/* Right Sidebar */}
           <div className="hidden xl:block w-72 flex-shrink-0">
             <div className="sticky top-6 space-y-4">
-              {/* Sell Faster CTA */}
               <Card className="p-4 bg-teal-900 text-white overflow-hidden shadow-lg border-none relative">
                 <div className="relative z-10">
                   <h4 className="font-bold text-lg mb-2">Sell Faster!</h4>
                   <p className="text-xs text-teal-100 mb-4 leading-relaxed">Boost your auto parts reach to thousands of potential buyers instantly.</p>
-                  <Button onClick={() => user ? router.push('/sell/new') : router.push('/signin?redirect=/sell/new')} className="w-full bg-white text-teal-900 hover:bg-teal-50 font-bold border-none">
+                  <Button
+                    onClick={() => user ? router.push("/sell/new") : router.push("/signin?redirect=/sell/new")}
+                    className="w-full bg-white text-teal-900 hover:bg-teal-50 font-bold border-none"
+                  >
                     Post Free Ad Now
                   </Button>
                 </div>
                 <Package className="absolute -right-4 -bottom-4 h-24 w-24 text-white/10 rotate-12" />
               </Card>
 
-              {/* Ad Placeholder */}
               <Card className="p-4 bg-white border-slate-200 overflow-hidden text-center shadow-none">
                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Advertisement</div>
                 <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-lg h-64 flex flex-col items-center justify-center text-slate-400 p-6">
@@ -727,7 +725,3 @@ export default function AutoPartsPage() {
     </div>
   );
 }
-
-
-
-
