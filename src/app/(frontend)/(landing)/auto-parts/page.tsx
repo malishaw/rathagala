@@ -95,6 +95,7 @@ export default function AutoPartsPage() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedBrand, setSelectedBrand] = useState<string>("all");
   const [selectedVehicleType, setSelectedVehicleType] = useState<string>("all");
   const [selectedCondition, setSelectedCondition] = useState<string>("all");
   const [selectedDistrict, setSelectedDistrict] = useState<string>("all");
@@ -102,6 +103,7 @@ export default function AutoPartsPage() {
   const [maxPrice, setMaxPrice] = useState("");
   const [isFiltersOpen, setIsFiltersOpen] = useState(true);
   const [urgentOnly, setUrgentOnly] = useState(false);
+  const [brandSearch, setBrandSearch] = useState("");
   const [visibleCount, setVisibleCount] = useState(12);
 
   const { data: categories = [] } = useGetAutoPartCategories(true);
@@ -120,6 +122,20 @@ export default function AutoPartsPage() {
     return Array.from(set).sort();
   }, [data]);
 
+  const brands = useMemo(() => {
+    const adsAll = data?.ads ?? [];
+    const set = new Set<string>();
+    adsAll.forEach((ad) => {
+      if (ad.type === "AUTO_PARTS" && ad.brand) set.add(ad.brand);
+    });
+    return Array.from(set).sort();
+  }, [data]);
+
+  const filteredBrands = useMemo(() => {
+    if (!brandSearch) return brands;
+    return brands.filter((b) => b.toLowerCase().includes(brandSearch.toLowerCase()));
+  }, [brands, brandSearch]);
+
   const filteredAds = useMemo(() => {
     const adsAll = data?.ads ?? [];
     const searchTerms = searchQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);
@@ -137,6 +153,7 @@ export default function AutoPartsPage() {
       };
 
       if (selectedCategory !== "all" && adExt.partCategoryId !== selectedCategory) return false;
+      if (selectedBrand !== "all" && ad.brand !== selectedBrand) return false;
       if (selectedVehicleType !== "all" && adExt.compatibleVehicleType !== selectedVehicleType) return false;
       if (selectedCondition !== "all" && ad.condition !== selectedCondition) return false;
       if (selectedDistrict !== "all" && ad.district !== selectedDistrict) return false;
@@ -163,7 +180,7 @@ export default function AutoPartsPage() {
 
       return true;
     });
-  }, [data, searchQuery, selectedCategory, selectedVehicleType, selectedCondition, selectedDistrict, minPrice, maxPrice, urgentOnly]);
+  }, [data, searchQuery, selectedCategory, selectedBrand, selectedVehicleType, selectedCondition, selectedDistrict, minPrice, maxPrice, urgentOnly]);
 
   // Rotation (1 minute)
   const [rotationIndex, setRotationIndex] = useState(0);
@@ -263,6 +280,7 @@ export default function AutoPartsPage() {
   const handleFilterChange = (key: string, value: any) => {
     if (key === "searchQuery") setSearchQuery(value);
     else if (key === "selectedCategory") setSelectedCategory(value);
+    else if (key === "selectedBrand") { setSelectedBrand(value); setBrandSearch(""); }
     else if (key === "selectedVehicleType") setSelectedVehicleType(value);
     else if (key === "selectedCondition") setSelectedCondition(value);
     else if (key === "selectedDistrict") setSelectedDistrict(value);
@@ -274,18 +292,21 @@ export default function AutoPartsPage() {
   const clearFilters = () => {
     setSearchQuery("");
     setSelectedCategory("all");
+    setSelectedBrand("all");
     setSelectedVehicleType("all");
     setSelectedCondition("all");
     setSelectedDistrict("all");
     setMinPrice("");
     setMaxPrice("");
     setUrgentOnly(false);
+    setBrandSearch("");
     setVisibleCount(12);
   };
 
   const activeFilterCount = [
     searchQuery,
     selectedCategory !== "all" ? selectedCategory : null,
+    selectedBrand !== "all" ? selectedBrand : null,
     selectedVehicleType !== "all" ? selectedVehicleType : null,
     selectedCondition !== "all" ? selectedCondition : null,
     selectedDistrict !== "all" ? selectedDistrict : null,
@@ -404,24 +425,57 @@ export default function AutoPartsPage() {
 
                 <Separator className="my-3" />
 
-                {/* Compatible Vehicle */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
-                    Compatible Vehicle
-                  </label>
-                  <Select value={selectedVehicleType} onValueChange={(value) => handleFilterChange("selectedVehicleType", value)}>
-                    <SelectTrigger className="h-9 text-sm border-slate-200">
-                      <SelectValue placeholder="All Vehicles" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Vehicles</SelectItem>
-                      {Object.entries(vehicleTypeLabels).map(([val, label]) => (
-                        <SelectItem key={val} value={val}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                {/* Vehicle & Brand */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
+                      Vehicle Type
+                    </label>
+                    <Select value={selectedVehicleType} onValueChange={(value) => handleFilterChange("selectedVehicleType", value)}>
+                      <SelectTrigger className="h-9 text-sm border-slate-200">
+                        <SelectValue placeholder="All" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        {Object.entries(vehicleTypeLabels).map(([val, label]) => (
+                          <SelectItem key={val} value={val}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
+                      Brand
+                    </label>
+                    <Select
+                      value={selectedBrand}
+                      onValueChange={(value) => handleFilterChange("selectedBrand", value)}
+                    >
+                      <SelectTrigger className="h-9 text-sm border-slate-200">
+                        <SelectValue placeholder="All" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-62.5">
+                        <div className="p-2 border-b sticky top-0 bg-white z-10">
+                          <Input
+                            autoFocus
+                            placeholder="Search brands..."
+                            value={brandSearch}
+                            onChange={(e) => setBrandSearch(e.target.value)}
+                            className="h-8 text-sm"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                        <SelectItem value="all">All</SelectItem>
+                        {filteredBrands.map((brand) => (
+                          <SelectItem key={brand} value={brand}>{brand}</SelectItem>
+                        ))}
+                        {filteredBrands.length === 0 && (
+                          <div className="p-2 text-sm text-slate-500 text-center">No brands found</div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <Separator className="my-3" />
