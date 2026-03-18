@@ -54,17 +54,15 @@ export default function AdComparisonPage() {
         }
     }, [searchParams]);
 
-    // Fetch vehicles for search - fetch all ads and filter client-side
+    // Fetch vehicles for search - only show active ads for comparison
     const { data: searchData1 } = useGetAds({
         page: 1,
         limit: 200,
-        includeExpired: true,
     });
 
     const { data: searchData2 } = useGetAds({
         page: 1,
         limit: 200,
-        includeExpired: true,
     });
 
     // Fetch selected vehicle details
