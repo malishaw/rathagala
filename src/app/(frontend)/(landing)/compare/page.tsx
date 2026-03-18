@@ -167,7 +167,9 @@ export default function AdComparisonPage() {
         return ad?.status === "EXPIRED";
     };
 
-    const isVisibleForCompare = (ad: any) => isPublished(ad) || isExpired(ad);
+    const isSellingAd = (ad: any) => ad?.listingType === "SELL";
+
+    const isVisibleForCompare = (ad: any) => isSellingAd(ad) && (isPublished(ad) || isExpired(ad));
 
     const matchesSearch = (ad: any, query: string) => {
         if (!query || query.trim() === "") return true;

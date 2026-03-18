@@ -13,7 +13,6 @@ import {
 
 import { auth, type Session } from "@/lib/auth";
 
-import { ScrollArea } from "../ui/scroll-area";
 import AppSidebarContent from "./app-sidebar-content";
 import { OrgSwitcher } from "@/features/organizations/components/org-switcher";
 
@@ -47,14 +46,12 @@ export async function AppSidebar({
         </div>
       </SidebarHeader>
 
-      <ScrollArea className="flex-1">
-        <SidebarContent>
-          <AppSidebarContent
-            session={props.session}
-            activeMember={activeMember}
-          />
-        </SidebarContent>
-      </ScrollArea>
+      <SidebarContent>
+        <AppSidebarContent
+          session={props.session}
+          activeMember={activeMember}
+        />
+      </SidebarContent>
 
       <SidebarFooter>
         <NavUser

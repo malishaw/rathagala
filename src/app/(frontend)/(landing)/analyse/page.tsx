@@ -2,6 +2,14 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
 import {
   TrendingUp,
@@ -30,6 +38,12 @@ export default function ComparisonPage() {
   const [trendFilterBrand2, setTrendFilterBrand2] = useState<string>("");
   const [trendFilterModel2, setTrendFilterModel2] = useState<string>("");
   const [trendFilterMfgYear2, setTrendFilterMfgYear2] = useState<string>("");
+
+  // Search state for dropdowns
+  const [brandSearch1, setBrandSearch1] = useState("");
+  const [modelSearch1, setModelSearch1] = useState("");
+  const [brandSearch2, setBrandSearch2] = useState("");
+  const [modelSearch2, setModelSearch2] = useState("");
 
   // Fetch all vehicles for price trend analysis (independent)
   const { data: allVehiclesForTrendAnalysis, isLoading } = useGetAds({
@@ -149,6 +163,38 @@ export default function ComparisonPage() {
     });
     return Array.from(mfgYears).sort((a, b) => b - a);
   }, [trendFilterYear, trendFilterBrand2, trendFilterModel2, trendAds]);
+
+  // Filter brands based on search input (Selection 1)
+  const filteredTrendBrands1 = useMemo(() => {
+    if (!brandSearch1) return availableTrendBrands;
+    return availableTrendBrands.filter(b =>
+      b.toLowerCase().includes(brandSearch1.toLowerCase())
+    );
+  }, [brandSearch1, availableTrendBrands]);
+
+  // Filter models based on search input (Selection 1)
+  const filteredTrendModels1 = useMemo(() => {
+    if (!modelSearch1) return availableTrendModels1;
+    return availableTrendModels1.filter(m =>
+      m.toLowerCase().includes(modelSearch1.toLowerCase())
+    );
+  }, [modelSearch1, availableTrendModels1]);
+
+  // Filter brands based on search input (Selection 2)
+  const filteredTrendBrands2 = useMemo(() => {
+    if (!brandSearch2) return availableTrendBrands;
+    return availableTrendBrands.filter(b =>
+      b.toLowerCase().includes(brandSearch2.toLowerCase())
+    );
+  }, [brandSearch2, availableTrendBrands]);
+
+  // Filter models based on search input (Selection 2)
+  const filteredTrendModels2 = useMemo(() => {
+    if (!modelSearch2) return availableTrendModels2;
+    return availableTrendModels2.filter(m =>
+      m.toLowerCase().includes(modelSearch2.toLowerCase())
+    );
+  }, [modelSearch2, availableTrendModels2]);
 
   const priceTrendData = useMemo(() => {
     if (!trendAds || !trendFilterYear) return [];
@@ -351,7 +397,7 @@ export default function ComparisonPage() {
                   {/* Year Filter */}
                   <div className="p-3 bg-white rounded-lg border border-gray-200">
                     <div className="max-w-xs">
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Analyse Year</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Analyze Year</label>
                       <select
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-[#024950] focus:border-transparent outline-none transition-all"
                         value={trendFilterYear}
@@ -386,62 +432,96 @@ export default function ComparisonPage() {
                         {/* Brand 1 */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1.5">Brand</label>
-                          <select
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-[#024950] outline-none transition-all"
+                          <Select
                             value={trendFilterBrand1}
-                            onChange={(e) => {
-                              setTrendFilterBrand1(e.target.value);
+                            onValueChange={(value) => {
+                              setTrendFilterBrand1(value);
+                              setBrandSearch1("");
                               setTrendFilterModel1("");
                               setTrendFilterMfgYear1("");
                             }}
                             disabled={!trendFilterYear}
                           >
-                            <option value="">Select</option>
-                            {availableTrendBrands.map((brand) => (
-                              <option key={brand} value={brand}>
-                                {brand}
-                              </option>
-                            ))}
-                          </select>
+                            <SelectTrigger className="h-9 text-sm border-gray-300">
+                              <SelectValue placeholder="Select" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-62.5">
+                              <div className="p-2 border-b sticky top-0 bg-white z-10">
+                                <Input
+                                  autoFocus
+                                  placeholder="Search brands..."
+                                  value={brandSearch1}
+                                  onChange={(e) => setBrandSearch1(e.target.value)}
+                                  className="h-8 text-sm"
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  onKeyDown={(e) => e.stopPropagation()}
+                                />
+                              </div>
+                              {filteredTrendBrands1.map((brand) => (
+                                <SelectItem key={brand} value={brand}>{brand}</SelectItem>
+                              ))}
+                              {filteredTrendBrands1.length === 0 && (
+                                <div className="p-2 text-sm text-gray-500 text-center">No brands found</div>
+                              )}
+                            </SelectContent>
+                          </Select>
                         </div>
 
                         {/* Model 1 */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1.5">Model</label>
-                          <select
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-[#024950] outline-none transition-all"
+                          <Select
                             value={trendFilterModel1}
-                            onChange={(e) => {
-                              setTrendFilterModel1(e.target.value);
+                            onValueChange={(value) => {
+                              setTrendFilterModel1(value);
+                              setModelSearch1("");
                               setTrendFilterMfgYear1("");
                             }}
                             disabled={!trendFilterYear || !trendFilterBrand1}
                           >
-                            <option value="">Select</option>
-                            {availableTrendModels1.map((model) => (
-                              <option key={model} value={model}>
-                                {model}
-                              </option>
-                            ))}
-                          </select>
+                            <SelectTrigger className="h-9 text-sm border-gray-300">
+                              <SelectValue placeholder="Select" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-62.5">
+                              <div className="p-2 border-b sticky top-0 bg-white z-10">
+                                <Input
+                                  autoFocus
+                                  placeholder="Search models..."
+                                  value={modelSearch1}
+                                  onChange={(e) => setModelSearch1(e.target.value)}
+                                  className="h-8 text-sm"
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  onKeyDown={(e) => e.stopPropagation()}
+                                />
+                              </div>
+                              {filteredTrendModels1.map((model) => (
+                                <SelectItem key={model} value={model}>{model}</SelectItem>
+                              ))}
+                              {filteredTrendModels1.length === 0 && (
+                                <div className="p-2 text-sm text-gray-500 text-center">No models found</div>
+                              )}
+                            </SelectContent>
+                          </Select>
                         </div>
 
                         {/* Mfg Year 1 */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1.5">Manufacture Year</label>
-                          <select
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-[#024950] outline-none transition-all"
-                            value={trendFilterMfgYear1}
-                            onChange={(e) => setTrendFilterMfgYear1(e.target.value)}
+                          <Select
+                            value={trendFilterMfgYear1 || "all"}
+                            onValueChange={(e) => setTrendFilterMfgYear1(e === "all" ? "" : e)}
                             disabled={!trendFilterYear || !trendFilterBrand1 || !trendFilterModel1}
                           >
-                            <option value="">All</option>
-                            {availableTrendMfgYears1.map((year) => (
-                              <option key={year} value={String(year)}>
-                                {year}
-                              </option>
-                            ))}
-                          </select>
+                            <SelectTrigger className="h-9 text-sm border-gray-300">
+                              <SelectValue placeholder="All" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All</SelectItem>
+                              {availableTrendMfgYears1.map((year) => (
+                                <SelectItem key={year} value={String(year)}>{year}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                     </div>
@@ -455,62 +535,96 @@ export default function ComparisonPage() {
                         {/* Brand 2 */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1.5">Brand</label>
-                          <select
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-teal-600 outline-none transition-all"
+                          <Select
                             value={trendFilterBrand2}
-                            onChange={(e) => {
-                              setTrendFilterBrand2(e.target.value);
+                            onValueChange={(value) => {
+                              setTrendFilterBrand2(value);
+                              setBrandSearch2("");
                               setTrendFilterModel2("");
                               setTrendFilterMfgYear2("");
                             }}
                             disabled={!trendFilterYear}
                           >
-                            <option value="">Select</option>
-                            {availableTrendBrands.map((brand) => (
-                              <option key={brand} value={brand}>
-                                {brand}
-                              </option>
-                            ))}
-                          </select>
+                            <SelectTrigger className="h-9 text-sm border-gray-300">
+                              <SelectValue placeholder="Select" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-62.5">
+                              <div className="p-2 border-b sticky top-0 bg-white z-10">
+                                <Input
+                                  autoFocus
+                                  placeholder="Search brands..."
+                                  value={brandSearch2}
+                                  onChange={(e) => setBrandSearch2(e.target.value)}
+                                  className="h-8 text-sm"
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  onKeyDown={(e) => e.stopPropagation()}
+                                />
+                              </div>
+                              {filteredTrendBrands2.map((brand) => (
+                                <SelectItem key={brand} value={brand}>{brand}</SelectItem>
+                              ))}
+                              {filteredTrendBrands2.length === 0 && (
+                                <div className="p-2 text-sm text-gray-500 text-center">No brands found</div>
+                              )}
+                            </SelectContent>
+                          </Select>
                         </div>
 
                         {/* Model 2 */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1.5">Model</label>
-                          <select
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-teal-600 outline-none transition-all"
+                          <Select
                             value={trendFilterModel2}
-                            onChange={(e) => {
-                              setTrendFilterModel2(e.target.value);
+                            onValueChange={(value) => {
+                              setTrendFilterModel2(value);
+                              setModelSearch2("");
                               setTrendFilterMfgYear2("");
                             }}
                             disabled={!trendFilterYear || !trendFilterBrand2}
                           >
-                            <option value="">Select</option>
-                            {availableTrendModels2.map((model) => (
-                              <option key={model} value={model}>
-                                {model}
-                              </option>
-                            ))}
-                          </select>
+                            <SelectTrigger className="h-9 text-sm border-gray-300">
+                              <SelectValue placeholder="Select" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-62.5">
+                              <div className="p-2 border-b sticky top-0 bg-white z-10">
+                                <Input
+                                  autoFocus
+                                  placeholder="Search models..."
+                                  value={modelSearch2}
+                                  onChange={(e) => setModelSearch2(e.target.value)}
+                                  className="h-8 text-sm"
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  onKeyDown={(e) => e.stopPropagation()}
+                                />
+                              </div>
+                              {filteredTrendModels2.map((model) => (
+                                <SelectItem key={model} value={model}>{model}</SelectItem>
+                              ))}
+                              {filteredTrendModels2.length === 0 && (
+                                <div className="p-2 text-sm text-gray-500 text-center">No models found</div>
+                              )}
+                            </SelectContent>
+                          </Select>
                         </div>
 
                         {/* Mfg Year 2 */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1.5">Manufacture Year</label>
-                          <select
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-teal-600 outline-none transition-all"
-                            value={trendFilterMfgYear2}
-                            onChange={(e) => setTrendFilterMfgYear2(e.target.value)}
+                          <Select
+                            value={trendFilterMfgYear2 || "all"}
+                            onValueChange={(e) => setTrendFilterMfgYear2(e === "all" ? "" : e)}
                             disabled={!trendFilterYear || !trendFilterBrand2 || !trendFilterModel2}
                           >
-                            <option value="">All</option>
-                            {availableTrendMfgYears2.map((year) => (
-                              <option key={year} value={String(year)}>
-                                {year}
-                              </option>
-                            ))}
-                          </select>
+                            <SelectTrigger className="h-9 text-sm border-gray-300">
+                              <SelectValue placeholder="All" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All</SelectItem>
+                              {availableTrendMfgYears2.map((year) => (
+                                <SelectItem key={year} value={String(year)}>{year}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                     </div>

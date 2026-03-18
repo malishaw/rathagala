@@ -14,7 +14,9 @@ import { DataTableSearch } from "@/components/table/data-table-search";
 import { useQueryState, parseAsString, parseAsInteger } from "nuqs";
 import { useBulkApproveAds } from "@/features/ads/api/use-bulk-approve-ads";
 import { useBulkDeleteAds } from "@/features/ads/api/use-bulk-delete-ads";
-import { Check, Trash2, FileText, FileSpreadsheet } from "lucide-react";
+import { Check, Trash2, FileSpreadsheet, ChevronDown, Search } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { AdType } from "@/features/ads/components/ad-table/admin-columns";
 import { toast } from "sonner";
 import {
@@ -96,6 +98,17 @@ export default function AdsManagePage() {
 
   const [selectedRows, setSelectedRows] = useState<AdType[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const BOOST_OPTIONS = [
+    { value: "BUMP", label: "Bump Ad Only" },
+    { value: "TOP_AD", label: "Top Ad Only" },
+    { value: "URGENT", label: "Urgent Ad Only" },
+    { value: "FEATURED", label: "Featured Ad Only" },
+  ] as const;
+
+  const [pendingBoostFilter, setPendingBoostFilter] = useState<string[]>([]);
+  const [activeBoostFilter, setActiveBoostFilter] = useState<string[]>([]);
+  const [boostPopoverOpen, setBoostPopoverOpen] = useState(false);
   const [deleteReason, setDeleteReason] = useState<DeleteAdReason>(DELETE_AD_REASONS[0]);
   const bulkApproveMutation = useBulkApproveAds();
   const bulkDeleteMutation = useBulkDeleteAds();
@@ -258,9 +271,23 @@ export default function AdsManagePage() {
   const statsAds: AdType[] = (statsData?.ads ?? []) as unknown as AdType[];
   const activeCount = statsAds.filter((ad) => ad.status === "ACTIVE").length;
 
-  const filteredAds = isPendingBoostFilter
-    ? formattedAds.filter((ad) => (ad as any).boostStatus === "PENDING")
-    : formattedAds;
+  const boostFilteredAds = (() => {
+    let ads = isPendingBoostFilter
+      ? formattedAds.filter((ad) => (ad as { boostStatus?: string }).boostStatus === "PENDING")
+      : formattedAds;
+    if (activeBoostFilter.length > 0) {
+      ads = ads.filter((ad) => {
+        const boostTypes: string[] = (ad as { boostTypes?: string[] }).boostTypes ?? [];
+        return (
+          boostTypes.length === activeBoostFilter.length &&
+          activeBoostFilter.every((bf) => boostTypes.includes(bf))
+        );
+      });
+    }
+    return ads;
+  })();
+
+  const filteredAds = boostFilteredAds;
 
   return (
     <PageContainer scrollable={false}>
@@ -300,6 +327,70 @@ export default function AdsManagePage() {
                 <SelectItem value="PENDING_BOOST">Pending Boost</SelectItem>
               </SelectContent>
             </Select>
+
+            {/* Boost filter dropdown */}
+            <Popover open={boostPopoverOpen} onOpenChange={setBoostPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="shrink-0 gap-2 w-40 justify-between">
+                  <span className="truncate">
+                    {pendingBoostFilter.length === 0
+                      ? "Boost Type"
+                      : pendingBoostFilter.length === 1
+                        ? BOOST_OPTIONS.find((o) => o.value === pendingBoostFilter[0])?.label
+                        : `${pendingBoostFilter.length} selected`}
+                  </span>
+                  <ChevronDown className="w-4 h-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-48 p-2" align="start">
+                <div className="space-y-1">
+                  {BOOST_OPTIONS.map((opt) => (
+                    <label
+                      key={opt.value}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-slate-100 cursor-pointer text-sm"
+                    >
+                      <Checkbox
+                        checked={pendingBoostFilter.includes(opt.value)}
+                        onCheckedChange={(checked) => {
+                          setPendingBoostFilter((prev) =>
+                            checked
+                              ? [...prev, opt.value]
+                              : prev.filter((v) => v !== opt.value)
+                          );
+                        }}
+                      />
+                      {opt.label}
+                    </label>
+                  ))}
+                </div>
+                <div className="mt-2 pt-2 border-t flex gap-1">
+                  <Button
+                    size="sm"
+                    className="flex-1 gap-1"
+                    onClick={() => {
+                      setActiveBoostFilter(pendingBoostFilter);
+                      setBoostPopoverOpen(false);
+                    }}
+                  >
+                    <Search className="w-3.5 h-3.5" />
+                    Search
+                  </Button>
+                  {activeBoostFilter.length > 0 && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setPendingBoostFilter([]);
+                        setActiveBoostFilter([]);
+                        setBoostPopoverOpen(false);
+                      }}
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
           {/* Stat mini cards - inline on desktop, new row on mobile */}
           <div className="flex items-center gap-2 w-full sm:w-auto">

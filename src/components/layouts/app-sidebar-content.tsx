@@ -27,6 +27,7 @@ import {
 
 import { type Session } from "@/lib/auth";
 import { NavMain } from "@/components/layouts/nav-groups/nav-main";
+import { NavAccordion } from "@/components/layouts/nav-groups/nav-accordion";
 import { NavOrgManagement } from "./nav-groups/nav-org-management";
 import { NavContent } from "./nav-groups/nav-content";
 import { authClient } from "@/lib/auth-client";
@@ -121,6 +122,13 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
         icon: MailIcon
       },
       {
+        title: "Revenue",
+        url: "/dashboard/revenue",
+        icon: DollarSign
+      }
+    ],
+    catalogueItems: [
+      {
         title: "Auto Parts",
         url: "/dashboard/auto-parts",
         icon: WrenchIcon
@@ -145,11 +153,6 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
         url: "/dashboard/promotion",
         icon: Zap
       },
-      {
-        title: "Revenue",
-        url: "/dashboard/revenue",
-        icon: DollarSign
-      }
     ],
     agentManagement: [
       {
@@ -185,6 +188,15 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
 
       {/* Admin-only navigation items */}
       {isAdmin && <NavMain items={data.adminNavMain} />}
+
+      {/* Catalogue accordion */}
+      {isAdmin && (
+        <NavAccordion
+          label="System"
+          icon={SlidersHorizontal}
+          items={data.catalogueItems}
+        />
+      )}
 
       {/* Organization Management - only for admins */}
       {isAdmin && activeOrganization.data && activeMember?.role !== "member" && (

@@ -160,7 +160,7 @@ export function Header() {
               href="/analyse"
               className="hover:text-teal-200 transition-colors font-medium"
             >
-              Analyse
+              Analyze
             </Link>
             {/* <Link
               href="/search"
@@ -376,7 +376,7 @@ export function Header() {
                     <div className="bg-white/10 p-1.5 rounded-lg">
                       <TrendingUp className="h-4 w-4" />
                     </div>
-                    Analyse
+                    Analyze
                   </Link>
 
                   {user && (
