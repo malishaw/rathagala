@@ -146,7 +146,37 @@ export default function SearchPage() {
   const [brandSearch, setBrandSearch] = useState('');
   const [availableGrades, setAvailableGrades] = useState<{ id: string; name: string }[]>([]);
   const [loadingGrades, setLoadingGrades] = useState(false);
+  const [availableModels, setAvailableModels] = useState<{ id: string; name: string }[]>([]);
+  const [loadingModels, setLoadingModels] = useState(false);
+  const [modelSearch, setModelSearch] = useState('');
+  const [gradeSearch, setGradeSearch] = useState('');
   const [visibleCount, setVisibleCount] = useState(12);
+
+  // Fetch available models when brand changes
+  useEffect(() => {
+    const fetchModels = async () => {
+      if (!filters.brand || filters.brand === 'all') {
+        setAvailableModels([]);
+        return;
+      }
+
+      setLoadingModels(true);
+      try {
+        const params = new URLSearchParams({ limit: "500", isActive: "true", brand: filters.brand });
+        const res = await fetch(`/api/vehicle-model?${params}`);
+        if (res.ok) {
+          const data = await res.json() as { models: { id: string; name: string; isActive?: boolean }[] };
+          setAvailableModels(data.models.filter((m) => m.isActive !== false));
+        }
+      } catch (error) {
+        console.error("Failed to fetch models:", error);
+      } finally {
+        setLoadingModels(false);
+      }
+    };
+
+    fetchModels();
+  }, [filters.brand]);
 
   // Fetch available grades when brand or model changes
   useEffect(() => {
@@ -158,7 +188,7 @@ export default function SearchPage() {
 
       setLoadingGrades(true);
       try {
-        const params = new URLSearchParams({ limit: "500", isActive: "true" });
+        const params = new URLSearchParams({ limit: "500", isActive: "true", includeUserGrades: "true" });
         if (filters.brand && filters.brand !== 'all') {
           params.set("brand", filters.brand);
         }
@@ -245,6 +275,22 @@ export default function SearchPage() {
       brand.toLowerCase().includes(brandSearch.toLowerCase())
     );
   }, [brandSearch]);
+
+  // Filter models based on search input
+  const filteredModels = useMemo(() => {
+    if (!modelSearch) return availableModels;
+    return availableModels.filter(m =>
+      m.name.toLowerCase().includes(modelSearch.toLowerCase())
+    );
+  }, [modelSearch, availableModels]);
+
+  // Filter grades based on search input
+  const filteredGrades = useMemo(() => {
+    if (!gradeSearch) return availableGrades;
+    return availableGrades.filter(g =>
+      g.name.toLowerCase().includes(gradeSearch.toLowerCase())
+    );
+  }, [gradeSearch, availableGrades]);
 
   // Fetch ads with current filters - fetch all ads to enable comprehensive search
   // (pagination will be handled client-side after filtering)
@@ -880,12 +926,41 @@ export default function SearchPage() {
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
                       Model
                     </label>
-                    <Input
-                      placeholder="Enter model"
-                      value={filters.model}
-                      onChange={(e) => handleFilterChange('model', e.target.value)}
-                      className="h-9 text-sm"
-                    />
+                    <Select
+                      value={filters.model || 'all'}
+                      onValueChange={(value) => {
+                        handleFilterChange('model', value === 'all' ? '' : value);
+                        setModelSearch('');
+                      }}
+                      disabled={!filters.brand || filters.brand === 'all' || loadingModels}
+                    >
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder={loadingModels ? "Loading..." : "All"} />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-62.5">
+                        <div className="p-2 border-b sticky top-0 bg-white z-10">
+                          <Input
+                            autoFocus
+                            placeholder="Search models..."
+                            value={modelSearch}
+                            onChange={(e) => setModelSearch(e.target.value)}
+                            className="h-8 text-sm"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                        <SelectItem value="all">All</SelectItem>
+                        {filteredModels.map((m) => (
+                          <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>
+                        ))}
+                        {filteredModels.length === 0 && (
+                          <div className="p-2 text-sm text-slate-500 text-center">No models found</div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    {(!filters.brand || filters.brand === 'all') && (
+                      <p className="text-xs text-muted-foreground mt-1">Select a brand first</p>
+                    )}
                   </div>
                 </div>
 
@@ -899,19 +974,36 @@ export default function SearchPage() {
                     </label>
                     <Select
                       value={filters.grade}
-                      onValueChange={(value) => handleFilterChange('grade', value)}
+                      onValueChange={(value) => {
+                        handleFilterChange('grade', value);
+                        setGradeSearch('');
+                      }}
                       disabled={!filters.brand || filters.brand === 'all' || loadingGrades}
                     >
                       <SelectTrigger className="h-9 text-sm">
                         <SelectValue placeholder={loadingGrades ? "Loading..." : "All"} />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="max-h-[250px]">
+                        <div className="p-2 border-b sticky top-0 bg-white z-10">
+                          <Input
+                            autoFocus
+                            placeholder="Search grades..."
+                            value={gradeSearch}
+                            onChange={(e) => setGradeSearch(e.target.value)}
+                            className="h-8 text-sm"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                          />
+                        </div>
                         <SelectItem value="all">All</SelectItem>
-                        {availableGrades.map((grade) => (
+                        {filteredGrades.map((grade) => (
                           <SelectItem key={grade.id} value={grade.name}>
                             {grade.name}
                           </SelectItem>
                         ))}
+                        {filteredGrades.length === 0 && (
+                          <div className="p-2 text-sm text-slate-500 text-center">No grades found</div>
+                        )}
                       </SelectContent>
                     </Select>
                     {(!filters.brand || filters.brand === 'all') && (
