@@ -88,12 +88,32 @@ export default function RevenueAdminPage() {
           <>
             {/* Total Revenue */}
             <Card className="p-6 bg-teal-900 text-white border-0">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 mb-5">
                 <DollarSign className="h-8 w-8 opacity-80" />
                 <div>
                   <p className="text-teal-200 text-sm font-medium">Total Revenue</p>
                   <p className="text-3xl font-bold">Rs. {(data?.totalRevenue ?? 0).toLocaleString()}</p>
                 </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                {[
+                  { label: "Bump Up", count: data?.bumpCount ?? 0, icon: <TrendingUp className="h-4 w-4" /> },
+                  { label: "Top Ad", count: data?.topAdCount ?? 0, icon: <Star className="h-4 w-4" /> },
+                  { label: "Urgent", count: data?.urgentCount ?? 0, icon: <AlertCircle className="h-4 w-4" /> },
+                  { label: "Featured", count: data?.featuredCount ?? 0, icon: <Zap className="h-4 w-4" /> },
+                  { label: "Total Boosted", count: data?.totalBoostedCount ?? 0, icon: <DollarSign className="h-4 w-4" />, highlight: true },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className={`rounded-lg px-4 py-3 flex flex-col gap-1 ${item.highlight ? "bg-white/20" : "bg-white/10"}`}
+                  >
+                    <div className="flex items-center gap-1.5 text-teal-200 text-xs font-medium">
+                      {item.icon}
+                      {item.label}
+                    </div>
+                    <p className="text-2xl font-bold">{item.count}</p>
+                  </div>
+                ))}
               </div>
             </Card>
 

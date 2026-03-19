@@ -435,6 +435,10 @@ export const getRevenue: AppRouteHandler<GetRevenueRoute> = async (c) => {
   let topAdRevenue = 0;
   let urgentRevenue = 0;
   let featuredRevenue = 0;
+  let bumpCount = 0;
+  let topAdCount = 0;
+  let urgentCount = 0;
+  let featuredCount = 0;
 
   for (const record of records) {
     totalRevenue += record.totalAmount;
@@ -442,10 +446,21 @@ export const getRevenue: AppRouteHandler<GetRevenueRoute> = async (c) => {
     topAdRevenue += record.topAdAmount ?? 0;
     urgentRevenue += record.urgentAmount ?? 0;
     featuredRevenue += record.featuredAmount ?? 0;
+    const types = record.boostTypes as string[];
+    if (types.includes("BUMP")) bumpCount++;
+    if (types.includes("TOP_AD")) topAdCount++;
+    if (types.includes("URGENT")) urgentCount++;
+    if (types.includes("FEATURED")) featuredCount++;
   }
 
+  const totalBoostedCount = records.length;
+
   return c.json(
-    { totalRevenue, bumpRevenue, topAdRevenue, urgentRevenue, featuredRevenue, records },
+    {
+      totalRevenue, bumpRevenue, topAdRevenue, urgentRevenue, featuredRevenue,
+      bumpCount, topAdCount, urgentCount, featuredCount, totalBoostedCount,
+      records,
+    },
     HttpStatusCodes.OK
   );
 };
