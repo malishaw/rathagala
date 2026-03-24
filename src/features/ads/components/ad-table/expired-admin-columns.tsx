@@ -167,6 +167,18 @@ export const expiredAdColumns: ColumnDef<ExpiredAdType>[] = [
     },
   },
   {
+    id: "daysSincePosted",
+    header: "Days Since Posted",
+    cell: ({ row }) => {
+      const createdAt = new Date(row.original.createdAt);
+      const now = new Date();
+      const diffMs = now.getTime() - createdAt.getTime();
+      const daysSincePosted = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+
+      return <span className="text-sm font-medium">{daysSincePosted} days</span>;
+    },
+  },
+  {
     id: "actions",
     header: "Actions",
     cell: ({ row }) => (
