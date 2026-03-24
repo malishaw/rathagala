@@ -57,6 +57,27 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     const offset = (pageNum - 1) * limitNum;
 
 
+    // Auto-expire boosts whose boostEndAt has passed
+    const now = new Date();
+    await prisma.ad.updateMany({
+      where: {
+        boostStatus: "ACTIVE",
+        boostEndAt: { lt: now },
+      },
+      data: {
+        boostStatus: "EXPIRED",
+        bumpActive: false,
+        topAdActive: false,
+        urgentActive: false,
+        featuredActive: false,
+        boostTypes: [],
+      },
+    });
+    await prisma.boostRequest.updateMany({
+      where: { status: "ACTIVE", expiresAt: { lt: now } },
+      data: { status: "EXPIRED" },
+    });
+
     // --- Refactored filter logic: always use top-level AND array ---
     const andFilters: any[] = [];
 
@@ -413,6 +434,8 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       boostExpiry: ad.boostExpiry?.toISOString() ?? null,
       featureExpiry: ad.featureExpiry?.toISOString() ?? null,
       expiryDate: ad.expiryDate?.toISOString() ?? null,
+      boostStartAt: ad.boostStartAt?.toISOString() ?? null,
+      boostEndAt: ad.boostEndAt?.toISOString() ?? null,
     }));
 
     return c.json(
@@ -841,6 +864,8 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
       boostExpiry: ad.boostExpiry?.toISOString() ?? null,
       featureExpiry: ad.featureExpiry?.toISOString() ?? null,
       expiryDate: ad.expiryDate?.toISOString() ?? null,
+      boostStartAt: ad.boostStartAt?.toISOString() ?? null,
+      boostEndAt: ad.boostEndAt?.toISOString() ?? null,
     };
 
     return c.json(formattedAd, HttpStatusCodes.OK);
@@ -1746,6 +1771,8 @@ export const trending: AppRouteHandler<TrendingRoute> = async (c) => {
       boostExpiry: ad.boostExpiry?.toISOString() ?? null,
       featureExpiry: ad.featureExpiry?.toISOString() ?? null,
       expiryDate: ad.expiryDate?.toISOString() ?? null,
+      boostStartAt: ad.boostStartAt?.toISOString() ?? null,
+      boostEndAt: ad.boostEndAt?.toISOString() ?? null,
       media: ad.media.map((media) => ({
         ...media,
         createdAt: media.createdAt.toISOString(),

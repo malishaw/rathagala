@@ -175,7 +175,7 @@ export const adminColumns: ColumnDef<AdType>[] = [
                 title="View/Approve Boost"
                 className="text-yellow-500 hover:text-yellow-600 transition-colors"
               >
-                <Sparkles className="h-4 w-4" />
+                <Sparkles className="h-6 w-6 cursor-pointer hover:bg-amber-100  p-1 border-1 rounded-full" />
               </button>
             )}
           </div>
@@ -187,7 +187,16 @@ export const adminColumns: ColumnDef<AdType>[] = [
               <Badge className="bg-orange-100 text-orange-700 border-orange-200 text-xs">Boost Pending</Badge>
             )}
             {(ad as any).boostStatus === "ACTIVE" && (
-              <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">Boost Active</Badge>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge className="bg-green-100 text-green-700 border-green-200 text-xs cursor-help">Boost Active</Badge>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-teal-700 text-white text-xs">
+                    <p>Boost ends: {ad.boostEndAt ? new Date(ad.boostEndAt).toLocaleString("en-LK", { dateStyle: "medium", timeStyle: "short" }) : "N/A"}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
           {showBoostDialog && (
