@@ -687,7 +687,7 @@ export async function sendAdTwoWeekNotification({ email, name, adTitle, adId }: 
                 
                 <p><strong>If you want to get more responses to your ad, here are some tips:</strong></p>
                 <ol class="tips-list">
-                  <li>🚀 <a href="${appUrl}/payments">Boost your ad</a> and make it stand out</li>
+                  <li>🚀 <a href="${appUrl}/boost">Boost your ad</a> and make it stand out</li>
                   <li>💰 Rethink the price</li>
                   <li>📸 Add good-quality, original photos</li>
                   <li>📝 Add more details to the description</li>
@@ -715,7 +715,7 @@ Is your ad still valid?
 You can also manage your ads from your account's My Ads page: ${appUrl}/profile#my-ads
 
 If you want to get more responses to your ad, here are some tips:
-1. Boost your ad and make it stand out: ${appUrl}/payments
+1. Boost your ad and make it stand out: ${appUrl}/boost
 2. Rethink the price.
 3. Add good-quality, original photos.
 4. Add more details to the description.

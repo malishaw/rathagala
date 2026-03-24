@@ -389,7 +389,7 @@ export default function DashboardPage() {
             )}
 
             {/* Users Section - Admin Only */}
-            {isAdmin && (
+            {/* {isAdmin && (
               <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                 <div className="p-6 border-b border-slate-200">
                   <h2 className="text-2xl font-bold text-slate-800 mb-2">Users</h2>
@@ -413,7 +413,7 @@ export default function DashboardPage() {
                   </Link>
                 </div>
               </div>
-            )}
+            )} */}
 
             {/* Static Content: Recent Activity */}
             {!isAdmin && (
@@ -468,11 +468,11 @@ export default function DashboardPage() {
                   <Car className="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform" />
                   Create a new listing
                 </Link>
-                <Link href="/ads?boost=true" className="flex items-center px-5 py-3.5 bg-gradient-to-r from-emerald-50 to-teal-50 text-teal-700 rounded-xl hover:from-emerald-100 hover:to-teal-100 transition-all duration-300 font-medium border border-teal-200 hover:border-teal-300">
+                <Link href="/dashboard/ads-manage" className="flex items-center px-5 py-3.5 bg-gradient-to-r from-blue-50 to-blue-50 text-blue-700 rounded-xl hover:from-blue-100 hover:to-blue-200 transition-all duration-300 font-medium border border-blue-200 hover:border-blue-300">
                   <TrendingUp className="w-5 h-5 mr-2" />
                   Boost an ad
                 </Link>
-                <Link href="/ads?featured=true" className="flex items-center px-5 py-3.5 bg-gradient-to-r from-orange-50 to-amber-50 text-orange-700 rounded-xl hover:from-orange-100 hover:to-amber-100 transition-all duration-300 font-medium border border-orange-200 hover:border-orange-300">
+                <Link href="/dashboard/ads-manage" className="flex items-center px-5 py-3.5 bg-gradient-to-r from-orange-50 to-amber-50 text-orange-700 rounded-xl hover:from-orange-100 hover:to-amber-100 transition-all duration-300 font-medium border border-orange-200 hover:border-orange-300">
                   <Star className="w-5 h-5 mr-2" />
                   Feature an ad
                 </Link>
