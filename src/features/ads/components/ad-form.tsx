@@ -2033,7 +2033,7 @@ export function AdForm({
                   </div>
 
                   {/* Original Price */}
-                  <div className="flex items-center">
+                  {/* <div className="flex items-center">
                     <div className="w-48 text-right pr-4 text-gray-600">
                       Original Price
                     </div>
@@ -2050,7 +2050,7 @@ export function AdForm({
                         If there&apos;s a discount, enter the original price here
                       </p>
                     </div>
-                  </div>
+                  </div> */}
 
                   <div className="flex justify-between mt-6">
                     <Button

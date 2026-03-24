@@ -53,6 +53,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
 import { authClient } from "@/lib/auth-client";
+import { buildAdUrl } from "@/lib/ad-url";
 import { FaFacebookSquare, FaWhatsappSquare, FaYoutubeSquare } from "react-icons/fa";
 import { FaSquareXTwitter, FaTelegram } from "react-icons/fa6";
 import { AdIdDisplay } from "./ad-id-display";
@@ -582,48 +583,60 @@ export default function AdDetailPage() {
 
                 <DropdownMenuContent align="end" className="w-44">
                   <DropdownMenuItem
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
                       const url = ad ? window.location.origin + buildAdUrl(ad) : (typeof window !== 'undefined' ? window.location.href : '');
                       const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
-                      window.open(shareUrl, '_blank', 'noopener');
+                      window.open(shareUrl, '_blank');
                     }}
                   >
                     Facebook
                   </DropdownMenuItem>
 
                   <DropdownMenuItem
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
                       const url = ad ? window.location.origin + buildAdUrl(ad) : (typeof window !== 'undefined' ? window.location.href : '');
                       const text = ad ? `Check out this ${[ad.brand, ad.model, ad.manufacturedYear].filter(Boolean).join(' ')}` : '';
                       const shareUrl = `https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`;
-                      window.open(shareUrl, '_blank', 'noopener');
+                      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                      if (isMobile) {
+                        window.location.href = shareUrl;
+                      } else {
+                        window.open(shareUrl, '_blank');
+                      }
                     }}
                   >
                     WhatsApp
                   </DropdownMenuItem>
 
                   <DropdownMenuItem
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
                       const url = ad ? window.location.origin + buildAdUrl(ad) : (typeof window !== 'undefined' ? window.location.href : '');
                       const shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}`;
-                      window.open(shareUrl, '_blank', 'noopener');
+                      window.open(shareUrl, '_blank');
                     }}
                   >
                     Twitter / X
                   </DropdownMenuItem>
 
                   <DropdownMenuItem
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
                       const url = ad ? window.location.origin + buildAdUrl(ad) : (typeof window !== 'undefined' ? window.location.href : '');
                       const text = ad ? `Rathagala.lk Check out this ${[ad.brand, ad.model, ad.manufacturedYear].filter(Boolean).join(' ')}` : '';
                       const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
-                      window.open(shareUrl, '_blank', 'noopener');
+                      window.open(shareUrl, '_blank');
                     }}
                   >
                     Telegram
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem onClick={handleCopyLink}>
+                  <DropdownMenuItem onClick={(e) => {
+                    e.preventDefault();
+                    handleCopyLink();
+                  }}>
                     {isCopied ? 'Copied!' : 'Copy Link'}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -919,20 +932,22 @@ export default function AdDetailPage() {
                   <div className="flex gap-1">
                     {/* Facebook */}
                     <button
+                      type="button"
                       onClick={() => {
                         const url = ad ? window.location.origin + buildAdUrl(ad) : (typeof window !== 'undefined' ? window.location.href : '');
                         const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
-                        window.open(shareUrl, '_blank', 'noopener');
+                        window.open(shareUrl, '_blank');
                         setIsShareMenuOpen(false);
                       }}
-                      className="p-1 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
                       title="Share on Facebook"
                     >
-                      <FaFacebookSquare className="w-7 h-7 text-blue-600" />
+                      <FaFacebookSquare className="w-6 h-6 text-blue-600" />
                     </button>
 
                     {/* WhatsApp */}
                     <button
+                      type="button"
                       onClick={() => {
                         try {
                           const url = ad ? window.location.origin + buildAdUrl(ad) : (typeof window !== 'undefined' ? window.location.href : '');
@@ -945,35 +960,33 @@ export default function AdDetailPage() {
                           if (isMobile) {
                             window.location.href = shareUrl;
                           } else {
-                            const newWindow = window.open(shareUrl, '_blank', 'noopener,noreferrer');
-                            if (!newWindow) {
-                              window.location.href = shareUrl;
-                            }
+                            window.open(shareUrl, '_blank');
                           }
                           setIsShareMenuOpen(false);
                         } catch (error) {
                           console.error("Error sharing on WhatsApp:", error);
                         }
                       }}
-                      className="p-1 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
                       title="Share on WhatsApp"
                     >
-                      <FaWhatsappSquare className="w-7 h-7 text-green-600" />
+                      <FaWhatsappSquare className="w-6 h-6 text-green-600" />
                     </button>
 
                     {/* X (Twitter) */}
                     <button
+                      type="button"
                       onClick={() => {
                         const url = ad ? window.location.origin + buildAdUrl(ad) : (typeof window !== 'undefined' ? window.location.href : '');
                         const text = `Rathagala.lk Check out this ${[ad.brand, ad.model, ad.manufacturedYear].filter(Boolean).join(" ")}`;
                         const shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
-                        window.open(shareUrl, '_blank', 'noopener');
+                        window.open(shareUrl, '_blank');
                         setIsShareMenuOpen(false);
                       }}
-                      className="p-1 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
                       title="Share on X"
                     >
-                      <FaSquareXTwitter className="w-7 h-7 text-gray-900" />
+                      <FaSquareXTwitter className="w-6 h-6 text-gray-900" />
                     </button>
 
                     {/* YouTube */}
@@ -990,32 +1003,34 @@ export default function AdDetailPage() {
 
                     {/* Telegram */}
                     <button
+                      type="button"
                       onClick={() => {
                         const url = ad ? window.location.origin + buildAdUrl(ad) : (typeof window !== 'undefined' ? window.location.href : '');
                         const text = `Rathagala.lk Check out this vehicle: ${[ad.brand, ad.model, ad.manufacturedYear].filter(Boolean).join(" ")}`;
                         const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
-                        window.open(shareUrl, '_blank', 'noopener');
+                        window.open(shareUrl, '_blank');
                         setIsShareMenuOpen(false);
                       }}
-                      className="p-1 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
                       title="Share on Telegram"
                     >
-                      <FaTelegram className="w-7 h-7 text-white bg-blue-500 p-1 rounded" />
+                      <FaTelegram className="w-6 h-6 text-blue-600" />
                     </button>
 
                     {/* Copy Link */}
                     <button
+                      type="button"
                       onClick={() => {
                         handleCopyLink();
                         setIsShareMenuOpen(false);
                       }}
-                      className="p-1 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
                       title="Copy Link"
                     >
                       {isCopied ? (
-                        <Check className=" cursor-pointer w-7 h-7 text-green-600 bg-green-100 p-1 rounded" />
+                        <Check className="w-6 h-6 text-green-600" />
                       ) : (
-                        <Copy className=" cursor-pointer w-7 h-7 text-gray-50 bg-gray-400 p-1 rounded" />
+                        <Copy className="w-6 h-6 text-gray-400" />
                       )}
                     </button>
                   </div>
