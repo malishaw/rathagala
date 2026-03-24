@@ -69,7 +69,13 @@ export const list: any = async (c: any) => {
       })
     );
 
-    return c.json(favoritesWithOrg, HttpStatusCodes.OK);
+    return c.json(
+      {
+        favorites: favoritesWithOrg,
+        total: favoritesWithOrg.length,
+      },
+      HttpStatusCodes.OK
+    );
   } catch (error) {
     console.error("Error fetching favorites:", error);
     return c.json(

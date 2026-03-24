@@ -253,6 +253,16 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
           media: true, // hydrate nested Media manually to tolerate orphaned AdMedia rows
           category: true,
           analytics: true,
+          boostRequests: {
+            where: { status: "PENDING" },
+            orderBy: { requestedAt: "desc" },
+            take: 1,
+            select: {
+              totalAmount: true,
+              status: true,
+              requestedAt: true,
+            },
+          },
         },
       });
 
@@ -436,6 +446,10 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       expiryDate: ad.expiryDate?.toISOString() ?? null,
       boostStartAt: ad.boostStartAt?.toISOString() ?? null,
       boostEndAt: ad.boostEndAt?.toISOString() ?? null,
+      boostTotalAmount:
+        (ad as any).boostRequests?.[0]?.totalAmount ??
+        ((ad as any).metadata as any)?.boostTotalAmount ??
+        null,
     }));
 
     return c.json(

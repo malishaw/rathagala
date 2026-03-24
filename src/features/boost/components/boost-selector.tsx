@@ -68,7 +68,7 @@ const BOOST_INFO: Record<BoostType, { label: string; description: string; icon: 
 
 const DURATION_OPTIONS = [3, 7, 15];
 
-export function BoostSelector({ onChange, showPaymentDetails = false, whatsappNumber = "0XXXXXXXXX" }: BoostSelectorProps) {
+export function BoostSelector({ onChange, showPaymentDetails = false, whatsappNumber = "0766220170" }: BoostSelectorProps) {
   const { data: pricing, isLoading } = useGetBoostPricing();
   const [selected, setSelected] = useState<Set<BoostType>>(new Set());
   const [durations, setDurations] = useState<Record<BoostType, number>>({
@@ -203,13 +203,13 @@ export function BoostSelector({ onChange, showPaymentDetails = false, whatsappNu
                   <li>Transfer <strong>Rs. {totalAmount.toLocaleString()}</strong> to the account below</li>
                   <li>Take a screenshot of the payment slip</li>
                   <li>Send it via WhatsApp to <strong>{whatsappNumber}</strong></li>
-                  <li>Admin will approve your boost within 24 hours</li>
+                  <li>Admin will approve your boost as soon as possible </li>
                 </ol>
                 <div className="mt-3 border rounded-md p-3 bg-white space-y-1">
                   <p><strong>Bank:</strong> Commercial Bank of Ceylon</p>
-                  <p><strong>Account Name:</strong> Rathagala.lk</p>
-                  <p><strong>Account No:</strong> 1234567890</p>
-                  <p><strong>Branch:</strong> Colombo Main</p>
+                  <p><strong>Account Name:</strong> R.A. Amila</p>
+                  <p><strong>Account No:</strong> 8005862029</p>
+                  <p><strong>Branch:</strong> Pita Kotte Branch</p>
                 </div>
               </div>
             </AccordionContent>

@@ -111,7 +111,7 @@ export default function QuickAdCreatePage() {
     district: "",
     city: "",
     location: "",
-    termsAndConditions: false,
+    termsAndConditions: true,
 
     // Publication status
     published: true,
@@ -2074,8 +2074,7 @@ export default function QuickAdCreatePage() {
                 </div>
                 <div className="flex gap-2">
                   <Button
-                    variant="outline"
-                    className="flex-1 border-teal-300 text-teal-700 hover:bg-teal-50"
+                    className="flex-1 bg-orange-400 hover:bg-orange-400/70"
                     onClick={() => setShowBoostDialog((v) => !v)}
                     disabled={isPending}
                   >
@@ -2149,7 +2148,7 @@ export default function QuickAdCreatePage() {
             district: "",
             city: "",
             location: "",
-            termsAndConditions: false,
+            termsAndConditions: true,
             published: true,
             isDraft: false,
           });

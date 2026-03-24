@@ -17,7 +17,7 @@ import { buildAdUrl } from "@/lib/ad-url";
 import { betterFetch } from "@better-fetch/fetch";
 import { format } from "date-fns";
 import { getRelativeTime } from "@/lib/utils";
-import { Building2, Car, CheckCircle, ChevronRight, CreditCard, Edit, Heart, Loader2, Lock, MapPin, MessageCircle, Phone, Shield, Trash2, Camera, Zap, TrendingUp, Star, AlertCircle } from "lucide-react";
+import { Building2, Calendar, Car, CheckCircle, ChevronRight, CreditCard, Edit, Eye, Heart, Loader2, Lock, MapPin, MessageCircle, Phone, Shield, Trash2, Camera, Zap, TrendingUp, Star, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { BoostSelector, type BoostSelection } from "@/features/boost/components/boost-selector";
 import { useRequestBoost } from "@/features/boost/api/use-request-boost";
@@ -70,6 +70,10 @@ interface UserAd {
   manufacturedYear?: string | null;
   type?: string | null;
   analytics?: { views?: number } | null;
+  topAdActive?: boolean;
+  bumpActive?: boolean;
+  urgentActive?: boolean;
+  featuredActive?: boolean;
 }
 
 export default function ProfilePage() {
@@ -536,6 +540,44 @@ export default function ProfilePage() {
     return "";
   };
 
+  const getBoostTotalAmount = (ad: any): string => {
+    const value =
+      ad?.boostTotalAmount ??
+      ad?.boostRequests?.[0]?.totalAmount ??
+      ad?.metadata?.boostTotalAmount ??
+      null;
+
+    if (value === null || value === undefined || value === "") {
+      return "—";
+    }
+
+    const numericValue = Number(value);
+    if (Number.isNaN(numericValue)) {
+      return String(value);
+    }
+
+    return numericValue.toLocaleString("en-LK");
+  };
+
+  const getAddedPromotions = (ad: any): string[] => {
+    const promotions: string[] = [];
+
+    if (ad?.topAdActive || ad?.boostTypes?.includes("TOP_AD")) {
+      promotions.push("Top Ad");
+    }
+    if (ad?.bumpActive || ad?.boostTypes?.includes("BUMP")) {
+      promotions.push("Bump Up");
+    }
+    if (ad?.urgentActive || ad?.boostTypes?.includes("URGENT")) {
+      promotions.push("Urgent");
+    }
+    if (ad?.featuredActive || ad?.boostTypes?.includes("FEATURED")) {
+      promotions.push("Featured");
+    }
+
+    return promotions;
+  };
+
   // Get status badge
   const getStatusBadge = (status?: string) => {
     if (!status) return null;
@@ -561,7 +603,17 @@ export default function ProfilePage() {
     return Array.isArray(rawUserAds) ? rawUserAds : rawUserAds.ads || [];
   }, [userAdsQuery.data]);
 
-  const filteredAds = userAds;
+  const filteredAds = useMemo(() => {
+    const activeAds = userAds.filter((ad: UserAd) => ad.status !== "EXPIRED");
+
+    if (adsFilter === "all") return activeAds;
+    if (adsFilter === "top") return activeAds.filter((ad: UserAd) => !!ad.topAdActive);
+    if (adsFilter === "bump") return activeAds.filter((ad: UserAd) => !!ad.bumpActive);
+    if (adsFilter === "urgent") return activeAds.filter((ad: UserAd) => !!ad.urgentActive);
+    if (adsFilter === "featured") return activeAds.filter((ad: UserAd) => !!ad.featuredActive);
+
+    return activeAds;
+  }, [userAds, adsFilter]);
 
   // Loading state for the entire page
   if (isLoading) {
@@ -597,7 +649,7 @@ export default function ProfilePage() {
                 Cancel
               </Button>
               <Button
-                className="bg-teal-600 hover:bg-teal-700 text-white"
+                className="bg-teal-600 hover:bg-green-600 text-white"
                 disabled={!boostSelection || boostSelection.boostTypes.length === 0 || isBoostPending}
                 onClick={() => {
                   if (!boostDialog.adId || !boostSelection || boostSelection.boostTypes.length === 0) return;
@@ -1183,6 +1235,10 @@ export default function ProfilePage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Ads</SelectItem>
+                      <SelectItem value="top">Top Ads</SelectItem>
+                      <SelectItem value="bump">Bump Up Ads</SelectItem>
+                      <SelectItem value="urgent">Urgent Ads</SelectItem>
+                      <SelectItem value="featured">Featured Ads</SelectItem>
                     </SelectContent>
                   </Select>
                   {adsFilter !== "all" && (
@@ -1226,107 +1282,133 @@ export default function ProfilePage() {
                       return (
                         <div
                           key={ad.id}
-                          className="rounded-xl border-2 p-5 flex items-center transition-all duration-300 group relative bg-white/60 backdrop-blur-md border-white/30 hover:bg-white/70 hover:border-[#0D5C63]/30"
+                          className="group relative overflow-hidden rounded-sm border border-slate-200/70 bg-white/85 p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-teal-300/70 hover:shadow-lg"
                         >
+                          <div className="absolute inset-x-0 top-0 h-1 " />
 
+                          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                            <button
+                              type="button"
+                              className="relative h-24 w-full overflow-hidden rounded-xl border border-slate-200 sm:h-24 sm:w-32"
+                              onClick={() => router.push(buildAdUrl(ad))}
+                            >
+                              {getAdImage(ad) ? (
+                                <img
+                                  src={getAdImage(ad)}
+                                  alt={ad.title}
+                                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                />
+                              ) : (
+                                <div className="flex h-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
+                                  <Car className="h-10 w-10 text-slate-400" />
+                                </div>
+                              )}
+                            </button>
 
-                          <div className="h-20 w-20 flex-shrink-0 mr-5 rounded-xl overflow-hidden border-2 border-white/50">
-                            {getAdImage(ad) ? (
-                              <img
-                                src={getAdImage(ad)}
-                                alt={ad.title}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className="flex items-center justify-center h-full bg-gradient-to-br from-slate-100 to-slate-200">
-                                <Car className="h-10 w-10 text-slate-400" />
+                            <div className="min-w-0 flex-1">
+                              <div className="mb-2 flex flex-wrap items-start gap-2">
+                                <button
+                                  type="button"
+                                  className="line-clamp-2 text-left text-base font-semibold text-slate-800 transition-colors hover:text-[#0D5C63] sm:text-lg"
+                                  onClick={() => router.push(buildAdUrl(ad))}
+                                >
+                                  {ad.title}
+                                </button>
+                                {getStatusBadge(ad.status)}
                               </div>
-                            )}
+
+                              <div className="text-sm font-bold text-[#0D5C63]">
+                                Rs {formatPrice(ad.price, (ad as any).metadata?.isNegotiable)}
+                              </div>
+
+                              <div className="mt-3 flex flex-wrap gap-2 text-xs sm:text-xs">
+                                {/* <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">
+                                  <MapPin className="h-3.5 w-3.5" />
+                                  <span className="max-w-[160px] truncate">{ad.location || "No location"}</span>
+                                </div> */}
+                                <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">
+                                  <Calendar className="h-3.5 w-3.5" />
+                                  {formatDate(ad.createdAt)}
+                                </div>
+                                <div className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-2.5 py-1 text-teal-700">
+                                  <Eye className="h-3.5 w-3.5" />
+                                  {ad.analytics?.views || 0} views
+                                </div>
+                              </div>
+
+                            </div>
+
+                            <div className="flex shrink-0 flex-col gap-2 sm:items-end">
+                              <div className="flex gap-2 sm:justify-end">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-9 rounded-lg border-slate-200 bg-white text-slate-600 hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700"
+                                  onClick={() => router.push(`/edit-ad/${ad.id}`)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                  <span className="ml-1 hidden sm:inline">Edit</span>
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-9 rounded-lg border-slate-200 bg-white text-slate-600 hover:border-red-300 hover:bg-red-50 hover:text-red-600"
+                                  onClick={() => setDeleteDialog({ open: true, ad })}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  <span className="ml-1 hidden sm:inline">Delete</span>
+                                </Button>
+                              </div>
+
+                              {(ad as any).boostStatus === "PENDING" ? (
+                                <Badge className="border-orange-200 bg-orange-100 text-xs text-orange-700">
+                                  Boost Requested
+                                </Badge>
+                              ) : (ad as any).boostStatus === "ACTIVE" ? (
+                                <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-left sm:text-right">
+                                  <Badge className="mb-1 border-green-200 bg-green-100 text-xs text-green-700">Boost Active</Badge>
+                                  {getAddedPromotions(ad).length > 0 && (
+                                    <div className="text-xs text-green-700/90">
+                                      Added: {getAddedPromotions(ad).join(", ")}
+                                    </div>
+                                  )}
+                                  {(ad as any).boostEndAt && (
+                                    <div className="text-xs text-green-700/80">Until {format(new Date((ad as any).boostEndAt), "MMM d, yyyy HH:mm")}</div>
+                                  )}
+                                </div>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-9 rounded-lg border-teal-300 bg-white text-xs text-teal-700 hover:bg-green-100 hover:text-green-700"
+                                  onClick={() => {
+                                    setBoostDialog({ open: true, adId: ad.id });
+                                    setBoostSelection(null);
+                                  }}
+                                >
+                                  <Zap className="mr-1 h-3.5 w-3.5" />
+                                  Boost Now
+                                </Button>
+                              )}
+                            </div>
                           </div>
 
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1 flex-wrap">
-                              <div
-                                className="font-semibold text-lg text-slate-800 hover:text-[#0D5C63] cursor-pointer transition-colors duration-300"
-                                onClick={() => router.push(buildAdUrl(ad))}
-                              >
-                                {ad.title}
-                              </div>
-                              {getStatusBadge(ad.status)}
+                          {ad.status === "PENDING_REVIEW" && (
+                            <div className="mt-3 w-full rounded-xl border border-amber-200 bg-amber-50 p-3">
+                              <p className="text-sm text-amber-800">
+                                <span className="font-semibold">To publish your ad</span> please send Your Name via SMS or WhatsApp through the provided mobile number to{" "}
+                                <a href="https://wa.me/94766220170" target="_blank" rel="noopener noreferrer" className="font-bold text-[#0D5C63] hover:underline">0766220170</a>.
+                              </p>
                             </div>
-                            <div className="text-base font-bold text-[#0D5C63] mt-1">Rs {formatPrice(ad.price, (ad as any).metadata?.isNegotiable)}</div>
-                            <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-500 mt-2">
-                              <span className="flex items-center gap-1">
-                                <div className="h-1.5 w-1.5 rounded-full bg-slate-400"></div>
-                                {ad.location || "No location"}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <div className="h-1.5 w-1.5 rounded-full bg-slate-400"></div>
-                                {formatDate(ad.createdAt)}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <div className="h-1.5 w-1.5 rounded-full bg-slate-400"></div>
-                                {ad.analytics?.views || 0} views
-                              </span>
-                            </div>
-                            {ad.status === "PENDING_REVIEW" && (
-                              <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                                <p className="text-sm text-amber-800">
-                                  <span className="font-semibold">To publish your ad</span> please send Your Name via SMS or WhatsApp through the provided mobile number to{" "}
-                                  <a href="https://wa.me/94766220170" target="_blank" rel="noopener noreferrer" className="font-bold text-[#0D5C63] hover:underline">0766220170</a>.
-                                </p>
-                              </div>
-                            )}
-                          </div>
+                          )}
 
-                          <div className="flex flex-col gap-2 items-end shrink-0">
-                            <div className="flex gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-10 w-10 p-0 rounded-lg bg-white/50 hover:bg-gradient-to-r from-[#0D5C63] to-teal-600 text-slate-600 hover:text-white transition-all duration-300"
-                                onClick={() => router.push(`/edit-ad/${ad.id}`)}
-                              >
-                                <Edit className="h-5 w-5" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-10 w-10 p-0 rounded-lg bg-white/50 hover:bg-gradient-to-r from-red-500 to-red-600 text-slate-600 hover:text-white transition-all duration-300"
-                                onClick={() => setDeleteDialog({ open: true, ad })}
-                              >
-                                <Trash2 className="h-5 w-5" />
-                              </Button>
+                          {(ad as any).boostStatus === "PENDING" && (
+                            <div className="mt-3 w-full rounded-xl border border-orange-200 bg-orange-50 p-3">
+                              <p className="text-sm font-semibold text-orange-800">Boost Requested</p>
+                              <p className="mt-1 text-sm font-medium text-orange-700">Total: Rs. {getBoostTotalAmount(ad)}</p>
+                              <p className="mt-1 text-sm text-orange-700">Pay and WhatsApp the slip to <strong>0766220170</strong>. Please wait for admin approval.</p>
                             </div>
-                            {/* Boost status or Boost Now button */}
-                            {(ad as any).boostStatus === "PENDING" ? (
-                              <div className="text-right">
-                                <Badge className="bg-orange-100 text-orange-700 border-orange-200 text-xs mb-1">Boost Requested</Badge>
-                                <div className="text-xs text-orange-600 font-medium">Total: Rs. {(ad as any).boostTotalAmount || "—"}</div>
-                                <p className="text-xs text-slate-500 mt-1 max-w-[180px] text-right">Pay and WhatsApp the slip to <strong>0766220170</strong>. Please wait for admin approval.</p>
-                              </div>
-                            ) : (ad as any).boostStatus === "ACTIVE" ? (
-                              <div className="text-right">
-                                <Badge className="bg-green-100 text-green-700 border-green-200 text-xs mb-1">Boost Active</Badge>
-                                {(ad as any).boostEndAt && (
-                                  <div className="text-xs text-slate-500">Until {format(new Date((ad as any).boostEndAt), "MMM d, yyyy HH:mm")}</div>
-                                )}
-                              </div>
-                            ) : (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="border-teal-300 text-teal-700 hover:bg-teal-50 text-xs"
-                                onClick={() => {
-                                  setBoostDialog({ open: true, adId: ad.id });
-                                  setBoostSelection(null);
-                                }}
-                              >
-                                <Zap className="h-3 w-3 mr-1" />
-                                Boost Now
-                              </Button>
-                            )}
-                          </div>
+                          )}
                         </div>
                       );
                     })
