@@ -154,6 +154,7 @@ export default function AdminGalleryPage() {
   // ---- State ----
   const [search, setSearch] = useState("");
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
+  const [sortBy, setSortBy] = useState<"date" | "size">("date");
   const [mediaTypeFilter, setMediaTypeFilter] = useState<"ALL" | "IMAGE" | "VIDEO">("ALL");
   const [dateFilter, setDateFilter] = useState<"all" | "year" | "month" | "date" | "custom">("all");
   const [filterYear, setFilterYear] = useState<number>(new Date().getFullYear());
@@ -276,13 +277,19 @@ export default function AdminGalleryPage() {
 
     // Sort
     items.sort((a, b) => {
+      if (sortBy === "size") {
+        const sa = a.size ?? 0;
+        const sb = b.size ?? 0;
+        return sortOrder === "desc" ? sb - sa : sa - sb;
+      }
+
       const da = new Date(a.createdAt).getTime();
       const db = new Date(b.createdAt).getTime();
       return sortOrder === "desc" ? db - da : da - db;
     });
 
     return items;
-  }, [allMedia, search, mediaTypeFilter, dateFilter, filterYear, filterMonth, filterDate, customDateFrom, customDateTo, sortOrder, show6MonthOldOnly]);
+  }, [allMedia, search, mediaTypeFilter, dateFilter, filterYear, filterMonth, filterDate, customDateFrom, customDateTo, sortOrder, sortBy, show6MonthOldOnly]);
 
   // Pagination
   const totalPages = Math.ceil(filteredMedia.length / ITEMS_PER_PAGE);
@@ -292,7 +299,7 @@ export default function AdminGalleryPage() {
   );
 
   // Reset page when filters change
-  useEffect(() => { setCurrentPage(1); }, [search, mediaTypeFilter, dateFilter, filterYear, filterMonth, filterDate, customDateFrom, customDateTo, sortOrder, show6MonthOldOnly]);
+  useEffect(() => { setCurrentPage(1); }, [search, mediaTypeFilter, dateFilter, filterYear, filterMonth, filterDate, customDateFrom, customDateTo, sortOrder, sortBy, show6MonthOldOnly]);
 
   // ---- Selection helpers ----
   const toggleSelect = useCallback((id: string) => {
@@ -773,15 +780,38 @@ export default function AdminGalleryPage() {
             </Popover>
 
             {/* Sort */}
-            <Button
-              variant="outline"
-              size="default"
-              onClick={() => setSortOrder((p) => (p === "desc" ? "asc" : "desc"))}
-              className="gap-2"
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as "date" | "size")}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="date">Sort: Date</SelectItem>
+                <SelectItem value="size">Sort: File Size</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={sortOrder}
+              onValueChange={(v) => setSortOrder(v as "desc" | "asc")}
             >
-              {sortOrder === "desc" ? <SortDesc className="w-4 h-4" /> : <ArrowUpAZ className="w-4 h-4" />}
-              {sortOrder === "desc" ? "Newest First" : "Oldest First"}
-            </Button>
+              <SelectTrigger className="w-[170px] gap-2">
+                {sortOrder === "desc" ? <SortDesc className="w-4 h-4" /> : <ArrowUpAZ className="w-4 h-4" />}
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {sortBy === "date" ? (
+                  <>
+                    <SelectItem value="desc">Newest First</SelectItem>
+                    <SelectItem value="asc">Oldest First</SelectItem>
+                  </>
+                ) : (
+                  <>
+                    <SelectItem value="asc">Low to High</SelectItem>
+                    <SelectItem value="desc">High to Low</SelectItem>
+                  </>
+                )}
+              </SelectContent>
+            </Select>
 
             {/* View Mode */}
             <div className="flex border border-slate-200 rounded-lg overflow-hidden">
