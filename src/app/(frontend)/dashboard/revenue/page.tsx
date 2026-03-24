@@ -88,24 +88,40 @@ export default function RevenueAdminPage() {
           <>
             {/* Total Revenue */}
             <Card className="p-6 bg-teal-900 text-white border-0">
-              <div className="flex items-center gap-3 mb-5">
-                <DollarSign className="h-8 w-8 opacity-80" />
-                <div>
-                  <p className="text-teal-200 text-sm font-medium">Total Revenue</p>
-                  <p className="text-3xl font-bold">Rs. {(data?.totalRevenue ?? 0).toLocaleString()}</p>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-5">
+                <div className="flex items-center gap-3">
+                  <DollarSign className="h-8 w-8 opacity-80" />
+                  <div>
+                    <p className="text-teal-200 text-sm font-medium">Total Revenue</p>
+                    <p className="text-3xl font-bold">Rs. {(data?.totalRevenue ?? 0).toLocaleString()}</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 sm:ml-auto">
+                  {[
+                    { label: "Bump Up", count: data?.bumpCount ?? 0, icon: <TrendingUp className="h-3.5 w-3.5" /> },
+                    { label: "Top Ad", count: data?.topAdCount ?? 0, icon: <Star className="h-3.5 w-3.5" /> },
+                    { label: "Urgent", count: data?.urgentCount ?? 0, icon: <AlertCircle className="h-3.5 w-3.5" /> },
+                    { label: "Featured", count: data?.featuredCount ?? 0, icon: <Zap className="h-3.5 w-3.5" /> },
+                    { label: "Total", count: data?.totalBoostedCount ?? 0, icon: <DollarSign className="h-3.5 w-3.5" /> },
+                  ].map((item) => (
+                    <div key={item.label} className="bg-white/15 rounded-md px-3 py-1.5 flex items-center gap-1.5">
+                      {item.icon}
+                      <span className="text-xs text-teal-200">{item.label}</span>
+                      <span className="text-sm font-bold">{item.count}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
-                  { label: "Bump Up", count: data?.bumpCount ?? 0, icon: <TrendingUp className="h-4 w-4" /> },
-                  { label: "Top Ad", count: data?.topAdCount ?? 0, icon: <Star className="h-4 w-4" /> },
-                  { label: "Urgent", count: data?.urgentCount ?? 0, icon: <AlertCircle className="h-4 w-4" /> },
-                  { label: "Featured", count: data?.featuredCount ?? 0, icon: <Zap className="h-4 w-4" /> },
-                  { label: "Total Boosted", count: data?.totalBoostedCount ?? 0, icon: <DollarSign className="h-4 w-4" />, highlight: true },
+                  { label: "Active Urgent", count: data?.activeUrgentCount ?? 0, icon: <AlertCircle className="h-4 w-4" /> },
+                  { label: "Active Featured", count: data?.activeFeaturedCount ?? 0, icon: <Zap className="h-4 w-4" /> },
+                  { label: "Active Top Ad", count: data?.activeTopAdCount ?? 0, icon: <Star className="h-4 w-4" /> },
+                  { label: "Active Bump Up", count: data?.activeBumpCount ?? 0, icon: <TrendingUp className="h-4 w-4" /> },
                 ].map((item) => (
                   <div
                     key={item.label}
-                    className={`rounded-lg px-4 py-3 flex flex-col gap-1 ${item.highlight ? "bg-white/20" : "bg-white/10"}`}
+                    className="rounded-lg px-4 py-3 flex flex-col gap-1 bg-white/10"
                   >
                     <div className="flex items-center gap-1.5 text-teal-200 text-xs font-medium">
                       {item.icon}

@@ -455,10 +455,19 @@ export const getRevenue: AppRouteHandler<GetRevenueRoute> = async (c) => {
 
   const totalBoostedCount = records.length;
 
+  // Count currently active boosted ads by type
+  const [activeBumpCount, activeTopAdCount, activeUrgentCount, activeFeaturedCount] = await Promise.all([
+    prisma.ad.count({ where: { bumpActive: true, status: "ACTIVE" } }),
+    prisma.ad.count({ where: { topAdActive: true, status: "ACTIVE" } }),
+    prisma.ad.count({ where: { urgentActive: true, status: "ACTIVE" } }),
+    prisma.ad.count({ where: { featuredActive: true, status: "ACTIVE" } }),
+  ]);
+
   return c.json(
     {
       totalRevenue, bumpRevenue, topAdRevenue, urgentRevenue, featuredRevenue,
       bumpCount, topAdCount, urgentCount, featuredCount, totalBoostedCount,
+      activeBumpCount, activeTopAdCount, activeUrgentCount, activeFeaturedCount,
       records,
     },
     HttpStatusCodes.OK
