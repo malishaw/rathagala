@@ -1182,8 +1182,8 @@ export default function ReportPage() {
                                       : "outline"
                                   }
                                   className={
-                                    ad.status === "ACTIVE" ? "bg-green-600" :
-                                    ad.status === "PENDING_REVIEW" ? "bg-yellow-600" :
+                                    ad.status === "ACTIVE" ? "bg-green-600 text-xs" :
+                                    ad.status === "PENDING_REVIEW" ? "bg-yellow-500" :
                                     ad.status === "REJECTED" ? "bg-red-600" :
                                     "bg-gray-600"
                                   }
@@ -1208,7 +1208,7 @@ export default function ReportPage() {
                                     View Ad
                                   </Button>
                                 ) : (
-                                  <span className="text-xs text-muted-foreground">Unpublished</span>
+                                  <span className="text-xs text-muted-foreground"></span>
                                 )}
                               </TableCell>
                             </TableRow>

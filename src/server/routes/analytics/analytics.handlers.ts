@@ -592,6 +592,7 @@ export const getEntityHistory = async (c: any) => {
 
     let details: any = { id };
     let history: any[] = [];
+    let last10Ads: any[] = [];
 
     // Fetch generic counts from prisma based on type
     if (type === "user") {
@@ -640,6 +641,34 @@ export const getEntityHistory = async (c: any) => {
       history = Array.from(dataMap.entries())
         .map(([date, count]) => ({ date, count }))
         .sort((a, b) => a.date.localeCompare(b.date));
+
+      // Get last 10 ads for the table
+      last10Ads = await prisma.ad.findMany({
+        where: { createdBy: id },
+        select: {
+          id: true,
+          title: true,
+          brand: true,
+          model: true,
+          type: true,
+          status: true,
+          published: true,
+          createdAt: true,
+          phoneNumber: true,
+          whatsappNumber: true,
+          media: {
+            select: {
+              media: {
+                select: { url: true },
+              },
+            },
+            orderBy: { order: "asc" },
+            take: 1,
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      });
 
     } else if (type === "organization") {
       const org = await prisma.organization.findUnique({
@@ -690,9 +719,37 @@ export const getEntityHistory = async (c: any) => {
       history = Array.from(dataMap.entries())
         .map(([date, count]) => ({ date, count }))
         .sort((a, b) => a.date.localeCompare(b.date));
+
+      // Get last 10 ads for the table
+      last10Ads = await prisma.ad.findMany({
+        where: { orgId: id },
+        select: {
+          id: true,
+          title: true,
+          brand: true,
+          model: true,
+          type: true,
+          status: true,
+          published: true,
+          createdAt: true,
+          phoneNumber: true,
+          whatsappNumber: true,
+          media: {
+            select: {
+              media: {
+                select: { url: true },
+              },
+            },
+            orderBy: { order: "asc" },
+            take: 1,
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      });
     }
 
-    return c.json({ history, details }, HttpStatusCodes.OK);
+    return c.json({ history, details, ads: last10Ads }, HttpStatusCodes.OK);
   } catch (error) {
     console.error("Error fetching entity history:", error);
     return c.json(
