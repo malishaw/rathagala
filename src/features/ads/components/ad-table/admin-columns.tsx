@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 
@@ -127,63 +128,90 @@ const generateAdTitle = (ad: AdType): string => {
     .join(' ') || ad.title || "Untitled Ad";
 };
 
+const BOOST_TYPE_IMAGES: Record<string, string> = {
+  BUMP:     "/assets/promotionLogos/bumpAd.png",
+  TOP_AD:   "/assets/promotionLogos/topAd.png",
+  URGENT:   "/assets/promotionLogos/urgentAd.jpg",
+  FEATURED: "/assets/promotionLogos/featuredAd.png",
+};
+
+const BOOST_TYPE_LABELS: Record<string, string> = {
+  BUMP:     "Bump Up",
+  TOP_AD:   "Top Ad",
+  URGENT:   "Urgent",
+  FEATURED: "Featured",
+};
+
 function TitleCell({ ad }: { ad: AdType }) {
   const displayTitle = generateAdTitle(ad);
-  const displayType = vehicleTypeLabels[ad.type] || ad.type;
   const [showBoostDialog, setShowBoostDialog] = useState(false);
   const [showPromoteDialog, setShowPromoteDialog] = useState(false);
   const hasBoostRequest = ad.boostStatus === "PENDING" || ad.boostStatus === "ACTIVE";
+  const boostTypes: string[] = (ad.boostTypes as string[]) ?? [];
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-1.5">
       <div className="flex items-center gap-2">
         <Link href={`/dashboard/ads/${ad.id}`} className="hover:underline font-medium text-sm">
           {displayTitle}
         </Link>
         {hasBoostRequest ? (
-          <button
-            onClick={() => setShowBoostDialog(true)}
-            title="View/Approve Boost"
-            className="text-yellow-500 hover:text-yellow-600 transition-colors"
-          >
-            <Sparkles className="h-6 w-6 cursor-pointer hover:bg-amber-100 p-1 border-1 rounded-full" />
+          <button onClick={() => setShowBoostDialog(true)} title="View/Approve Boost" className="text-yellow-500 hover:text-yellow-600 transition-colors">
+            <Sparkles className="h-7 w-7 border border-yellow-500 cursor-pointer hover:bg-amber-100 p-1 rounded-full" />
           </button>
         ) : (
-          <button
-            onClick={() => setShowPromoteDialog(true)}
-            title="Promote Ad"
-            className="text-slate-400 hover:text-amber-500 transition-colors"
-          >
-            <Sparkles className="h-6 w-6 cursor-pointer hover:bg-amber-100 p-1 border-1 rounded-full" />
+          <button onClick={() => setShowPromoteDialog(true)} title="Promote Ad" className="text-slate-400 hover:text-amber-500 transition-colors">
+            <Sparkles className="h-7 w-7 border border-slate-400 cursor-pointer hover:bg-amber-100 p-1 rounded-full" />
           </button>
         )}
       </div>
-      <div className="flex gap-2 flex-wrap items-center">
-        <Badge variant="outline" className="bg-slate-100 text-slate-800 border-1 w-fit border-amber-200">
-          {displayType}
-        </Badge>
-        {ad.boostStatus === "PENDING" && (
-          <Badge className="bg-orange-100 text-orange-700 border-orange-200 text-xs">Boost Pending</Badge>
-        )}
-        {ad.boostStatus === "ACTIVE" && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge className="bg-green-100 text-green-700 border-green-200 text-xs cursor-help">Boost Active</Badge>
-              </TooltipTrigger>
-              <TooltipContent className="bg-teal-700 text-white text-xs">
-                <p>Boost ends: {ad.boostEndAt ? new Date(ad.boostEndAt).toLocaleString("en-LK", { dateStyle: "medium", timeStyle: "short" }) : "N/A"}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
-      </div>
-      {showBoostDialog && (
-        <BoostApproveDialog adId={ad.id} open={showBoostDialog} onOpenChange={setShowBoostDialog} />
+      {(boostTypes.length > 0 || ad.boostStatus === "PENDING" || ad.boostStatus === "ACTIVE") && (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {ad.boostStatus === "PENDING" && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge className="bg-orange-100 text-orange-700 border border-orange-200 text-xs cursor-help px-1.5 py-0">
+                    Boost Pending
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent className="bg-slate-800 text-white text-xs">
+                  <p>Boost requested: {ad.boostRequestedAt ? new Date(ad.boostRequestedAt).toLocaleString("en-LK", { dateStyle: "medium", timeStyle: "short" }) : "N/A"}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          {ad.boostStatus === "ACTIVE" && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge className="bg-green-100 text-green-700 border border-green-200 text-xs cursor-help px-1.5 py-0">
+                    Boost Active
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent className="bg-slate-800 text-white text-xs space-y-0.5">
+                  <p>Started: {ad.boostStartAt ? new Date(ad.boostStartAt).toLocaleString("en-LK", { dateStyle: "medium", timeStyle: "short" }) : "N/A"}</p>
+                  <p>Ends: {ad.boostEndAt ? new Date(ad.boostEndAt).toLocaleString("en-LK", { dateStyle: "medium", timeStyle: "short" }) : "N/A"}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          {boostTypes.map((type) => (
+            <TooltipProvider key={type}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Image src={BOOST_TYPE_IMAGES[type]} alt={BOOST_TYPE_LABELS[type] ?? type} width={20} height={15} className="h-4 w-auto object-contain rounded" />
+                </TooltipTrigger>
+                <TooltipContent className="bg-slate-800 text-white text-xs">
+                  {BOOST_TYPE_LABELS[type] ?? type}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ))}
+        </div>
       )}
-      {showPromoteDialog && (
-        <AdminPromoteDialog adId={ad.id} open={showPromoteDialog} onOpenChange={setShowPromoteDialog} />
-      )}
+      {showBoostDialog && <BoostApproveDialog adId={ad.id} open={showBoostDialog} onOpenChange={setShowBoostDialog} />}
+      {showPromoteDialog && <AdminPromoteDialog adId={ad.id} open={showPromoteDialog} onOpenChange={setShowPromoteDialog} />}
     </div>
   );
 }
@@ -191,6 +219,7 @@ function TitleCell({ ad }: { ad: AdType }) {
 export const adminColumns: ColumnDef<AdType>[] = [
   {
     id: "select",
+    size: 40,
     header: ({ table }) => (
       <Checkbox
         checked={
@@ -214,11 +243,13 @@ export const adminColumns: ColumnDef<AdType>[] = [
   {
     accessorKey: "title",
     header: "Ad Title",
+    size: 220,
     cell: ({ row }) => <TitleCell ad={row.original} />,
   },
   {
     accessorKey: "status",
     header: "View/Status",
+    size: 150,
     cell: ({ row }) => {
       const ad = row.original;
       const now = new Date();
@@ -233,7 +264,7 @@ export const adminColumns: ColumnDef<AdType>[] = [
               size="default"
               variant="ghost"
               onClick={() => setShowDetails(true)}
-              className="p-2 h-auto text-slate-500 bg-blue-600 border-1 text-white hover:bg-blue-700"
+              className="p-2 h-auto  bg-teal-700 border-1 text-white hover:bg-teal-800"
               title="View Ad Details"
             >
               <Eye className="w-8 h-8" />
@@ -277,6 +308,7 @@ export const adminColumns: ColumnDef<AdType>[] = [
   {
     accessorKey: "createdBy",
     header: "Created By",
+    size: 180,
     cell: ({ row }) => {
       const ad = row.original;
       const creator = ad.creator;
@@ -293,6 +325,7 @@ export const adminColumns: ColumnDef<AdType>[] = [
   {
     accessorKey: "phoneNumber",
     header: "Contact No",
+    size: 160,
     cell: ({ row }) => {
       const ad = row.original;
       const phone = ad.phoneNumber;
@@ -332,6 +365,7 @@ export const adminColumns: ColumnDef<AdType>[] = [
   {
     accessorKey: "createdAt",
     header: "Created At",
+    size: 110,
     cell: ({ row }) => {
       const ad = row.original;
       const date = new Date(ad.createdAt);
@@ -346,6 +380,7 @@ export const adminColumns: ColumnDef<AdType>[] = [
   {
     id: "actions",
     header: "Actions",
+    size: 160,
     cell: ({ row }) => {
       return <AdminActionsCell ad={row.original} />;
     }

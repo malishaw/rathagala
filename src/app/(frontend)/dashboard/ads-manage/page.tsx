@@ -274,7 +274,9 @@ export default function AdsManagePage() {
   const boostFilteredAds = (() => {
     let ads = isPendingBoostFilter
       ? formattedAds.filter((ad) => (ad as { boostStatus?: string }).boostStatus === "PENDING")
-      : formattedAds;
+      : statusFilter === "BOOSTED"
+        ? formattedAds.filter((ad) => (ad as { boostStatus?: string }).boostStatus === "ACTIVE")
+        : formattedAds;
     if (activeBoostFilter.length > 0) {
       ads = ads.filter((ad) => {
         const boostTypes: string[] = (ad as { boostTypes?: string[] }).boostTypes ?? [];
@@ -325,6 +327,7 @@ export default function AdsManagePage() {
                 <SelectItem value="PENDING_REVIEW">Pending</SelectItem>
                 <SelectItem value="REJECTED">Rejected</SelectItem>
                 <SelectItem value="PENDING_BOOST">Pending Boost</SelectItem>
+                <SelectItem value="BOOSTED">Boosted</SelectItem>
               </SelectContent>
             </Select>
 
