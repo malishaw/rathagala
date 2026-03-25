@@ -640,28 +640,47 @@ export default function UsersPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Total Users</CardDescription>
-            <CardTitle className="text-2xl flex items-center gap-2">
-              <Users className="w-5 h-5 text-blue-600" />
+        <Card className="relative overflow-hidden border-0 shadow-md bg-gradient-to-br from-slate-200 to-white hover:from-slate-300/90 hover:to-white/90 transition-colors duration-300">
+          <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-[#024950] via-[#0a6c74] to-[#15979f]" />
+          <CardHeader className="pb-2 pt-5">
+            <div className="flex items-center justify-between">
+              <CardDescription className="text-slate-600 font-bold text-xl">Total Users</CardDescription>
+              <div className="h-9 w-9 rounded-full bg-[#024950]/10 text-[#024950] flex items-center justify-center">
+                <Users className="w-5 h-5" />
+              </div>
+            </div>
+            <CardTitle className="text-3xl font-bold tracking-tight text-slate-900">
               {data?.pagination.total || 0}
             </CardTitle>
           </CardHeader>
         </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Active Users</CardDescription>
-            <CardTitle className="text-2xl text-green-600">
+
+        <Card className="relative overflow-hidden border-0 shadow-md bg-gradient-to-br from-emerald-100 to-white hover:from-emerald-300/90 hover:to-white/90 transition-colors duration-300">
+          <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-emerald-500 to-green-600" />
+          <CardHeader className="pb-2 pt-5">
+            <div className="flex items-center justify-between">
+              <CardDescription className="text-emerald-700 font-bold text-xl ">Active Users</CardDescription>
+              <div className="h-9 w-9 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                <Check className="w-5 h-5" />
+              </div>
+            </div>
+            <CardTitle className="text-3xl font-bold tracking-tight text-emerald-800">
               {data?.users.filter((u: User) => u.emailVerified && !u.banned)
                 .length || 0}
             </CardTitle>
           </CardHeader>
         </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Banned Users</CardDescription>
-            <CardTitle className="text-2xl text-red-600">
+
+        <Card className="relative overflow-hidden border-0 shadow-md bg-gradient-to-br from-rose-50 to-white hover:from-rose-200/90 hover:to-white/90 transition-colors duration-300">
+          <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-rose-500 to-red-600" />
+          <CardHeader className="pb-1 pt-2">
+            <div className="flex items-center justify-between">
+              <CardDescription className="text-rose-700 font-bold text-xl">Banned Users</CardDescription>
+              <div className="h-9 w-9 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center">
+                <Ban className="w-5 h-5" />
+              </div>
+            </div>
+            <CardTitle className="text-3xl font-bold tracking-tight text-rose-800">
               {data?.users.filter((u: User) => u.banned).length || 0}
             </CardTitle>
           </CardHeader>

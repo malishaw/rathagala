@@ -241,34 +241,58 @@ export default function ReportsManagementPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Total Reports</CardDescription>
-            <CardTitle className="text-2xl">
+        <Card className="relative overflow-hidden border-0 shadow-md bg-gradient-to-br from-slate-200 to-white hover:from-slate-300/90 hover:to-white/90 transition-colors duration-300">
+          <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-[#024950] via-[#0a6c74] to-[#15979f]" />
+          <CardHeader className="pb-2 pt-5">
+            <div className="flex items-center justify-between">
+              <CardDescription className="text-slate-600 font-bold text-xl">Total Reports</CardDescription>
+              <div className="h-9 w-9 rounded-full bg-[#024950]/10 text-[#024950] flex items-center justify-center">
+                <AlertCircle className="w-5 h-5" />
+              </div>
+            </div>
+            <CardTitle className="text-3xl font-bold tracking-tight text-slate-900">
               {filteredReports.length}
             </CardTitle>
           </CardHeader>
         </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Pending</CardDescription>
-            <CardTitle className="text-2xl text-yellow-600">
+        <Card className="relative overflow-hidden border-0 shadow-md bg-gradient-to-br from-amber-100 to-white hover:from-amber-200/90 hover:to-white/90 transition-colors duration-300">
+          <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-amber-500 to-yellow-600" />
+          <CardHeader className="pb-2 pt-5">
+            <div className="flex items-center justify-between">
+              <CardDescription className="text-amber-700 font-bold text-xl">Pending</CardDescription>
+              <div className="h-9 w-9 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center">
+                <Clock className="w-5 h-5" />
+              </div>
+            </div>
+            <CardTitle className="text-3xl font-bold tracking-tight text-amber-800">
               {filteredReports.filter((r) => r.status === "PENDING").length}
             </CardTitle>
           </CardHeader>
         </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Reviewed</CardDescription>
-            <CardTitle className="text-2xl text-blue-600">
+        <Card className="relative overflow-hidden border-0 shadow-md bg-gradient-to-br from-blue-100 to-white hover:from-blue-200/90 hover:to-white/90 transition-colors duration-300">
+          <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-blue-500 to-indigo-600" />
+          <CardHeader className="pb-2 pt-5">
+            <div className="flex items-center justify-between">
+              <CardDescription className="text-blue-700 font-bold text-xl">Reviewed</CardDescription>
+              <div className="h-9 w-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
+                <Eye className="w-5 h-5" />
+              </div>
+            </div>
+            <CardTitle className="text-3xl font-bold tracking-tight text-blue-800">
               {filteredReports.filter((r) => r.status === "REVIEWED").length}
             </CardTitle>
           </CardHeader>
         </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Resolved</CardDescription>
-            <CardTitle className="text-2xl text-green-600">
+        <Card className="relative overflow-hidden border-0 shadow-md bg-gradient-to-br from-emerald-100 to-white hover:from-emerald-200/90 hover:to-white/90 transition-colors duration-300">
+          <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-emerald-500 to-green-600" />
+          <CardHeader className="pb-2 pt-5">
+            <div className="flex items-center justify-between">
+              <CardDescription className="text-emerald-700 font-bold text-xl">Resolved</CardDescription>
+              <div className="h-9 w-9 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                <CheckCircle className="w-5 h-5" />
+              </div>
+            </div>
+            <CardTitle className="text-3xl font-bold tracking-tight text-emerald-800">
               {filteredReports.filter((r) => r.status === "RESOLVED").length}
             </CardTitle>
           </CardHeader>
