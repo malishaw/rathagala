@@ -217,6 +217,28 @@ export default function ReportPage() {
   const userAdsData = adByEntity?.data.filter(item => item.type === "user").slice(0, 10) || [];
   const orgAdsData = adByEntity?.data.filter(item => item.type === "organization").slice(0, 10) || [];
 
+  // Wrap long Y-axis labels into two-word lines for better readability.
+  const renderTwoWordYAxisTick = (props: any) => {
+    const { x, y, payload } = props;
+    const raw = String(payload?.value ?? "").trim();
+    const words = raw.split(/\s+/).filter(Boolean);
+
+    const lines: string[] = [];
+    for (let i = 0; i < words.length; i += 2) {
+      lines.push(words.slice(i, i + 2).join(" "));
+    }
+
+    return (
+      <text x={x} y={y} dy={4} textAnchor="end" fill="#475569" fontSize={11}>
+        {lines.map((line, index) => (
+          <tspan key={`${line}-${index}`} x={x} dy={index === 0 ? 0 : 12}>
+            {line}
+          </tspan>
+        ))}
+      </text>
+    );
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-6 p-10">
       <div className="flex items-center justify-between">
@@ -245,75 +267,87 @@ export default function ReportPage() {
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Ads</CardTitle>
-                <FileText className="h-4 w-4 text-muted-foreground" />
+            <Card className="relative overflow-hidden border-0 shadow-md bg-gradient-to-br from-slate-200 to-white hover:from-slate-300/90 hover:to-white/90 transition-colors duration-300">
+              <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-[#024950] via-[#0a6c74] to-[#15979f]" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-5">
+                <CardTitle className="text-sm font-semibold text-slate-700">Total Ads</CardTitle>
+                <div className="h-8 w-8 rounded-full bg-[#024950]/10 text-[#024950] flex items-center justify-center">
+                  <FileText className="h-4 w-4" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-3xl font-bold text-slate-900">
                   {loadingSummary ? "..." : adSummary?.totalAds.toLocaleString()}
                 </div>
-                <p className="text-xs text-muted-foreground">Lifetime total</p>
+                <p className="text-xs text-slate-500 mt-1">Lifetime total</p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Approved Ads</CardTitle>
-                <TrendingUp className="h-4 w-4 text-green-600" />
+            <Card className="relative overflow-hidden border-0 shadow-md bg-gradient-to-br from-emerald-100 to-white hover:from-emerald-200/90 hover:to-white/90 transition-colors duration-300">
+              <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-emerald-500 to-green-600" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-5">
+                <CardTitle className="text-sm font-semibold text-emerald-700">Approved Ads</CardTitle>
+                <div className="h-8 w-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                  <TrendingUp className="h-4 w-4" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-3xl font-bold text-emerald-800">
                   {loadingSummary ? "..." : adSummary?.approvedAds.toLocaleString()}
                 </div>
-                <p className="text-xs text-muted-foreground">Published & Active</p>
+                <p className="text-xs text-emerald-700/80 mt-1">Published & Active</p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending Ads</CardTitle>
-                <BarChart3 className="h-4 w-4 text-yellow-600" />
+            <Card className="relative overflow-hidden border-0 shadow-md bg-gradient-to-br from-amber-100 to-white hover:from-amber-200/90 hover:to-white/90 transition-colors duration-300">
+              <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-amber-500 to-yellow-600" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-5">
+                <CardTitle className="text-sm font-semibold text-amber-700">Pending Ads</CardTitle>
+                <div className="h-8 w-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center">
+                  <BarChart3 className="h-4 w-4" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-yellow-600">
+                <div className="text-3xl font-bold text-amber-800">
                   {loadingSummary ? "..." : adSummary?.pendingAds.toLocaleString()}
                 </div>
-                <p className="text-xs text-muted-foreground">Awaiting approval</p>
+                <p className="text-xs text-amber-700/80 mt-1">Awaiting approval</p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Draft Ads</CardTitle>
-                <FileText className="h-4 w-4 text-gray-600" />
+            <Card className="relative overflow-hidden border-0 shadow-md bg-gradient-to-br from-slate-100 to-white hover:from-slate-200/90 hover:to-white/90 transition-colors duration-300">
+              <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-slate-500 to-slate-700" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-5">
+                <CardTitle className="text-sm font-semibold text-slate-700">Draft Ads</CardTitle>
+                <div className="h-8 w-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center">
+                  <FileText className="h-4 w-4" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-gray-600">
+                <div className="text-3xl font-bold text-slate-700">
                   {loadingSummary ? "..." : adSummary?.draftAds.toLocaleString()}
                 </div>
-                <p className="text-xs text-muted-foreground">Not yet submitted</p>
+                <p className="text-xs text-slate-500 mt-1">Not yet submitted</p>
               </CardContent>
             </Card>
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
-            <Card>
+            <Card className="relative overflow-hidden border border-slate-200/80 shadow-sm bg-white">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium text-slate-700">Total Users</CardTitle>
+                <Users className="h-4 w-4 text-slate-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-2xl font-bold text-slate-900">
                   {loadingUsers ? "..." : userSummary?.totalUsers.toLocaleString()}
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="relative overflow-hidden border border-blue-200/70 shadow-sm bg-gradient-to-br from-blue-50/70 to-white">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Agents</CardTitle>
+                <CardTitle className="text-sm font-medium text-blue-700">Total Agents</CardTitle>
                 <Users className="h-4 w-4 text-blue-600" />
               </CardHeader>
               <CardContent>
@@ -323,9 +357,9 @@ export default function ReportPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="relative overflow-hidden border border-violet-200/70 shadow-sm bg-gradient-to-br from-violet-50/70 to-white">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Organizations</CardTitle>
+                <CardTitle className="text-sm font-medium text-violet-700">Total Organizations</CardTitle>
                 <Building2 className="h-4 w-4 text-purple-600" />
               </CardHeader>
               <CardContent>
@@ -339,10 +373,10 @@ export default function ReportPage() {
 
         {/* Ad Analytics Tab */}
         <TabsContent value="ads" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Filter Options</CardTitle>
-              <CardDescription>Select period and date range for reports</CardDescription>
+          <Card className="border border-slate-200/80 shadow-sm bg-white">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-slate-900">Filter Options</CardTitle>
+              <CardDescription className="text-slate-600">Select period and date range for reports</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-4">
@@ -409,9 +443,9 @@ export default function ReportPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Ad Creation Trends</CardTitle>
+          <Card className="border border-slate-200/80 shadow-sm bg-white">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-slate-900">Ad Creation Trends</CardTitle>
               <CardDescription>
                 Number of ads created over time ({period})
               </CardDescription>
@@ -437,11 +471,11 @@ export default function ReportPage() {
           </Card>
 
           {/* Ad Views Chart */}
-          <Card>
-            <CardHeader>
+          <Card className="border border-slate-200/80 shadow-sm bg-white">
+            <CardHeader className="pb-3">
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
-                  <CardTitle>Ad Views</CardTitle>
+                  <CardTitle className="text-slate-900">Ad Views</CardTitle>
                   <CardDescription>
                     {viewsPeriod === "daily"
                       ? "Ads viewed per day – past 30 days"
@@ -501,8 +535,8 @@ export default function ReportPage() {
           </Card>
 
           {/* Top 10 Most Viewed Ads */}
-          <Card>
-            <CardHeader>
+          <Card className="border border-slate-200/80 shadow-sm bg-white">
+            <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-[#024950]" />
                 Top 10 Most Viewed Ads
@@ -582,9 +616,9 @@ export default function ReportPage() {
 
           {/* Ad Creation Split Charts */}
           <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Ad Creation by Users</CardTitle>
+            <Card className="border border-slate-200/80 shadow-sm bg-white">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-slate-900">Ad Creation by Users</CardTitle>
                 <CardDescription>Top users by ad creation volume</CardDescription>
               </CardHeader>
               <CardContent>
@@ -597,7 +631,7 @@ export default function ReportPage() {
                     <BarChart data={userAdsData} layout="vertical">
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis type="number" />
-                      <YAxis dataKey="name" type="category" width={100} />
+                      <YAxis dataKey="name" type="category" width={170} tick={renderTwoWordYAxisTick} interval={0} />
                       <Tooltip />
                       <Legend />
                       <Bar dataKey="count" name="Ads" fill="#0088FE" />
@@ -607,9 +641,9 @@ export default function ReportPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Ad Creation by Organizations</CardTitle>
+            <Card className="border border-slate-200/80 shadow-sm bg-white">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-slate-900">Ad Creation by Organizations</CardTitle>
                 <CardDescription>Top organizations by ad creation volume</CardDescription>
               </CardHeader>
               <CardContent>
@@ -672,9 +706,9 @@ export default function ReportPage() {
             <div className="space-y-6" id="report-advanced-charts">
               {/* Row 1: Vehicle Types & Ad Types */}
               <div className="grid gap-4 md:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Vehicle Types</CardTitle>
+                <Card className="border border-slate-200/80 shadow-sm bg-white">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-slate-900">Vehicle Types</CardTitle>
                     <CardDescription>Total: {advancedSummary.adTypes.total.reduce((a, b) => a + b.count, 0)}</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -699,9 +733,9 @@ export default function ReportPage() {
                     </ResponsiveContainer>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Ad Types</CardTitle>
+                <Card className="border border-slate-200/80 shadow-sm bg-white">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-slate-900">Ad Types</CardTitle>
                     <CardDescription>Total: {advancedSummary.listingTypes.total.reduce((a, b) => a + b.count, 0)}</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -724,9 +758,9 @@ export default function ReportPage() {
 
               {/* Row 2: Manufacturer & Models */}
               <div className="grid gap-4 md:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Manufacturer</CardTitle>
+                <Card className="border border-slate-200/80 shadow-sm bg-white">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-slate-900">Manufacturer</CardTitle>
                     <CardDescription>Total: {advancedSummary.brands.total.length}</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -734,16 +768,16 @@ export default function ReportPage() {
                       <BarChart data={advancedSummary.brands.top10} layout="vertical">
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis type="number" />
-                        <YAxis dataKey="value" type="category" width={100} />
+                        <YAxis dataKey="value" type="category" width={170} tick={renderTwoWordYAxisTick} interval={0} />
                         <Tooltip />
                         <Bar dataKey="count" fill="#82ca9d" />
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Top Models</CardTitle>
+                <Card className="border border-slate-200/80 shadow-sm bg-white">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-slate-900">Top Models</CardTitle>
                     <CardDescription>Total: {advancedSummary.models.total.length}</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -751,7 +785,7 @@ export default function ReportPage() {
                       <BarChart data={advancedSummary.models.top10} layout="vertical">
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis type="number" />
-                        <YAxis dataKey="value" type="category" width={100} />
+                        <YAxis dataKey="value" type="category" width={170} tick={renderTwoWordYAxisTick} interval={0} />
                         <Tooltip />
                         <Bar dataKey="count" fill="#ffc658" />
                       </BarChart>
@@ -762,9 +796,9 @@ export default function ReportPage() {
 
               {/* Row 3: Manufacture Year (NEW) */}
               <div className="grid gap-4 md:grid-cols-1">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Manufacture Year</CardTitle>
+                <Card className="border border-slate-200/80 shadow-sm bg-white">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-slate-900">Manufacture Year</CardTitle>
                     <CardDescription>Total: {advancedSummary.manufacturedYears.total.length}</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -783,9 +817,9 @@ export default function ReportPage() {
 
               {/* Row 3: Conditions, Fuel, Transmissions */}
               <div className="grid gap-4 md:grid-cols-3">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Conditions</CardTitle>
+                <Card className="border border-slate-200/80 shadow-sm bg-white">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-slate-900">Conditions</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
@@ -798,9 +832,9 @@ export default function ReportPage() {
                     </div>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Fuel Types</CardTitle>
+                <Card className="border border-slate-200/80 shadow-sm bg-white">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-slate-900">Fuel Types</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
@@ -813,9 +847,9 @@ export default function ReportPage() {
                     </div>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Transmissions</CardTitle>
+                <Card className="border border-slate-200/80 shadow-sm bg-white">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-slate-900">Transmissions</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
@@ -832,9 +866,9 @@ export default function ReportPage() {
 
               {/* Row 4: Locations */}
               <div className="grid gap-4 md:grid-cols-3">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Top Provinces</CardTitle>
+                <Card className="border border-slate-200/80 shadow-sm bg-white">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-slate-900">Top Provinces</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
@@ -847,9 +881,9 @@ export default function ReportPage() {
                     </div>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Top Districts</CardTitle>
+                <Card className="border border-slate-200/80 shadow-sm bg-white">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-slate-900">Top Districts</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
@@ -862,9 +896,9 @@ export default function ReportPage() {
                     </div>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Top Cities</CardTitle>
+                <Card className="border border-slate-200/80 shadow-sm bg-white">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-slate-900">Top Cities</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
@@ -887,7 +921,7 @@ export default function ReportPage() {
         {/* User Analytics Tab */}
         <TabsContent value="users" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
-            <Card>
+            <Card className="border border-slate-200/80 shadow-sm bg-white">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Users</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
@@ -896,7 +930,7 @@ export default function ReportPage() {
                 <div className="text-2xl font-bold">{userSummary?.totalUsers || 0}</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="border border-blue-200/70 shadow-sm bg-gradient-to-br from-blue-50/70 to-white">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Agents</CardTitle>
                 <Users className="h-4 w-4 text-blue-600" />
@@ -905,7 +939,7 @@ export default function ReportPage() {
                 <div className="text-2xl font-bold text-blue-600">{userSummary?.totalAgents || 0}</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="border border-violet-200/70 shadow-sm bg-gradient-to-br from-violet-50/70 to-white">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Organizations</CardTitle>
                 <Building2 className="h-4 w-4 text-purple-600" />
@@ -938,7 +972,7 @@ export default function ReportPage() {
 
               {/* Search Results */}
               {debouncedSearchQuery.length >= 2 && (
-                <Card className="mt-4">
+                <Card className="mt-4 border border-slate-200/80 shadow-sm bg-white">
                   <CardHeader>
                     <CardTitle>Search Results</CardTitle>
                   </CardHeader>
@@ -1017,7 +1051,7 @@ export default function ReportPage() {
               {/* Default Top 10 Lists (Only show if not searching or if search is empty/short) */}
               {debouncedSearchQuery.length < 2 && (
                 <div className="grid gap-4 md:grid-cols-2 mt-4">
-                  <Card>
+                  <Card className="border border-slate-200/80 shadow-sm bg-white">
                     <CardHeader>
                       <CardTitle>Top 10 Single Users</CardTitle>
                       <CardDescription>By Ad Creation</CardDescription>
@@ -1045,7 +1079,7 @@ export default function ReportPage() {
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="border border-slate-200/80 shadow-sm bg-white">
                     <CardHeader>
                       <CardTitle>Top 10 Organizations</CardTitle>
                       <CardDescription>By Ad Creation</CardDescription>
@@ -1083,7 +1117,7 @@ export default function ReportPage() {
               </Button>
 
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
+                <Card className="border border-slate-200/80 shadow-sm bg-white">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium">Entity Name</CardTitle>
                   </CardHeader>
@@ -1092,7 +1126,7 @@ export default function ReportPage() {
                     {entityHistory?.details.email && <p className="text-sm text-muted-foreground">{entityHistory?.details.email}</p>}
                   </CardContent>
                 </Card>
-                <Card>
+                <Card className="border border-slate-200/80 shadow-sm bg-white">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium">Total Ads</CardTitle>
                   </CardHeader>
@@ -1101,7 +1135,7 @@ export default function ReportPage() {
                   </CardContent>
                 </Card>
                 {selectedEntity.type === 'organization' && (
-                  <Card>
+                  <Card className="border border-slate-200/80 shadow-sm bg-white">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm font-medium">Members</CardTitle>
                     </CardHeader>
@@ -1113,7 +1147,7 @@ export default function ReportPage() {
               </div>
 
               {/* Last 10 Ads Table */}
-              <Card>
+              <Card className="border border-slate-200/80 shadow-sm bg-white">
                 <CardHeader>
                   <CardTitle>Last 10 Ads</CardTitle>
                   <CardDescription>Recent listings from this {selectedEntity?.type === 'user' ? 'user' : 'organization'}</CardDescription>
@@ -1220,7 +1254,7 @@ export default function ReportPage() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="border border-slate-200/80 shadow-sm bg-white">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
