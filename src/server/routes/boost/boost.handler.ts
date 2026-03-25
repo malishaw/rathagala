@@ -9,6 +9,7 @@ import type {
   GetBoostRequestsRoute,
   GetAdBoostRequestRoute,
   GetRevenueRoute,
+  AdminPromoteRoute,
 } from "./boost.routes";
 import { BoostType } from "@prisma/client";
 
@@ -301,6 +302,106 @@ export const approveBoost: AppRouteHandler<ApproveBoostRoute> = async (c) => {
   });
 
   return c.json({ message: "Boost approved successfully" }, HttpStatusCodes.OK);
+};
+
+export const adminPromote: AppRouteHandler<AdminPromoteRoute> = async (c) => {
+  const session = c.get("session");
+  const user = c.get("user");
+  if (!session || (user as any)?.role !== "admin") {
+    return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
+  }
+
+  const body = await c.req.json();
+  const { adId, boostTypes, bumpDays, topAdDays, urgentDays, featuredDays } = body;
+
+  const ad = await prisma.ad.findUnique({ where: { id: adId } });
+  if (!ad) return c.json({ message: "Ad not found" }, HttpStatusCodes.NOT_FOUND);
+
+  if (boostTypes.length > 3) {
+    return c.json({ message: "Maximum 3 boost types allowed" }, HttpStatusCodes.BAD_REQUEST);
+  }
+
+  const pricing = await prisma.boostPricing.findMany({
+    where: { boostType: { in: boostTypes as BoostType[] } },
+  });
+  const getPrice = (type: BoostType, days: number) => {
+    const found = pricing.find((p) => p.boostType === type && p.days === days);
+    return found?.price ?? DEFAULT_PRICES[type]?.[days] ?? 0;
+  };
+
+  let totalAmount = 0;
+  let bumpAmount: number | undefined;
+  let topAdAmount: number | undefined;
+  let urgentAmount: number | undefined;
+  let featuredAmount: number | undefined;
+
+  if (boostTypes.includes("BUMP") && bumpDays) { bumpAmount = getPrice("BUMP", bumpDays); totalAmount += bumpAmount; }
+  if (boostTypes.includes("TOP_AD") && topAdDays) { topAdAmount = getPrice("TOP_AD", topAdDays); totalAmount += topAdAmount; }
+  if (boostTypes.includes("URGENT") && urgentDays) { urgentAmount = getPrice("URGENT", urgentDays); totalAmount += urgentAmount; }
+  if (boostTypes.includes("FEATURED") && featuredDays) { featuredAmount = getPrice("FEATURED", featuredDays); totalAmount += featuredAmount; }
+
+  const now = new Date();
+  const durations = [
+    boostTypes.includes("BUMP") ? bumpDays : null,
+    boostTypes.includes("TOP_AD") ? topAdDays : null,
+    boostTypes.includes("URGENT") ? urgentDays : null,
+    boostTypes.includes("FEATURED") ? featuredDays : null,
+  ].filter(Boolean) as number[];
+  const maxDays = Math.max(...durations, 0);
+  const boostEndAt = new Date(now.getTime() + maxDays * 24 * 60 * 60 * 1000);
+
+  // Create boost request in ACTIVE state (admin-initiated, no payment needed)
+  const boostRequest = await prisma.boostRequest.create({
+    data: {
+      adId,
+      userId: ad.createdBy,
+      boostTypes,
+      bumpDays,
+      topAdDays,
+      urgentDays,
+      featuredDays,
+      totalAmount,
+      bumpAmount,
+      topAdAmount,
+      urgentAmount,
+      featuredAmount,
+      status: "ACTIVE",
+      approvedBy: user!.id,
+      activatedAt: now,
+      expiresAt: boostEndAt,
+    },
+  });
+
+  await prisma.ad.update({
+    where: { id: adId },
+    data: {
+      boostTypes,
+      bumpActive: boostTypes.includes("BUMP"),
+      topAdActive: boostTypes.includes("TOP_AD"),
+      urgentActive: boostTypes.includes("URGENT"),
+      featuredActive: boostTypes.includes("FEATURED"),
+      boostStatus: "ACTIVE",
+      boostRequestedAt: now,
+      boostStartAt: now,
+      boostEndAt,
+    },
+  });
+
+  await prisma.revenueRecord.create({
+    data: {
+      boostRequestId: boostRequest.id,
+      adId,
+      userId: ad.createdBy,
+      boostTypes,
+      totalAmount,
+      bumpAmount,
+      topAdAmount,
+      urgentAmount,
+      featuredAmount,
+    },
+  });
+
+  return c.json({ message: "Ad promoted successfully" }, HttpStatusCodes.OK);
 };
 
 export const getBoostRequests: AppRouteHandler<GetBoostRequestsRoute> = async (c) => {

@@ -157,6 +157,37 @@ export const getAdBoostRequest = createRoute({
 });
 export type GetAdBoostRequestRoute = typeof getAdBoostRequest;
 
+// --------- Admin Promote Ad (Admin) ----------
+export const adminPromote = createRoute({
+  tags,
+  summary: "Admin directly promote an ad (no user boost request needed)",
+  path: "/admin-promote",
+  method: "post",
+  middleware: [serverAuthMiddleware],
+  request: {
+    body: jsonContentRequired(schemas.adminPromoteSchema, "Admin promote"),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      createMessageObjectSchema("Ad promoted"),
+      "Ad promoted"
+    ),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      z.object({ message: z.string() }),
+      "Unauthorized"
+    ),
+    [HttpStatusCodes.NOT_FOUND]: jsonContent(
+      z.object({ message: z.string() }),
+      "Ad not found"
+    ),
+    [HttpStatusCodes.BAD_REQUEST]: jsonContent(
+      z.object({ message: z.string() }),
+      "Bad request"
+    ),
+  },
+});
+export type AdminPromoteRoute = typeof adminPromote;
+
 // --------- Get Revenue Stats (Admin) ----------
 export const getRevenue = createRoute({
   tags,

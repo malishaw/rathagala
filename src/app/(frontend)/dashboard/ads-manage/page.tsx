@@ -430,6 +430,12 @@ export default function AdsManagePage() {
           totalItems={data.pagination.total}
           enableRowSelection={true}
           onRowSelectionChange={setSelectedRows}
+          rowClassName={(row) => {
+            const boostStatus = (row as AdType).boostStatus;
+            return boostStatus === "ACTIVE" || boostStatus === "PENDING"
+              ? "bg-yellow-50 hover:bg-yellow-100"
+              : "";
+          }}
         />
       </div>
 

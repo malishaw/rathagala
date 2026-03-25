@@ -40,6 +40,7 @@ interface DataTableProps<TData, TValue> {
   pageSizeOptions?: number[];
   enableRowSelection?: boolean;
   onRowSelectionChange?: (selectedRows: TData[]) => void;
+  rowClassName?: (row: TData) => string;
 }
 
 export function DataTable<TData, TValue>({
@@ -48,7 +49,8 @@ export function DataTable<TData, TValue>({
   totalItems,
   pageSizeOptions = [10, 20, 30, 40, 50],
   enableRowSelection = false,
-  onRowSelectionChange
+  onRowSelectionChange,
+  rowClassName
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [currentPage, setCurrentPage] = useQueryState(
@@ -137,6 +139,7 @@ export function DataTable<TData, TValue>({
                       <TableRow
                         key={row.id}
                         data-state={row.getIsSelected() && "selected"}
+                        className={rowClassName ? rowClassName(row.original) : undefined}
                       >
                         {row.getVisibleCells().map((cell) => (
                           <TableCell key={cell.id}>

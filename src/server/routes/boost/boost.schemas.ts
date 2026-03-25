@@ -41,6 +41,15 @@ export const updateBoostPricingSchema = z.object({
   ),
 });
 
+export const adminPromoteSchema = z.object({
+  adId: z.string().min(1, "Ad ID is required"),
+  boostTypes: z.array(BoostTypeEnum).min(1).max(3, "Maximum 3 boost types"),
+  bumpDays: z.number().optional(),
+  topAdDays: z.number().optional(),
+  urgentDays: z.number().optional(),
+  featuredDays: z.number().optional(),
+});
+
 export const revenueFilterSchema = z.object({
   filter: z.enum(["today", "7days", "30days", "all"]).optional().default("all"),
 });

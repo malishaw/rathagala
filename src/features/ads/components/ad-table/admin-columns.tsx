@@ -37,6 +37,7 @@ import { useApproveAd } from "@/features/ads/api/use-approve-ad";
 import { useRejectAd } from "@/features/ads/api/use-reject-ad";
 import { useDeleteAd } from "@/features/ads/api/use-delete-ad";
 import { BoostApproveDialog } from "@/features/boost/components/boost-approve-dialog";
+import { AdminPromoteDialog } from "@/features/boost/components/admin-promote-dialog";
 import { Check, X, Eye, Edit, Trash2, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import {
   Tooltip,
@@ -57,6 +58,7 @@ export type AdType = Omit<Ad, "createdAt" | "updatedAt" | "boostExpiry" | "boost
   boostRequestedAt?: string | Date | null;
   boostStartAt?: string | Date | null;
   boostEndAt?: string | Date | null;
+  boostStatus?: string | null;
   creator?: {
     id: string;
     name?: string | null;
@@ -125,6 +127,67 @@ const generateAdTitle = (ad: AdType): string => {
     .join(' ') || ad.title || "Untitled Ad";
 };
 
+function TitleCell({ ad }: { ad: AdType }) {
+  const displayTitle = generateAdTitle(ad);
+  const displayType = vehicleTypeLabels[ad.type] || ad.type;
+  const [showBoostDialog, setShowBoostDialog] = useState(false);
+  const [showPromoteDialog, setShowPromoteDialog] = useState(false);
+  const hasBoostRequest = ad.boostStatus === "PENDING" || ad.boostStatus === "ACTIVE";
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <Link href={`/dashboard/ads/${ad.id}`} className="hover:underline font-medium text-sm">
+          {displayTitle}
+        </Link>
+        {hasBoostRequest ? (
+          <button
+            onClick={() => setShowBoostDialog(true)}
+            title="View/Approve Boost"
+            className="text-yellow-500 hover:text-yellow-600 transition-colors"
+          >
+            <Sparkles className="h-6 w-6 cursor-pointer hover:bg-amber-100 p-1 border-1 rounded-full" />
+          </button>
+        ) : (
+          <button
+            onClick={() => setShowPromoteDialog(true)}
+            title="Promote Ad"
+            className="text-slate-400 hover:text-amber-500 transition-colors"
+          >
+            <Sparkles className="h-6 w-6 cursor-pointer hover:bg-amber-100 p-1 border-1 rounded-full" />
+          </button>
+        )}
+      </div>
+      <div className="flex gap-2 flex-wrap items-center">
+        <Badge variant="outline" className="bg-slate-100 text-slate-800 border-1 w-fit border-amber-200">
+          {displayType}
+        </Badge>
+        {ad.boostStatus === "PENDING" && (
+          <Badge className="bg-orange-100 text-orange-700 border-orange-200 text-xs">Boost Pending</Badge>
+        )}
+        {ad.boostStatus === "ACTIVE" && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge className="bg-green-100 text-green-700 border-green-200 text-xs cursor-help">Boost Active</Badge>
+              </TooltipTrigger>
+              <TooltipContent className="bg-teal-700 text-white text-xs">
+                <p>Boost ends: {ad.boostEndAt ? new Date(ad.boostEndAt).toLocaleString("en-LK", { dateStyle: "medium", timeStyle: "short" }) : "N/A"}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+      </div>
+      {showBoostDialog && (
+        <BoostApproveDialog adId={ad.id} open={showBoostDialog} onOpenChange={setShowBoostDialog} />
+      )}
+      {showPromoteDialog && (
+        <AdminPromoteDialog adId={ad.id} open={showPromoteDialog} onOpenChange={setShowPromoteDialog} />
+      )}
+    </div>
+  );
+}
+
 export const adminColumns: ColumnDef<AdType>[] = [
   {
     id: "select",
@@ -151,68 +214,11 @@ export const adminColumns: ColumnDef<AdType>[] = [
   {
     accessorKey: "title",
     header: "Ad Title",
-    cell: ({ row }) => {
-      const ad = row.original;
-      const displayTitle = generateAdTitle(ad);
-      const type = ad.type;
-      const displayType = vehicleTypeLabels[type] || type;
-
-      const [showBoostDialog, setShowBoostDialog] = useState(false);
-      const hasBoostRequest = (ad as any).boostStatus === "PENDING" || (ad as any).boostStatus === "ACTIVE";
-
-      return (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <Link
-              href={`/dashboard/ads/${ad.id}`}
-              className="hover:underline font-medium text-sm"
-            >
-              {displayTitle}
-            </Link>
-            {hasBoostRequest && (
-              <button
-                onClick={() => setShowBoostDialog(true)}
-                title="View/Approve Boost"
-                className="text-yellow-500 hover:text-yellow-600 transition-colors"
-              >
-                <Sparkles className="h-6 w-6 cursor-pointer hover:bg-amber-100  p-1 border-1 rounded-full" />
-              </button>
-            )}
-          </div>
-          <div className="flex gap-2 flex-wrap items-center">
-            <Badge variant="outline" className="bg-slate-100 text-slate-800 border-1 w-fit border-amber-200">
-              {displayType}
-            </Badge>
-            {(ad as any).boostStatus === "PENDING" && (
-              <Badge className="bg-orange-100 text-orange-700 border-orange-200 text-xs">Boost Pending</Badge>
-            )}
-            {(ad as any).boostStatus === "ACTIVE" && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Badge className="bg-green-100 text-green-700 border-green-200 text-xs cursor-help">Boost Active</Badge>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-teal-700 text-white text-xs">
-                    <p>Boost ends: {ad.boostEndAt ? new Date(ad.boostEndAt).toLocaleString("en-LK", { dateStyle: "medium", timeStyle: "short" }) : "N/A"}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-          </div>
-          {showBoostDialog && (
-            <BoostApproveDialog
-              adId={ad.id}
-              open={showBoostDialog}
-              onOpenChange={setShowBoostDialog}
-            />
-          )}
-        </div>
-      );
-    }
+    cell: ({ row }) => <TitleCell ad={row.original} />,
   },
   {
     accessorKey: "status",
-    header: "Status",
+    header: "View/Status",
     cell: ({ row }) => {
       const ad = row.original;
       const now = new Date();
@@ -227,10 +233,10 @@ export const adminColumns: ColumnDef<AdType>[] = [
               size="default"
               variant="ghost"
               onClick={() => setShowDetails(true)}
-              className="p-1 h-auto text-slate-500 bg-blue-50 border-1 hover:text-blue-600 hover:bg-blue-50"
+              className="p-2 h-auto text-slate-500 bg-blue-600 border-1 text-white hover:bg-blue-700"
               title="View Ad Details"
             >
-              <Eye className="w-4 h-4" />
+              <Eye className="w-8 h-8" />
             </Button>
             {getStatusBadge(status)}
             {status === "REJECTED" && rejectionDescription && (
