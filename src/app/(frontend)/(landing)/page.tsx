@@ -408,8 +408,9 @@ export default function VehicleMarketplace() {
         return ads.sort((a, b) => (b.price || 0) - (a.price || 0));
       case "year":
         return ads.sort((a, b) => (b.manufacturedYear || 0) - (a.manufacturedYear || 0));
-      case "default":
       case "newest":
+        return ads.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      case "default":
       default:
         return ads.sort((a, b) => {
           const timeDiff = getSortTime(b) - getSortTime(a);
@@ -448,12 +449,13 @@ export default function VehicleMarketplace() {
   }, [shuffledFeaturedAdsPool]);
 
   const baseAds = useMemo(() => {
+    if (sortBy !== "default") return sortedAds;
     return sortedAds.filter((ad) => !(ad as any).featuredActive && !(ad as any).topAdActive);
-  }, [sortedAds]);
+  }, [sortedAds, sortBy]);
 
   const interleavedAds = useMemo(() => {
     if (baseAds.length === 0) return [];
-    if (featuredInsertPool.length === 0) return baseAds;
+    if (sortBy !== "default" || featuredInsertPool.length === 0) return baseAds;
 
     const result: any[] = [];
     const insertCount = Math.min(2, featuredInsertPool.length);
@@ -473,7 +475,7 @@ export default function VehicleMarketplace() {
     });
 
     return result;
-  }, [baseAds, featuredInsertPool, featuredRotationIndex]);
+  }, [baseAds, featuredInsertPool, featuredRotationIndex, sortBy]);
 
   // Featured Ads Carousel (latest 6 - featured only, no other promotions)
   const featuredBoostedAds = useMemo(() => {
@@ -1252,7 +1254,7 @@ export default function VehicleMarketplace() {
               </div>
 
               {/* Top Ad Section */}
-              {!isLoading && displayedTopAds.length > 0 && (
+              {!isLoading && sortBy === "default" && displayedTopAds.length > 0 && (
                 <div className="mb-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {displayedTopAds.map((vehicle) => (
@@ -1263,7 +1265,7 @@ export default function VehicleMarketplace() {
               )}
 
               {/* Featured Ad Section */}
-              {!isLoading && displayedFeaturedAds.length > 0 && (
+              {!isLoading && sortBy === "default" && displayedFeaturedAds.length > 0 && (
                 <div className="mb-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {displayedFeaturedAds.map((vehicle) => (
