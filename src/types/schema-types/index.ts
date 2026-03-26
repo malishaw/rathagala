@@ -118,6 +118,12 @@ export const AutoPartCategoryScalarFieldEnumSchema = z.enum(['id','name','slug',
 
 export const NewsletterScalarFieldEnumSchema = z.enum(['id','subject','htmlContent','plainContent','recipientCount','recipientEmails','sentBy','sentAt','createdAt']);
 
+export const ProvinceScalarFieldEnumSchema = z.enum(['id','name','createdAt','updatedAt']);
+
+export const DistrictScalarFieldEnumSchema = z.enum(['id','name','provinceId','createdAt','updatedAt']);
+
+export const CityScalarFieldEnumSchema = z.enum(['id','name','districtId','createdAt','updatedAt']);
+
 export const BrandCarouselScalarFieldEnumSchema = z.enum(['id','name','imageUrl','order','createdAt','updatedAt']);
 
 export const VehicleModelScalarFieldEnumSchema = z.enum(['id','name','brand','isActive','createdAt','updatedAt']);
@@ -773,6 +779,47 @@ export const NewsletterSchema = z.object({
 })
 
 export type Newsletter = z.infer<typeof NewsletterSchema>
+
+/////////////////////////////////////////
+// PROVINCE SCHEMA
+/////////////////////////////////////////
+
+export const ProvinceSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+})
+
+export type Province = z.infer<typeof ProvinceSchema>
+
+/////////////////////////////////////////
+// DISTRICT SCHEMA
+/////////////////////////////////////////
+
+export const DistrictSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  provinceId: z.string(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+})
+
+export type District = z.infer<typeof DistrictSchema>
+
+/////////////////////////////////////////
+// CITY SCHEMA
+/////////////////////////////////////////
+
+export const CitySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  districtId: z.string(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+})
+
+export type City = z.infer<typeof CitySchema>
 
 /////////////////////////////////////////
 // BRAND CAROUSEL SCHEMA
@@ -1694,6 +1741,84 @@ export const NewsletterSelectSchema: z.ZodType<Prisma.NewsletterSelect> = z.obje
   sentBy: z.boolean().optional(),
   sentAt: z.boolean().optional(),
   createdAt: z.boolean().optional(),
+}).strict()
+
+// PROVINCE
+//------------------------------------------------------
+
+export const ProvinceIncludeSchema: z.ZodType<Prisma.ProvinceInclude> = z.object({
+}).strict();
+
+export const ProvinceArgsSchema: z.ZodType<Prisma.ProvinceDefaultArgs> = z.object({
+  select: z.lazy(() => ProvinceSelectSchema).optional(),
+  include: z.lazy(() => ProvinceIncludeSchema).optional(),
+}).strict();
+
+export const ProvinceCountOutputTypeArgsSchema: z.ZodType<Prisma.ProvinceCountOutputTypeDefaultArgs> = z.object({
+  select: z.lazy(() => ProvinceCountOutputTypeSelectSchema).nullish(),
+}).strict();
+
+export const ProvinceCountOutputTypeSelectSchema: z.ZodType<Prisma.ProvinceCountOutputTypeSelect> = z.object({
+  districts: z.boolean().optional(),
+}).strict();
+
+export const ProvinceSelectSchema: z.ZodType<Prisma.ProvinceSelect> = z.object({
+  id: z.boolean().optional(),
+  name: z.boolean().optional(),
+  createdAt: z.boolean().optional(),
+  updatedAt: z.boolean().optional(),
+  districts: z.union([z.boolean(),z.lazy(() => DistrictArgsSchema)]).optional(),
+  _count: z.union([z.boolean(),z.lazy(() => ProvinceCountOutputTypeArgsSchema)]).optional(),
+}).strict()
+
+// DISTRICT
+//------------------------------------------------------
+
+export const DistrictIncludeSchema: z.ZodType<Prisma.DistrictInclude> = z.object({
+}).strict();
+
+export const DistrictArgsSchema: z.ZodType<Prisma.DistrictDefaultArgs> = z.object({
+  select: z.lazy(() => DistrictSelectSchema).optional(),
+  include: z.lazy(() => DistrictIncludeSchema).optional(),
+}).strict();
+
+export const DistrictCountOutputTypeArgsSchema: z.ZodType<Prisma.DistrictCountOutputTypeDefaultArgs> = z.object({
+  select: z.lazy(() => DistrictCountOutputTypeSelectSchema).nullish(),
+}).strict();
+
+export const DistrictCountOutputTypeSelectSchema: z.ZodType<Prisma.DistrictCountOutputTypeSelect> = z.object({
+  cities: z.boolean().optional(),
+}).strict();
+
+export const DistrictSelectSchema: z.ZodType<Prisma.DistrictSelect> = z.object({
+  id: z.boolean().optional(),
+  name: z.boolean().optional(),
+  provinceId: z.boolean().optional(),
+  createdAt: z.boolean().optional(),
+  updatedAt: z.boolean().optional(),
+  province: z.union([z.boolean(),z.lazy(() => ProvinceArgsSchema)]).optional(),
+  cities: z.union([z.boolean(),z.lazy(() => CityArgsSchema)]).optional(),
+  _count: z.union([z.boolean(),z.lazy(() => DistrictCountOutputTypeArgsSchema)]).optional(),
+}).strict()
+
+// CITY
+//------------------------------------------------------
+
+export const CityIncludeSchema: z.ZodType<Prisma.CityInclude> = z.object({
+}).strict();
+
+export const CityArgsSchema: z.ZodType<Prisma.CityDefaultArgs> = z.object({
+  select: z.lazy(() => CitySelectSchema).optional(),
+  include: z.lazy(() => CityIncludeSchema).optional(),
+}).strict();
+
+export const CitySelectSchema: z.ZodType<Prisma.CitySelect> = z.object({
+  id: z.boolean().optional(),
+  name: z.boolean().optional(),
+  districtId: z.boolean().optional(),
+  createdAt: z.boolean().optional(),
+  updatedAt: z.boolean().optional(),
+  district: z.union([z.boolean(),z.lazy(() => DistrictArgsSchema)]).optional(),
 }).strict()
 
 // BRAND CAROUSEL
@@ -4569,6 +4694,207 @@ export const NewsletterScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.Ne
   sentBy: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
   sentAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
   createdAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
+}).strict();
+
+export const ProvinceWhereInputSchema: z.ZodType<Prisma.ProvinceWhereInput> = z.object({
+  AND: z.union([ z.lazy(() => ProvinceWhereInputSchema), z.lazy(() => ProvinceWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => ProvinceWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => ProvinceWhereInputSchema), z.lazy(() => ProvinceWhereInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  districts: z.lazy(() => DistrictListRelationFilterSchema).optional(),
+}).strict();
+
+export const ProvinceOrderByWithRelationInputSchema: z.ZodType<Prisma.ProvinceOrderByWithRelationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+  districts: z.lazy(() => DistrictOrderByRelationAggregateInputSchema).optional(),
+}).strict();
+
+export const ProvinceWhereUniqueInputSchema: z.ZodType<Prisma.ProvinceWhereUniqueInput> = z.union([
+  z.object({
+    id: z.string(),
+    name: z.string(),
+  }),
+  z.object({
+    id: z.string(),
+  }),
+  z.object({
+    name: z.string(),
+  }),
+])
+.and(z.object({
+  id: z.string().optional(),
+  name: z.string().optional(),
+  AND: z.union([ z.lazy(() => ProvinceWhereInputSchema), z.lazy(() => ProvinceWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => ProvinceWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => ProvinceWhereInputSchema), z.lazy(() => ProvinceWhereInputSchema).array() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  districts: z.lazy(() => DistrictListRelationFilterSchema).optional(),
+}).strict());
+
+export const ProvinceOrderByWithAggregationInputSchema: z.ZodType<Prisma.ProvinceOrderByWithAggregationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+  _count: z.lazy(() => ProvinceCountOrderByAggregateInputSchema).optional(),
+  _max: z.lazy(() => ProvinceMaxOrderByAggregateInputSchema).optional(),
+  _min: z.lazy(() => ProvinceMinOrderByAggregateInputSchema).optional(),
+}).strict();
+
+export const ProvinceScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.ProvinceScalarWhereWithAggregatesInput> = z.object({
+  AND: z.union([ z.lazy(() => ProvinceScalarWhereWithAggregatesInputSchema), z.lazy(() => ProvinceScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  OR: z.lazy(() => ProvinceScalarWhereWithAggregatesInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => ProvinceScalarWhereWithAggregatesInputSchema), z.lazy(() => ProvinceScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
+  name: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
+}).strict();
+
+export const DistrictWhereInputSchema: z.ZodType<Prisma.DistrictWhereInput> = z.object({
+  AND: z.union([ z.lazy(() => DistrictWhereInputSchema), z.lazy(() => DistrictWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => DistrictWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => DistrictWhereInputSchema), z.lazy(() => DistrictWhereInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  provinceId: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  province: z.union([ z.lazy(() => ProvinceScalarRelationFilterSchema), z.lazy(() => ProvinceWhereInputSchema) ]).optional(),
+  cities: z.lazy(() => CityListRelationFilterSchema).optional(),
+}).strict();
+
+export const DistrictOrderByWithRelationInputSchema: z.ZodType<Prisma.DistrictOrderByWithRelationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  provinceId: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+  province: z.lazy(() => ProvinceOrderByWithRelationInputSchema).optional(),
+  cities: z.lazy(() => CityOrderByRelationAggregateInputSchema).optional(),
+}).strict();
+
+export const DistrictWhereUniqueInputSchema: z.ZodType<Prisma.DistrictWhereUniqueInput> = z.union([
+  z.object({
+    id: z.string(),
+    name_provinceId: z.lazy(() => DistrictNameProvinceIdCompoundUniqueInputSchema),
+  }),
+  z.object({
+    id: z.string(),
+  }),
+  z.object({
+    name_provinceId: z.lazy(() => DistrictNameProvinceIdCompoundUniqueInputSchema),
+  }),
+])
+.and(z.object({
+  id: z.string().optional(),
+  name_provinceId: z.lazy(() => DistrictNameProvinceIdCompoundUniqueInputSchema).optional(),
+  AND: z.union([ z.lazy(() => DistrictWhereInputSchema), z.lazy(() => DistrictWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => DistrictWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => DistrictWhereInputSchema), z.lazy(() => DistrictWhereInputSchema).array() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  provinceId: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  province: z.union([ z.lazy(() => ProvinceScalarRelationFilterSchema), z.lazy(() => ProvinceWhereInputSchema) ]).optional(),
+  cities: z.lazy(() => CityListRelationFilterSchema).optional(),
+}).strict());
+
+export const DistrictOrderByWithAggregationInputSchema: z.ZodType<Prisma.DistrictOrderByWithAggregationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  provinceId: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+  _count: z.lazy(() => DistrictCountOrderByAggregateInputSchema).optional(),
+  _max: z.lazy(() => DistrictMaxOrderByAggregateInputSchema).optional(),
+  _min: z.lazy(() => DistrictMinOrderByAggregateInputSchema).optional(),
+}).strict();
+
+export const DistrictScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.DistrictScalarWhereWithAggregatesInput> = z.object({
+  AND: z.union([ z.lazy(() => DistrictScalarWhereWithAggregatesInputSchema), z.lazy(() => DistrictScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  OR: z.lazy(() => DistrictScalarWhereWithAggregatesInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => DistrictScalarWhereWithAggregatesInputSchema), z.lazy(() => DistrictScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
+  name: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
+  provinceId: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
+}).strict();
+
+export const CityWhereInputSchema: z.ZodType<Prisma.CityWhereInput> = z.object({
+  AND: z.union([ z.lazy(() => CityWhereInputSchema), z.lazy(() => CityWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => CityWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => CityWhereInputSchema), z.lazy(() => CityWhereInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  districtId: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  district: z.union([ z.lazy(() => DistrictScalarRelationFilterSchema), z.lazy(() => DistrictWhereInputSchema) ]).optional(),
+}).strict();
+
+export const CityOrderByWithRelationInputSchema: z.ZodType<Prisma.CityOrderByWithRelationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  districtId: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+  district: z.lazy(() => DistrictOrderByWithRelationInputSchema).optional(),
+}).strict();
+
+export const CityWhereUniqueInputSchema: z.ZodType<Prisma.CityWhereUniqueInput> = z.union([
+  z.object({
+    id: z.string(),
+    name_districtId: z.lazy(() => CityNameDistrictIdCompoundUniqueInputSchema),
+  }),
+  z.object({
+    id: z.string(),
+  }),
+  z.object({
+    name_districtId: z.lazy(() => CityNameDistrictIdCompoundUniqueInputSchema),
+  }),
+])
+.and(z.object({
+  id: z.string().optional(),
+  name_districtId: z.lazy(() => CityNameDistrictIdCompoundUniqueInputSchema).optional(),
+  AND: z.union([ z.lazy(() => CityWhereInputSchema), z.lazy(() => CityWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => CityWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => CityWhereInputSchema), z.lazy(() => CityWhereInputSchema).array() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  districtId: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  district: z.union([ z.lazy(() => DistrictScalarRelationFilterSchema), z.lazy(() => DistrictWhereInputSchema) ]).optional(),
+}).strict());
+
+export const CityOrderByWithAggregationInputSchema: z.ZodType<Prisma.CityOrderByWithAggregationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  districtId: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+  _count: z.lazy(() => CityCountOrderByAggregateInputSchema).optional(),
+  _max: z.lazy(() => CityMaxOrderByAggregateInputSchema).optional(),
+  _min: z.lazy(() => CityMinOrderByAggregateInputSchema).optional(),
+}).strict();
+
+export const CityScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.CityScalarWhereWithAggregatesInput> = z.object({
+  AND: z.union([ z.lazy(() => CityScalarWhereWithAggregatesInputSchema), z.lazy(() => CityScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  OR: z.lazy(() => CityScalarWhereWithAggregatesInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => CityScalarWhereWithAggregatesInputSchema), z.lazy(() => CityScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
+  name: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
+  districtId: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
 }).strict();
 
 export const BrandCarouselWhereInputSchema: z.ZodType<Prisma.BrandCarouselWhereInput> = z.object({
@@ -7497,6 +7823,161 @@ export const NewsletterUncheckedUpdateManyInputSchema: z.ZodType<Prisma.Newslett
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
+export const ProvinceCreateInputSchema: z.ZodType<Prisma.ProvinceCreateInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+  districts: z.lazy(() => DistrictCreateNestedManyWithoutProvinceInputSchema).optional(),
+}).strict();
+
+export const ProvinceUncheckedCreateInputSchema: z.ZodType<Prisma.ProvinceUncheckedCreateInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+  districts: z.lazy(() => DistrictUncheckedCreateNestedManyWithoutProvinceInputSchema).optional(),
+}).strict();
+
+export const ProvinceUpdateInputSchema: z.ZodType<Prisma.ProvinceUpdateInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  districts: z.lazy(() => DistrictUpdateManyWithoutProvinceNestedInputSchema).optional(),
+}).strict();
+
+export const ProvinceUncheckedUpdateInputSchema: z.ZodType<Prisma.ProvinceUncheckedUpdateInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  districts: z.lazy(() => DistrictUncheckedUpdateManyWithoutProvinceNestedInputSchema).optional(),
+}).strict();
+
+export const ProvinceCreateManyInputSchema: z.ZodType<Prisma.ProvinceCreateManyInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const ProvinceUpdateManyMutationInputSchema: z.ZodType<Prisma.ProvinceUpdateManyMutationInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const ProvinceUncheckedUpdateManyInputSchema: z.ZodType<Prisma.ProvinceUncheckedUpdateManyInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const DistrictCreateInputSchema: z.ZodType<Prisma.DistrictCreateInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+  province: z.lazy(() => ProvinceCreateNestedOneWithoutDistrictsInputSchema),
+  cities: z.lazy(() => CityCreateNestedManyWithoutDistrictInputSchema).optional(),
+}).strict();
+
+export const DistrictUncheckedCreateInputSchema: z.ZodType<Prisma.DistrictUncheckedCreateInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  provinceId: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+  cities: z.lazy(() => CityUncheckedCreateNestedManyWithoutDistrictInputSchema).optional(),
+}).strict();
+
+export const DistrictUpdateInputSchema: z.ZodType<Prisma.DistrictUpdateInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  province: z.lazy(() => ProvinceUpdateOneRequiredWithoutDistrictsNestedInputSchema).optional(),
+  cities: z.lazy(() => CityUpdateManyWithoutDistrictNestedInputSchema).optional(),
+}).strict();
+
+export const DistrictUncheckedUpdateInputSchema: z.ZodType<Prisma.DistrictUncheckedUpdateInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  provinceId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  cities: z.lazy(() => CityUncheckedUpdateManyWithoutDistrictNestedInputSchema).optional(),
+}).strict();
+
+export const DistrictCreateManyInputSchema: z.ZodType<Prisma.DistrictCreateManyInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  provinceId: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const DistrictUpdateManyMutationInputSchema: z.ZodType<Prisma.DistrictUpdateManyMutationInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const DistrictUncheckedUpdateManyInputSchema: z.ZodType<Prisma.DistrictUncheckedUpdateManyInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  provinceId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const CityCreateInputSchema: z.ZodType<Prisma.CityCreateInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+  district: z.lazy(() => DistrictCreateNestedOneWithoutCitiesInputSchema),
+}).strict();
+
+export const CityUncheckedCreateInputSchema: z.ZodType<Prisma.CityUncheckedCreateInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  districtId: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const CityUpdateInputSchema: z.ZodType<Prisma.CityUpdateInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  district: z.lazy(() => DistrictUpdateOneRequiredWithoutCitiesNestedInputSchema).optional(),
+}).strict();
+
+export const CityUncheckedUpdateInputSchema: z.ZodType<Prisma.CityUncheckedUpdateInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  districtId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const CityCreateManyInputSchema: z.ZodType<Prisma.CityCreateManyInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  districtId: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const CityUpdateManyMutationInputSchema: z.ZodType<Prisma.CityUpdateManyMutationInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const CityUncheckedUpdateManyInputSchema: z.ZodType<Prisma.CityUncheckedUpdateManyInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  districtId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
 export const BrandCarouselCreateInputSchema: z.ZodType<Prisma.BrandCarouselCreateInput> = z.object({
   id: z.string().optional(),
   name: z.string(),
@@ -9826,6 +10307,115 @@ export const NewsletterSumOrderByAggregateInputSchema: z.ZodType<Prisma.Newslett
   recipientCount: z.lazy(() => SortOrderSchema).optional(),
 }).strict();
 
+export const DistrictListRelationFilterSchema: z.ZodType<Prisma.DistrictListRelationFilter> = z.object({
+  every: z.lazy(() => DistrictWhereInputSchema).optional(),
+  some: z.lazy(() => DistrictWhereInputSchema).optional(),
+  none: z.lazy(() => DistrictWhereInputSchema).optional(),
+}).strict();
+
+export const DistrictOrderByRelationAggregateInputSchema: z.ZodType<Prisma.DistrictOrderByRelationAggregateInput> = z.object({
+  _count: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const ProvinceCountOrderByAggregateInputSchema: z.ZodType<Prisma.ProvinceCountOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const ProvinceMaxOrderByAggregateInputSchema: z.ZodType<Prisma.ProvinceMaxOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const ProvinceMinOrderByAggregateInputSchema: z.ZodType<Prisma.ProvinceMinOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const ProvinceScalarRelationFilterSchema: z.ZodType<Prisma.ProvinceScalarRelationFilter> = z.object({
+  is: z.lazy(() => ProvinceWhereInputSchema).optional(),
+  isNot: z.lazy(() => ProvinceWhereInputSchema).optional(),
+}).strict();
+
+export const CityListRelationFilterSchema: z.ZodType<Prisma.CityListRelationFilter> = z.object({
+  every: z.lazy(() => CityWhereInputSchema).optional(),
+  some: z.lazy(() => CityWhereInputSchema).optional(),
+  none: z.lazy(() => CityWhereInputSchema).optional(),
+}).strict();
+
+export const CityOrderByRelationAggregateInputSchema: z.ZodType<Prisma.CityOrderByRelationAggregateInput> = z.object({
+  _count: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const DistrictNameProvinceIdCompoundUniqueInputSchema: z.ZodType<Prisma.DistrictNameProvinceIdCompoundUniqueInput> = z.object({
+  name: z.string(),
+  provinceId: z.string(),
+}).strict();
+
+export const DistrictCountOrderByAggregateInputSchema: z.ZodType<Prisma.DistrictCountOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  provinceId: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const DistrictMaxOrderByAggregateInputSchema: z.ZodType<Prisma.DistrictMaxOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  provinceId: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const DistrictMinOrderByAggregateInputSchema: z.ZodType<Prisma.DistrictMinOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  provinceId: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const DistrictScalarRelationFilterSchema: z.ZodType<Prisma.DistrictScalarRelationFilter> = z.object({
+  is: z.lazy(() => DistrictWhereInputSchema).optional(),
+  isNot: z.lazy(() => DistrictWhereInputSchema).optional(),
+}).strict();
+
+export const CityNameDistrictIdCompoundUniqueInputSchema: z.ZodType<Prisma.CityNameDistrictIdCompoundUniqueInput> = z.object({
+  name: z.string(),
+  districtId: z.string(),
+}).strict();
+
+export const CityCountOrderByAggregateInputSchema: z.ZodType<Prisma.CityCountOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  districtId: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const CityMaxOrderByAggregateInputSchema: z.ZodType<Prisma.CityMaxOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  districtId: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const CityMinOrderByAggregateInputSchema: z.ZodType<Prisma.CityMinOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  districtId: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
 export const BrandCarouselCountOrderByAggregateInputSchema: z.ZodType<Prisma.BrandCarouselCountOrderByAggregateInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
@@ -12109,6 +12699,118 @@ export const NewsletterCreaterecipientEmailsInputSchema: z.ZodType<Prisma.Newsle
 export const NewsletterUpdaterecipientEmailsInputSchema: z.ZodType<Prisma.NewsletterUpdaterecipientEmailsInput> = z.object({
   set: z.string().array().optional(),
   push: z.union([ z.string(),z.string().array() ]).optional(),
+}).strict();
+
+export const DistrictCreateNestedManyWithoutProvinceInputSchema: z.ZodType<Prisma.DistrictCreateNestedManyWithoutProvinceInput> = z.object({
+  create: z.union([ z.lazy(() => DistrictCreateWithoutProvinceInputSchema), z.lazy(() => DistrictCreateWithoutProvinceInputSchema).array(), z.lazy(() => DistrictUncheckedCreateWithoutProvinceInputSchema), z.lazy(() => DistrictUncheckedCreateWithoutProvinceInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => DistrictCreateOrConnectWithoutProvinceInputSchema), z.lazy(() => DistrictCreateOrConnectWithoutProvinceInputSchema).array() ]).optional(),
+  createMany: z.lazy(() => DistrictCreateManyProvinceInputEnvelopeSchema).optional(),
+  connect: z.union([ z.lazy(() => DistrictWhereUniqueInputSchema), z.lazy(() => DistrictWhereUniqueInputSchema).array() ]).optional(),
+}).strict();
+
+export const DistrictUncheckedCreateNestedManyWithoutProvinceInputSchema: z.ZodType<Prisma.DistrictUncheckedCreateNestedManyWithoutProvinceInput> = z.object({
+  create: z.union([ z.lazy(() => DistrictCreateWithoutProvinceInputSchema), z.lazy(() => DistrictCreateWithoutProvinceInputSchema).array(), z.lazy(() => DistrictUncheckedCreateWithoutProvinceInputSchema), z.lazy(() => DistrictUncheckedCreateWithoutProvinceInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => DistrictCreateOrConnectWithoutProvinceInputSchema), z.lazy(() => DistrictCreateOrConnectWithoutProvinceInputSchema).array() ]).optional(),
+  createMany: z.lazy(() => DistrictCreateManyProvinceInputEnvelopeSchema).optional(),
+  connect: z.union([ z.lazy(() => DistrictWhereUniqueInputSchema), z.lazy(() => DistrictWhereUniqueInputSchema).array() ]).optional(),
+}).strict();
+
+export const DistrictUpdateManyWithoutProvinceNestedInputSchema: z.ZodType<Prisma.DistrictUpdateManyWithoutProvinceNestedInput> = z.object({
+  create: z.union([ z.lazy(() => DistrictCreateWithoutProvinceInputSchema), z.lazy(() => DistrictCreateWithoutProvinceInputSchema).array(), z.lazy(() => DistrictUncheckedCreateWithoutProvinceInputSchema), z.lazy(() => DistrictUncheckedCreateWithoutProvinceInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => DistrictCreateOrConnectWithoutProvinceInputSchema), z.lazy(() => DistrictCreateOrConnectWithoutProvinceInputSchema).array() ]).optional(),
+  upsert: z.union([ z.lazy(() => DistrictUpsertWithWhereUniqueWithoutProvinceInputSchema), z.lazy(() => DistrictUpsertWithWhereUniqueWithoutProvinceInputSchema).array() ]).optional(),
+  createMany: z.lazy(() => DistrictCreateManyProvinceInputEnvelopeSchema).optional(),
+  set: z.union([ z.lazy(() => DistrictWhereUniqueInputSchema), z.lazy(() => DistrictWhereUniqueInputSchema).array() ]).optional(),
+  disconnect: z.union([ z.lazy(() => DistrictWhereUniqueInputSchema), z.lazy(() => DistrictWhereUniqueInputSchema).array() ]).optional(),
+  delete: z.union([ z.lazy(() => DistrictWhereUniqueInputSchema), z.lazy(() => DistrictWhereUniqueInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => DistrictWhereUniqueInputSchema), z.lazy(() => DistrictWhereUniqueInputSchema).array() ]).optional(),
+  update: z.union([ z.lazy(() => DistrictUpdateWithWhereUniqueWithoutProvinceInputSchema), z.lazy(() => DistrictUpdateWithWhereUniqueWithoutProvinceInputSchema).array() ]).optional(),
+  updateMany: z.union([ z.lazy(() => DistrictUpdateManyWithWhereWithoutProvinceInputSchema), z.lazy(() => DistrictUpdateManyWithWhereWithoutProvinceInputSchema).array() ]).optional(),
+  deleteMany: z.union([ z.lazy(() => DistrictScalarWhereInputSchema), z.lazy(() => DistrictScalarWhereInputSchema).array() ]).optional(),
+}).strict();
+
+export const DistrictUncheckedUpdateManyWithoutProvinceNestedInputSchema: z.ZodType<Prisma.DistrictUncheckedUpdateManyWithoutProvinceNestedInput> = z.object({
+  create: z.union([ z.lazy(() => DistrictCreateWithoutProvinceInputSchema), z.lazy(() => DistrictCreateWithoutProvinceInputSchema).array(), z.lazy(() => DistrictUncheckedCreateWithoutProvinceInputSchema), z.lazy(() => DistrictUncheckedCreateWithoutProvinceInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => DistrictCreateOrConnectWithoutProvinceInputSchema), z.lazy(() => DistrictCreateOrConnectWithoutProvinceInputSchema).array() ]).optional(),
+  upsert: z.union([ z.lazy(() => DistrictUpsertWithWhereUniqueWithoutProvinceInputSchema), z.lazy(() => DistrictUpsertWithWhereUniqueWithoutProvinceInputSchema).array() ]).optional(),
+  createMany: z.lazy(() => DistrictCreateManyProvinceInputEnvelopeSchema).optional(),
+  set: z.union([ z.lazy(() => DistrictWhereUniqueInputSchema), z.lazy(() => DistrictWhereUniqueInputSchema).array() ]).optional(),
+  disconnect: z.union([ z.lazy(() => DistrictWhereUniqueInputSchema), z.lazy(() => DistrictWhereUniqueInputSchema).array() ]).optional(),
+  delete: z.union([ z.lazy(() => DistrictWhereUniqueInputSchema), z.lazy(() => DistrictWhereUniqueInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => DistrictWhereUniqueInputSchema), z.lazy(() => DistrictWhereUniqueInputSchema).array() ]).optional(),
+  update: z.union([ z.lazy(() => DistrictUpdateWithWhereUniqueWithoutProvinceInputSchema), z.lazy(() => DistrictUpdateWithWhereUniqueWithoutProvinceInputSchema).array() ]).optional(),
+  updateMany: z.union([ z.lazy(() => DistrictUpdateManyWithWhereWithoutProvinceInputSchema), z.lazy(() => DistrictUpdateManyWithWhereWithoutProvinceInputSchema).array() ]).optional(),
+  deleteMany: z.union([ z.lazy(() => DistrictScalarWhereInputSchema), z.lazy(() => DistrictScalarWhereInputSchema).array() ]).optional(),
+}).strict();
+
+export const ProvinceCreateNestedOneWithoutDistrictsInputSchema: z.ZodType<Prisma.ProvinceCreateNestedOneWithoutDistrictsInput> = z.object({
+  create: z.union([ z.lazy(() => ProvinceCreateWithoutDistrictsInputSchema), z.lazy(() => ProvinceUncheckedCreateWithoutDistrictsInputSchema) ]).optional(),
+  connectOrCreate: z.lazy(() => ProvinceCreateOrConnectWithoutDistrictsInputSchema).optional(),
+  connect: z.lazy(() => ProvinceWhereUniqueInputSchema).optional(),
+}).strict();
+
+export const CityCreateNestedManyWithoutDistrictInputSchema: z.ZodType<Prisma.CityCreateNestedManyWithoutDistrictInput> = z.object({
+  create: z.union([ z.lazy(() => CityCreateWithoutDistrictInputSchema), z.lazy(() => CityCreateWithoutDistrictInputSchema).array(), z.lazy(() => CityUncheckedCreateWithoutDistrictInputSchema), z.lazy(() => CityUncheckedCreateWithoutDistrictInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => CityCreateOrConnectWithoutDistrictInputSchema), z.lazy(() => CityCreateOrConnectWithoutDistrictInputSchema).array() ]).optional(),
+  createMany: z.lazy(() => CityCreateManyDistrictInputEnvelopeSchema).optional(),
+  connect: z.union([ z.lazy(() => CityWhereUniqueInputSchema), z.lazy(() => CityWhereUniqueInputSchema).array() ]).optional(),
+}).strict();
+
+export const CityUncheckedCreateNestedManyWithoutDistrictInputSchema: z.ZodType<Prisma.CityUncheckedCreateNestedManyWithoutDistrictInput> = z.object({
+  create: z.union([ z.lazy(() => CityCreateWithoutDistrictInputSchema), z.lazy(() => CityCreateWithoutDistrictInputSchema).array(), z.lazy(() => CityUncheckedCreateWithoutDistrictInputSchema), z.lazy(() => CityUncheckedCreateWithoutDistrictInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => CityCreateOrConnectWithoutDistrictInputSchema), z.lazy(() => CityCreateOrConnectWithoutDistrictInputSchema).array() ]).optional(),
+  createMany: z.lazy(() => CityCreateManyDistrictInputEnvelopeSchema).optional(),
+  connect: z.union([ z.lazy(() => CityWhereUniqueInputSchema), z.lazy(() => CityWhereUniqueInputSchema).array() ]).optional(),
+}).strict();
+
+export const ProvinceUpdateOneRequiredWithoutDistrictsNestedInputSchema: z.ZodType<Prisma.ProvinceUpdateOneRequiredWithoutDistrictsNestedInput> = z.object({
+  create: z.union([ z.lazy(() => ProvinceCreateWithoutDistrictsInputSchema), z.lazy(() => ProvinceUncheckedCreateWithoutDistrictsInputSchema) ]).optional(),
+  connectOrCreate: z.lazy(() => ProvinceCreateOrConnectWithoutDistrictsInputSchema).optional(),
+  upsert: z.lazy(() => ProvinceUpsertWithoutDistrictsInputSchema).optional(),
+  connect: z.lazy(() => ProvinceWhereUniqueInputSchema).optional(),
+  update: z.union([ z.lazy(() => ProvinceUpdateToOneWithWhereWithoutDistrictsInputSchema), z.lazy(() => ProvinceUpdateWithoutDistrictsInputSchema), z.lazy(() => ProvinceUncheckedUpdateWithoutDistrictsInputSchema) ]).optional(),
+}).strict();
+
+export const CityUpdateManyWithoutDistrictNestedInputSchema: z.ZodType<Prisma.CityUpdateManyWithoutDistrictNestedInput> = z.object({
+  create: z.union([ z.lazy(() => CityCreateWithoutDistrictInputSchema), z.lazy(() => CityCreateWithoutDistrictInputSchema).array(), z.lazy(() => CityUncheckedCreateWithoutDistrictInputSchema), z.lazy(() => CityUncheckedCreateWithoutDistrictInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => CityCreateOrConnectWithoutDistrictInputSchema), z.lazy(() => CityCreateOrConnectWithoutDistrictInputSchema).array() ]).optional(),
+  upsert: z.union([ z.lazy(() => CityUpsertWithWhereUniqueWithoutDistrictInputSchema), z.lazy(() => CityUpsertWithWhereUniqueWithoutDistrictInputSchema).array() ]).optional(),
+  createMany: z.lazy(() => CityCreateManyDistrictInputEnvelopeSchema).optional(),
+  set: z.union([ z.lazy(() => CityWhereUniqueInputSchema), z.lazy(() => CityWhereUniqueInputSchema).array() ]).optional(),
+  disconnect: z.union([ z.lazy(() => CityWhereUniqueInputSchema), z.lazy(() => CityWhereUniqueInputSchema).array() ]).optional(),
+  delete: z.union([ z.lazy(() => CityWhereUniqueInputSchema), z.lazy(() => CityWhereUniqueInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => CityWhereUniqueInputSchema), z.lazy(() => CityWhereUniqueInputSchema).array() ]).optional(),
+  update: z.union([ z.lazy(() => CityUpdateWithWhereUniqueWithoutDistrictInputSchema), z.lazy(() => CityUpdateWithWhereUniqueWithoutDistrictInputSchema).array() ]).optional(),
+  updateMany: z.union([ z.lazy(() => CityUpdateManyWithWhereWithoutDistrictInputSchema), z.lazy(() => CityUpdateManyWithWhereWithoutDistrictInputSchema).array() ]).optional(),
+  deleteMany: z.union([ z.lazy(() => CityScalarWhereInputSchema), z.lazy(() => CityScalarWhereInputSchema).array() ]).optional(),
+}).strict();
+
+export const CityUncheckedUpdateManyWithoutDistrictNestedInputSchema: z.ZodType<Prisma.CityUncheckedUpdateManyWithoutDistrictNestedInput> = z.object({
+  create: z.union([ z.lazy(() => CityCreateWithoutDistrictInputSchema), z.lazy(() => CityCreateWithoutDistrictInputSchema).array(), z.lazy(() => CityUncheckedCreateWithoutDistrictInputSchema), z.lazy(() => CityUncheckedCreateWithoutDistrictInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => CityCreateOrConnectWithoutDistrictInputSchema), z.lazy(() => CityCreateOrConnectWithoutDistrictInputSchema).array() ]).optional(),
+  upsert: z.union([ z.lazy(() => CityUpsertWithWhereUniqueWithoutDistrictInputSchema), z.lazy(() => CityUpsertWithWhereUniqueWithoutDistrictInputSchema).array() ]).optional(),
+  createMany: z.lazy(() => CityCreateManyDistrictInputEnvelopeSchema).optional(),
+  set: z.union([ z.lazy(() => CityWhereUniqueInputSchema), z.lazy(() => CityWhereUniqueInputSchema).array() ]).optional(),
+  disconnect: z.union([ z.lazy(() => CityWhereUniqueInputSchema), z.lazy(() => CityWhereUniqueInputSchema).array() ]).optional(),
+  delete: z.union([ z.lazy(() => CityWhereUniqueInputSchema), z.lazy(() => CityWhereUniqueInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => CityWhereUniqueInputSchema), z.lazy(() => CityWhereUniqueInputSchema).array() ]).optional(),
+  update: z.union([ z.lazy(() => CityUpdateWithWhereUniqueWithoutDistrictInputSchema), z.lazy(() => CityUpdateWithWhereUniqueWithoutDistrictInputSchema).array() ]).optional(),
+  updateMany: z.union([ z.lazy(() => CityUpdateManyWithWhereWithoutDistrictInputSchema), z.lazy(() => CityUpdateManyWithWhereWithoutDistrictInputSchema).array() ]).optional(),
+  deleteMany: z.union([ z.lazy(() => CityScalarWhereInputSchema), z.lazy(() => CityScalarWhereInputSchema).array() ]).optional(),
+}).strict();
+
+export const DistrictCreateNestedOneWithoutCitiesInputSchema: z.ZodType<Prisma.DistrictCreateNestedOneWithoutCitiesInput> = z.object({
+  create: z.union([ z.lazy(() => DistrictCreateWithoutCitiesInputSchema), z.lazy(() => DistrictUncheckedCreateWithoutCitiesInputSchema) ]).optional(),
+  connectOrCreate: z.lazy(() => DistrictCreateOrConnectWithoutCitiesInputSchema).optional(),
+  connect: z.lazy(() => DistrictWhereUniqueInputSchema).optional(),
+}).strict();
+
+export const DistrictUpdateOneRequiredWithoutCitiesNestedInputSchema: z.ZodType<Prisma.DistrictUpdateOneRequiredWithoutCitiesNestedInput> = z.object({
+  create: z.union([ z.lazy(() => DistrictCreateWithoutCitiesInputSchema), z.lazy(() => DistrictUncheckedCreateWithoutCitiesInputSchema) ]).optional(),
+  connectOrCreate: z.lazy(() => DistrictCreateOrConnectWithoutCitiesInputSchema).optional(),
+  upsert: z.lazy(() => DistrictUpsertWithoutCitiesInputSchema).optional(),
+  connect: z.lazy(() => DistrictWhereUniqueInputSchema).optional(),
+  update: z.union([ z.lazy(() => DistrictUpdateToOneWithWhereWithoutCitiesInputSchema), z.lazy(() => DistrictUpdateWithoutCitiesInputSchema), z.lazy(() => DistrictUncheckedUpdateWithoutCitiesInputSchema) ]).optional(),
 }).strict();
 
 export const NestedStringFilterSchema: z.ZodType<Prisma.NestedStringFilter> = z.object({
@@ -21680,6 +22382,196 @@ export const AdUpdateManyWithWhereWithoutPartCategoryInputSchema: z.ZodType<Pris
   data: z.union([ z.lazy(() => AdUpdateManyMutationInputSchema), z.lazy(() => AdUncheckedUpdateManyWithoutPartCategoryInputSchema) ]),
 }).strict();
 
+export const DistrictCreateWithoutProvinceInputSchema: z.ZodType<Prisma.DistrictCreateWithoutProvinceInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+  cities: z.lazy(() => CityCreateNestedManyWithoutDistrictInputSchema).optional(),
+}).strict();
+
+export const DistrictUncheckedCreateWithoutProvinceInputSchema: z.ZodType<Prisma.DistrictUncheckedCreateWithoutProvinceInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+  cities: z.lazy(() => CityUncheckedCreateNestedManyWithoutDistrictInputSchema).optional(),
+}).strict();
+
+export const DistrictCreateOrConnectWithoutProvinceInputSchema: z.ZodType<Prisma.DistrictCreateOrConnectWithoutProvinceInput> = z.object({
+  where: z.lazy(() => DistrictWhereUniqueInputSchema),
+  create: z.union([ z.lazy(() => DistrictCreateWithoutProvinceInputSchema), z.lazy(() => DistrictUncheckedCreateWithoutProvinceInputSchema) ]),
+}).strict();
+
+export const DistrictCreateManyProvinceInputEnvelopeSchema: z.ZodType<Prisma.DistrictCreateManyProvinceInputEnvelope> = z.object({
+  data: z.union([ z.lazy(() => DistrictCreateManyProvinceInputSchema), z.lazy(() => DistrictCreateManyProvinceInputSchema).array() ]),
+}).strict();
+
+export const DistrictUpsertWithWhereUniqueWithoutProvinceInputSchema: z.ZodType<Prisma.DistrictUpsertWithWhereUniqueWithoutProvinceInput> = z.object({
+  where: z.lazy(() => DistrictWhereUniqueInputSchema),
+  update: z.union([ z.lazy(() => DistrictUpdateWithoutProvinceInputSchema), z.lazy(() => DistrictUncheckedUpdateWithoutProvinceInputSchema) ]),
+  create: z.union([ z.lazy(() => DistrictCreateWithoutProvinceInputSchema), z.lazy(() => DistrictUncheckedCreateWithoutProvinceInputSchema) ]),
+}).strict();
+
+export const DistrictUpdateWithWhereUniqueWithoutProvinceInputSchema: z.ZodType<Prisma.DistrictUpdateWithWhereUniqueWithoutProvinceInput> = z.object({
+  where: z.lazy(() => DistrictWhereUniqueInputSchema),
+  data: z.union([ z.lazy(() => DistrictUpdateWithoutProvinceInputSchema), z.lazy(() => DistrictUncheckedUpdateWithoutProvinceInputSchema) ]),
+}).strict();
+
+export const DistrictUpdateManyWithWhereWithoutProvinceInputSchema: z.ZodType<Prisma.DistrictUpdateManyWithWhereWithoutProvinceInput> = z.object({
+  where: z.lazy(() => DistrictScalarWhereInputSchema),
+  data: z.union([ z.lazy(() => DistrictUpdateManyMutationInputSchema), z.lazy(() => DistrictUncheckedUpdateManyWithoutProvinceInputSchema) ]),
+}).strict();
+
+export const DistrictScalarWhereInputSchema: z.ZodType<Prisma.DistrictScalarWhereInput> = z.object({
+  AND: z.union([ z.lazy(() => DistrictScalarWhereInputSchema), z.lazy(() => DistrictScalarWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => DistrictScalarWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => DistrictScalarWhereInputSchema), z.lazy(() => DistrictScalarWhereInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  provinceId: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+}).strict();
+
+export const ProvinceCreateWithoutDistrictsInputSchema: z.ZodType<Prisma.ProvinceCreateWithoutDistrictsInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const ProvinceUncheckedCreateWithoutDistrictsInputSchema: z.ZodType<Prisma.ProvinceUncheckedCreateWithoutDistrictsInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const ProvinceCreateOrConnectWithoutDistrictsInputSchema: z.ZodType<Prisma.ProvinceCreateOrConnectWithoutDistrictsInput> = z.object({
+  where: z.lazy(() => ProvinceWhereUniqueInputSchema),
+  create: z.union([ z.lazy(() => ProvinceCreateWithoutDistrictsInputSchema), z.lazy(() => ProvinceUncheckedCreateWithoutDistrictsInputSchema) ]),
+}).strict();
+
+export const CityCreateWithoutDistrictInputSchema: z.ZodType<Prisma.CityCreateWithoutDistrictInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const CityUncheckedCreateWithoutDistrictInputSchema: z.ZodType<Prisma.CityUncheckedCreateWithoutDistrictInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const CityCreateOrConnectWithoutDistrictInputSchema: z.ZodType<Prisma.CityCreateOrConnectWithoutDistrictInput> = z.object({
+  where: z.lazy(() => CityWhereUniqueInputSchema),
+  create: z.union([ z.lazy(() => CityCreateWithoutDistrictInputSchema), z.lazy(() => CityUncheckedCreateWithoutDistrictInputSchema) ]),
+}).strict();
+
+export const CityCreateManyDistrictInputEnvelopeSchema: z.ZodType<Prisma.CityCreateManyDistrictInputEnvelope> = z.object({
+  data: z.union([ z.lazy(() => CityCreateManyDistrictInputSchema), z.lazy(() => CityCreateManyDistrictInputSchema).array() ]),
+}).strict();
+
+export const ProvinceUpsertWithoutDistrictsInputSchema: z.ZodType<Prisma.ProvinceUpsertWithoutDistrictsInput> = z.object({
+  update: z.union([ z.lazy(() => ProvinceUpdateWithoutDistrictsInputSchema), z.lazy(() => ProvinceUncheckedUpdateWithoutDistrictsInputSchema) ]),
+  create: z.union([ z.lazy(() => ProvinceCreateWithoutDistrictsInputSchema), z.lazy(() => ProvinceUncheckedCreateWithoutDistrictsInputSchema) ]),
+  where: z.lazy(() => ProvinceWhereInputSchema).optional(),
+}).strict();
+
+export const ProvinceUpdateToOneWithWhereWithoutDistrictsInputSchema: z.ZodType<Prisma.ProvinceUpdateToOneWithWhereWithoutDistrictsInput> = z.object({
+  where: z.lazy(() => ProvinceWhereInputSchema).optional(),
+  data: z.union([ z.lazy(() => ProvinceUpdateWithoutDistrictsInputSchema), z.lazy(() => ProvinceUncheckedUpdateWithoutDistrictsInputSchema) ]),
+}).strict();
+
+export const ProvinceUpdateWithoutDistrictsInputSchema: z.ZodType<Prisma.ProvinceUpdateWithoutDistrictsInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const ProvinceUncheckedUpdateWithoutDistrictsInputSchema: z.ZodType<Prisma.ProvinceUncheckedUpdateWithoutDistrictsInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const CityUpsertWithWhereUniqueWithoutDistrictInputSchema: z.ZodType<Prisma.CityUpsertWithWhereUniqueWithoutDistrictInput> = z.object({
+  where: z.lazy(() => CityWhereUniqueInputSchema),
+  update: z.union([ z.lazy(() => CityUpdateWithoutDistrictInputSchema), z.lazy(() => CityUncheckedUpdateWithoutDistrictInputSchema) ]),
+  create: z.union([ z.lazy(() => CityCreateWithoutDistrictInputSchema), z.lazy(() => CityUncheckedCreateWithoutDistrictInputSchema) ]),
+}).strict();
+
+export const CityUpdateWithWhereUniqueWithoutDistrictInputSchema: z.ZodType<Prisma.CityUpdateWithWhereUniqueWithoutDistrictInput> = z.object({
+  where: z.lazy(() => CityWhereUniqueInputSchema),
+  data: z.union([ z.lazy(() => CityUpdateWithoutDistrictInputSchema), z.lazy(() => CityUncheckedUpdateWithoutDistrictInputSchema) ]),
+}).strict();
+
+export const CityUpdateManyWithWhereWithoutDistrictInputSchema: z.ZodType<Prisma.CityUpdateManyWithWhereWithoutDistrictInput> = z.object({
+  where: z.lazy(() => CityScalarWhereInputSchema),
+  data: z.union([ z.lazy(() => CityUpdateManyMutationInputSchema), z.lazy(() => CityUncheckedUpdateManyWithoutDistrictInputSchema) ]),
+}).strict();
+
+export const CityScalarWhereInputSchema: z.ZodType<Prisma.CityScalarWhereInput> = z.object({
+  AND: z.union([ z.lazy(() => CityScalarWhereInputSchema), z.lazy(() => CityScalarWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => CityScalarWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => CityScalarWhereInputSchema), z.lazy(() => CityScalarWhereInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  districtId: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+}).strict();
+
+export const DistrictCreateWithoutCitiesInputSchema: z.ZodType<Prisma.DistrictCreateWithoutCitiesInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+  province: z.lazy(() => ProvinceCreateNestedOneWithoutDistrictsInputSchema),
+}).strict();
+
+export const DistrictUncheckedCreateWithoutCitiesInputSchema: z.ZodType<Prisma.DistrictUncheckedCreateWithoutCitiesInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  provinceId: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const DistrictCreateOrConnectWithoutCitiesInputSchema: z.ZodType<Prisma.DistrictCreateOrConnectWithoutCitiesInput> = z.object({
+  where: z.lazy(() => DistrictWhereUniqueInputSchema),
+  create: z.union([ z.lazy(() => DistrictCreateWithoutCitiesInputSchema), z.lazy(() => DistrictUncheckedCreateWithoutCitiesInputSchema) ]),
+}).strict();
+
+export const DistrictUpsertWithoutCitiesInputSchema: z.ZodType<Prisma.DistrictUpsertWithoutCitiesInput> = z.object({
+  update: z.union([ z.lazy(() => DistrictUpdateWithoutCitiesInputSchema), z.lazy(() => DistrictUncheckedUpdateWithoutCitiesInputSchema) ]),
+  create: z.union([ z.lazy(() => DistrictCreateWithoutCitiesInputSchema), z.lazy(() => DistrictUncheckedCreateWithoutCitiesInputSchema) ]),
+  where: z.lazy(() => DistrictWhereInputSchema).optional(),
+}).strict();
+
+export const DistrictUpdateToOneWithWhereWithoutCitiesInputSchema: z.ZodType<Prisma.DistrictUpdateToOneWithWhereWithoutCitiesInput> = z.object({
+  where: z.lazy(() => DistrictWhereInputSchema).optional(),
+  data: z.union([ z.lazy(() => DistrictUpdateWithoutCitiesInputSchema), z.lazy(() => DistrictUncheckedUpdateWithoutCitiesInputSchema) ]),
+}).strict();
+
+export const DistrictUpdateWithoutCitiesInputSchema: z.ZodType<Prisma.DistrictUpdateWithoutCitiesInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  province: z.lazy(() => ProvinceUpdateOneRequiredWithoutDistrictsNestedInputSchema).optional(),
+}).strict();
+
+export const DistrictUncheckedUpdateWithoutCitiesInputSchema: z.ZodType<Prisma.DistrictUncheckedUpdateWithoutCitiesInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  provinceId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
 export const SessionCreateManyUserInputSchema: z.ZodType<Prisma.SessionCreateManyUserInput> = z.object({
   id: z.string(),
   expiresAt: z.coerce.date(),
@@ -23950,6 +24842,58 @@ export const AdUncheckedUpdateManyWithoutPartCategoryInputSchema: z.ZodType<Pris
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
+export const DistrictCreateManyProvinceInputSchema: z.ZodType<Prisma.DistrictCreateManyProvinceInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const DistrictUpdateWithoutProvinceInputSchema: z.ZodType<Prisma.DistrictUpdateWithoutProvinceInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  cities: z.lazy(() => CityUpdateManyWithoutDistrictNestedInputSchema).optional(),
+}).strict();
+
+export const DistrictUncheckedUpdateWithoutProvinceInputSchema: z.ZodType<Prisma.DistrictUncheckedUpdateWithoutProvinceInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  cities: z.lazy(() => CityUncheckedUpdateManyWithoutDistrictNestedInputSchema).optional(),
+}).strict();
+
+export const DistrictUncheckedUpdateManyWithoutProvinceInputSchema: z.ZodType<Prisma.DistrictUncheckedUpdateManyWithoutProvinceInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const CityCreateManyDistrictInputSchema: z.ZodType<Prisma.CityCreateManyDistrictInput> = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const CityUpdateWithoutDistrictInputSchema: z.ZodType<Prisma.CityUpdateWithoutDistrictInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const CityUncheckedUpdateWithoutDistrictInputSchema: z.ZodType<Prisma.CityUncheckedUpdateWithoutDistrictInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const CityUncheckedUpdateManyWithoutDistrictInputSchema: z.ZodType<Prisma.CityUncheckedUpdateManyWithoutDistrictInput> = z.object({
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
 /////////////////////////////////////////
 // ARGS
 /////////////////////////////////////////
@@ -25908,6 +26852,192 @@ export const NewsletterFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.NewsletterF
   where: NewsletterWhereUniqueInputSchema, 
 }).strict();
 
+export const ProvinceFindFirstArgsSchema: z.ZodType<Prisma.ProvinceFindFirstArgs> = z.object({
+  select: ProvinceSelectSchema.optional(),
+  include: ProvinceIncludeSchema.optional(),
+  where: ProvinceWhereInputSchema.optional(), 
+  orderBy: z.union([ ProvinceOrderByWithRelationInputSchema.array(), ProvinceOrderByWithRelationInputSchema ]).optional(),
+  cursor: ProvinceWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ ProvinceScalarFieldEnumSchema, ProvinceScalarFieldEnumSchema.array() ]).optional(),
+}).strict();
+
+export const ProvinceFindFirstOrThrowArgsSchema: z.ZodType<Prisma.ProvinceFindFirstOrThrowArgs> = z.object({
+  select: ProvinceSelectSchema.optional(),
+  include: ProvinceIncludeSchema.optional(),
+  where: ProvinceWhereInputSchema.optional(), 
+  orderBy: z.union([ ProvinceOrderByWithRelationInputSchema.array(), ProvinceOrderByWithRelationInputSchema ]).optional(),
+  cursor: ProvinceWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ ProvinceScalarFieldEnumSchema, ProvinceScalarFieldEnumSchema.array() ]).optional(),
+}).strict();
+
+export const ProvinceFindManyArgsSchema: z.ZodType<Prisma.ProvinceFindManyArgs> = z.object({
+  select: ProvinceSelectSchema.optional(),
+  include: ProvinceIncludeSchema.optional(),
+  where: ProvinceWhereInputSchema.optional(), 
+  orderBy: z.union([ ProvinceOrderByWithRelationInputSchema.array(), ProvinceOrderByWithRelationInputSchema ]).optional(),
+  cursor: ProvinceWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ ProvinceScalarFieldEnumSchema, ProvinceScalarFieldEnumSchema.array() ]).optional(),
+}).strict();
+
+export const ProvinceAggregateArgsSchema: z.ZodType<Prisma.ProvinceAggregateArgs> = z.object({
+  where: ProvinceWhereInputSchema.optional(), 
+  orderBy: z.union([ ProvinceOrderByWithRelationInputSchema.array(), ProvinceOrderByWithRelationInputSchema ]).optional(),
+  cursor: ProvinceWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict();
+
+export const ProvinceGroupByArgsSchema: z.ZodType<Prisma.ProvinceGroupByArgs> = z.object({
+  where: ProvinceWhereInputSchema.optional(), 
+  orderBy: z.union([ ProvinceOrderByWithAggregationInputSchema.array(), ProvinceOrderByWithAggregationInputSchema ]).optional(),
+  by: ProvinceScalarFieldEnumSchema.array(), 
+  having: ProvinceScalarWhereWithAggregatesInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict();
+
+export const ProvinceFindUniqueArgsSchema: z.ZodType<Prisma.ProvinceFindUniqueArgs> = z.object({
+  select: ProvinceSelectSchema.optional(),
+  include: ProvinceIncludeSchema.optional(),
+  where: ProvinceWhereUniqueInputSchema, 
+}).strict();
+
+export const ProvinceFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.ProvinceFindUniqueOrThrowArgs> = z.object({
+  select: ProvinceSelectSchema.optional(),
+  include: ProvinceIncludeSchema.optional(),
+  where: ProvinceWhereUniqueInputSchema, 
+}).strict();
+
+export const DistrictFindFirstArgsSchema: z.ZodType<Prisma.DistrictFindFirstArgs> = z.object({
+  select: DistrictSelectSchema.optional(),
+  include: DistrictIncludeSchema.optional(),
+  where: DistrictWhereInputSchema.optional(), 
+  orderBy: z.union([ DistrictOrderByWithRelationInputSchema.array(), DistrictOrderByWithRelationInputSchema ]).optional(),
+  cursor: DistrictWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ DistrictScalarFieldEnumSchema, DistrictScalarFieldEnumSchema.array() ]).optional(),
+}).strict();
+
+export const DistrictFindFirstOrThrowArgsSchema: z.ZodType<Prisma.DistrictFindFirstOrThrowArgs> = z.object({
+  select: DistrictSelectSchema.optional(),
+  include: DistrictIncludeSchema.optional(),
+  where: DistrictWhereInputSchema.optional(), 
+  orderBy: z.union([ DistrictOrderByWithRelationInputSchema.array(), DistrictOrderByWithRelationInputSchema ]).optional(),
+  cursor: DistrictWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ DistrictScalarFieldEnumSchema, DistrictScalarFieldEnumSchema.array() ]).optional(),
+}).strict();
+
+export const DistrictFindManyArgsSchema: z.ZodType<Prisma.DistrictFindManyArgs> = z.object({
+  select: DistrictSelectSchema.optional(),
+  include: DistrictIncludeSchema.optional(),
+  where: DistrictWhereInputSchema.optional(), 
+  orderBy: z.union([ DistrictOrderByWithRelationInputSchema.array(), DistrictOrderByWithRelationInputSchema ]).optional(),
+  cursor: DistrictWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ DistrictScalarFieldEnumSchema, DistrictScalarFieldEnumSchema.array() ]).optional(),
+}).strict();
+
+export const DistrictAggregateArgsSchema: z.ZodType<Prisma.DistrictAggregateArgs> = z.object({
+  where: DistrictWhereInputSchema.optional(), 
+  orderBy: z.union([ DistrictOrderByWithRelationInputSchema.array(), DistrictOrderByWithRelationInputSchema ]).optional(),
+  cursor: DistrictWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict();
+
+export const DistrictGroupByArgsSchema: z.ZodType<Prisma.DistrictGroupByArgs> = z.object({
+  where: DistrictWhereInputSchema.optional(), 
+  orderBy: z.union([ DistrictOrderByWithAggregationInputSchema.array(), DistrictOrderByWithAggregationInputSchema ]).optional(),
+  by: DistrictScalarFieldEnumSchema.array(), 
+  having: DistrictScalarWhereWithAggregatesInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict();
+
+export const DistrictFindUniqueArgsSchema: z.ZodType<Prisma.DistrictFindUniqueArgs> = z.object({
+  select: DistrictSelectSchema.optional(),
+  include: DistrictIncludeSchema.optional(),
+  where: DistrictWhereUniqueInputSchema, 
+}).strict();
+
+export const DistrictFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.DistrictFindUniqueOrThrowArgs> = z.object({
+  select: DistrictSelectSchema.optional(),
+  include: DistrictIncludeSchema.optional(),
+  where: DistrictWhereUniqueInputSchema, 
+}).strict();
+
+export const CityFindFirstArgsSchema: z.ZodType<Prisma.CityFindFirstArgs> = z.object({
+  select: CitySelectSchema.optional(),
+  include: CityIncludeSchema.optional(),
+  where: CityWhereInputSchema.optional(), 
+  orderBy: z.union([ CityOrderByWithRelationInputSchema.array(), CityOrderByWithRelationInputSchema ]).optional(),
+  cursor: CityWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ CityScalarFieldEnumSchema, CityScalarFieldEnumSchema.array() ]).optional(),
+}).strict();
+
+export const CityFindFirstOrThrowArgsSchema: z.ZodType<Prisma.CityFindFirstOrThrowArgs> = z.object({
+  select: CitySelectSchema.optional(),
+  include: CityIncludeSchema.optional(),
+  where: CityWhereInputSchema.optional(), 
+  orderBy: z.union([ CityOrderByWithRelationInputSchema.array(), CityOrderByWithRelationInputSchema ]).optional(),
+  cursor: CityWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ CityScalarFieldEnumSchema, CityScalarFieldEnumSchema.array() ]).optional(),
+}).strict();
+
+export const CityFindManyArgsSchema: z.ZodType<Prisma.CityFindManyArgs> = z.object({
+  select: CitySelectSchema.optional(),
+  include: CityIncludeSchema.optional(),
+  where: CityWhereInputSchema.optional(), 
+  orderBy: z.union([ CityOrderByWithRelationInputSchema.array(), CityOrderByWithRelationInputSchema ]).optional(),
+  cursor: CityWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ CityScalarFieldEnumSchema, CityScalarFieldEnumSchema.array() ]).optional(),
+}).strict();
+
+export const CityAggregateArgsSchema: z.ZodType<Prisma.CityAggregateArgs> = z.object({
+  where: CityWhereInputSchema.optional(), 
+  orderBy: z.union([ CityOrderByWithRelationInputSchema.array(), CityOrderByWithRelationInputSchema ]).optional(),
+  cursor: CityWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict();
+
+export const CityGroupByArgsSchema: z.ZodType<Prisma.CityGroupByArgs> = z.object({
+  where: CityWhereInputSchema.optional(), 
+  orderBy: z.union([ CityOrderByWithAggregationInputSchema.array(), CityOrderByWithAggregationInputSchema ]).optional(),
+  by: CityScalarFieldEnumSchema.array(), 
+  having: CityScalarWhereWithAggregatesInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict();
+
+export const CityFindUniqueArgsSchema: z.ZodType<Prisma.CityFindUniqueArgs> = z.object({
+  select: CitySelectSchema.optional(),
+  include: CityIncludeSchema.optional(),
+  where: CityWhereUniqueInputSchema, 
+}).strict();
+
+export const CityFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.CityFindUniqueOrThrowArgs> = z.object({
+  select: CitySelectSchema.optional(),
+  include: CityIncludeSchema.optional(),
+  where: CityWhereUniqueInputSchema, 
+}).strict();
+
 export const BrandCarouselFindFirstArgsSchema: z.ZodType<Prisma.BrandCarouselFindFirstArgs> = z.object({
   select: BrandCarouselSelectSchema.optional(),
   where: BrandCarouselWhereInputSchema.optional(), 
@@ -27396,6 +28526,132 @@ export const NewsletterUpdateManyArgsSchema: z.ZodType<Prisma.NewsletterUpdateMa
 
 export const NewsletterDeleteManyArgsSchema: z.ZodType<Prisma.NewsletterDeleteManyArgs> = z.object({
   where: NewsletterWhereInputSchema.optional(), 
+  limit: z.number().optional(),
+}).strict();
+
+export const ProvinceCreateArgsSchema: z.ZodType<Prisma.ProvinceCreateArgs> = z.object({
+  select: ProvinceSelectSchema.optional(),
+  include: ProvinceIncludeSchema.optional(),
+  data: z.union([ ProvinceCreateInputSchema, ProvinceUncheckedCreateInputSchema ]),
+}).strict();
+
+export const ProvinceUpsertArgsSchema: z.ZodType<Prisma.ProvinceUpsertArgs> = z.object({
+  select: ProvinceSelectSchema.optional(),
+  include: ProvinceIncludeSchema.optional(),
+  where: ProvinceWhereUniqueInputSchema, 
+  create: z.union([ ProvinceCreateInputSchema, ProvinceUncheckedCreateInputSchema ]),
+  update: z.union([ ProvinceUpdateInputSchema, ProvinceUncheckedUpdateInputSchema ]),
+}).strict();
+
+export const ProvinceCreateManyArgsSchema: z.ZodType<Prisma.ProvinceCreateManyArgs> = z.object({
+  data: z.union([ ProvinceCreateManyInputSchema, ProvinceCreateManyInputSchema.array() ]),
+}).strict();
+
+export const ProvinceDeleteArgsSchema: z.ZodType<Prisma.ProvinceDeleteArgs> = z.object({
+  select: ProvinceSelectSchema.optional(),
+  include: ProvinceIncludeSchema.optional(),
+  where: ProvinceWhereUniqueInputSchema, 
+}).strict();
+
+export const ProvinceUpdateArgsSchema: z.ZodType<Prisma.ProvinceUpdateArgs> = z.object({
+  select: ProvinceSelectSchema.optional(),
+  include: ProvinceIncludeSchema.optional(),
+  data: z.union([ ProvinceUpdateInputSchema, ProvinceUncheckedUpdateInputSchema ]),
+  where: ProvinceWhereUniqueInputSchema, 
+}).strict();
+
+export const ProvinceUpdateManyArgsSchema: z.ZodType<Prisma.ProvinceUpdateManyArgs> = z.object({
+  data: z.union([ ProvinceUpdateManyMutationInputSchema, ProvinceUncheckedUpdateManyInputSchema ]),
+  where: ProvinceWhereInputSchema.optional(), 
+  limit: z.number().optional(),
+}).strict();
+
+export const ProvinceDeleteManyArgsSchema: z.ZodType<Prisma.ProvinceDeleteManyArgs> = z.object({
+  where: ProvinceWhereInputSchema.optional(), 
+  limit: z.number().optional(),
+}).strict();
+
+export const DistrictCreateArgsSchema: z.ZodType<Prisma.DistrictCreateArgs> = z.object({
+  select: DistrictSelectSchema.optional(),
+  include: DistrictIncludeSchema.optional(),
+  data: z.union([ DistrictCreateInputSchema, DistrictUncheckedCreateInputSchema ]),
+}).strict();
+
+export const DistrictUpsertArgsSchema: z.ZodType<Prisma.DistrictUpsertArgs> = z.object({
+  select: DistrictSelectSchema.optional(),
+  include: DistrictIncludeSchema.optional(),
+  where: DistrictWhereUniqueInputSchema, 
+  create: z.union([ DistrictCreateInputSchema, DistrictUncheckedCreateInputSchema ]),
+  update: z.union([ DistrictUpdateInputSchema, DistrictUncheckedUpdateInputSchema ]),
+}).strict();
+
+export const DistrictCreateManyArgsSchema: z.ZodType<Prisma.DistrictCreateManyArgs> = z.object({
+  data: z.union([ DistrictCreateManyInputSchema, DistrictCreateManyInputSchema.array() ]),
+}).strict();
+
+export const DistrictDeleteArgsSchema: z.ZodType<Prisma.DistrictDeleteArgs> = z.object({
+  select: DistrictSelectSchema.optional(),
+  include: DistrictIncludeSchema.optional(),
+  where: DistrictWhereUniqueInputSchema, 
+}).strict();
+
+export const DistrictUpdateArgsSchema: z.ZodType<Prisma.DistrictUpdateArgs> = z.object({
+  select: DistrictSelectSchema.optional(),
+  include: DistrictIncludeSchema.optional(),
+  data: z.union([ DistrictUpdateInputSchema, DistrictUncheckedUpdateInputSchema ]),
+  where: DistrictWhereUniqueInputSchema, 
+}).strict();
+
+export const DistrictUpdateManyArgsSchema: z.ZodType<Prisma.DistrictUpdateManyArgs> = z.object({
+  data: z.union([ DistrictUpdateManyMutationInputSchema, DistrictUncheckedUpdateManyInputSchema ]),
+  where: DistrictWhereInputSchema.optional(), 
+  limit: z.number().optional(),
+}).strict();
+
+export const DistrictDeleteManyArgsSchema: z.ZodType<Prisma.DistrictDeleteManyArgs> = z.object({
+  where: DistrictWhereInputSchema.optional(), 
+  limit: z.number().optional(),
+}).strict();
+
+export const CityCreateArgsSchema: z.ZodType<Prisma.CityCreateArgs> = z.object({
+  select: CitySelectSchema.optional(),
+  include: CityIncludeSchema.optional(),
+  data: z.union([ CityCreateInputSchema, CityUncheckedCreateInputSchema ]),
+}).strict();
+
+export const CityUpsertArgsSchema: z.ZodType<Prisma.CityUpsertArgs> = z.object({
+  select: CitySelectSchema.optional(),
+  include: CityIncludeSchema.optional(),
+  where: CityWhereUniqueInputSchema, 
+  create: z.union([ CityCreateInputSchema, CityUncheckedCreateInputSchema ]),
+  update: z.union([ CityUpdateInputSchema, CityUncheckedUpdateInputSchema ]),
+}).strict();
+
+export const CityCreateManyArgsSchema: z.ZodType<Prisma.CityCreateManyArgs> = z.object({
+  data: z.union([ CityCreateManyInputSchema, CityCreateManyInputSchema.array() ]),
+}).strict();
+
+export const CityDeleteArgsSchema: z.ZodType<Prisma.CityDeleteArgs> = z.object({
+  select: CitySelectSchema.optional(),
+  include: CityIncludeSchema.optional(),
+  where: CityWhereUniqueInputSchema, 
+}).strict();
+
+export const CityUpdateArgsSchema: z.ZodType<Prisma.CityUpdateArgs> = z.object({
+  select: CitySelectSchema.optional(),
+  include: CityIncludeSchema.optional(),
+  data: z.union([ CityUpdateInputSchema, CityUncheckedUpdateInputSchema ]),
+  where: CityWhereUniqueInputSchema, 
+}).strict();
+
+export const CityUpdateManyArgsSchema: z.ZodType<Prisma.CityUpdateManyArgs> = z.object({
+  data: z.union([ CityUpdateManyMutationInputSchema, CityUncheckedUpdateManyInputSchema ]),
+  where: CityWhereInputSchema.optional(), 
+  limit: z.number().optional(),
+}).strict();
+
+export const CityDeleteManyArgsSchema: z.ZodType<Prisma.CityDeleteManyArgs> = z.object({
+  where: CityWhereInputSchema.optional(), 
   limit: z.number().optional(),
 }).strict();
 

@@ -58,7 +58,8 @@ import { MediaGallery } from "@/modules/media/components/media-gallery";
 import type { MediaFile } from "@/modules/media/types";
 import { CreateAdSchema } from "@/server/routes/ad/ad.schemas";
 import { authClient } from "@/lib/auth-client";
-import { locationData, getManufactureYears } from "@/lib/location-data";
+import { getManufactureYears } from "@/lib/location-data";
+import { useLocations } from "@/hooks/use-locations";
 import { CitySearchDropdown } from "@/components/ui/city-search-dropdown";
 import { ModelSearchDropdown } from "@/components/ui/model-search-dropdown";
 import { GradeSearchDropdown } from "@/components/ui/grade-search-dropdown";
@@ -112,6 +113,9 @@ export function AdForm({
   // const user = session?.user; // reserved for future use
   void session; // suppress unused warning
   // const isAdmin = (user as any)?.role === "admin"; // reserved for future use
+
+  // Fetch location data from DB
+  const { locationData } = useLocations();
 
   // Fetch auto part categories at top level
   const { data: autoPartCategories = [] } = useGetAutoPartCategories(true);

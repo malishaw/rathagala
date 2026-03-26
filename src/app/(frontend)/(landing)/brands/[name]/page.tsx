@@ -17,7 +17,7 @@ import { useGetAds } from "@/features/ads/api/use-get-ads";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
 import { authClient } from "@/lib/auth-client";
 import { buildAdUrl } from "@/lib/ad-url";
-import { locationData, getAllCities, getAllDistricts } from "@/lib/location-data";
+import { useLocations } from "@/hooks/use-locations";
 
 // Vehicle type labels
 const vehicleTypeLabels: Record<string, string> = {
@@ -88,8 +88,6 @@ const getRotatingSlice = <T,>(items: T[], startIndex: number, count: number): T[
   return Array.from({ length: limit }, (_, i) => items[(normalizedStart + i) % items.length]);
 };
 
-const sriLankanCities = getAllCities();
-const sriLankanDistricts = getAllDistricts();
 
 // Filter interface (brand is pre-set from URL)
 interface BrandPageFilters {
@@ -113,6 +111,7 @@ export default function BrandPage() {
   const router = useRouter();
   const params = useParams();
   const { data: session } = authClient.useSession();
+  const { locationData, allCities: sriLankanCities, allDistricts: sriLankanDistricts } = useLocations();
 
   // Decode brand name from URL
   const brandName = decodeURIComponent((params.name as string) || "");

@@ -24,7 +24,7 @@ import { useRequestBoost } from "@/features/boost/api/use-request-boost";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
-import { locationData } from "@/lib/location-data";
+import { useLocations } from "@/hooks/use-locations";
 import { CitySearchDropdown } from "@/components/ui/city-search-dropdown";
 
 // User type from auth
@@ -86,6 +86,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const { locationData, provinces: locationProvinces } = useLocations();
   const [showSuccess, setShowSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<string | null>(null);
@@ -913,15 +914,9 @@ export default function ProfilePage() {
                             <SelectValue placeholder="Select province" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Western">Western</SelectItem>
-                            <SelectItem value="Central">Central</SelectItem>
-                            <SelectItem value="Southern">Southern</SelectItem>
-                            <SelectItem value="Northern">Northern</SelectItem>
-                            <SelectItem value="Eastern">Eastern</SelectItem>
-                            <SelectItem value="North Western">North Western</SelectItem>
-                            <SelectItem value="North Central">North Central</SelectItem>
-                            <SelectItem value="Uva">Uva</SelectItem>
-                            <SelectItem value="Sabaragamuwa">Sabaragamuwa</SelectItem>
+                            {locationProvinces.map((p) => (
+                              <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>

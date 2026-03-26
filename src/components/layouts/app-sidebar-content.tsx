@@ -23,6 +23,7 @@ import {
   Sparkles,
   Zap,
   DollarSign,
+  MapPin,
 } from "lucide-react";
 
 import { type Session } from "@/lib/auth";
@@ -152,6 +153,11 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
         title: "Promotion",
         url: "/dashboard/promotion",
         icon: Zap
+      },
+      {
+        title: "Address",
+        url: "/dashboard/address",
+        icon: MapPin
       },
     ],
     agentManagement: [

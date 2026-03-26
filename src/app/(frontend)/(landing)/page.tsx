@@ -80,10 +80,7 @@ const vehicleMakes = [
   "Volvo", "Yamaha"
 ];
 
-import { locationData, getAllCities, getAllDistricts } from "@/lib/location-data";
-
-const sriLankanCities = getAllCities();
-const sriLankanDistricts = getAllDistricts();
+import { useLocations } from "@/hooks/use-locations";
 
 // Helper function to format ad title with special handling for AUTO_PARTS
 const formatAdTitle = (ad: any): string => {
@@ -137,6 +134,7 @@ interface FilterState {
 }
 
 export default function VehicleMarketplace() {
+  const { locationData, allCities: sriLankanCities, allDistricts: sriLankanDistricts } = useLocations();
   const [cityQuery, setCityQuery] = useState("");
   const [showFilterSheet, setShowFilterSheet] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");

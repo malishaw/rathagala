@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useGetUsers } from "@/features/users/api/use-get-users";
 import { useGetOrganizations } from "@/features/organizations/api/use-get-orgs";
 import { getRelativeTime } from "@/lib/utils";
-import { locationData } from "@/lib/location-data";
+import { useLocations } from "@/hooks/use-locations";
 import { CitySearchDropdown } from "@/components/ui/city-search-dropdown";
 import {
   Card,
@@ -110,6 +110,7 @@ export default function UsersPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [orgDialogOpen, setOrgDialogOpen] = useState(false);
   const [phoneVerifyDialogOpen, setPhoneVerifyDialogOpen] = useState(false);
+  const { locationData } = useLocations();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [phoneVerifyStatus, setPhoneVerifyStatus] = useState<"verified" | "not_verified" | "rejected">("not_verified");
   const [selectedOrgId, setSelectedOrgId] = useState<string>("");

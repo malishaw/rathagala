@@ -33,7 +33,8 @@ import { MediaGallery } from "@/modules/media/components/media-gallery";
 import type { MediaFile } from "@/modules/media/types";
 import { PendingAdModal } from "@/features/ads/components/pending-ad-modal";
 import { AdSubmissionSuccessModal } from "@/features/ads/components/ad-submission-success-modal";
-import { locationData, getManufactureYears } from "@/lib/location-data";
+import { getManufactureYears } from "@/lib/location-data";
+import { useLocations } from "@/hooks/use-locations";
 import { CitySearchDropdown } from "@/components/ui/city-search-dropdown";
 import { ModelSearchDropdown } from "@/components/ui/model-search-dropdown";
 import { GradeSearchDropdown } from "@/components/ui/grade-search-dropdown";
@@ -57,6 +58,7 @@ export default function QuickAdCreatePage() {
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   // Track whether we're in "Sell Auto Part" mode
   const [adMode, setAdMode] = useState<"vehicle" | "auto_part">("vehicle");
+  const { locationData } = useLocations();
 
   // Ref to track whether "Create Another" was chosen in pending modal
   // (prevents redirect to profile when user wants to stay and create again)

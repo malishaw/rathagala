@@ -18,7 +18,7 @@ import { useGetAds } from "@/features/ads/api/use-get-ads";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
 import { authClient } from "@/lib/auth-client";
 import { buildAdUrl } from "@/lib/ad-url";
-import { locationData, getAllCities, getAllDistricts } from "@/lib/location-data";
+import { useLocations } from "@/hooks/use-locations";
 
 // Vehicle type labels
 const vehicleTypeLabels: Record<string, string> = {
@@ -85,8 +85,6 @@ const vehicleMakes = [
   "Isuzu", "Bajaj", "Hero", "Yamaha", "Kawasaki", "KTM", "TVS", "Other"
 ];
 
-const sriLankanCities = getAllCities();
-const sriLankanDistricts = getAllDistricts();
 
 // Search filter interface
 interface SearchFilters {
@@ -115,6 +113,7 @@ export default function SearchPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session } = authClient.useSession();
+  const { locationData, allCities: sriLankanCities, allDistricts: sriLankanDistricts } = useLocations();
 
   // Initialize filters from URL params
   const [filters, setFilters] = useState<SearchFilters>({
