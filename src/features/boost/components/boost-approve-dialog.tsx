@@ -139,9 +139,7 @@ export function BoostApproveDialog({ adId, open, onOpenChange }: BoostApproveDia
             <div className="text-xs text-slate-500">
               Requested: {getRelativeTime(boostRequest.requestedAt)}
             </div>
-            <div className="text-xs text-slate-500">
-              User: {boostRequest.user?.name} ({boostRequest.user?.email})
-            </div>
+
 
             <div className="space-y-3">
               {(["BUMP", "TOP_AD", "URGENT", "FEATURED"] as BoostType[]).map((type) => {

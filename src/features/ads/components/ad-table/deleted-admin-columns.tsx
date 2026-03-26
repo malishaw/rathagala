@@ -23,7 +23,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { FaMobileAlt, FaWhatsapp } from "react-icons/fa";
 import { getRelativeTime } from "@/lib/utils";
 
 // Vehicle type labels mapping
@@ -374,6 +373,9 @@ export const createDeletedAdColumns = (onDelete: (id: string) => void): ColumnDe
     ),
     enableSorting: false,
     enableHiding: false,
+    size: 44,
+    minSize: 44,
+    maxSize: 44,
   },
   {
     accessorKey: "title",
@@ -416,25 +418,6 @@ export const createDeletedAdColumns = (onDelete: (id: string) => void): ColumnDe
     },
   },
   {
-    accessorKey: "price",
-    header: "Price",
-    cell: ({ row }) => {
-      const price = row.original.price;
-      return price ? (
-        <div className="font-medium">
-          Rs. {price.toLocaleString()}
-          {(row.original.metadata as any)?.isNegotiable && (
-            <span className="ml-1 text-xs text-teal-600 font-normal">(Negotiable)</span>
-          )}
-        </div>
-      ) : (
-        <span className="text-muted-foreground">
-          {(row.original.metadata as any)?.isNegotiable ? "Negotiable" : "—"}
-        </span>
-      );
-    },
-  },
-  {
     accessorKey: "creator",
     header: "Created By",
     cell: ({ row }) => {
@@ -446,45 +429,6 @@ export const createDeletedAdColumns = (onDelete: (id: string) => void): ColumnDe
         <div className="flex flex-col gap-1 text-sm">
           <div className="font-medium">Profile: {creator?.name || creator?.email || "Unknown"}</div>
           <div className="text-muted-foreground text-xs">Seller: {formName || "—"}</div>
-        </div>
-      );
-    }
-  },
-  {
-    accessorKey: "phoneNumber",
-    header: "Contact No",
-    cell: ({ row }) => {
-      const ad = row.original;
-      const phone = ad.phoneNumber;
-      const whatsapp = ad.whatsappNumber;
-      
-      return (
-        <div className="flex flex-col gap-1 text-sm">
-          {phone ? (
-            <a href={`tel:${phone}`} className="text-teal-700 hover:underline">
-              <span className="inline-flex items-center gap-2">
-                <FaMobileAlt className="w-4 h-4" />
-                <span className="inline">{phone}</span>
-              </span>
-            </a>
-          ) : (
-            <span className="text-muted-foreground">—</span>
-          )}
-          {whatsapp ? (
-            <a
-              href={`https://wa.me/${whatsapp.replace(/\D/g, "")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-green-600 hover:underline"
-            >
-              <span className="inline-flex items-center gap-2">
-                <FaWhatsapp className="w-4 h-4" />
-                <span className="inline">{whatsapp}</span>
-              </span>
-            </a>
-          ) : (
-            <span className="text-muted-foreground">—</span>
-          )}
         </div>
       );
     }
@@ -512,10 +456,12 @@ export const createDeletedAdColumns = (onDelete: (id: string) => void): ColumnDe
   {
     accessorKey: "createdAt",
     header: "Created At",
+    size: 120,
+    maxSize: 120,
     cell: ({ row }) => {
       const ad = row.original;
       const date = new Date(ad.createdAt);
-      
+
       return (
         <div className="flex flex-col gap-1 text-sm">
           <div>{getRelativeTime(ad.createdAt)}</div>

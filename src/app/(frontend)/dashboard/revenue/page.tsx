@@ -14,8 +14,138 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Star, AlertCircle, Zap, DollarSign, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import Image from "next/image";
+import { TrendingUp, Star, AlertCircle, Zap, DollarSign, Loader2, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import { getRelativeTime } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { client } from "@/lib/rpc";
+
+const vehicleTypeLabels: Record<string, string> = {
+  CAR: "Car", VAN: "Van", SUV_JEEP: "SUV / Jeep", MOTORCYCLE: "Motorcycle",
+  CREW_CAB: "Crew Cab", PICKUP_DOUBLE_CAB: "Pickup / Double Cab", BUS: "Bus",
+  LORRY: "Lorry", THREE_WHEEL: "Three Wheeler", OTHER: "Other", TRACTOR: "Tractor",
+  HEAVY_DUTY: "Heavy-Duty", BICYCLE: "Bicycle", AUTO_PARTS: "Auto Parts",
+  AUTO_SERVICE: "Auto Service", RENTAL: "Rental",
+};
+
+function AdDetailsModal({ adId, open, onOpenChange }: { adId: string; open: boolean; onOpenChange: (open: boolean) => void }) {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["ad-detail-revenue", adId],
+    queryFn: async () => {
+      const res = await client.api.ad[":id"].$get({ param: { id: adId } });
+      if (!res.ok) throw new Error("Failed to fetch ad");
+      return res.json();
+    },
+    enabled: open && !!adId,
+  });
+
+  const ad = data as Record<string, unknown> | undefined;
+  const images = (ad?.media as { media: { url: string } }[]) || [];
+  const currentImage = images[currentImageIndex]?.media?.url;
+
+  const nextImage = () => setCurrentImageIndex((p) => (p + 1) % (images.length || 1));
+  const prevImage = () => setCurrentImageIndex((p) => (p - 1 + (images.length || 1)) % (images.length || 1));
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Ad Details</DialogTitle>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-teal-600" />
+          </div>
+        ) : !ad ? (
+          <p className="text-sm text-slate-500 py-4">Ad not found.</p>
+        ) : (
+          <div className="space-y-4">
+            {images.length > 0 ? (
+              <div className="relative bg-slate-100 rounded-lg overflow-hidden aspect-video">
+                <Image src={currentImage || "/placeholder-image.jpg"} alt="Ad" fill className="object-cover" />
+                {images.length > 1 && (
+                  <>
+                    <Button size="sm" variant="ghost" className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1" onClick={prevImage}>
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    <Button size="sm" variant="ghost" className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1" onClick={nextImage}>
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 text-white px-2 py-1 rounded text-xs">
+                      {currentImageIndex + 1} / {images.length}
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="w-full h-40 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500">No images available</div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div><label className="text-xs font-semibold text-slate-600">Make</label><p className="text-sm text-slate-800">{ad.brand || "—"}</p></div>
+              <div><label className="text-xs font-semibold text-slate-600">Model</label><p className="text-sm text-slate-800">{ad.model || "—"}</p></div>
+              <div><label className="text-xs font-semibold text-slate-600">Year</label><p className="text-sm text-slate-800">{ad.manufacturedYear || "—"}</p></div>
+              <div><label className="text-xs font-semibold text-slate-600">Type</label><p className="text-sm text-slate-800">{vehicleTypeLabels[ad.type] || ad.type || "—"}</p></div>
+              <div><label className="text-xs font-semibold text-slate-600">Condition</label><p className="text-sm text-slate-800 capitalize">{ad.condition || "—"}</p></div>
+              <div><label className="text-xs font-semibold text-slate-600">Mileage</label><p className="text-sm text-slate-800">{ad.mileage ? `${ad.mileage.toLocaleString()} km` : "—"}</p></div>
+              <div><label className="text-xs font-semibold text-slate-600">Fuel Type</label><p className="text-sm text-slate-800">{ad.fuelType || "—"}</p></div>
+              <div><label className="text-xs font-semibold text-slate-600">Transmission</label><p className="text-sm text-slate-800 capitalize">{ad.transmission || "—"}</p></div>
+              <div><label className="text-xs font-semibold text-slate-600">Grade</label><p className="text-sm text-slate-800">{ad.grade || "—"}</p></div>
+              <div>
+                <label className="text-xs font-semibold text-slate-600">Price</label>
+                <p className="text-sm font-semibold text-teal-700">
+                  {ad.price ? `Rs. ${ad.price.toLocaleString()}` : (ad.metadata?.isNegotiable ? "Negotiable" : "Price on request")}
+                </p>
+              </div>
+            </div>
+
+            <div className="border-t pt-4 grid grid-cols-2 gap-4">
+              <div><label className="text-xs font-semibold text-slate-600">City</label><p className="text-sm text-slate-800">{ad.city || "—"}</p></div>
+              <div><label className="text-xs font-semibold text-slate-600">District</label><p className="text-sm text-slate-800">{ad.district || "—"}</p></div>
+              <div className="col-span-2"><label className="text-xs font-semibold text-slate-600">Location</label><p className="text-sm text-slate-800">{ad.location || "—"}</p></div>
+            </div>
+
+            <div className="border-t pt-4 space-y-2">
+              <div><label className="text-xs font-semibold text-slate-600">Title</label><p className="text-sm text-slate-800">{ad.title || "—"}</p></div>
+              <div><label className="text-xs font-semibold text-slate-600">Description</label><p className="text-sm text-slate-800 max-h-24 overflow-y-auto">{ad.description || "—"}</p></div>
+            </div>
+
+            <div className="border-t pt-4">
+              <label className="text-xs font-semibold text-slate-600 block mb-2">Seller Information</label>
+              <div className="grid grid-cols-2 gap-4">
+                <div><p className="text-xs text-slate-600">Name</p><p className="text-sm text-slate-800">{ad.creator?.name || ad.creator?.email || "Unknown"}</p></div>
+                <div><p className="text-xs text-slate-600">Seller Name (Form)</p><p className="text-sm text-slate-800">{ad.name || "—"}</p></div>
+                <div><p className="text-xs text-slate-600">Phone</p><p className="text-sm text-slate-800">{ad.phoneNumber || "—"}</p></div>
+                <div><p className="text-xs text-slate-600">WhatsApp</p><p className="text-sm text-slate-800">{ad.whatsappNumber || "—"}</p></div>
+                <div><p className="text-xs text-slate-600">Email</p><p className="text-sm text-slate-800 break-all">{ad.creator?.email || "—"}</p></div>
+              </div>
+            </div>
+
+            <div className="border-t pt-4 grid grid-cols-2 gap-4">
+              <div><p className="text-xs text-slate-600">Status</p><p className="text-sm font-medium text-slate-800">{ad.status || "—"}</p></div>
+              <div><p className="text-xs text-slate-600">Created</p><p className="text-sm text-slate-800">{ad.createdAt ? getRelativeTime(ad.createdAt) : "—"}</p></div>
+            </div>
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 type RevenueFilter = "today" | "7days" | "30days" | "all";
 
@@ -28,6 +158,7 @@ const BOOST_LABELS: Record<string, string> = {
 
 export default function RevenueAdminPage() {
   const [filter, setFilter] = useState<RevenueFilter>("all");
+  const [selectedAdId, setSelectedAdId] = useState<string | null>(null);
   const { data, isLoading } = useGetRevenue(filter);
 
   const cards = [
@@ -165,6 +296,7 @@ export default function RevenueAdminPage() {
                         <th className="text-left px-4 py-3 font-medium text-slate-700">Boost Types</th>
                         <th className="text-right px-4 py-3 font-medium text-slate-700">Amount</th>
                         <th className="text-left px-4 py-3 font-medium text-slate-700">Date</th>
+                        <th className="text-center px-4 py-3 font-medium text-slate-700">View</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -193,6 +325,18 @@ export default function RevenueAdminPage() {
                           <td className="px-4 py-3 text-slate-500">
                             {getRelativeTime(record.recordedAt)}
                           </td>
+                          <td className="px-4 py-3 text-center">
+                            {record.boostRequest?.ad?.id && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="p-2 h-auto bg-teal-700 text-white hover:bg-teal-800"
+                                onClick={() => setSelectedAdId(record.boostRequest.ad.id)}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -203,6 +347,14 @@ export default function RevenueAdminPage() {
           </>
         )}
       </div>
+
+      {selectedAdId && (
+        <AdDetailsModal
+          adId={selectedAdId}
+          open={!!selectedAdId}
+          onOpenChange={(open) => { if (!open) setSelectedAdId(null); }}
+        />
+      )}
     </PageContainer>
   );
 }

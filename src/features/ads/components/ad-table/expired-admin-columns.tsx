@@ -92,6 +92,9 @@ export const expiredAdColumns: ColumnDef<ExpiredAdType>[] = [
     ),
     enableSorting: false,
     enableHiding: false,
+    size: 44,
+    minSize: 44,
+    maxSize: 44,
   },
   {
     accessorKey: "title",
