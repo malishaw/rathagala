@@ -124,6 +124,8 @@ export const DistrictScalarFieldEnumSchema = z.enum(['id','name','provinceId','c
 
 export const CityScalarFieldEnumSchema = z.enum(['id','name','districtId','createdAt','updatedAt']);
 
+export const ManufactureYearScalarFieldEnumSchema = z.enum(['id','year','createdAt','updatedAt']);
+
 export const BrandCarouselScalarFieldEnumSchema = z.enum(['id','name','imageUrl','order','createdAt','updatedAt']);
 
 export const VehicleModelScalarFieldEnumSchema = z.enum(['id','name','brand','isActive','createdAt','updatedAt']);
@@ -820,6 +822,19 @@ export const CitySchema = z.object({
 })
 
 export type City = z.infer<typeof CitySchema>
+
+/////////////////////////////////////////
+// MANUFACTURE YEAR SCHEMA
+/////////////////////////////////////////
+
+export const ManufactureYearSchema = z.object({
+  id: z.string(),
+  year: z.string(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+})
+
+export type ManufactureYear = z.infer<typeof ManufactureYearSchema>
 
 /////////////////////////////////////////
 // BRAND CAROUSEL SCHEMA
@@ -1819,6 +1834,20 @@ export const CitySelectSchema: z.ZodType<Prisma.CitySelect> = z.object({
   createdAt: z.boolean().optional(),
   updatedAt: z.boolean().optional(),
   district: z.union([z.boolean(),z.lazy(() => DistrictArgsSchema)]).optional(),
+}).strict()
+
+// MANUFACTURE YEAR
+//------------------------------------------------------
+
+export const ManufactureYearArgsSchema: z.ZodType<Prisma.ManufactureYearDefaultArgs> = z.object({
+  select: z.lazy(() => ManufactureYearSelectSchema).optional(),
+}).strict();
+
+export const ManufactureYearSelectSchema: z.ZodType<Prisma.ManufactureYearSelect> = z.object({
+  id: z.boolean().optional(),
+  year: z.boolean().optional(),
+  createdAt: z.boolean().optional(),
+  updatedAt: z.boolean().optional(),
 }).strict()
 
 // BRAND CAROUSEL
@@ -4893,6 +4922,65 @@ export const CityScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.CityScal
   id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
   name: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
   districtId: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
+}).strict();
+
+export const ManufactureYearWhereInputSchema: z.ZodType<Prisma.ManufactureYearWhereInput> = z.object({
+  AND: z.union([ z.lazy(() => ManufactureYearWhereInputSchema), z.lazy(() => ManufactureYearWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => ManufactureYearWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => ManufactureYearWhereInputSchema), z.lazy(() => ManufactureYearWhereInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  year: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+}).strict();
+
+export const ManufactureYearOrderByWithRelationInputSchema: z.ZodType<Prisma.ManufactureYearOrderByWithRelationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  year: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const ManufactureYearWhereUniqueInputSchema: z.ZodType<Prisma.ManufactureYearWhereUniqueInput> = z.union([
+  z.object({
+    id: z.string(),
+    year: z.string(),
+  }),
+  z.object({
+    id: z.string(),
+  }),
+  z.object({
+    year: z.string(),
+  }),
+])
+.and(z.object({
+  id: z.string().optional(),
+  year: z.string().optional(),
+  AND: z.union([ z.lazy(() => ManufactureYearWhereInputSchema), z.lazy(() => ManufactureYearWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => ManufactureYearWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => ManufactureYearWhereInputSchema), z.lazy(() => ManufactureYearWhereInputSchema).array() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
+}).strict());
+
+export const ManufactureYearOrderByWithAggregationInputSchema: z.ZodType<Prisma.ManufactureYearOrderByWithAggregationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  year: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+  _count: z.lazy(() => ManufactureYearCountOrderByAggregateInputSchema).optional(),
+  _max: z.lazy(() => ManufactureYearMaxOrderByAggregateInputSchema).optional(),
+  _min: z.lazy(() => ManufactureYearMinOrderByAggregateInputSchema).optional(),
+}).strict();
+
+export const ManufactureYearScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.ManufactureYearScalarWhereWithAggregatesInput> = z.object({
+  AND: z.union([ z.lazy(() => ManufactureYearScalarWhereWithAggregatesInputSchema), z.lazy(() => ManufactureYearScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  OR: z.lazy(() => ManufactureYearScalarWhereWithAggregatesInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => ManufactureYearScalarWhereWithAggregatesInputSchema), z.lazy(() => ManufactureYearScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
+  year: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
   createdAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
   updatedAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
 }).strict();
@@ -7978,6 +8066,51 @@ export const CityUncheckedUpdateManyInputSchema: z.ZodType<Prisma.CityUncheckedU
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
+export const ManufactureYearCreateInputSchema: z.ZodType<Prisma.ManufactureYearCreateInput> = z.object({
+  id: z.string().optional(),
+  year: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const ManufactureYearUncheckedCreateInputSchema: z.ZodType<Prisma.ManufactureYearUncheckedCreateInput> = z.object({
+  id: z.string().optional(),
+  year: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const ManufactureYearUpdateInputSchema: z.ZodType<Prisma.ManufactureYearUpdateInput> = z.object({
+  year: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const ManufactureYearUncheckedUpdateInputSchema: z.ZodType<Prisma.ManufactureYearUncheckedUpdateInput> = z.object({
+  year: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const ManufactureYearCreateManyInputSchema: z.ZodType<Prisma.ManufactureYearCreateManyInput> = z.object({
+  id: z.string().optional(),
+  year: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+}).strict();
+
+export const ManufactureYearUpdateManyMutationInputSchema: z.ZodType<Prisma.ManufactureYearUpdateManyMutationInput> = z.object({
+  year: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const ManufactureYearUncheckedUpdateManyInputSchema: z.ZodType<Prisma.ManufactureYearUncheckedUpdateManyInput> = z.object({
+  year: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
 export const BrandCarouselCreateInputSchema: z.ZodType<Prisma.BrandCarouselCreateInput> = z.object({
   id: z.string().optional(),
   name: z.string(),
@@ -10412,6 +10545,27 @@ export const CityMinOrderByAggregateInputSchema: z.ZodType<Prisma.CityMinOrderBy
   id: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
   districtId: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const ManufactureYearCountOrderByAggregateInputSchema: z.ZodType<Prisma.ManufactureYearCountOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  year: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const ManufactureYearMaxOrderByAggregateInputSchema: z.ZodType<Prisma.ManufactureYearMaxOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  year: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  updatedAt: z.lazy(() => SortOrderSchema).optional(),
+}).strict();
+
+export const ManufactureYearMinOrderByAggregateInputSchema: z.ZodType<Prisma.ManufactureYearMinOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  year: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.lazy(() => SortOrderSchema).optional(),
 }).strict();
@@ -27038,6 +27192,63 @@ export const CityFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.CityFindUniqueOrT
   where: CityWhereUniqueInputSchema, 
 }).strict();
 
+export const ManufactureYearFindFirstArgsSchema: z.ZodType<Prisma.ManufactureYearFindFirstArgs> = z.object({
+  select: ManufactureYearSelectSchema.optional(),
+  where: ManufactureYearWhereInputSchema.optional(), 
+  orderBy: z.union([ ManufactureYearOrderByWithRelationInputSchema.array(), ManufactureYearOrderByWithRelationInputSchema ]).optional(),
+  cursor: ManufactureYearWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ ManufactureYearScalarFieldEnumSchema, ManufactureYearScalarFieldEnumSchema.array() ]).optional(),
+}).strict();
+
+export const ManufactureYearFindFirstOrThrowArgsSchema: z.ZodType<Prisma.ManufactureYearFindFirstOrThrowArgs> = z.object({
+  select: ManufactureYearSelectSchema.optional(),
+  where: ManufactureYearWhereInputSchema.optional(), 
+  orderBy: z.union([ ManufactureYearOrderByWithRelationInputSchema.array(), ManufactureYearOrderByWithRelationInputSchema ]).optional(),
+  cursor: ManufactureYearWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ ManufactureYearScalarFieldEnumSchema, ManufactureYearScalarFieldEnumSchema.array() ]).optional(),
+}).strict();
+
+export const ManufactureYearFindManyArgsSchema: z.ZodType<Prisma.ManufactureYearFindManyArgs> = z.object({
+  select: ManufactureYearSelectSchema.optional(),
+  where: ManufactureYearWhereInputSchema.optional(), 
+  orderBy: z.union([ ManufactureYearOrderByWithRelationInputSchema.array(), ManufactureYearOrderByWithRelationInputSchema ]).optional(),
+  cursor: ManufactureYearWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ ManufactureYearScalarFieldEnumSchema, ManufactureYearScalarFieldEnumSchema.array() ]).optional(),
+}).strict();
+
+export const ManufactureYearAggregateArgsSchema: z.ZodType<Prisma.ManufactureYearAggregateArgs> = z.object({
+  where: ManufactureYearWhereInputSchema.optional(), 
+  orderBy: z.union([ ManufactureYearOrderByWithRelationInputSchema.array(), ManufactureYearOrderByWithRelationInputSchema ]).optional(),
+  cursor: ManufactureYearWhereUniqueInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict();
+
+export const ManufactureYearGroupByArgsSchema: z.ZodType<Prisma.ManufactureYearGroupByArgs> = z.object({
+  where: ManufactureYearWhereInputSchema.optional(), 
+  orderBy: z.union([ ManufactureYearOrderByWithAggregationInputSchema.array(), ManufactureYearOrderByWithAggregationInputSchema ]).optional(),
+  by: ManufactureYearScalarFieldEnumSchema.array(), 
+  having: ManufactureYearScalarWhereWithAggregatesInputSchema.optional(), 
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict();
+
+export const ManufactureYearFindUniqueArgsSchema: z.ZodType<Prisma.ManufactureYearFindUniqueArgs> = z.object({
+  select: ManufactureYearSelectSchema.optional(),
+  where: ManufactureYearWhereUniqueInputSchema, 
+}).strict();
+
+export const ManufactureYearFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.ManufactureYearFindUniqueOrThrowArgs> = z.object({
+  select: ManufactureYearSelectSchema.optional(),
+  where: ManufactureYearWhereUniqueInputSchema, 
+}).strict();
+
 export const BrandCarouselFindFirstArgsSchema: z.ZodType<Prisma.BrandCarouselFindFirstArgs> = z.object({
   select: BrandCarouselSelectSchema.optional(),
   where: BrandCarouselWhereInputSchema.optional(), 
@@ -28652,6 +28863,44 @@ export const CityUpdateManyArgsSchema: z.ZodType<Prisma.CityUpdateManyArgs> = z.
 
 export const CityDeleteManyArgsSchema: z.ZodType<Prisma.CityDeleteManyArgs> = z.object({
   where: CityWhereInputSchema.optional(), 
+  limit: z.number().optional(),
+}).strict();
+
+export const ManufactureYearCreateArgsSchema: z.ZodType<Prisma.ManufactureYearCreateArgs> = z.object({
+  select: ManufactureYearSelectSchema.optional(),
+  data: z.union([ ManufactureYearCreateInputSchema, ManufactureYearUncheckedCreateInputSchema ]),
+}).strict();
+
+export const ManufactureYearUpsertArgsSchema: z.ZodType<Prisma.ManufactureYearUpsertArgs> = z.object({
+  select: ManufactureYearSelectSchema.optional(),
+  where: ManufactureYearWhereUniqueInputSchema, 
+  create: z.union([ ManufactureYearCreateInputSchema, ManufactureYearUncheckedCreateInputSchema ]),
+  update: z.union([ ManufactureYearUpdateInputSchema, ManufactureYearUncheckedUpdateInputSchema ]),
+}).strict();
+
+export const ManufactureYearCreateManyArgsSchema: z.ZodType<Prisma.ManufactureYearCreateManyArgs> = z.object({
+  data: z.union([ ManufactureYearCreateManyInputSchema, ManufactureYearCreateManyInputSchema.array() ]),
+}).strict();
+
+export const ManufactureYearDeleteArgsSchema: z.ZodType<Prisma.ManufactureYearDeleteArgs> = z.object({
+  select: ManufactureYearSelectSchema.optional(),
+  where: ManufactureYearWhereUniqueInputSchema, 
+}).strict();
+
+export const ManufactureYearUpdateArgsSchema: z.ZodType<Prisma.ManufactureYearUpdateArgs> = z.object({
+  select: ManufactureYearSelectSchema.optional(),
+  data: z.union([ ManufactureYearUpdateInputSchema, ManufactureYearUncheckedUpdateInputSchema ]),
+  where: ManufactureYearWhereUniqueInputSchema, 
+}).strict();
+
+export const ManufactureYearUpdateManyArgsSchema: z.ZodType<Prisma.ManufactureYearUpdateManyArgs> = z.object({
+  data: z.union([ ManufactureYearUpdateManyMutationInputSchema, ManufactureYearUncheckedUpdateManyInputSchema ]),
+  where: ManufactureYearWhereInputSchema.optional(), 
+  limit: z.number().optional(),
+}).strict();
+
+export const ManufactureYearDeleteManyArgsSchema: z.ZodType<Prisma.ManufactureYearDeleteManyArgs> = z.object({
+  where: ManufactureYearWhereInputSchema.optional(), 
   limit: z.number().optional(),
 }).strict();
 

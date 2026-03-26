@@ -105,7 +105,7 @@ export default function AddressManagementPage() {
   // Seeding state
   const [seeding, setSeeding] = useState(false);
 
-  // Total counts (all provinces/districts/cities in DB)
+  // Total counts
   const { allDistricts, allCities } = useLocations();
 
   // ─── Queries ─────────────────────────────────────────────────────────────
@@ -127,7 +127,6 @@ export default function AddressManagementPage() {
     enabled: !!selectedDistrict,
   });
 
-  // Sync citiesText when district changes
   const citiesTextForDistrict = citiesData?.cities.map((c) => c.name).join(", ") ?? "";
 
   // ─── Province mutations ───────────────────────────────────────────────────
@@ -139,10 +138,7 @@ export default function AddressManagementPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
       });
-      if (!res.ok) {
-        const e = await res.json();
-        throw new Error(e.error || "Failed");
-      }
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error || "Failed"); }
       return res.json();
     },
     onSuccess: () => {
@@ -162,10 +158,7 @@ export default function AddressManagementPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
       });
-      if (!res.ok) {
-        const e = await res.json();
-        throw new Error(e.error || "Failed");
-      }
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error || "Failed"); }
       return res.json();
     },
     onSuccess: () => {
@@ -205,10 +198,7 @@ export default function AddressManagementPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, provinceId }),
       });
-      if (!res.ok) {
-        const e = await res.json();
-        throw new Error(e.error || "Failed");
-      }
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error || "Failed"); }
       return res.json();
     },
     onSuccess: () => {
@@ -228,10 +218,7 @@ export default function AddressManagementPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
       });
-      if (!res.ok) {
-        const e = await res.json();
-        throw new Error(e.error || "Failed");
-      }
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error || "Failed"); }
       return res.json();
     },
     onSuccess: () => {
@@ -268,10 +255,7 @@ export default function AddressManagementPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ districtId, citiesText }),
       });
-      if (!res.ok) {
-        const e = await res.json();
-        throw new Error(e.error || "Failed");
-      }
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error || "Failed"); }
       return res.json();
     },
     onSuccess: (data) => {
@@ -290,9 +274,7 @@ export default function AddressManagementPage() {
       const res = await fetch("/api/admin/locations/seed", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Seed failed");
-      toast.success(
-        `Seeded: ${data.provincesCreated} provinces, ${data.districtsCreated} districts, ${data.citiesCreated} cities`
-      );
+      toast.success(`Seeded: ${data.provincesCreated} provinces, ${data.districtsCreated} districts, ${data.citiesCreated} cities`);
       queryClient.invalidateQueries({ queryKey: ["admin-provinces"] });
       queryClient.invalidateQueries({ queryKey: ["locations"] });
     } catch (e: unknown) {
@@ -321,17 +303,8 @@ export default function AddressManagementPage() {
             Manage provinces, districts, and cities used throughout the platform
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleSeedFromEnv}
-          disabled={seeding}
-        >
-          {seeding ? (
-            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-          ) : (
-            <Download className="h-4 w-4 mr-1" />
-          )}
+        <Button variant="outline" size="sm" onClick={handleSeedFromEnv} disabled={seeding}>
+          {seeding ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
           Import from ENV
         </Button>
       </div>
@@ -345,13 +318,7 @@ export default function AddressManagementPage() {
                 <CardTitle className="text-base">Provinces</CardTitle>
                 <span className="text-sm text-muted-foreground font-normal">({provinces.length})</span>
               </div>
-              <Button
-                size="sm"
-                onClick={() => {
-                  setProvinceName("");
-                  setProvinceDialog({ open: true });
-                }}
-              >
+              <Button size="sm" onClick={() => { setProvinceName(""); setProvinceDialog({ open: true }); }}>
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
@@ -359,69 +326,34 @@ export default function AddressManagementPage() {
           <CardContent className="p-0">
             {loadingProvinces ? (
               <div className="px-4 pb-4 space-y-2">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton key={i} className="h-9 w-full" />
-                ))}
+                {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-9 w-full" />)}
               </div>
             ) : provinces.length === 0 ? (
               <p className="px-4 pb-4 text-sm text-muted-foreground">
                 No provinces yet.{" "}
-                <button
-                  onClick={() => { setProvinceName(""); setProvinceDialog({ open: true }); }}
-                  className="text-primary underline"
-                >
-                  Add one
-                </button>{" "}
-                or{" "}
-                <button onClick={handleSeedFromEnv} className="text-primary underline">
-                  import from ENV
-                </button>
-                .
+                <button onClick={() => { setProvinceName(""); setProvinceDialog({ open: true }); }} className="text-primary underline">Add one</button>
+                {" "}or{" "}
+                <button onClick={handleSeedFromEnv} className="text-primary underline">import from ENV</button>.
               </p>
             ) : (
               <ul className="divide-y">
                 {provinces.map((p) => (
                   <li
                     key={p.id}
-                    className={`flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-muted/50 transition-colors ${
-                      selectedProvince?.id === p.id ? "bg-muted" : ""
-                    }`}
-                    onClick={() => {
-                      setSelectedProvince(p);
-                      setSelectedDistrict(null);
-                      setCitiesText("");
-                    }}
+                    className={`flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-muted/50 transition-colors ${selectedProvince?.id === p.id ? "bg-muted" : ""}`}
+                    onClick={() => { setSelectedProvince(p); setSelectedDistrict(null); setCitiesText(""); }}
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      {selectedProvince?.id === p.id ? (
-                        <ChevronDown className="h-4 w-4 shrink-0 text-primary" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      )}
+                      {selectedProvince?.id === p.id
+                        ? <ChevronDown className="h-4 w-4 shrink-0 text-primary" />
+                        : <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />}
                       <span className="text-sm font-medium truncate">{p.name}</span>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setProvinceName(p.name);
-                          setProvinceDialog({ open: true, edit: p });
-                        }}
-                      >
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setProvinceName(p.name); setProvinceDialog({ open: true, edit: p }); }}>
                         <Pencil className="h-3 w-3" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteDialog({ open: true, type: "province", id: p.id, name: p.name });
-                        }}
-                      >
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteDialog({ open: true, type: "province", id: p.id, name: p.name }); }}>
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
@@ -443,13 +375,7 @@ export default function AddressManagementPage() {
                 </span>
               </div>
               {selectedProvince && (
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setDistrictName("");
-                    setDistrictDialog({ open: true });
-                  }}
-                >
+                <Button size="sm" onClick={() => { setDistrictName(""); setDistrictDialog({ open: true }); }}>
                   <Plus className="h-4 w-4" />
                 </Button>
               )}
@@ -457,69 +383,35 @@ export default function AddressManagementPage() {
           </CardHeader>
           <CardContent className="p-0">
             {!selectedProvince ? (
-              <p className="px-4 pb-4 text-sm text-muted-foreground">
-                Select a province to view its districts.
-              </p>
+              <p className="px-4 pb-4 text-sm text-muted-foreground">Select a province to view its districts.</p>
             ) : loadingDistricts ? (
               <div className="px-4 pb-4 space-y-2">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <Skeleton key={i} className="h-9 w-full" />
-                ))}
+                {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-9 w-full" />)}
               </div>
             ) : districts.length === 0 ? (
               <p className="px-4 pb-4 text-sm text-muted-foreground">
                 No districts yet.{" "}
-                <button
-                  onClick={() => { setDistrictName(""); setDistrictDialog({ open: true }); }}
-                  className="text-primary underline"
-                >
-                  Add one
-                </button>
-                .
+                <button onClick={() => { setDistrictName(""); setDistrictDialog({ open: true }); }} className="text-primary underline">Add one</button>.
               </p>
             ) : (
               <ul className="divide-y">
                 {districts.map((d) => (
                   <li
                     key={d.id}
-                    className={`flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-muted/50 transition-colors ${
-                      selectedDistrict?.id === d.id ? "bg-muted" : ""
-                    }`}
-                    onClick={() => {
-                      setSelectedDistrict(d);
-                      setCitiesText("");
-                    }}
+                    className={`flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-muted/50 transition-colors ${selectedDistrict?.id === d.id ? "bg-muted" : ""}`}
+                    onClick={() => { setSelectedDistrict(d); setCitiesText(""); }}
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      {selectedDistrict?.id === d.id ? (
-                        <ChevronDown className="h-4 w-4 shrink-0 text-primary" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      )}
+                      {selectedDistrict?.id === d.id
+                        ? <ChevronDown className="h-4 w-4 shrink-0 text-primary" />
+                        : <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />}
                       <span className="text-sm font-medium truncate">{d.name}</span>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDistrictName(d.name);
-                          setDistrictDialog({ open: true, edit: d });
-                        }}
-                      >
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setDistrictName(d.name); setDistrictDialog({ open: true, edit: d }); }}>
                         <Pencil className="h-3 w-3" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteDialog({ open: true, type: "district", id: d.id, name: d.name });
-                        }}
-                      >
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteDialog({ open: true, type: "district", id: d.id, name: d.name }); }}>
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
@@ -542,9 +434,7 @@ export default function AddressManagementPage() {
           </CardHeader>
           <CardContent>
             {!selectedDistrict ? (
-              <p className="text-sm text-muted-foreground">
-                Select a district to manage its cities.
-              </p>
+              <p className="text-sm text-muted-foreground">Select a district to manage its cities.</p>
             ) : loadingCities ? (
               <div className="space-y-2">
                 <Skeleton className="h-32 w-full" />
@@ -554,8 +444,7 @@ export default function AddressManagementPage() {
               <div className="space-y-3">
                 <div className="space-y-1">
                   <Label htmlFor="cities-textarea">
-                    Cities{" "}
-                    <span className="text-muted-foreground font-normal">(comma-separated)</span>
+                    Cities <span className="text-muted-foreground font-normal">(comma-separated)</span>
                   </Label>
                   <Textarea
                     id="cities-textarea"
@@ -569,31 +458,17 @@ export default function AddressManagementPage() {
                     Separate each city with a comma. Saving will replace all existing cities.
                   </p>
                 </div>
-
-                {/* Preview */}
                 {(citiesText || citiesTextForDistrict) && (
                   <div className="flex flex-wrap gap-1">
-                    {(citiesText || citiesTextForDistrict)
-                      .split(",")
-                      .map((c) => c.trim())
-                      .filter(Boolean)
-                      .map((city, i) => (
-                        <Badge key={i} variant="secondary" className="text-xs">
-                          {city}
-                        </Badge>
-                      ))}
+                    {(citiesText || citiesTextForDistrict).split(",").map((c) => c.trim()).filter(Boolean).map((city, i) => (
+                      <Badge key={i} variant="secondary" className="text-xs">{city}</Badge>
+                    ))}
                   </div>
                 )}
-
                 <Button
                   size="sm"
                   disabled={saveCities.isPending}
-                  onClick={() =>
-                    saveCities.mutate({
-                      districtId: selectedDistrict.id,
-                      citiesText: citiesText || citiesTextForDistrict,
-                    })
-                  }
+                  onClick={() => saveCities.mutate({ districtId: selectedDistrict.id, citiesText: citiesText || citiesTextForDistrict })}
                 >
                   {saveCities.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
                   Save Cities
@@ -605,15 +480,10 @@ export default function AddressManagementPage() {
       </div>
 
       {/* Province Dialog */}
-      <Dialog
-        open={provinceDialog.open}
-        onOpenChange={(o) => !o && setProvinceDialog({ open: false })}
-      >
+      <Dialog open={provinceDialog.open} onOpenChange={(o) => !o && setProvinceDialog({ open: false })}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {provinceDialog.edit ? "Edit Province" : "Add Province"}
-            </DialogTitle>
+            <DialogTitle>{provinceDialog.edit ? "Edit Province" : "Add Province"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
@@ -625,33 +495,23 @@ export default function AddressManagementPage() {
                 placeholder="e.g. Western"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && provinceName.trim()) {
-                    if (provinceDialog.edit) {
-                      updateProvince.mutate({ id: provinceDialog.edit.id, name: provinceName });
-                    } else {
-                      createProvince.mutate(provinceName);
-                    }
+                    if (provinceDialog.edit) updateProvince.mutate({ id: provinceDialog.edit.id, name: provinceName });
+                    else createProvince.mutate(provinceName);
                   }
                 }}
               />
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setProvinceDialog({ open: false })}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setProvinceDialog({ open: false })}>Cancel</Button>
             <Button
               disabled={!provinceName.trim() || createProvince.isPending || updateProvince.isPending}
               onClick={() => {
-                if (provinceDialog.edit) {
-                  updateProvince.mutate({ id: provinceDialog.edit.id, name: provinceName });
-                } else {
-                  createProvince.mutate(provinceName);
-                }
+                if (provinceDialog.edit) updateProvince.mutate({ id: provinceDialog.edit.id, name: provinceName });
+                else createProvince.mutate(provinceName);
               }}
             >
-              {(createProvince.isPending || updateProvince.isPending) && (
-                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-              )}
+              {(createProvince.isPending || updateProvince.isPending) && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
               {provinceDialog.edit ? "Save Changes" : "Add Province"}
             </Button>
           </div>
@@ -659,15 +519,10 @@ export default function AddressManagementPage() {
       </Dialog>
 
       {/* District Dialog */}
-      <Dialog
-        open={districtDialog.open}
-        onOpenChange={(o) => !o && setDistrictDialog({ open: false })}
-      >
+      <Dialog open={districtDialog.open} onOpenChange={(o) => !o && setDistrictDialog({ open: false })}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {districtDialog.edit ? "Edit District" : "Add District"}
-            </DialogTitle>
+            <DialogTitle>{districtDialog.edit ? "Edit District" : "Add District"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
@@ -679,33 +534,23 @@ export default function AddressManagementPage() {
                 placeholder="e.g. Colombo"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && districtName.trim() && selectedProvince) {
-                    if (districtDialog.edit) {
-                      updateDistrict.mutate({ id: districtDialog.edit.id, name: districtName });
-                    } else {
-                      createDistrict.mutate({ name: districtName, provinceId: selectedProvince.id });
-                    }
+                    if (districtDialog.edit) updateDistrict.mutate({ id: districtDialog.edit.id, name: districtName });
+                    else createDistrict.mutate({ name: districtName, provinceId: selectedProvince.id });
                   }
                 }}
               />
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setDistrictDialog({ open: false })}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setDistrictDialog({ open: false })}>Cancel</Button>
             <Button
               disabled={!districtName.trim() || createDistrict.isPending || updateDistrict.isPending}
               onClick={() => {
-                if (districtDialog.edit) {
-                  updateDistrict.mutate({ id: districtDialog.edit.id, name: districtName });
-                } else if (selectedProvince) {
-                  createDistrict.mutate({ name: districtName, provinceId: selectedProvince.id });
-                }
+                if (districtDialog.edit) updateDistrict.mutate({ id: districtDialog.edit.id, name: districtName });
+                else if (selectedProvince) createDistrict.mutate({ name: districtName, provinceId: selectedProvince.id });
               }}
             >
-              {(createDistrict.isPending || updateDistrict.isPending) && (
-                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-              )}
+              {(createDistrict.isPending || updateDistrict.isPending) && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
               {districtDialog.edit ? "Save Changes" : "Add District"}
             </Button>
           </div>
@@ -716,12 +561,9 @@ export default function AddressManagementPage() {
       <AlertDialog open={!!deleteDialog} onOpenChange={(o) => !o && setDeleteDialog(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Delete {deleteDialog?.type === "province" ? "Province" : "District"}
-            </AlertDialogTitle>
+            <AlertDialogTitle>Delete {deleteDialog?.type === "province" ? "Province" : "District"}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete{" "}
-              <strong>{deleteDialog?.name}</strong>?{" "}
+              Are you sure you want to delete <strong>{deleteDialog?.name}</strong>?{" "}
               {deleteDialog?.type === "province"
                 ? "All districts and cities within it will also be deleted."
                 : "All cities within it will also be deleted."}
@@ -733,16 +575,11 @@ export default function AddressManagementPage() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => {
                 if (!deleteDialog) return;
-                if (deleteDialog.type === "province") {
-                  deleteProvince.mutate(deleteDialog.id);
-                } else {
-                  deleteDistrict.mutate(deleteDialog.id);
-                }
+                if (deleteDialog.type === "province") deleteProvince.mutate(deleteDialog.id);
+                else deleteDistrict.mutate(deleteDialog.id);
               }}
             >
-              {(deleteProvince.isPending || deleteDistrict.isPending) && (
-                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-              )}
+              {(deleteProvince.isPending || deleteDistrict.isPending) && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

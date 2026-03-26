@@ -24,6 +24,7 @@ import {
   Zap,
   DollarSign,
   MapPin,
+  CalendarDays,
 } from "lucide-react";
 
 import { type Session } from "@/lib/auth";
@@ -158,6 +159,11 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
         title: "Address",
         url: "/dashboard/address",
         icon: MapPin
+      },
+      {
+        title: "Manufacture Years",
+        url: "/dashboard/manufacture-years",
+        icon: CalendarDays
       },
     ],
     agentManagement: [
