@@ -25,6 +25,7 @@ import {
   DollarSign,
   MapPin,
   CalendarDays,
+  DatabaseBackup,
 } from "lucide-react";
 
 import { type Session } from "@/lib/auth";
@@ -164,6 +165,11 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
         title: "Manufacture Years",
         url: "/dashboard/manufacture-years",
         icon: CalendarDays
+      },
+      {
+        title: "Backup",
+        url: "/dashboard/backup",
+        icon: DatabaseBackup
       },
     ],
     agentManagement: [
