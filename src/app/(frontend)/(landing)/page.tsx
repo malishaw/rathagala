@@ -411,14 +411,23 @@ export default function VehicleMarketplace() {
       case "newest":
         return ads.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       case "default":
-      default:
+      default: {
+        const isBoosted = (ad: typeof ads[number]) =>
+          Boolean((ad as Record<string, unknown>)?.topAdActive || (ad as Record<string, unknown>)?.featuredActive || (ad as Record<string, unknown>)?.bumpActive || (ad as Record<string, unknown>)?.urgentActive);
         return ads.sort((a, b) => {
+          if (searchQuery.trim()) {
+            const aBoosted = isBoosted(a);
+            const bBoosted = isBoosted(b);
+            if (aBoosted && !bBoosted) return -1;
+            if (!aBoosted && bBoosted) return 1;
+          }
           const timeDiff = getSortTime(b) - getSortTime(a);
           if (timeDiff !== 0) return timeDiff;
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         });
+      }
     }
-  }, [filteredAds, sortBy]);
+  }, [filteredAds, sortBy, searchQuery]);
 
   const topAdsPool = useMemo(() => {
     return allAds.filter((ad) => (ad as any).topAdActive && !(ad as any).featuredActive && !(ad as any).bumpActive && ad.status === "ACTIVE" && (ad as any).published);
@@ -448,14 +457,16 @@ export default function VehicleMarketplace() {
     return shuffledFeaturedAdsPool.filter((ad) => !(ad as any).topAdActive);
   }, [shuffledFeaturedAdsPool]);
 
+  const isSearchActive = searchQuery.trim().length > 0;
+
   const baseAds = useMemo(() => {
-    if (sortBy !== "default") return sortedAds;
+    if (sortBy !== "default" || isSearchActive) return sortedAds;
     return sortedAds.filter((ad) => !(ad as any).featuredActive && !(ad as any).topAdActive);
-  }, [sortedAds, sortBy]);
+  }, [sortedAds, sortBy, isSearchActive]);
 
   const interleavedAds = useMemo(() => {
     if (baseAds.length === 0) return [];
-    if (sortBy !== "default" || featuredInsertPool.length === 0) return baseAds;
+    if (sortBy !== "default" || isSearchActive || featuredInsertPool.length === 0) return baseAds;
 
     const result: any[] = [];
     const insertCount = Math.min(2, featuredInsertPool.length);
@@ -475,7 +486,7 @@ export default function VehicleMarketplace() {
     });
 
     return result;
-  }, [baseAds, featuredInsertPool, featuredRotationIndex, sortBy]);
+  }, [baseAds, featuredInsertPool, featuredRotationIndex, sortBy, isSearchActive]);
 
   // Featured Ads Carousel (latest 6 - featured only, no other promotions)
   const featuredBoostedAds = useMemo(() => {
@@ -1254,7 +1265,7 @@ export default function VehicleMarketplace() {
               </div>
 
               {/* Top Ad Section */}
-              {!isLoading && sortBy === "default" && displayedTopAds.length > 0 && (
+              {!isLoading && sortBy === "default" && !isSearchActive && displayedTopAds.length > 0 && (
                 <div className="mb-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {displayedTopAds.map((vehicle) => (
@@ -1265,7 +1276,7 @@ export default function VehicleMarketplace() {
               )}
 
               {/* Featured Ad Section */}
-              {!isLoading && sortBy === "default" && displayedFeaturedAds.length > 0 && (
+              {!isLoading && sortBy === "default" && !isSearchActive && displayedFeaturedAds.length > 0 && (
                 <div className="mb-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {displayedFeaturedAds.map((vehicle) => (

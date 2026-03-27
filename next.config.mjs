@@ -23,6 +23,11 @@ const nextConfig = {
         hostname: 'myunivrs-s3-storage.s3.eu-west-2.amazonaws.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'rathagala.s3.ap-south-1.amazonaws.com',
+        pathname: '/**',
+      }
     ]
   },
 
