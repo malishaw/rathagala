@@ -2,7 +2,7 @@ import * as HttpStatusCodes from "stoker/http-status-codes";
 import { prisma } from "@/server/prisma/client";
 import { AppRouteHandler } from "@/types/server";
 import type { SendVerificationCodeRoute, VerifyCodeRoute } from "./verification.routes";
-import { sendVerificationCode as sendCode, generateVerificationCode, sendWelcomeEmail } from "@/lib/email";
+import { sendVerificationCode as sendCode, generateVerificationCode, sendWelcomeEmail, sendProfileCompletionReminderEmail } from "@/lib/email";
 
 // Send verification code
 export const sendVerificationCode: AppRouteHandler<SendVerificationCodeRoute> = async (c) => {
@@ -113,6 +113,22 @@ export const verifyCode: AppRouteHandler<VerifyCodeRoute> = async (c) => {
     } catch (emailError) {
       console.error("Failed to send welcome email, but verification succeeded:", emailError);
       // Don't fail the verification if welcome email fails
+    }
+
+    // Send profile completion reminder (non-blocking) — check which fields are missing
+    const missingFields: string[] = [];
+    if (!user.image) missingFields.push("image");
+    if (!user.phone) missingFields.push("phone");
+    if (!user.whatsappNumber) missingFields.push("whatsappNumber");
+    if (!user.province) missingFields.push("province");
+    if (!user.district) missingFields.push("district");
+    if (!user.city) missingFields.push("city");
+    if (!user.location) missingFields.push("location");
+
+    if (missingFields.length > 0) {
+      sendProfileCompletionReminderEmail({ email, name: user.name || "User", missingFields }).catch((err) => {
+        console.error("Failed to send profile completion reminder:", err);
+      });
     }
 
     return c.json(

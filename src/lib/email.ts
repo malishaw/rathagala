@@ -735,6 +735,173 @@ If you have any questions, contact us at support@rathagala.lk
   }
 }
 
+// Send profile updated notification
+export async function sendProfileUpdatedEmail({ email, name }: { email: string; name: string }) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://rathagala.lk";
+
+  try {
+    await transporter.sendMail({
+      from: `"Rathagala Support" <${process.env.EMAIL_FROM || "support@rathagala.lk"}>`,
+      to: email,
+      subject: "Your Profile Has Been Updated - Rathagala",
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background-color: #024950; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+              .content { background-color: #f9f9f9; padding: 30px; border-radius: 0 0 5px 5px; }
+              .info-box { background-color: #e0f2f1; padding: 15px; border-left: 4px solid #024950; border-radius: 3px; margin: 20px 0; }
+              .button { display: inline-block; padding: 12px 30px; background-color: #024950; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }
+              .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>Profile Updated</h1>
+              </div>
+              <div class="content">
+                <p>Hello ${name},</p>
+                <p>Your Rathagala profile has been updated successfully.</p>
+                <div class="info-box">
+                  <p>If you made this change, no further action is needed.</p>
+                  <p>If you did <strong>not</strong> make this change, please contact us immediately at <a href="mailto:support@rathagala.lk" style="color: #024950;">support@rathagala.lk</a>.</p>
+                </div>
+                <p style="text-align: center;">
+                  <a href="${appUrl}/profile" class="button" style="display: inline-block; background-color: #024950; color: #ffffff !important; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold;">View My Profile</a>
+                </p>
+                <p>Best regards,<br>The Rathagala Team</p>
+              </div>
+              <div class="footer">
+                <p>© ${new Date().getFullYear()} Rathagala. All rights reserved.</p>
+                <p>If you have any questions, contact us at support@rathagala.lk</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+      text: `
+Hello ${name},
+
+Your Rathagala profile has been updated successfully.
+
+If you made this change, no further action is needed.
+If you did NOT make this change, please contact us immediately at support@rathagala.lk.
+
+View your profile: ${appUrl}/profile
+
+Best regards,
+The Rathagala Team
+
+© ${new Date().getFullYear()} Rathagala. All rights reserved.
+If you have any questions, contact us at support@rathagala.lk
+      `,
+    });
+    console.log("Profile updated email sent successfully to:", email);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send profile updated email:", error);
+    throw error;
+  }
+}
+
+// Send profile completion reminder
+export async function sendProfileCompletionReminderEmail({ email, name, missingFields }: { email: string; name: string; missingFields: string[] }) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://rathagala.lk";
+
+  const fieldLabels: Record<string, string> = {
+    phone: "Phone Number",
+    whatsappNumber: "WhatsApp Number",
+    province: "Province",
+    district: "District",
+    city: "City",
+    location: "Location",
+    image: "Profile Photo",
+  };
+
+  const missingList = missingFields
+    .map((f) => `<li>${fieldLabels[f] || f}</li>`)
+    .join("");
+
+  const missingListText = missingFields
+    .map((f) => `- ${fieldLabels[f] || f}`)
+    .join("\n");
+
+  try {
+    await transporter.sendMail({
+      from: `"Rathagala Support" <${process.env.EMAIL_FROM || "support@rathagala.lk"}>`,
+      to: email,
+      subject: "Complete Your Profile - Rathagala",
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background-color: #024950; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+              .content { background-color: #f9f9f9; padding: 30px; border-radius: 0 0 5px 5px; }
+              .missing-box { background-color: white; padding: 15px; border-left: 4px solid #f59e0b; border-radius: 3px; margin: 20px 0; }
+              .missing-box ul { margin: 8px 0 0 0; padding-left: 20px; color: #444; }
+              .button { display: inline-block; padding: 12px 30px; background-color: #024950; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }
+              .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>Complete Your Profile</h1>
+              </div>
+              <div class="content">
+                <p>Hello ${name},</p>
+                <p>A complete profile helps buyers and sellers reach you faster on Rathagala. You still have a few details missing:</p>
+                <div class="missing-box">
+                  <strong>Missing information:</strong>
+                  <ul>${missingList}</ul>
+                </div>
+                <p>Completing your profile only takes a minute and improves your experience on the platform.</p>
+                <p style="text-align: center;">
+                  <a href="${appUrl}/profile" class="button" style="display: inline-block; background-color: #024950; color: #ffffff !important; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold;">Complete My Profile</a>
+                </p>
+                <p>Best regards,<br>The Rathagala Team</p>
+              </div>
+              <div class="footer">
+                <p>© ${new Date().getFullYear()} Rathagala. All rights reserved.</p>
+                <p>If you have any questions, contact us at support@rathagala.lk</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+      text: `
+Hello ${name},
+
+A complete profile helps buyers and sellers reach you faster on Rathagala. You still have a few details missing:
+
+${missingListText}
+
+Completing your profile only takes a minute and improves your experience on the platform.
+
+Complete your profile: ${appUrl}/profile
+
+Best regards,
+The Rathagala Team
+
+© ${new Date().getFullYear()} Rathagala. All rights reserved.
+If you have any questions, contact us at support@rathagala.lk
+      `,
+    });
+    console.log("Profile completion reminder email sent successfully to:", email);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send profile completion reminder email:", error);
+    throw error;
+  }
+}
+
 // Generate a 6-digit verification code
 export function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();

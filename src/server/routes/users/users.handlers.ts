@@ -5,6 +5,7 @@ import { prisma } from "@/server/prisma/client";
 import type { ListRoute, UpdateOrganizationIdRoute, GetCurrentUserRoute, UpdateProfileRoute, BulkCreateRoute } from "./users.routes";
 import { AppRouteHandler } from "@/types/server";
 import crypto from "crypto";
+import { sendProfileUpdatedEmail } from "@/lib/email";
 
 export const list: AppRouteHandler<ListRoute> = async (c) => {
   const user = c.get("user");
@@ -321,6 +322,11 @@ export const updateProfile: AppRouteHandler<UpdateProfileRoute> = async (c) => {
         city: true,
         location: true,
       },
+    });
+
+    // Send profile updated notification (non-blocking)
+    sendProfileUpdatedEmail({ email: updatedUser.email, name: updatedUser.name || "User" }).catch((err) => {
+      console.error("Failed to send profile updated email:", err);
     });
 
     return c.json(
