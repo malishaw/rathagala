@@ -12,6 +12,7 @@ import type {
   AdminPromoteRoute,
 } from "./boost.routes";
 import { BoostType } from "@prisma/client";
+import { sendBoostApprovedEmail } from "@/lib/email";
 
 const BOOST_DAYS_OPTIONS = [3, 7, 15];
 
@@ -300,6 +301,26 @@ export const approveBoost: AppRouteHandler<ApproveBoostRoute> = async (c) => {
       featuredAmount,
     },
   });
+
+  // Send boost approval email (non-blocking)
+  prisma.ad.findUnique({
+    where: { id: boostRequest.adId },
+    select: {
+      title: true,
+      creator: { select: { name: true, email: true } },
+    },
+  }).then((ad) => {
+    if (ad?.creator?.email) {
+      sendBoostApprovedEmail({
+        email: ad.creator.email,
+        name: ad.creator.name || "User",
+        adTitle: ad.title,
+        adId: boostRequest.adId,
+        boostTypes: finalBoostTypes,
+        boostEndAt,
+      }).catch((err) => console.error("[APPROVE BOOST] Failed to send email:", err));
+    }
+  }).catch(() => {});
 
   return c.json({ message: "Boost approved successfully" }, HttpStatusCodes.OK);
 };
