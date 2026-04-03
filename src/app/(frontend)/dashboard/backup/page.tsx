@@ -226,7 +226,7 @@ export default function BackupPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-xl bg-zinc-900 text-white p-5 flex flex-col gap-3">
+        <div className="rounded-xl border border-blue-700 hover:bg-blue-50 p-5 flex flex-col gap-3">
           <div className="flex items-center gap-2 text-zinc-400 text-xs font-medium uppercase tracking-wider">
             <HardDrive className="h-4 w-4" />
             Total DB Size
@@ -238,7 +238,7 @@ export default function BackupPage() {
           )}
         </div>
 
-        <div className="rounded-xl bg-zinc-900 text-white p-5 flex flex-col gap-3">
+        <div className="rounded-xl border border-yellow-600 hover:bg-amber-50 p-5 flex flex-col gap-3">
           <div className="flex items-center gap-2 text-zinc-400 text-xs font-medium uppercase tracking-wider">
             <LayoutGrid className="h-4 w-4" />
             Total Collections
@@ -250,7 +250,7 @@ export default function BackupPage() {
           )}
         </div>
 
-        <div className="rounded-xl bg-zinc-900 text-white p-5 flex flex-col gap-3">
+        <div className="rounded-xl border border-green-700 hover:bg-green-50 p-5 flex flex-col gap-3">
           <div className="flex items-center gap-2 text-zinc-400 text-xs font-medium uppercase tracking-wider">
             <Clock className="h-4 w-4" />
             Last Manual Backup
@@ -273,7 +273,7 @@ export default function BackupPage() {
           <button
             onClick={handleDownload}
             disabled={busy}
-            className="flex items-center justify-center gap-2 rounded-lg  text-zinc-900 font-semibold py-8 px-4 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-amber-500 hover:bg-amber-400 "
+            className="flex items-center justify-center gap-2 rounded-lg  text-white font-semibold py-8 px-4 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-amber-500 hover:bg-amber-400 "
           >
             {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
             Download Backup
@@ -299,11 +299,11 @@ export default function BackupPage() {
       </div>
 
       {/* Danger Zone */}
-      <div className="rounded-xl border border-red-800 bg-zinc-900 p-5">
-        <p className="text-xs font-medium uppercase tracking-wider text-red-500 mb-4">Danger Zone</p>
+      <div className="rounded-xl border border-red-800 bg-red-100 p-5">
+        <p className="text-xs font-extrabold uppercase tracking-wider text-red-500 mb-4">Danger Zone</p>
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-sm font-medium text-white">Delete All Data</p>
+            <p className="text-sm font-medium text-red-500">Delete All Data</p>
             <p className="text-xs text-zinc-400 mt-0.5">
               Permanently removes all records except authentication accounts. S3 files are not affected.
             </p>
@@ -311,7 +311,7 @@ export default function BackupPage() {
           <button
             onClick={() => openPasswordDialog("clear")}
             disabled={isProcessing || isDownloading}
-            className="shrink-0 flex items-center gap-1.5 rounded-lg border border-red-700 bg-transparent text-red-500 text-xs font-medium px-3 py-2 hover:bg-red-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="shrink-0 flex items-center gap-1.5 rounded-lg border border-red-700 bg-transparent text-red-500 text-xs font-medium px-3 py-2 hover:bg-red-700 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isProcessing && pendingAction === "clear" ? (
               <Loader2 className="h-3 w-3 animate-spin" />
