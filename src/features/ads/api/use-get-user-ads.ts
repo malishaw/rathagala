@@ -9,7 +9,7 @@ interface UserAdsParams {
 }
 
 export const useGetUserAds = (params: UserAdsParams = {}) => {
-  const { page = 1, limit = 10, search = "", filterByUser = true } = params;
+  const { page = 1, limit = 10000, search = "", filterByUser = true } = params;
 
   const query = useQuery({
     queryKey: ["userAds", { page, limit, search, filterByUser }],

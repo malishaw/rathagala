@@ -604,16 +604,22 @@ export default function ProfilePage() {
     return Array.isArray(rawUserAds) ? rawUserAds : rawUserAds.ads || [];
   }, [userAdsQuery.data]);
 
+  const sortByUpdatedDesc = (ads: UserAd[]) =>
+    [...ads].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+
   const filteredAds = useMemo(() => {
+    if (adsFilter === "pending") return sortByUpdatedDesc(userAds.filter((ad: UserAd) => ad.status === "PENDING_REVIEW"));
+    if (adsFilter === "rejected") return sortByUpdatedDesc(userAds.filter((ad: UserAd) => ad.status === "REJECTED"));
+
     const activeAds = userAds.filter((ad: UserAd) => ad.status !== "EXPIRED");
 
-    if (adsFilter === "all") return activeAds;
-    if (adsFilter === "top") return activeAds.filter((ad: UserAd) => !!ad.topAdActive);
-    if (adsFilter === "bump") return activeAds.filter((ad: UserAd) => !!ad.bumpActive);
-    if (adsFilter === "urgent") return activeAds.filter((ad: UserAd) => !!ad.urgentActive);
-    if (adsFilter === "featured") return activeAds.filter((ad: UserAd) => !!ad.featuredActive);
+    if (adsFilter === "all") return sortByUpdatedDesc(activeAds);
+    if (adsFilter === "top") return sortByUpdatedDesc(activeAds.filter((ad: UserAd) => !!ad.topAdActive));
+    if (adsFilter === "bump") return sortByUpdatedDesc(activeAds.filter((ad: UserAd) => !!ad.bumpActive));
+    if (adsFilter === "urgent") return sortByUpdatedDesc(activeAds.filter((ad: UserAd) => !!ad.urgentActive));
+    if (adsFilter === "featured") return sortByUpdatedDesc(activeAds.filter((ad: UserAd) => !!ad.featuredActive));
 
-    return activeAds;
+    return sortByUpdatedDesc(activeAds);
   }, [userAds, adsFilter]);
 
   // Loading state for the entire page
@@ -1230,6 +1236,8 @@ export default function ProfilePage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Ads</SelectItem>
+                      <SelectItem value="pending">Pending Ads</SelectItem>
+                      <SelectItem value="rejected">Rejected Ads</SelectItem>
                       <SelectItem value="top">Top Ads</SelectItem>
                       <SelectItem value="bump">Bump Up Ads</SelectItem>
                       <SelectItem value="urgent">Urgent Ads</SelectItem>
@@ -1317,14 +1325,16 @@ export default function ProfilePage() {
                               </div>
 
                               <div className="mt-3 flex flex-wrap gap-2 text-xs sm:text-xs">
-                                {/* <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">
-                                  <MapPin className="h-3.5 w-3.5" />
-                                  <span className="max-w-[160px] truncate">{ad.location || "No location"}</span>
-                                </div> */}
                                 <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">
                                   <Calendar className="h-3.5 w-3.5" />
-                                  {formatDate(ad.createdAt)}
+                                  <span>Posted: {formatDate(ad.createdAt)}</span>
                                 </div>
+                                {ad.updatedAt && ad.updatedAt !== ad.createdAt && (
+                                  <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-blue-600">
+                                    <Calendar className="h-3.5 w-3.5" />
+                                    <span>Updated: {formatDate(ad.updatedAt)}</span>
+                                  </div>
+                                )}
                                 <div className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-2.5 py-1 text-teal-700">
                                   <Eye className="h-3.5 w-3.5" />
                                   {ad.analytics?.views || 0} views
@@ -1371,7 +1381,7 @@ export default function ProfilePage() {
                                     <div className="text-xs text-green-700/80">Until {format(new Date((ad as any).boostEndAt), "MMM d, yyyy HH:mm")}</div>
                                   )}
                                 </div>
-                              ) : (
+                              ) : ad.status !== "REJECTED" ? (
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -1384,7 +1394,7 @@ export default function ProfilePage() {
                                   <Zap className="mr-1 h-3.5 w-3.5" />
                                   Boost Now
                                 </Button>
-                              )}
+                              ) : null}
                             </div>
                           </div>
 
