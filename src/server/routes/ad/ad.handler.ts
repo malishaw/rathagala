@@ -16,10 +16,12 @@ import {
   BulkCreateRoute,
   IncrementViewRoute,
   TrendingRoute,
+  RenewRoute,
+  SendExpiryRemindersRoute,
 } from "./ad.routes";
 import { QueryParams } from "./ad.schemas";
 import { AdStatus, AdType } from "@prisma/client";
-import { sendAdPostedEmail, sendAdApprovalEmail } from "@/lib/email";
+import { sendAdPostedEmail, sendAdApprovalEmail, sendListingUpdatedEmail, sendListingRenewalConfirmationEmail, sendListingExpiryReminderEmail } from "@/lib/email";
 
 
 export const list: AppRouteHandler<ListRoute> = async (c) => {
@@ -1077,6 +1079,16 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
         typeof updatedAd.metadata === "object" ? updatedAd.metadata : null,
     };
 
+    // Send listing update confirmation (non-blocking, only for active/published ads edited by the owner)
+    if (user.email && updatedAd.status === AdStatus.ACTIVE) {
+      sendListingUpdatedEmail({
+        email: user.email,
+        name: user.name || "User",
+        adTitle: updatedAd.title,
+        adId: adId,
+      }).catch((err) => console.error("[UPDATE AD] Failed to send update email:", err));
+    }
+
     return c.json(formattedAd, HttpStatusCodes.OK);
   } catch (error: any) {
     console.error("[UPDATE AD] Error:", error);
@@ -1802,4 +1814,122 @@ export const trending: AppRouteHandler<TrendingRoute> = async (c) => {
       HttpStatusCodes.INTERNAL_SERVER_ERROR
     );
   }
+};
+
+// ---- Renew Ad Handler ----
+export const renew: AppRouteHandler<RenewRoute> = async (c) => {
+  try {
+    const adId = c.req.valid("param").id;
+    const user = c.get("user");
+
+    if (!user) {
+      return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
+    }
+
+    const existingAd = await prisma.ad.findUnique({
+      where: { id: adId },
+      include: {
+        creator: { select: { id: true, name: true, email: true } },
+      },
+    });
+
+    if (!existingAd) {
+      return c.json({ message: "Ad not found" }, HttpStatusCodes.NOT_FOUND);
+    }
+
+    const isAdmin = (user as any)?.role === "admin";
+    if (existingAd.createdBy !== user.id && !isAdmin) {
+      return c.json({ message: "Forbidden" }, HttpStatusCodes.FORBIDDEN);
+    }
+
+    // Extend by setting expiryDate to 60 days from now and reset createdAt so listing logic keeps working
+    const newExpiryDate = new Date();
+    newExpiryDate.setDate(newExpiryDate.getDate() + 60);
+
+    const renewedAd = await prisma.ad.update({
+      where: { id: adId },
+      data: {
+        createdAt: new Date(),
+        expiryDate: newExpiryDate,
+        status: AdStatus.ACTIVE,
+        published: true,
+        isDraft: false,
+        updatedAt: new Date(),
+      },
+    });
+
+    // Send renewal confirmation (non-blocking)
+    if (existingAd.creator?.email) {
+      sendListingRenewalConfirmationEmail({
+        email: existingAd.creator.email,
+        name: existingAd.creator.name || "User",
+        adTitle: existingAd.title,
+        adId: adId,
+        newExpiryDate,
+      }).catch((err) => console.error("[RENEW AD] Failed to send renewal email:", err));
+    }
+
+    return c.json(
+      {
+        message: "Ad renewed successfully",
+        expiryDate: renewedAd.expiryDate?.toISOString() ?? newExpiryDate.toISOString(),
+      },
+      HttpStatusCodes.OK
+    );
+  } catch (error: any) {
+    console.error("[RENEW AD] Error:", error);
+    return c.json(
+      { message: error.message || "Failed to renew ad" },
+      HttpStatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+};
+
+// ---- Send Expiry Reminder Emails (cron job endpoint) ----
+// Intended to be called daily by a cron job or scheduler.
+// Secured by CRON_SECRET env variable.
+export const sendExpiryReminders: AppRouteHandler<SendExpiryRemindersRoute> = async (c) => {
+  const secret = c.req.header("x-cron-secret");
+  if (!process.env.CRON_SECRET || secret !== process.env.CRON_SECRET) {
+    return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
+  }
+
+  // Find ads whose createdAt is exactly 59 days ago (between 59d 0h and 59d 23h 59m from now)
+  const start = new Date();
+  start.setDate(start.getDate() - 59);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(start);
+  end.setHours(23, 59, 59, 999);
+
+  const ads = await prisma.ad.findMany({
+    where: {
+      status: AdStatus.ACTIVE,
+      published: true,
+      boostStatus: { not: "ACTIVE" }, // boosted ads don't expire at 60 days
+      createdAt: { gte: start, lte: end },
+    },
+    include: {
+      creator: { select: { name: true, email: true } },
+    },
+  });
+
+  let count = 0;
+  for (const ad of ads) {
+    if (ad.creator?.email) {
+      try {
+        await sendListingExpiryReminderEmail({
+          email: ad.creator.email,
+          name: ad.creator.name || "User",
+          adTitle: ad.title,
+          adId: ad.id,
+        });
+        count++;
+      } catch (err) {
+        console.error(`[EXPIRY REMINDERS] Failed for ad ${ad.id}:`, err);
+      }
+    }
+  }
+
+  return c.json({ message: "Expiry reminders sent", count }, HttpStatusCodes.OK);
 };

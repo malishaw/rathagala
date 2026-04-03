@@ -391,6 +391,57 @@ export const incrementView = createRoute({
 
 export type IncrementViewRoute = typeof incrementView;
 
+// --------- Renew Ad ----------
+export const renew = createRoute({
+  tags,
+  summary: "Renew an ad",
+  description: "Extend an ad's active period by 60 days from today",
+  path: "/{id}/renew",
+  method: "post",
+  middleware: [serverAuthMiddleware],
+  request: {
+    params: schemas.IdParamsSchema,
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      z.object({ message: z.string(), expiryDate: z.string() }),
+      "Ad renewed successfully"
+    ),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      createMessageObjectSchema("Unauthorized"),
+      "Unauthorized"
+    ),
+    [HttpStatusCodes.FORBIDDEN]: jsonContent(
+      createMessageObjectSchema("Forbidden"),
+      "Forbidden"
+    ),
+    [HttpStatusCodes.NOT_FOUND]: jsonContent(notFoundSchema, "Ad not found"),
+  },
+});
+
+export type RenewRoute = typeof renew;
+
+// --------- Send Expiry Reminders (internal/cron) ----------
+export const sendExpiryReminders = createRoute({
+  tags,
+  summary: "Send expiry reminder emails",
+  description: "Sends expiry reminder emails for ads expiring tomorrow (day 59). Secured by internal API key.",
+  path: "/cron/expiry-reminders",
+  method: "post",
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      z.object({ message: z.string(), count: z.number() }),
+      "Reminders sent"
+    ),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      createMessageObjectSchema("Unauthorized"),
+      "Unauthorized"
+    ),
+  },
+});
+
+export type SendExpiryRemindersRoute = typeof sendExpiryReminders;
+
 // --------- Get Trending Ads ----------
 export const trending = createRoute({
   tags,

@@ -902,6 +902,276 @@ If you have any questions, contact us at support@rathagala.lk
   }
 }
 
+// Send listing expiry reminder (day 59 — 1 day before 60-day expiry)
+export async function sendListingExpiryReminderEmail({
+  email,
+  name,
+  adTitle,
+  adId,
+}: {
+  email: string;
+  name: string;
+  adTitle: string;
+  adId: string;
+}) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://rathagala.lk";
+
+  try {
+    await transporter.sendMail({
+      from: `"Rathagala Support" <${process.env.EMAIL_FROM || "support@rathagala.lk"}>`,
+      to: email,
+      subject: "Your Listing Expires Tomorrow - Rathagala",
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background-color: #f59e0b; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+              .content { background-color: #f9f9f9; padding: 30px; border-radius: 0 0 5px 5px; }
+              .ad-title { background-color: #fff7ed; padding: 15px; border-left: 4px solid #f59e0b; border-radius: 3px; margin: 20px 0; font-size: 16px; font-weight: bold; color: #92400e; }
+              .warning-box { background-color: #fef3c7; padding: 15px; border-radius: 5px; margin: 20px 0; }
+              .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>⏰ Your Listing Expires Tomorrow</h1>
+              </div>
+              <div class="content">
+                <p>Hello ${name},</p>
+                <p>Your listing is expiring in <strong>1 day</strong>:</p>
+                <div class="ad-title">${adTitle}</div>
+                <div class="warning-box">
+                  <p>Listings on Rathagala are active for <strong>60 days</strong>. After expiry, your ad will no longer be visible to buyers.</p>
+                </div>
+                <p>Renew your listing now to keep it live for another 60 days and continue reaching potential buyers.</p>
+                <p style="text-align: center; margin: 30px 0;">
+                  <a href="${appUrl}/profile#my-ads" style="display: inline-block; background-color: #024950; color: #ffffff !important; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-right: 10px;">Renew Listing</a>
+                  <a href="${appUrl}/${adId}" style="display: inline-block; background-color: #f59e0b; color: #ffffff !important; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">View Listing</a>
+                </p>
+                <p>Best regards,<br>The Rathagala Team</p>
+              </div>
+              <div class="footer">
+                <p>© ${new Date().getFullYear()} Rathagala. All rights reserved.</p>
+                <p>If you have any questions, contact us at support@rathagala.lk</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+      text: `
+Hello ${name},
+
+Your listing is expiring in 1 day:
+
+"${adTitle}"
+
+Listings on Rathagala are active for 60 days. After expiry, your ad will no longer be visible to buyers.
+
+Renew your listing now to keep it live for another 60 days:
+${appUrl}/profile#my-ads
+
+View listing: ${appUrl}/${adId}
+
+Best regards,
+The Rathagala Team
+
+© ${new Date().getFullYear()} Rathagala. All rights reserved.
+If you have any questions, contact us at support@rathagala.lk
+      `,
+    });
+    console.log("Listing expiry reminder email sent successfully to:", email);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send listing expiry reminder email:", error);
+    throw error;
+  }
+}
+
+// Send listing renewal confirmation
+export async function sendListingRenewalConfirmationEmail({
+  email,
+  name,
+  adTitle,
+  adId,
+  newExpiryDate,
+}: {
+  email: string;
+  name: string;
+  adTitle: string;
+  adId: string;
+  newExpiryDate: Date;
+}) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://rathagala.lk";
+  const formattedExpiry = newExpiryDate.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  try {
+    await transporter.sendMail({
+      from: `"Rathagala Support" <${process.env.EMAIL_FROM || "support@rathagala.lk"}>`,
+      to: email,
+      subject: "Listing Renewed Successfully - Rathagala",
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background-color: #024950; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+              .content { background-color: #f9f9f9; padding: 30px; border-radius: 0 0 5px 5px; }
+              .success-badge { background-color: #10b981; color: white; font-size: 16px; font-weight: bold; text-align: center; padding: 12px; border-radius: 5px; margin: 20px 0; }
+              .ad-title { background-color: #e0f2f1; padding: 15px; border-left: 4px solid #024950; border-radius: 3px; margin: 20px 0; font-size: 16px; font-weight: bold; color: #024950; }
+              .expiry-box { background-color: white; padding: 15px; border: 1px solid #d1fae5; border-radius: 5px; margin: 20px 0; text-align: center; }
+              .expiry-date { font-size: 22px; font-weight: bold; color: #024950; margin-top: 5px; }
+              .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>Listing Renewed!</h1>
+              </div>
+              <div class="content">
+                <p>Hello ${name},</p>
+                <div class="success-badge">✓ Your listing has been renewed for 60 more days</div>
+                <div class="ad-title">${adTitle}</div>
+                <div class="expiry-box">
+                  <p style="margin: 0; color: #555;">New expiry date</p>
+                  <div class="expiry-date">${formattedExpiry}</div>
+                </div>
+                <p>Your listing is now active and visible to buyers on Rathagala until the date above.</p>
+                <p style="text-align: center; margin: 25px 0;">
+                  <a href="${appUrl}/${adId}" style="display: inline-block; background-color: #024950; color: #ffffff !important; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">View Listing</a>
+                </p>
+                <p>Best regards,<br>The Rathagala Team</p>
+              </div>
+              <div class="footer">
+                <p>© ${new Date().getFullYear()} Rathagala. All rights reserved.</p>
+                <p>If you have any questions, contact us at support@rathagala.lk</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+      text: `
+Hello ${name},
+
+Your listing has been renewed for 60 more days.
+
+"${adTitle}"
+
+New expiry date: ${formattedExpiry}
+
+Your listing is now active and visible to buyers on Rathagala until the date above.
+
+View listing: ${appUrl}/${adId}
+
+Best regards,
+The Rathagala Team
+
+© ${new Date().getFullYear()} Rathagala. All rights reserved.
+If you have any questions, contact us at support@rathagala.lk
+      `,
+    });
+    console.log("Listing renewal confirmation email sent successfully to:", email);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send listing renewal confirmation email:", error);
+    throw error;
+  }
+}
+
+// Send listing edit/update confirmation
+export async function sendListingUpdatedEmail({
+  email,
+  name,
+  adTitle,
+  adId,
+}: {
+  email: string;
+  name: string;
+  adTitle: string;
+  adId: string;
+}) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://rathagala.lk";
+
+  try {
+    await transporter.sendMail({
+      from: `"Rathagala Support" <${process.env.EMAIL_FROM || "support@rathagala.lk"}>`,
+      to: email,
+      subject: "Listing Updated Successfully - Rathagala",
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background-color: #024950; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+              .content { background-color: #f9f9f9; padding: 30px; border-radius: 0 0 5px 5px; }
+              .ad-title { background-color: #e0f2f1; padding: 15px; border-left: 4px solid #024950; border-radius: 3px; margin: 20px 0; font-size: 16px; font-weight: bold; color: #024950; }
+              .info-box { background-color: white; padding: 15px; border-left: 4px solid #6b7280; border-radius: 3px; margin: 20px 0; }
+              .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>Listing Updated</h1>
+              </div>
+              <div class="content">
+                <p>Hello ${name},</p>
+                <p>Your listing has been updated successfully:</p>
+                <div class="ad-title">${adTitle}</div>
+                <div class="info-box">
+                  <p style="margin: 0;">If you did <strong>not</strong> make this change, please contact us immediately at <a href="mailto:support@rathagala.lk" style="color: #024950;">support@rathagala.lk</a>.</p>
+                </div>
+                <p style="text-align: center; margin: 25px 0;">
+                  <a href="${appUrl}/${adId}" style="display: inline-block; background-color: #024950; color: #ffffff !important; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">View Listing</a>
+                </p>
+                <p>Best regards,<br>The Rathagala Team</p>
+              </div>
+              <div class="footer">
+                <p>© ${new Date().getFullYear()} Rathagala. All rights reserved.</p>
+                <p>If you have any questions, contact us at support@rathagala.lk</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+      text: `
+Hello ${name},
+
+Your listing has been updated successfully:
+
+"${adTitle}"
+
+If you did NOT make this change, please contact us immediately at support@rathagala.lk.
+
+View listing: ${appUrl}/${adId}
+
+Best regards,
+The Rathagala Team
+
+© ${new Date().getFullYear()} Rathagala. All rights reserved.
+If you have any questions, contact us at support@rathagala.lk
+      `,
+    });
+    console.log("Listing updated email sent successfully to:", email);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send listing updated email:", error);
+    throw error;
+  }
+}
+
 // Generate a 6-digit verification code
 export function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();

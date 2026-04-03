@@ -14,8 +14,10 @@ const router = createRouter()
   .openapi(routes.bulkPermanentDelete, handlers.bulkPermanentDelete)
   .openapi(routes.approve, handlers.approve)
   .openapi(routes.reject, handlers.reject)
-.openapi(routes.bulkCreate, handlers.bulkCreate)
+  .openapi(routes.bulkCreate, handlers.bulkCreate)
   .openapi(routes.incrementView, handlers.incrementView)
-  .openapi(routes.trending, handlers.trending);
+  .openapi(routes.trending, handlers.trending)
+  .openapi(routes.renew, handlers.renew)
+  .openapi(routes.sendExpiryReminders, handlers.sendExpiryReminders);
 
 export default router;
