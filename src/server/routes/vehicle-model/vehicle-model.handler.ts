@@ -63,13 +63,28 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
   // Optionally include user-entered models (free-text models stored on Ads)
   const includeUserModels = query.includeUserModels === "true";
   let userModels: string[] = [];
+  const userModelTimestamps = new Map<string, { createdAt: Date; updatedAt: Date }>();
   if (includeUserModels) {
     const adWhere: any = { model: { not: null } };
     if (brand) adWhere.brand = brand;
-    const ads = await prisma.ad.findMany({ where: adWhere, select: { model: true }, take: 10000 });
+    const ads = await prisma.ad.findMany({
+      where: adWhere,
+      select: { model: true, createdAt: true, updatedAt: true },
+      take: 10000,
+    });
     const set = new Set<string>();
     for (const a of ads) {
-      if (a.model && typeof a.model === "string") set.add(a.model);
+      if (a.model && typeof a.model === "string") {
+        set.add(a.model);
+        const key = a.model;
+        const existing = userModelTimestamps.get(key);
+        if (!existing) {
+          userModelTimestamps.set(key, { createdAt: a.createdAt, updatedAt: a.updatedAt });
+        } else {
+          if (a.createdAt < existing.createdAt) existing.createdAt = a.createdAt;
+          if (a.updatedAt > existing.updatedAt) existing.updatedAt = a.updatedAt;
+        }
+      }
     }
     // Exclude names already present in DB models (case-insensitive) to prevent duplicates
     const dbModelNames = new Set(models.map((m) => m.name.toLowerCase()));
@@ -84,14 +99,19 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
         // Canonical models from vehicleModel collection
         ...models.map(formatModel),
         // Append user models as objects (no id mapped to vehicleModel)
-        ...userModels.map((name) => ({ 
-          id: `user:${name}`, 
-          name, 
-          brand: brand || null, 
-          isActive: true, 
-          createdAt: new Date().toISOString(), 
-          updatedAt: new Date().toISOString() 
-        })),
+        ...userModels.map((name) => {
+          const timestamps = userModelTimestamps.get(name);
+          const createdAt = timestamps?.createdAt || new Date();
+          const updatedAt = timestamps?.updatedAt || createdAt;
+          return {
+            id: `user:${name}`,
+            name,
+            brand: brand || null,
+            isActive: true,
+            createdAt: createdAt.toISOString(),
+            updatedAt: updatedAt.toISOString(),
+          };
+        }),
       ],
       pagination: {
         total,

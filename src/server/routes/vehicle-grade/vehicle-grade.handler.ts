@@ -67,13 +67,14 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     // Optionally include user-entered grades (free-text grades stored on Ads)
     const includeUserGrades = query.includeUserGrades === "true";
     let userGradesByBrandModel: Map<string, { name: string; brand: string | null; model: string | null }> = new Map();
+    const userGradeTimestamps = new Map<string, { createdAt: Date; updatedAt: Date }>();
     if (includeUserGrades) {
       const adWhere: any = { grade: { not: null } };
       if (model) adWhere.model = model;
       if (brand) adWhere.brand = brand;
       const ads = await prisma.ad.findMany({ 
         where: adWhere, 
-        select: { grade: true, brand: true, model: true }, 
+        select: { grade: true, brand: true, model: true, createdAt: true, updatedAt: true }, 
         take: 10000 
       });
       
@@ -86,6 +87,13 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
               brand: a.brand || null,
               model: a.model || null,
             });
+          }
+          const existing = userGradeTimestamps.get(key);
+          if (!existing) {
+            userGradeTimestamps.set(key, { createdAt: a.createdAt, updatedAt: a.updatedAt });
+          } else {
+            if (a.createdAt < existing.createdAt) existing.createdAt = a.createdAt;
+            if (a.updatedAt > existing.updatedAt) existing.updatedAt = a.updatedAt;
           }
         }
       }
@@ -101,15 +109,21 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
             const dbGradeNames = new Set(grades.map((g) => g.name.toLowerCase()));
             return Array.from(userGradesByBrandModel.values())
               .filter((userGrade) => !dbGradeNames.has(userGrade.name.toLowerCase()))
-              .map((userGrade) => ({
-                id: `user:${userGrade.name}`,
-                name: userGrade.name,
-                model: userGrade.model,
-                brand: userGrade.brand,
-                isActive: true,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-              }));
+              .map((userGrade) => {
+                const key = `${userGrade.name}|${userGrade.brand || ""}|${userGrade.model || ""}`;
+                const timestamps = userGradeTimestamps.get(key);
+                const createdAt = timestamps?.createdAt || new Date();
+                const updatedAt = timestamps?.updatedAt || createdAt;
+                return {
+                  id: `user:${userGrade.name}`,
+                  name: userGrade.name,
+                  model: userGrade.model,
+                  brand: userGrade.brand,
+                  isActive: true,
+                  createdAt: createdAt.toISOString(),
+                  updatedAt: updatedAt.toISOString(),
+                };
+              });
           })(),
         ],
         pagination: {
