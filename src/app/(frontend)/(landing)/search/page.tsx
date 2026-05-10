@@ -161,7 +161,7 @@ export default function SearchPage() {
 
       setLoadingModels(true);
       try {
-        const params = new URLSearchParams({ limit: "500", isActive: "true", brand: filters.brand });
+        const params = new URLSearchParams({ limit: "500", isActive: "true", brand: filters.brand, includeUserModels: "true" });
         const res = await fetch(`/api/vehicle-model?${params}`);
         if (res.ok) {
           const data = await res.json() as { models: { id: string; name: string; isActive?: boolean }[] };
