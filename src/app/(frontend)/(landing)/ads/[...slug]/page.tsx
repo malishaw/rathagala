@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import dynamic from "next/dynamic";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -18,13 +18,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RevealPhoneButton } from "@/components/ui/reveal-phone-button";
 import { Separator } from "@/components/ui/separator";
-import { SimilarVehicleComparison } from "@/components/ui/similar-vehicle-comparison";
 import { useGetAdById } from "@/features/ads/api/use-get-ad-by-id";
 import { useGetSimilarVehicles } from "@/features/ads/api/use-get-similar-vehicles";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
@@ -43,108 +41,192 @@ import {
   Phone,
   Share2,
   Shield,
-  BarChart3,
   Flag,
   Copy,
   Check,
-
+  ExternalLink,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
 import { authClient } from "@/lib/auth-client";
 import { buildAdUrl } from "@/lib/ad-url";
-import { FaFacebookSquare, FaWhatsappSquare, FaYoutubeSquare } from "react-icons/fa";
+import { FaFacebookSquare, FaWhatsappSquare } from "react-icons/fa";
 import { FaSquareXTwitter, FaTelegram } from "react-icons/fa6";
 import { AdIdDisplay } from "./ad-id-display";
 import { client } from "@/lib/rpc";
 import { getRelativeTime } from "@/lib/utils";
-import VehicleAnalyticsContent from "./vehicle-analytics";
+
+// Lazy-load analytics — not needed for normal ad view
+const VehicleAnalyticsContent = dynamic(() => import("./vehicle-analytics"), {
+  ssr: false,
+  loading: () => (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin w-8 h-8 border-2 border-[#024950] border-t-transparent rounded-full" />
+    </div>
+  ),
+});
+
+// ─── helpers ──────────────────────────────────────────────────────────────────
+
+const vehicleTypeLabels: Record<string, string> = {
+  CAR: "Car", VAN: "Van", SUV_JEEP: "SUV / Jeep", MOTORCYCLE: "Motorcycle",
+  CREW_CAB: "Crew Cab", PICKUP_DOUBLE_CAB: "Pickup / Double Cab", BUS: "Bus",
+  LORRY: "Lorry", THREE_WHEEL: "Three Wheel", OTHER: "Other",
+  TRACTOR: "Tractor", HEAVY_DUTY: "Heavy-Duty", BICYCLE: "Bicycle",
+  AUTO_SERVICE: "Auto Service", RENTAL: "Rental", AUTO_PARTS: "Auto Parts",
+  MAINTENANCE: "Maintenance", BOAT: "Boat",
+};
+
+const formatAdTitle = (ad: any): string => {
+  if ((ad.type ?? ad.vehicleType) === "AUTO_PARTS") {
+    const partName = ad.partName || "Auto Part";
+    const compatLabel = vehicleTypeLabels[ad.compatibleVehicleType || ""] || ad.compatibleVehicleType || "";
+    const forParts = [ad.brand, ad.model, compatLabel].filter(Boolean).join(" ");
+    return forParts ? `${partName} for ${forParts}` : partName;
+  }
+  const rawType = (ad.type ?? ad.vehicleType) as string | undefined;
+  const typeLabel = rawType ? (vehicleTypeLabels[rawType] || String(rawType)) : undefined;
+  const vehicleInfo = [ad.brand, ad.model, ad.manufacturedYear || ad.modelYear, typeLabel]
+    .filter(Boolean).join(" ");
+  if (ad.listingType === "WANT") return `Want ${vehicleInfo}`;
+  if (ad.listingType === "RENT") return `${vehicleInfo} for Rent`;
+  if (ad.listingType === "HIRE") return `${vehicleInfo} for Hire`;
+  return vehicleInfo;
+};
+
+const formatPrice = (price: number | null | undefined, isNegotiable = false) => {
+  if (!price && isNegotiable) return "Negotiable";
+  if (!price) return "Price Negotiable";
+  const formatted = new Intl.NumberFormat("en-LK", {
+    style: "currency", currency: "LKR", minimumFractionDigits: 0,
+  }).format(price).replace("LKR", "Rs.");
+  if (isNegotiable) return `${formatted} (Negotiable)`;
+  return formatted;
+};
+
+// ─── Skeleton loading state ───────────────────────────────────────────────────
+
+function DetailSkeleton() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-[#024950] h-14" />
+      <div className="max-w-5xl mx-auto px-4 py-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 space-y-4">
+            <Skeleton className="aspect-video w-full rounded" />
+            <div className="flex gap-2">
+              {[1,2,3,4].map(i => <Skeleton key={i} className="h-14 w-20 rounded shrink-0" />)}
+            </div>
+            <div className="bg-white rounded border p-4 grid grid-cols-3 gap-3">
+              {[1,2,3,4,5,6].map(i => (
+                <div key={i}><Skeleton className="h-3 w-12 mb-1" /><Skeleton className="h-4 w-20" /></div>
+              ))}
+            </div>
+            <div className="bg-white rounded border p-4 space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-2/3" />
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="bg-white rounded border p-4 space-y-3">
+              <Skeleton className="h-8 w-2/3" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-10 w-full rounded" />
+              <Skeleton className="h-10 w-full rounded" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export default function AdDetailPage() {
   const params = useParams();
-  // [...slug] catch-all handles multiple URL formats:
-  // Vehicles: [brand, seoSlug] or just [id]
-  // Auto-parts: [seoSlug] or just [id]
-  // If the last segment is "analytics", render the analytics view instead
-  const slugArray = Array.isArray(params.slug) ? params.slug : params.slug ? [params.slug as string] : [];
+  const slugArray = Array.isArray(params.slug)
+    ? params.slug
+    : params.slug ? [params.slug as string] : [];
   const isAnalytics = slugArray[slugArray.length - 1] === "analytics";
   const adSlug = isAnalytics ? slugArray.slice(0, -1) : slugArray;
-  // Extract the seoSlug or id: for 2 segments, take [1] (vehicle seoSlug), otherwise [0] (auto-parts seoSlug or id)
   const adId = adSlug.length === 2 ? adSlug[1] : adSlug[0] || "";
 
-  if (isAnalytics) {
-    return <VehicleAnalyticsContent adId={adId} />;
-  }
+  // ── All hooks must be called unconditionally before any early returns ──
   const router = useRouter();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [reportDetails, setReportDetails] = useState("");
   const [isCopied, setIsCopied] = useState(false);
-  const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
-  const [similarVehiclesPage, setSimilarVehiclesPage] = useState(1);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [similarPage, setSimilarPage] = useState(1);
 
-  // Get session to check if user is logged in
   const { data: session } = authClient.useSession();
-
-  // Using the hook to fetch ad data
   const { data: ad, isLoading, isError } = useGetAdById({ adId: adId || "" });
-  const { data: similarVehiclesData, isLoading: isLoadingSimilar } = useGetSimilarVehicles({
+  const { data: similarData, isLoading: loadingSimilar } = useGetSimilarVehicles({
     adId: adId || "",
-    limit: 24,
-    enabled: !!adId
+    limit: 9,        // reduced from 24 — we only show 6 per page
+    enabled: !!adId,
   });
   const { mutate: createReport, isPending: isSubmittingReport } = useCreateReport();
 
-  // Pagination: 6 ads per page (2 rows × 3 columns)
-  const itemsPerPage = 6;
-  const allSimilarVehicles = similarVehiclesData?.vehicles || [];
-
-  // Filter similar vehicles to only show those with matching model
-  const modelFilteredVehicles = useMemo(() => {
-    if (!ad?.model) return allSimilarVehicles;
-    return allSimilarVehicles.filter(vehicle =>
-      vehicle.model && vehicle.model.toLowerCase() === ad.model.toLowerCase()
-    );
-  }, [allSimilarVehicles, ad?.model]);
-
-  const totalPages = Math.ceil(modelFilteredVehicles.length / itemsPerPage);
-  const startIndex = (similarVehiclesPage - 1) * itemsPerPage;
-  const paginatedSimilarVehicles = modelFilteredVehicles.slice(startIndex, startIndex + itemsPerPage);
-
-  // Handle report submission
-  const handleSubmitReport = () => {
-    if (!reportReason) {
-      return;
+  // ── View count increment ──
+  useEffect(() => {
+    if (ad?.id) {
+      client.api.ad[":id"].view.$post({ param: { id: ad.id } }).catch(() => {});
     }
+  }, [ad?.id]);
 
+  // ── Redirect old ID-based URLs to SEO URLs ──
+  useEffect(() => {
+    if (ad && slugArray.length === 1 && ad.seoSlug) {
+      const isVehicle = ad.type !== "AUTO_PARTS";
+      if (isVehicle && !ad.brand) return;
+      const seoUrl = buildAdUrl(ad);
+      if (seoUrl !== `/ads/${ad.id}`) router.replace(seoUrl);
+    }
+  }, [ad, slugArray.length, router]);
+
+  // ── Image protection ──
+  useEffect(() => {
+    const blockMenu = (e: MouseEvent) => {
+      const t = e.target as HTMLElement;
+      if (t.tagName === "IMG" || t.closest?.(".img-protected")) {
+        e.preventDefault(); e.stopPropagation();
+      }
+    };
+    const blockDrag = (e: DragEvent) => {
+      if ((e.target as HTMLElement).tagName === "IMG") e.preventDefault();
+    };
+    document.addEventListener("contextmenu", blockMenu, true);
+    document.addEventListener("dragstart", blockDrag, true);
+    return () => {
+      document.removeEventListener("contextmenu", blockMenu, true);
+      document.removeEventListener("dragstart", blockDrag, true);
+    };
+  }, []);
+
+  // ── Similar vehicles — useMemo must be before any conditional returns ──
+  const allSimilar = similarData?.vehicles || [];
+  const modelFiltered = useMemo(() => {
+    if (!ad?.model) return allSimilar;
+    return allSimilar.filter(v => v.model?.toLowerCase() === ad.model?.toLowerCase());
+  }, [allSimilar, ad?.model]);
+
+  // ── Report ──
+  const handleSubmitReport = () => {
+    if (!reportReason) return;
     createReport(
+      { values: { adId: adId || "", reason: reportReason, details: reportDetails || undefined } },
       {
-        values: {
-          adId: adId || "",
-          reason: reportReason,
-          details: reportDetails || undefined,
-        },
-      },
-      {
-        onSuccess: () => {
-          setIsReportDialogOpen(false);
-          setReportReason("");
-          setReportDetails("");
-        },
-        onError: () => {
-          // Error is already handled by the mutation, but ensure dialog stays open
-          // so user can try again or see the error
-        },
         onSettled: () => {
-          // Always close dialog after mutation completes (success or error)
-          // This ensures the dialog closes even if there's an issue
           setTimeout(() => {
             if (!isSubmittingReport) {
               setIsReportDialogOpen(false);
-              setReportReason("");
-              setReportDetails("");
+              setReportReason(""); setReportDetails("");
             }
           }, 100);
         },
@@ -152,1471 +234,610 @@ export default function AdDetailPage() {
     );
   };
 
-  // Handle copy link to clipboard
+  // ── Share / copy ──
+  const getShareUrl = () =>
+    ad && typeof window !== "undefined"
+      ? window.location.origin + buildAdUrl(ad)
+      : typeof window !== "undefined" ? window.location.href : "";
+
   const handleCopyLink = () => {
-    let url = typeof window !== 'undefined' ? window.location.href : '';
-    if (ad && typeof window !== 'undefined') {
-      url = window.location.origin + buildAdUrl(ad);
-    }
-    navigator.clipboard.writeText(url).then(() => {
+    navigator.clipboard.writeText(getShareUrl()).then(() => {
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
     });
   };
 
-  // Increment view count on mount
-  useEffect(() => {
-    if (ad?.id) {
-      const incrementView = async () => {
-        try {
-          await client.api.ad[":id"].view.$post({
-            param: { id: ad.id },
-          });
-        } catch (error) {
-          console.error("Failed to increment view count", error);
-        }
-      };
-      incrementView();
-    }
-  }, [ad?.id]);
-
-  // Redirect old ID-based URLs to new SEO-friendly URLs
-  useEffect(() => {
-    if (ad && slugArray.length === 1 && ad.seoSlug) {
-      // Only redirect if buildAdUrl will produce a proper SEO URL
-      const isVehicle = ad.type !== "AUTO_PARTS";
-      if (isVehicle && !ad.brand) return; // Skip redirect if vehicle without brand
-      
-      const seoUrl = buildAdUrl(ad);
-      if (seoUrl !== `/ads/${ad.id}`) {
-        router.replace(seoUrl);
-      }
-    }
-  }, [ad, slugArray.length, router]);
-
-  // Prevent image downloads and protect against various methods
-  useEffect(() => {
-    // Prevent right-click context menu globally on images - AGGRESSIVE BLOCKING
-    const handleContextMenu = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      // Block if clicking on image or any element inside image container
-      if (
-        target.tagName === "IMG" ||
-        (target.closest && target.closest("img")) ||
-        (target.closest && target.closest(".aspect-video")) ||
-        (target.closest && target.closest('[class*="watermark"]'))
-      ) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        return false;
-      }
-    };
-
-    // Prevent keyboard shortcuts for saving/downloading
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Prevent Ctrl+S, Ctrl+Shift+S, Ctrl+U (view source)
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        (e.key === "s" || e.key === "S" || e.key === "u" || e.key === "U")
-      ) {
-        // Allow Ctrl+S only if not on an image
-        const target = e.target as HTMLElement;
-        if (target.tagName === "IMG" || (target.closest && target.closest("img"))) {
-          e.preventDefault();
-          return false;
-        }
-      }
-      // Prevent F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C (dev tools)
-      if (
-        e.key === "F12" ||
-        ((e.ctrlKey || e.metaKey) &&
-          e.shiftKey &&
-          (e.key === "I" || e.key === "J" || e.key === "C" || e.key === "i" || e.key === "j" || e.key === "c"))
-      ) {
-        // Allow dev tools but warn - you might want to remove this if you want stricter protection
-        // For now, we'll allow it but the watermark is still applied
-      }
-    };
-
-    // Prevent drag and drop
-    const handleDragStart = (e: DragEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.tagName === "IMG" || (target.closest && target.closest("img"))) {
-        e.preventDefault();
-        return false;
-      }
-    };
-
-    // Prevent image selection
-    const handleSelectStart = (e: Event) => {
-      const target = e.target as HTMLElement;
-      if (target.tagName === "IMG" || (target.closest && target.closest("img"))) {
-        e.preventDefault();
-        return false;
-      }
-    };
-
-    // Add event listeners with capture phase to catch events early
-    document.addEventListener("contextmenu", handleContextMenu, true); // Use capture phase
-    document.addEventListener("keydown", handleKeyDown, true);
-    document.addEventListener("dragstart", handleDragStart, true);
-    document.addEventListener("selectstart", handleSelectStart, true);
-    // Additional mouse events
-    document.addEventListener("mousedown", (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (e.button === 2 && (target.tagName === "IMG" || (target.closest && target.closest("img")) || (target.closest && target.closest(".aspect-video")))) {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
-    }, true);
-
-    // Cleanup
-    return () => {
-      document.removeEventListener("contextmenu", handleContextMenu, true);
-      document.removeEventListener("keydown", handleKeyDown, true);
-      document.removeEventListener("dragstart", handleDragStart, true);
-      document.removeEventListener("selectstart", handleSelectStart, true);
-    };
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        {/* Header Skeleton */}
-        <header className="bg-[#024950] text-white shadow-lg">
-          <div className="max-w-6xl mx-auto px-4 py-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <Skeleton className="h-10 w-32 bg-white/20" /> {/* Back Button */}
-              <div className="flex-1">
-                <Skeleton className="h-8 w-3/4 bg-white/20" /> {/* Title */}
-              </div>
-              <div className="flex gap-2 mt-2 sm:mt-0">
-                <Skeleton className="h-10 w-10 rounded-full bg-white/20" /> {/* Fav */}
-                <Skeleton className="h-10 w-10 rounded-full bg-white/20" /> {/* Report */}
-                <Skeleton className="h-10 w-10 rounded-full bg-white/20" /> {/* Share */}
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column Skeleton */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Image Slider Skeleton */}
-              <Card className="overflow-hidden border-none shadow-sm">
-                <Skeleton className="aspect-video w-full rounded-t-lg" />
-                <div className="p-4 bg-white">
-                  <div className="flex gap-2 overflow-hidden">
-                    {[1, 2, 3, 4].map((i) => (
-                      <Skeleton key={i} className="h-16 w-20 rounded-md shrink-0" />
-                    ))}
-                  </div>
-                </div>
-              </Card>
-
-              {/* Details Skeleton */}
-              <Card>
-                <CardHeader>
-                  <Skeleton className="h-6 w-32" />
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {[1, 2, 3, 4, 5, 6].map((i) => (
-                      <div key={i} className="space-y-2">
-                        <Skeleton className="h-4 w-16" />
-                        <Skeleton className="h-5 w-24" />
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Features Skeleton */}
-              <Card>
-                <CardHeader>
-                  <Skeleton className="h-6 w-40" />
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {[1, 2, 3, 4, 5, 6].map((i) => (
-                      <Skeleton key={i} className="h-6 w-full rounded-full" />
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Description Skeleton */}
-              <Card>
-                <CardHeader>
-                  <Skeleton className="h-6 w-28" />
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-4 w-full" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Right Column Skeleton */}
-            <div className="space-y-6">
-              <Card>
-                <CardContent className="p-6 space-y-4">
-                  <Skeleton className="h-10 w-2/3" /> {/* Price */}
-                  <Skeleton className="h-5 w-1/2" /> {/* Location */}
-                  <div className="space-y-3 pt-4">
-                    <Skeleton className="h-12 w-full rounded-md" /> {/* Phone */}
-                    <Skeleton className="h-12 w-full rounded-md" /> {/* Whatsapp */}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6 space-y-4 text-center">
-                  <div className="flex justify-center">
-                    <Skeleton className="h-16 w-16 rounded-full" />
-                  </div>
-                  <Skeleton className="h-6 w-3/4 mx-auto" />
-                  <Skeleton className="h-4 w-full" />
-                  <div className="space-y-3 pt-2">
-                    <Skeleton className="h-14 w-full rounded-md" />
-                    <Skeleton className="h-14 w-full rounded-md" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
+  // ── Conditional returns — all hooks are above this point ──
+  if (isAnalytics) return <VehicleAnalyticsContent adId={adId} />;
+  if (isLoading) return <DetailSkeleton />;
   if (isError || !ad) {
     return (
-      <div className="text-center py-8">
-        <p className="text-destructive">Failed to load ad details</p>
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="text-center">
+          <p className="text-gray-500 text-sm">Failed to load ad details.</p>
+          <Button variant="ghost" size="sm" className="mt-3" onClick={() => router.back()}>
+            <ChevronLeft className="w-4 h-4 mr-1" /> Go back
+          </Button>
+        </div>
       </div>
     );
   }
-
-  // Hide rejected ads from public view
   if (ad.status === "REJECTED") {
     return (
-      <div className="min-h-screen  flex items-center justify-center px-4">
-        <div className="max-w-lg w-full text-center">
-          <h2 className="text-xl text-gray-900 mb-3">Sorry, This ad is not available.</h2>
-          <p className="text-gray-600">
-            The ad you are looking for is no longer accessible.
-          </p>
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="text-center max-w-sm">
+          <p className="text-gray-700 font-medium mb-1">This ad is no longer available.</p>
+          <p className="text-gray-400 text-sm">It may have been removed or is under review.</p>
         </div>
       </div>
     );
   }
 
-  // Extract media and organize it for the image slider
+  // ── Images ──
   const originalImages: string[] = Array.isArray((ad as any).media) && (ad as any).media.length > 0
     ? (ad as any).media
-      .map((item: any) => item?.media?.url)
-      .filter((u: any) => typeof u === "string" && u.length > 0)
+        .map((item: any) => item?.media?.url)
+        .filter((u: any) => typeof u === "string" && u.length > 0)
     : ["/placeholder.svg?height=400&width=600&text=No+Image"];
 
-  // Helper function to get watermarked image URL
-  const getWatermarkedImageUrl = (imageUrl: string): string => {
-    // Skip watermarking for placeholder images
-    if (imageUrl.includes("placeholder") || imageUrl.startsWith("/")) {
-      return imageUrl;
-    }
-    // Return watermarked image URL via API
-    return `/api/watermark?url=${encodeURIComponent(imageUrl)}&v=2`;
-  };
+  const getWatermarked = (url: string) =>
+    url.includes("placeholder") || url.startsWith("/")
+      ? url
+      : `/api/watermark?url=${encodeURIComponent(url)}&v=2`;
 
-  // Create watermarked image URLs
-  const images: string[] = originalImages.map(getWatermarkedImageUrl);
+  // Only watermark the CURRENT displayed image for thumbnails use raw URLs
+  const mainImage = getWatermarked(originalImages[currentImageIndex] || originalImages[0]);
 
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % images.length);
-  };
+  const adTitle = formatAdTitle(ad);
+  const adPrice = (ad as any).discountPrice
+    ? formatPrice((ad as any).discountPrice, (ad as any).metadata?.isNegotiable)
+    : formatPrice(ad.price, (ad as any).metadata?.isNegotiable);
 
-  const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
-  };
+  const location = [ad.city, ad.district].filter(Boolean).join(", ") || ad.location || "";
 
-  const formatPrice = (price: number | null | undefined, isNegotiable = false) => {
-    if (!price && isNegotiable) return "Negotiable";
-    if (!price) return "Price Negotiable";
-    const formatted = new Intl.NumberFormat("en-LK", {
-      style: "currency",
-      currency: "LKR",
-      minimumFractionDigits: 0
-    })
-      .format(price)
-      .replace("LKR", "Rs.");
-    if (isNegotiable) {
-      return <>{formatted}<div className="text-lg font-normal opacity-70"> Negotiable</div></>;
-    }
-    return formatted;
-  };
+  const perPage = 6;
+  const totalPages = Math.ceil(modelFiltered.length / perPage);
+  const paginated = modelFiltered.slice((similarPage - 1) * perPage, similarPage * perPage);
 
-  const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return "N/A";
-    return getRelativeTime(dateString);
-  };
+  // ── Specs grid ──
+  const isAutoPart = (ad as any).type === "AUTO_PARTS";
+  const specs = isAutoPart
+    ? [
+        (ad as any).partName && { label: "Part Name", value: (ad as any).partName },
+        (ad as any).partCategory?.name && { label: "Category", value: (ad as any).partCategory.name },
+        (ad as any).compatibleVehicleType && {
+          label: "Compatible",
+          value: vehicleTypeLabels[(ad as any).compatibleVehicleType] || (ad as any).compatibleVehicleType,
+        },
+        ad.brand && { label: "Brand", value: ad.brand },
+        ad.model && { label: "Model", value: ad.model },
+        ad.condition && { label: "Condition", value: ad.condition },
+      ].filter(Boolean)
+    : [
+        ad.brand && { label: "Brand", value: ad.brand },
+        ad.model && { label: "Model", value: ad.model },
+        ad.grade && { label: "Grade", value: ad.grade },
+        ad.manufacturedYear && { label: "Year", value: ad.manufacturedYear },
+        ad.mileage && { label: "Mileage", value: `${ad.mileage.toLocaleString()} km` },
+        ad.fuelType && { label: "Fuel", value: ad.fuelType },
+        ad.transmission && { label: "Transmission", value: ad.transmission },
+        ad.engineCapacity && { label: "Engine", value: `${ad.engineCapacity} cc` },
+        ad.bodyType && { label: "Body", value: ad.bodyType },
+        ad.condition && { label: "Condition", value: ad.condition },
+      ].filter(Boolean);
 
-  // Get similar vehicles from database
-  const similarVehicles = similarVehiclesData?.vehicles || [];
-
-  // Organize features/options for display
   const features = ad.tags || [];
-
-  // Helper function to format ad title with listing type prefix/suffix
-  const formatAdTitle = (ad: any): string => {
-    // Vehicle type labels (keep in-sync with search page labels)
-    const vehicleTypeLabels: Record<string, string> = {
-      CAR: "Car",
-      VAN: "Van",
-      MOTORCYCLE: "Motorbike",
-      BICYCLE: "Bicycle",
-      THREE_WHEEL: "Three Wheeler",
-      BUS: "Bus",
-      LORRY: "Lorry",
-      HEAVY_DUTY: "Heavy Duty",
-      TRACTOR: "Tractor",
-      AUTO_SERVICE: "Auto Service",
-      RENTAL: "Rental",
-      AUTO_PARTS: "Auto Parts",
-      MAINTENANCE: "Maintenance",
-      BOAT: "Boat"
-    };
-
-    // AUTO_PARTS: use part-specific title format
-    if ((ad.type ?? ad.vehicleType) === 'AUTO_PARTS') {
-      const partName = ad.partName || 'Auto Part';
-      const compatLabel = vehicleTypeLabels[ad.compatibleVehicleType || ''] || ad.compatibleVehicleType || '';
-      const forParts = [ad.brand, ad.model, compatLabel].filter(Boolean).join(' ');
-      return forParts ? `${partName} for ${forParts}` : partName;
-    }
-
-    // Build vehicle info with type at the end (brand model year [Type])
-    const rawType = (ad.type ?? ad.vehicleType) as string | undefined;
-    const typeLabel = rawType ? (vehicleTypeLabels[rawType] || String(rawType)) : undefined;
-    const vehicleInfo = [ad.brand, ad.model, ad.manufacturedYear || ad.modelYear, typeLabel]
-      .filter(Boolean)
-      .join(' ');
-
-    if (ad.listingType === 'WANT') {
-      return `Want ${vehicleInfo}`;
-    } else if (ad.listingType === 'RENT') {
-      return `${vehicleInfo} for Rent`;
-    } else if (ad.listingType === 'HIRE') {
-      return `${vehicleInfo} for Hire`;
-    }
-    return vehicleInfo;
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-[#024950] text-white shadow-lg">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:space-x-4">
-            <Button
-              variant="ghost"
-              className="text-white hover:bg-white/10 px-0 sm:px-3"
-              onClick={() => window.history.back()}
+      {/* ── Compact Header ── */}
+      <header className="bg-[#024950] text-white">
+        <div className="max-w-5xl mx-auto px-4 h-12 flex items-center gap-3">
+          <button
+            onClick={() => window.history.back()}
+            className="flex items-center gap-1 text-white/80 hover:text-white text-sm transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Back
+          </button>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-sm font-medium truncate">{adTitle}</h1>
+          </div>
+          <div className="flex items-center gap-1">
+            <FavoriteButton adId={adId || ""} className="text-white hover:bg-white/10 h-8 w-8" iconClassName="w-4 h-4" />
+            <button
+              className="h-8 w-8 flex items-center justify-center rounded text-gray-300 hover:bg-white/10 transition-colors"
+              title="Report Ad"
+              onClick={() => {
+                if (session?.user) setIsReportDialogOpen(true);
+                else router.push("/signin?redirect=" + encodeURIComponent(window.location.pathname));
+              }}
             >
-              <ChevronLeft className="w-5 h-5 mr-2" />
-              Back to Search
-            </Button>
-            <div className="flex-1">
-              <h1 className="text-lg sm:text-xl font-semibold">
-                {formatAdTitle(ad)}
-              </h1>
-            </div>
-            <div className="flex items-center space-x-2 mt-2 sm:mt-0">
-              <FavoriteButton
-                adId={adId || ""}
-                className="text-white hover:bg-white/10"
-                iconClassName="w-5 h-5"
-              />
-
-              <div className="relative group">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-red-500 hover:bg-white/10"
-                  onClick={() => {
-                    if (session?.user) {
-                      setIsReportDialogOpen(true);
-                    } else {
-                      // Redirect to login page for guest users
-                      router.push('/signin?redirect=' + encodeURIComponent(window.location.pathname));
-                    }
-                  }}
-                  aria-label="Report Ad"
-                >
-                  <Flag className="w-5 h-5 text-gray-500" />
-                </Button>
-                {!session?.user && (
-                  <span className="absolute top-full left-1/2 -translate-x-1/2 mt-1 text-xs text-white/70 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity  bg-black/70 px-2 py-1 rounded">
-                    Click to login
-                  </span>
-                )}
-              </div>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-white hover:bg-white/10"
-                    aria-label="Share"
-                  >
-                    <Share2 className="w-5 h-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-
-                <DropdownMenuContent align="end" className="w-44">
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.preventDefault();
-                      const url = ad ? window.location.origin + buildAdUrl(ad) : (typeof window !== 'undefined' ? window.location.href : '');
-                      const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
-                      window.open(shareUrl, '_blank');
-                    }}
-                  >
-                    Facebook
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.preventDefault();
-                      const url = ad ? window.location.origin + buildAdUrl(ad) : (typeof window !== 'undefined' ? window.location.href : '');
-                      const text = ad ? `Check out this ${[ad.brand, ad.model, ad.manufacturedYear].filter(Boolean).join(' ')}` : '';
-                      const shareUrl = `https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`;
-                      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                      if (isMobile) {
-                        window.location.href = shareUrl;
-                      } else {
-                        window.open(shareUrl, '_blank');
-                      }
-                    }}
-                  >
-                    WhatsApp
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.preventDefault();
-                      const url = ad ? window.location.origin + buildAdUrl(ad) : (typeof window !== 'undefined' ? window.location.href : '');
-                      const shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}`;
-                      window.open(shareUrl, '_blank');
-                    }}
-                  >
-                    Twitter / X
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.preventDefault();
-                      const url = ad ? window.location.origin + buildAdUrl(ad) : (typeof window !== 'undefined' ? window.location.href : '');
-                      const text = ad ? `Rathagala.lk Check out this ${[ad.brand, ad.model, ad.manufacturedYear].filter(Boolean).join(' ')}` : '';
-                      const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
-                      window.open(shareUrl, '_blank');
-                    }}
-                  >
-                    Telegram
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem onClick={(e) => {
-                    e.preventDefault();
-                    handleCopyLink();
-                  }}>
-                    {isCopied ? 'Copied!' : 'Copy Link'}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+              <Flag className="w-4 h-4" />
+            </button>
+            <button
+              className="h-8 w-8 flex items-center justify-center rounded text-gray-300 hover:bg-white/10 transition-colors"
+              onClick={() => setShareOpen(o => !o)}
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Images and Details */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Image Slider */}
-            <Card className="overflow-hidden">
-              <div className="relative">
-                <div className="aspect-video bg-gray-200 relative">
-                  <img
-                    src={images[currentImageIndex] || "/placeholder.svg"}
-                    alt={`Vehicle image ${currentImageIndex + 1}`}
-                    className="w-full h-full object-cover select-none pointer-events-none"
-                    draggable={false}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      return false;
-                    }}
-                    onDragStart={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      return false;
-                    }}
-                  />
-                  {/* Transparent overlay to prevent direct image interaction - BLOCKS ALL RIGHT CLICKS */}
-                  <div
-                    className="absolute inset-0 z-10 pointer-events-auto"
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      e.stopImmediatePropagation();
-                      return false;
-                    }}
-                    onDragStart={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      return false;
-                    }}
-                    onMouseDown={(e) => {
-                      if (e.button === 2) { // Right mouse button
-                        e.preventDefault();
-                        e.stopPropagation();
-                        return false;
-                      }
-                    }}
-                    style={{
-                      userSelect: 'none',
-                      WebkitUserSelect: 'none',
-                      MozUserSelect: 'none',
-                      msUserSelect: 'none'
-                    }}
-                  />
-                </div>
+      <div className="max-w-5xl mx-auto px-4 py-4">
+        {/* ── Inline Share Bar ── */}
+        {shareOpen && (
+          <div className="mb-3 flex items-center gap-2 bg-white border border-gray-200 rounded p-2 text-sm">
+            <span className="text-gray-500 text-xs mr-1">Share:</span>
+            <button className="p-1 hover:bg-gray-100 rounded" onClick={() => {
+              window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getShareUrl())}`, "_blank");
+              setShareOpen(false);
+            }}><FaFacebookSquare className="w-5 h-5 text-blue-600" /></button>
+            <button className="p-1 hover:bg-gray-100 rounded" onClick={() => {
+              const url = getShareUrl();
+              const text = `Check out this ${[ad.brand, ad.model, ad.manufacturedYear].filter(Boolean).join(" ")}`;
+              const wa = `https://wa.me/?text=${encodeURIComponent(text + " " + url)}`;
+              if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) window.location.href = wa;
+              else window.open(wa, "_blank");
+              setShareOpen(false);
+            }}><FaWhatsappSquare className="w-5 h-5 text-green-600" /></button>
+            <button className="p-1 hover:bg-gray-100 rounded" onClick={() => {
+              window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(getShareUrl())}`, "_blank");
+              setShareOpen(false);
+            }}><FaSquareXTwitter className="w-5 h-5 text-gray-900" /></button>
+            <button className="p-1 hover:bg-gray-100 rounded" onClick={() => {
+              const url = getShareUrl();
+              const text = `Rathagala.lk — ${adTitle}`;
+              window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, "_blank");
+              setShareOpen(false);
+            }}><FaTelegram className="w-5 h-5 text-blue-500" /></button>
+            <button className="p-1 hover:bg-gray-100 rounded flex items-center gap-1 text-gray-500" onClick={() => {
+              handleCopyLink(); setShareOpen(false);
+            }}>
+              {isCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+              <span className="text-xs">{isCopied ? "Copied" : "Copy link"}</span>
+            </button>
+          </div>
+        )}
 
-                {/* Slider Controls */}
-                {images.length > 1 && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* ── Left Column ── */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Image Viewer */}
+            <div className="bg-white border border-gray-200 rounded overflow-hidden">
+              <div className="relative img-protected aspect-video bg-gray-100">
+                <img
+                  src={mainImage}
+                  alt={`${adTitle} — image ${currentImageIndex + 1}`}
+                  className="w-full h-full object-cover select-none pointer-events-none"
+                  draggable={false}
+                  fetchPriority="high"
+                  onContextMenu={e => { e.preventDefault(); e.stopPropagation(); }}
+                />
+                {/* Transparent overlay blocks right-click */}
+                <div className="absolute inset-0 z-10" style={{ userSelect: "none", WebkitUserSelect: "none" }}
+                  onContextMenu={e => { e.preventDefault(); e.stopPropagation(); }}
+                />
+                {/* Image counter badge */}
+                {originalImages.length > 1 && (
+                  <span className="absolute bottom-2 right-2 z-20 bg-black/50 text-white text-xs px-2 py-0.5 rounded">
+                    {currentImageIndex + 1} / {originalImages.length}
+                  </span>
+                )}
+                {/* Nav buttons */}
+                {originalImages.length > 1 && (
                   <>
                     <button
+                      onClick={() => setCurrentImageIndex(p => (p - 1 + originalImages.length) % originalImages.length)}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-black/40 hover:bg-black/60 text-white p-1.5 rounded-full transition-colors"
                       aria-label="Previous image"
-                      onClick={prevImage}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full z-20"
                     >
-                      <ChevronLeft className="w-5 h-5" />
+                      <ChevronLeft className="w-4 h-4" />
                     </button>
                     <button
+                      onClick={() => setCurrentImageIndex(p => (p + 1) % originalImages.length)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-black/40 hover:bg-black/60 text-white p-1.5 rounded-full transition-colors"
                       aria-label="Next image"
-                      onClick={nextImage}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full z-20"
                     >
-                      <ChevronRight className="w-5 h-5" />
+                      <ChevronRight className="w-4 h-4" />
                     </button>
                   </>
                 )}
-
-                {/* Status Badges */}
               </div>
-
-              {/* Thumbnail Reel */}
-              {images.length > 1 && (
-                <div className="p-4 bg-gray-50">
-                  <div className="flex space-x-2 overflow-x-auto">
-                    {images.map((image, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentImageIndex(index)}
-                        className={`flex-shrink-0 w-20 h-16 rounded border-2 overflow-hidden ${index === currentImageIndex ? "border-[#024950]" : "border-gray-300"
-                          }`}
-                      >
-                        <img
-                          src={image || "/placeholder.svg"}
-                          alt={`Thumbnail ${index + 1}`}
-                          className="w-full h-full object-cover select-none"
-                          draggable={false}
-                          onContextMenu={(e) => e.preventDefault()}
-                          onDragStart={(e) => e.preventDefault()}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </Card>
-
-            {/* Vehicle / Part Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-[#024950]">
-                  {(ad as any).type === 'AUTO_PARTS' ? 'Part Details' : 'Vehicle Details'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {(ad as any).type === 'AUTO_PARTS' ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {(ad as any).partName && (
-                      <div>
-                        <div className="text-sm text-gray-500">Part Name</div>
-                        <div className="font-semibold">{(ad as any).partName}</div>
-                      </div>
-                    )}
-                    {(ad as any).partCategory?.name && (
-                      <div>
-                        <div className="text-sm text-gray-500">Part Category</div>
-                        <div className="font-semibold">{(ad as any).partCategory.name}</div>
-                      </div>
-                    )}
-                    {(ad as any).compatibleVehicleType && (
-                      <div>
-                        <div className="text-sm text-gray-500">Compatible Vehicle</div>
-                        <div className="font-semibold">
-                          {({ CAR: "Car", VAN: "Van", MOTORCYCLE: "Motorbike", BICYCLE: "Bicycle", THREE_WHEEL: "Three Wheeler", BUS: "Bus", LORRY: "Lorry", HEAVY_DUTY: "Heavy Duty", TRACTOR: "Tractor", BOAT: "Boat" } as Record<string, string>)[(ad as any).compatibleVehicleType] || (ad as any).compatibleVehicleType}
-                        </div>
-                      </div>
-                    )}
-                    {ad.brand && (
-                      <div>
-                        <div className="text-sm text-gray-500">Compatible Brand</div>
-                        <div className="font-semibold">{ad.brand}</div>
-                      </div>
-                    )}
-                    {ad.model && (
-                      <div>
-                        <div className="text-sm text-gray-500">Compatible Model</div>
-                        <div className="font-semibold">{ad.model}</div>
-                      </div>
-                    )}
-                    {ad.grade && (
-                      <div>
-                        <div className="text-sm text-gray-500">Compatible Grade</div>
-                        <div className="font-semibold">{ad.grade}</div>
-                      </div>
-                    )}
-                    {!ad.grade && (
-                      <div>
-                        <div className="text-sm text-gray-500">Compatible Grade</div>
-                        <div className="font-semibold text-gray-400">Not available</div>
-                      </div>
-                    )}
-                    {ad.condition && (
-                      <div>
-                        <div className="text-sm text-gray-500">Condition</div>
-                        <div className="font-semibold">{ad.condition}</div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {ad.manufacturedYear && (
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="w-5 h-5 text-gray-500" />
-                      <div>
-                        <div className="text-sm text-gray-500">Year</div>
-                        <div className="font-semibold">
-                          {ad.manufacturedYear}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {ad.mileage && (
-                    <div className="flex items-center space-x-2">
-                      <Gauge className="w-5 h-5 text-gray-500" />
-                      <div>
-                        <div className="text-sm text-gray-500">Mileage</div>
-                        <div className="font-semibold">
-                          {ad.mileage.toLocaleString()} km
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {ad.fuelType && (
-                    <div className="flex items-center space-x-2">
-                      <Fuel className="w-5 h-5 text-gray-500" />
-                      <div>
-                        <div className="text-sm text-gray-500">Fuel Type</div>
-                        <div className="font-semibold">{ad.fuelType}</div>
-                      </div>
-                    </div>
-                  )}
-
-                  {ad.transmission && (
-                    <div>
-                      <div className="text-sm text-gray-500">Transmission</div>
-                      <div className="font-semibold">{ad.transmission}</div>
-                    </div>
-                  )}
-
-                  {ad.engineCapacity && (
-                    <div>
-                      <div className="text-sm text-gray-500">Engine</div>
-                      <div className="font-semibold">
-                        {ad.engineCapacity} cc
-                      </div>
-                    </div>
-                  )}
-
-                  {ad.bodyType && (
-                    <div>
-                      <div className="text-sm text-gray-500">Body Type</div>
-                      <div className="font-semibold">{ad.bodyType}</div>
-                    </div>
-                  )}
-
-                  {ad.vehicleType && (
-                    <div>
-                      <div className="text-sm text-gray-500">Vehicle Type</div>
-                      <div className="font-semibold">{ad.vehicleType}</div>
-                    </div>
-                  )}
-
-                  {ad.condition && (
-                    <div>
-                      <div className="text-sm text-gray-500">Condition</div>
-                      <div className="font-semibold">{ad.condition}</div>
-                    </div>
-                  )}
-
-                  {ad.brand && (
-                    <div>
-                      <div className="text-sm text-gray-500">Brand</div>
-                      <div className="font-semibold">{ad.brand}</div>
-                    </div>
-                  )}
-
-                  {ad.model && (
-                    <div>
-                      <div className="text-sm text-gray-500">Model</div>
-                      <div className="font-semibold">{ad.model}</div>
-                    </div>
-                  )}
-
-                  {ad.grade && (
-                    <div>
-                      <div className="text-sm text-gray-500">Grade</div>
-                      <div className="font-semibold">{ad.grade}</div>
-                    </div>
-                  )}
-
-                  {!ad.grade && (
-                    <div>
-                      <div className="text-sm text-gray-500">Grade</div>
-                      <div className="font-semibold text-gray-400">Not available</div>
-                    </div>
-                  )}
-                </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Share Section */}
-            <div className="relative w-auto">
-              <Button
-                onClick={() => setIsShareMenuOpen(!isShareMenuOpen)}
-                variant="outline"
-                size="sm"
-                className="gap-1"
-              >
-                <Share2 className="w-4 h-4" />
-                Share
-              </Button>
-
-              {isShareMenuOpen && (
-                <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-50">
-                  <div className="flex gap-1">
-                    {/* Facebook */}
+              {/* Thumbnail strip */}
+              {originalImages.length > 1 && (
+                <div className="flex gap-1.5 p-2 overflow-x-auto bg-gray-50 border-t border-gray-100">
+                  {originalImages.map((src, i) => (
                     <button
-                      type="button"
-                      onClick={() => {
-                        const url = ad ? window.location.origin + buildAdUrl(ad) : (typeof window !== 'undefined' ? window.location.href : '');
-                        const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
-                        window.open(shareUrl, '_blank');
-                        setIsShareMenuOpen(false);
-                      }}
-                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                      title="Share on Facebook"
+                      key={i}
+                      onClick={() => setCurrentImageIndex(i)}
+                      className={`flex-shrink-0 w-16 h-12 rounded overflow-hidden border-2 transition-colors ${
+                        i === currentImageIndex ? "border-[#024950]" : "border-transparent"
+                      }`}
                     >
-                      <FaFacebookSquare className="w-6 h-6 text-blue-600" />
+                      <img
+                        src={src}   // raw URL — thumbnails are too small to steal
+                        alt={`Thumbnail ${i + 1}`}
+                        className="w-full h-full object-cover select-none"
+                        loading="lazy"
+                        draggable={false}
+                        onContextMenu={e => e.preventDefault()}
+                      />
                     </button>
-
-                    {/* WhatsApp */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        try {
-                          const url = ad ? window.location.origin + buildAdUrl(ad) : (typeof window !== 'undefined' ? window.location.href : '');
-                          const text = `Check out this vehicle: ${[ad.brand, ad.model, ad.manufacturedYear].filter(Boolean).join(" ")}`;
-                          const shareUrl = `https://wa.me/?text=${encodeURIComponent(text + " " + url)}`;
-                          
-                          // Detect mobile device
-                          const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                          
-                          if (isMobile) {
-                            window.location.href = shareUrl;
-                          } else {
-                            window.open(shareUrl, '_blank');
-                          }
-                          setIsShareMenuOpen(false);
-                        } catch (error) {
-                          console.error("Error sharing on WhatsApp:", error);
-                        }
-                      }}
-                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                      title="Share on WhatsApp"
-                    >
-                      <FaWhatsappSquare className="w-6 h-6 text-green-600" />
-                    </button>
-
-                    {/* X (Twitter) */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const url = ad ? window.location.origin + buildAdUrl(ad) : (typeof window !== 'undefined' ? window.location.href : '');
-                        const text = `Rathagala.lk Check out this ${[ad.brand, ad.model, ad.manufacturedYear].filter(Boolean).join(" ")}`;
-                        const shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
-                        window.open(shareUrl, '_blank');
-                        setIsShareMenuOpen(false);
-                      }}
-                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                      title="Share on X"
-                    >
-                      <FaSquareXTwitter className="w-6 h-6 text-gray-900" />
-                    </button>
-
-                    {/* YouTube */}
-                    {/* <button
-                      onClick={() => {
-                        window.open('https://www.youtube.com/', '_blank', 'noopener');
-                        setIsShareMenuOpen(false);
-                      }}
-                      className="p-1 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
-                      title="Share on YouTube"
-                    >
-                      <FaYoutubeSquare className="w-7 h-7 text-red-600" />
-                    </button> */}
-
-                    {/* Telegram */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const url = ad ? window.location.origin + buildAdUrl(ad) : (typeof window !== 'undefined' ? window.location.href : '');
-                        const text = `Rathagala.lk Check out this vehicle: ${[ad.brand, ad.model, ad.manufacturedYear].filter(Boolean).join(" ")}`;
-                        const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
-                        window.open(shareUrl, '_blank');
-                        setIsShareMenuOpen(false);
-                      }}
-                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                      title="Share on Telegram"
-                    >
-                      <FaTelegram className="w-6 h-6 text-blue-600" />
-                    </button>
-
-                    {/* Copy Link */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleCopyLink();
-                        setIsShareMenuOpen(false);
-                      }}
-                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                      title="Copy Link"
-                    >
-                      {isCopied ? (
-                        <Check className="w-6 h-6 text-green-600" />
-                      ) : (
-                        <Copy className="w-6 h-6 text-gray-400" />
-                      )}
-                    </button>
-                  </div>
+                  ))}
                 </div>
               )}
             </div>
 
-            {/* Features */}
+            {/* Specs Grid */}
+            {specs.length > 0 && (
+              <div className="bg-white border border-gray-200 rounded p-4">
+                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                  {isAutoPart ? "Part Details" : "Vehicle Details"}
+                </h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2.5">
+                  {(specs as any[]).map((s: any) => (
+                    <div key={s.label}>
+                      <div className="text-[11px] text-gray-400 uppercase tracking-wide">{s.label}</div>
+                      <div className="text-sm font-medium text-gray-800">{s.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Features / Tags */}
             {features.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-[#024950]">
-                    Features & Equipment
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {features.map((feature, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-[#024950] rounded-full"></div>
-                        <span className="text-sm">{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="bg-white border border-gray-200 rounded p-4">
+                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Features & Equipment</h2>
+                <div className="flex flex-wrap gap-1.5">
+                  {features.map((f: string, i: number) => (
+                    <span key={i} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                      {f}
+                    </span>
+                  ))}
+                </div>
+              </div>
             )}
 
             {/* Description */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-[#024950]">Description</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-                  {ad.description}
-                </p>
-
-                <Separator className="my-4" />
-
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm text-gray-500">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-1">
-                      <Eye className="w-4 h-4" />
-                      <span>
-                        {ad.analytics?.views || 0} views
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Clock className="w-4 h-4" />
-                      <span>Posted {formatDate(ad.createdAt)}</span>
-                    </div>
-                  </div>
-                  <AdIdDisplay id={ad.id} />
+            <div className="bg-white border border-gray-200 rounded p-4">
+              <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Description</h2>
+              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{ad.description}</p>
+              <Separator className="my-3" />
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400">
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1">
+                    <Eye className="w-3.5 h-3.5" />{ad.analytics?.views || 0} views
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" />Posted {getRelativeTime(ad.createdAt)}
+                  </span>
                 </div>
-              </CardContent>
-            </Card>
+                <AdIdDisplay id={ad.id} />
+              </div>
+            </div>
 
             {/* Special Notes */}
             {(ad as any).specialNote && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-[#024950]">Special Notes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-                    {(ad as any).specialNote}
-                  </p>
-                </CardContent>
-              </Card>
+              <div className="bg-amber-50 border border-amber-100 rounded p-4">
+                <h2 className="text-xs font-semibold text-amber-700 uppercase tracking-wide mb-2">Special Note</h2>
+                <p className="text-sm text-amber-900 leading-relaxed whitespace-pre-line">{(ad as any).specialNote}</p>
+              </div>
             )}
 
-            {/* Similar Vehicles (desktop/tablet) - hidden on mobile so we can show it last on small screens */}
+            {/* Similar Vehicles — desktop (hidden on mobile, shown below) */}
             <div className="hidden sm:block">
-              {(ad as any).type !== 'AUTO_PARTS' && (modelFilteredVehicles.length > 0 || isLoadingSimilar) && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-[#024950]">Similar Vehicles</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {isLoadingSimilar ? (
-                      <div className="flex items-center justify-center py-8">
-                        <div className="animate-spin w-6 h-6 border-4 border-[#024950] border-t-transparent rounded-full"></div>
-                        <span className="ml-2 text-sm text-gray-500">Loading similar vehicles...</span>
+              {!isAutoPart && (modelFiltered.length > 0 || loadingSimilar) && (
+                <div className="bg-white border border-gray-200 rounded p-4">
+                  <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Similar Vehicles</h2>
+                  {loadingSimilar ? (
+                    <div className="grid grid-cols-3 gap-3">
+                      {[1,2,3].map(i => (
+                        <div key={i} className="border rounded p-2">
+                          <Skeleton className="aspect-video w-full mb-2 rounded" />
+                          <Skeleton className="h-3 w-3/4 mb-1" />
+                          <Skeleton className="h-3 w-1/2" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-3 gap-3">
+                        {paginated.map(v => (
+                          <button
+                            key={v.id}
+                            onClick={() => router.push(buildAdUrl(v))}
+                            className="text-left border border-gray-200 rounded overflow-hidden hover:shadow-sm transition-shadow"
+                          >
+                            <img
+                              src={v.image || "/placeholder.svg"}
+                              alt={v.title}
+                              className="w-full h-20 object-cover"
+                              loading="lazy"
+                            />
+                            <div className="p-2">
+                              <div className="text-xs font-medium text-gray-800 line-clamp-1">{v.title}</div>
+                              <div className="text-xs font-bold text-[#024950] mt-0.5">
+                                {formatPrice(v.price, (v as any).metadata?.isNegotiable)}
+                              </div>
+                              {(v.city || v.district || v.location) && (
+                                <div className="flex items-center gap-0.5 text-[10px] text-gray-400 mt-0.5">
+                                  <MapPin className="w-2.5 h-2.5" />
+                                  <span className="truncate">
+                                    {[v.city, v.district].filter(Boolean).join(", ") || v.location}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </button>
+                        ))}
                       </div>
-                    ) : modelFilteredVehicles.length > 0 ? (
-                      <>
-                        <div className="grid grid-cols-3 gap-3 mb-4">
-                          {paginatedSimilarVehicles.map((vehicle) => (
-                            <Card
-                              key={vehicle.id}
-                              className="hover:shadow-md transition-shadow cursor-pointer"
-                              onClick={() => router.push(buildAdUrl(vehicle))}
+                      {totalPages > 1 && (
+                        <div className="flex items-center justify-center gap-1 mt-3 pt-3 border-t">
+                          <button
+                            onClick={() => setSimilarPage(p => Math.max(1, p - 1))}
+                            disabled={similarPage === 1}
+                            className="p-1 rounded border border-gray-200 disabled:opacity-30 hover:bg-gray-50"
+                          >
+                            <ChevronLeft className="w-3.5 h-3.5" />
+                          </button>
+                          {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                            <button
+                              key={p}
+                              onClick={() => setSimilarPage(p)}
+                              className={`w-7 h-7 text-xs rounded border transition-colors ${
+                                similarPage === p
+                                  ? "bg-[#024950] text-white border-[#024950]"
+                                  : "border-gray-200 hover:bg-gray-50"
+                              }`}
                             >
-                              <CardContent className="p-3">
-                                <img
-                                  src={vehicle.image || "/placeholder.svg"}
-                                  alt={vehicle.title}
-                                  className="w-full h-24 object-cover rounded mb-2"
-                                />
-                                <h3 className="font-semibold text-xs mb-1 line-clamp-2">{vehicle.title}</h3>
-                                <div className="text-sm font-bold text-[#024950] mb-1">
-                                  {formatPrice(vehicle.price || 0, (vehicle as any).metadata?.isNegotiable)}
-                                </div>
-                                <div className="flex items-center text-xs text-gray-500">
-                                  <MapPin className="w-3 h-3 mr-1" />
-                                  <span className="truncate">{[vehicle.city, vehicle.district].filter(Boolean).join(", ") || vehicle.location || "N/A"}</span>
-                                </div>
-                                {vehicle.mileage && (
-                                  <div className="text-xs text-gray-500 mt-1">
-                                    {vehicle.mileage.toLocaleString()} km
-                                  </div>
-                                )}
-                              </CardContent>
-                            </Card>
+                              {p}
+                            </button>
                           ))}
-                        </div>
-
-                        {/* Pagination Controls */}
-                        <div className="flex items-center justify-center gap-2 mt-4 pt-4 border-t">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSimilarVehiclesPage(prev => Math.max(1, prev - 1))}
-                            disabled={similarVehiclesPage === 1}
+                          <button
+                            onClick={() => setSimilarPage(p => Math.min(totalPages, p + 1))}
+                            disabled={similarPage === totalPages}
+                            className="p-1 rounded border border-gray-200 disabled:opacity-30 hover:bg-gray-50"
                           >
-                            <ChevronLeft className="w-4 h-4" />
-                          </Button>
-
-                          <div className="flex items-center gap-1">
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                              <Button
-                                key={page}
-                                variant={similarVehiclesPage === page ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => setSimilarVehiclesPage(page)}
-                                className={similarVehiclesPage === page ? "bg-[#024950]" : ""}
-                              >
-                                {page}
-                              </Button>
-                            ))}
-                          </div>
-
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSimilarVehiclesPage(prev => Math.min(totalPages, prev + 1))}
-                            disabled={similarVehiclesPage === totalPages}
-                          >
-                            <ChevronRight className="w-4 h-4" />
-                          </Button>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </button>
                         </div>
-                      </>
-                    ) : (
-                      <p className="text-center text-gray-500 py-4">No similar vehicles found</p>
-                    )}
-                  </CardContent>
-                </Card>
+                      )}
+                    </>
+                  )}
+                </div>
               )}
             </div>
           </div>
 
-          {/* Right Column - Price and Contact */}
-          <div className="space-y-6">
-            {/* Price and Location */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="text-3xl font-bold text-[#024950] mb-2">
-                  {(ad as any).discountPrice
-                    ? formatPrice((ad as any).discountPrice, (ad as any).metadata?.isNegotiable)
-                    : formatPrice(ad.price, (ad as any).metadata?.isNegotiable)}
-                </div>
-                {(ad as any).discountPrice &&
-                  ad.price &&
-                  (ad as any).discountPrice < ad.price && (
-                    <div className="text-xl line-through text-gray-400 mb-2">
-                      {formatPrice(ad.price, (ad as any).metadata?.isNegotiable)}
+          {/* ── Right Sidebar ── */}
+          <div className="space-y-3">
+            {/* Price & Contact — sticky on desktop */}
+            <div className="lg:sticky lg:top-4 space-y-3">
+              <div className="bg-white border border-gray-200 rounded p-4">
+                {/* Price */}
+                <div className="mb-3">
+                  <div className="text-xl font-bold text-[#024950]">{adPrice}</div>
+                  {(ad as any).discountPrice && ad.price && (ad as any).discountPrice < ad.price && (
+                    <div className="text-sm line-through text-gray-400">
+                      {formatPrice(ad.price)}
                     </div>
                   )}
-                {/* Location Display - show city/district or fallback to location field */}
-                {(ad.city || ad.district || ad.location) && (
-                    <div className="flex flex-col gap-4 mb-0">
-                      <div className="flex items-center text-gray-600">
-                        <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
-                        <span className="break-words">{[ad.city, ad.district].filter(Boolean).join(", ") || ad.location}</span>
-                      </div>
-                    </div>
-                  
-                )}
-                {ad.location && (
-                  <div className="flex items-center text-gray-600">
-                    <span className="text-xs mb-4">{ad.location}</span>
+                </div>
+
+                {/* Location */}
+                {location && (
+                  <div className="flex items-center gap-1.5 text-sm text-gray-500 mb-3">
+                    <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span>{location}</span>
                   </div>
                 )}
 
-                {/* Full Address */}
-                {(ad as any).address && (
-                  <div className="flex items-start text-gray-600 mb-3">
-                    <MapPin className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm break-words">{(ad as any).address}</span>
+                <Separator className="mb-3" />
+
+                {/* Phone */}
+                {ad.phoneNumber && (
+                  <div className="mb-2">
+                    {/* Mobile: dial link */}
+                    <a href={`tel:${ad.phoneNumber}`} className="block sm:hidden">
+                      <Button className="w-full bg-[#024950] hover:bg-[#036b75] text-white text-sm h-9">
+                        <Phone className="w-3.5 h-3.5 mr-2" />{ad.phoneNumber}
+                      </Button>
+                    </a>
+                    {/* Desktop: masked reveal */}
+                    <div className="hidden sm:block">
+                      <RevealPhoneButton phoneNumber={ad.phoneNumber} />
+                    </div>
                   </div>
                 )}
 
-                <div className="space-y-2">
-                  {ad.phoneNumber && (
-                    <div className="mb-2">
-                      {/* Desktop: Masked number, reveal on click, no hyperlink */}
-                      <div className="block sm:hidden">
-                        {/* Mobile: Show as tel: link */}
-                        <a
-                          href={`tel:${ad.phoneNumber}`}
-                          className="w-full inline-block"
-                        >
-                          <Button className="w-full bg-[#024950] hover:bg-[#036b75] text-white">
-                            <Phone className="w-4 h-4 mr-2" />
-                            {ad.phoneNumber}
-                          </Button>
-                        </a>
-                      </div>
-                      <div className="hidden sm:block">
-                        {/* Desktop: Masked, reveal on click */}
-                        <RevealPhoneButton phoneNumber={ad.phoneNumber} />
-                      </div>
-                    </div>
-                  )}
-                  <Button
-                    variant="outline"
-                    className="w-full border-[#024950] text-[#024950] hover:bg-[#024950] hover:text-white"
-                    disabled={!ad.whatsappNumber && !ad.phoneNumber}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      try {
-                        const vehicleInfo = [ad.brand, ad.model, ad.manufacturedYear].filter(Boolean).join(" ");
-                        const message = `Hi, I'm interested in this vehicle: ${vehicleInfo}. Could you please share more details`;
-                        
-                        if (ad.whatsappNumber) {
-                          // Clean phone number - remove all non-digits
-                          let phoneNumber = ad.whatsappNumber.replace(/\D/g, "");
-                          
-                          // Add Sri Lanka country code if not present
-                          if (!phoneNumber.startsWith("94")) {
-                            // Remove leading 0 if present
-                            phoneNumber = phoneNumber.replace(/^0+/, "");
-                            phoneNumber = "94" + phoneNumber;
-                          }
-                          
-                          console.log("Opening WhatsApp for number:", phoneNumber);
-                          
-                          // Detect mobile device
-                          const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                          
-                          // Build WhatsApp URL
-                          const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-                          
-                          if (isMobile) {
-                            // On mobile, use direct navigation for better app opening
-                            window.location.href = whatsappUrl;
-                          } else {
-                            // On desktop, open in new tab
-                            const newWindow = window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-                            if (!newWindow) {
-                              console.warn("Popup blocked, trying direct navigation");
-                              window.location.href = whatsappUrl;
-                            }
-                          }
-                        } else if (ad.phoneNumber) {
-                          // Fallback to SMS if no WhatsApp number
-                          const smsUrl = `sms:${ad.phoneNumber}${/iPhone|iPad|iPod/i.test(navigator.userAgent) ? '&' : '?'}body=${encodeURIComponent(message)}`;
-                          window.location.href = smsUrl;
-                        }
-                      } catch (error) {
-                        console.error("Error opening WhatsApp:", error);
-                        alert("Unable to open WhatsApp. Please try copying the number and messaging directly.");
-                      }
-                    }}
-                  >
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    {ad.whatsappNumber ? "WhatsApp" : "Message"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                {/* WhatsApp */}
+                <Button
+                  variant="outline"
+                  className="w-full border-[#024950] text-[#024950] hover:bg-[#024950] hover:text-white text-sm h-9"
+                  disabled={!ad.whatsappNumber && !ad.phoneNumber}
+                  onClick={() => {
+                    const vehicleInfo = [ad.brand, ad.model, ad.manufacturedYear].filter(Boolean).join(" ");
+                    const message = `Hi, I'm interested in this vehicle: ${vehicleInfo}. Could you please share more details`;
+                    if (ad.whatsappNumber) {
+                      let phone = ad.whatsappNumber.replace(/\D/g, "");
+                      if (!phone.startsWith("94")) phone = "94" + phone.replace(/^0+/, "");
+                      const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+                      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) window.location.href = url;
+                      else window.open(url, "_blank", "noopener,noreferrer");
+                    } else if (ad.phoneNumber) {
+                      const sms = `sms:${ad.phoneNumber}${/iPhone|iPad|iPod/i.test(navigator.userAgent) ? "&" : "?"}body=${encodeURIComponent(message)}`;
+                      window.location.href = sms;
+                    }
+                  }}
+                >
+                  <MessageCircle className="w-3.5 h-3.5 mr-2" />
+                  {ad.whatsappNumber ? "WhatsApp" : "Message"}
+                </Button>
+              </div>
 
-            {/* Seller Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-[#024950]">
-                  Seller Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-start space-x-3">
+              {/* Seller Info */}
+              <div className="bg-white border border-gray-200 rounded p-4">
+                <div className="flex items-center gap-3 mb-3">
                   <button
-                    type="button"
                     onClick={() => {
-                      const sellerId = (ad as any).createdBy || (ad as any).creator?.id || (ad as any).userId || (ad as any).user_id || (ad as any).sellerId || (ad as any).ownerId || (ad as any).user?.id || (ad as any).seller?.id;
-                      if (sellerId) {
-                        router.push(`/search?seller=${encodeURIComponent(String(sellerId))}`);
-                      } else {
-                        router.push(`/search`);
-                      }
+                      const sid = (ad as any).createdBy || (ad as any).creator?.id;
+                      router.push(sid ? `/search?seller=${encodeURIComponent(sid)}` : "/search");
                     }}
-                    className="w-12 h-12 rounded-full flex items-center justify-center hover:bg-opacity-20 cursor-pointer"
                   >
-                    <Avatar className="h-12 w-12">
-                      {((ad as any).creator?.image || (ad as any).creator?.avatar) ? (
-                        <AvatarImage
-                          src={(ad as any).creator?.image || (ad as any).creator?.avatar}
-                          alt={(ad as any).creator?.name || "Seller"}
-                        />
+                    <Avatar className="h-10 w-10">
+                      {(ad as any).creator?.image ? (
+                        <AvatarImage src={(ad as any).creator.image} alt={(ad as any).creator?.name || "Seller"} />
                       ) : (
-                        <AvatarFallback className="bg-gradient-to-br from-[#0D5C63] to-teal-600 text-white font-semibold">
-                          {(((ad as any).creator?.name || "Seller").charAt(0) || "S").toUpperCase()}
+                        <AvatarFallback className="bg-[#024950] text-white text-sm font-semibold">
+                          {((ad as any).creator?.name || "S").charAt(0).toUpperCase()}
                         </AvatarFallback>
                       )}
                     </Avatar>
                   </button>
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
                       <button
-                        type="button"
                         onClick={() => {
-                          const sellerId = (ad as any).createdBy || (ad as any).creator?.id || (ad as any).userId || (ad as any).user_id || (ad as any).sellerId || (ad as any).ownerId || (ad as any).user?.id || (ad as any).seller?.id;
-                          if (sellerId) {
-                            router.push(`/search?seller=${encodeURIComponent(String(sellerId))}`);
-                          } else {
-                            router.push(`/search`);
-                          }
+                          const sid = (ad as any).createdBy || (ad as any).creator?.id;
+                          router.push(sid ? `/search?seller=${encodeURIComponent(sid)}` : "/search");
                         }}
-                        className="font-semibold text-left hover:underline cursor-pointer"
+                        className="text-sm font-semibold hover:underline text-left truncate"
                       >
                         {(ad as any).creator?.name || "Seller"}
                       </button>
-                      <Shield className="w-4 h-4 text-green-500" />
+                      <Shield className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
                     </div>
-                    <div className="text-sm text-gray-500 mb-2">
-                      {(ad as any).sellerType === "DEALER"
-                        ? "Dealer"
-                        : "Private Seller"}
+                    <div className="text-xs text-gray-400">
+                      {(ad as any).sellerType === "DEALER" ? "Dealer" : "Private Seller"}
                     </div>
-                    <div className="flex items-center space-x-1 mb-2">
-                      {/* <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" /> */}
-                      {/* <span className="text-sm font-medium">4.8</span>
-                      <span className="text-sm text-gray-500">(5 ads)</span> */}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      onClick={() => {
-                        // Try common seller id fields on the ad object
-                        const sellerId = (ad as any).createdBy || (ad as any).creator?.id || (ad as any).userId || (ad as any).user_id || (ad as any).sellerId || (ad as any).ownerId || (ad as any).user?.id || (ad as any).seller?.id;
-                        if (sellerId) {
-                          router.push(`/search?seller=${encodeURIComponent(String(sellerId))}`);
-                        } else {
-                          // Fallback: go to search without filter
-                          router.push(`/search`);
-                        }
-                      }}
-                    >
-                      View All Ads
-                    </Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-xs h-8"
+                  onClick={() => {
+                    const sid = (ad as any).createdBy || (ad as any).creator?.id;
+                    router.push(sid ? `/search?seller=${encodeURIComponent(sid)}` : "/search");
+                  }}
+                >
+                  View All Ads
+                </Button>
+              </div>
 
-            {/* Vehicle Analytics Button */}
-            {ad.price && (
-              <Card className="border-2 border-dashed border-[#024950]/30 bg-gradient-to-br from-teal-50/50 to-white">
-                <CardContent className="p-8 text-center">
-                  <div className="flex flex-col items-center space-y-4">
-                    <div className="p-4 bg-gradient-to-br from-[#024950] to-teal-600 rounded-full">
-                      <BarChart3 className="w-8 h-8 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-800 mb-2">
-                        View Vehicle Analytics
-                      </h3>
-                      <p className="text-sm text-gray-600 mb-4 max-w-md">
-                        Get comprehensive market insights including price comparison and similar vehicle analysis
-                      </p>
-                    </div>
-                    <div className="flex flex-col gap-3 w-full max-w-md">
-                      <Button
-                        onClick={() => router.push(`/ads/${adId}/analytics`)}
-                        className="bg-gradient-to-r from-[#024950] to-teal-600 text-white hover:from-[#036b75] hover:to-teal-700 border-0 px-6 py-6 text-lg w-full"
-                        size="lg"
-                      >
-                        <BarChart3 className="w-5 h-5 mr-2" />
-                        View Analytics
-                      </Button>
-                      <Button
-                        onClick={() => router.push(`/compare?vehicle1=${adId}`)}
-                        variant="outline"
-                        className="border-2 border-[#024950] text-[#024950] hover:bg-[#024950] hover:text-white px-6 py-6 text-lg w-full"
-                        size="lg"
-                      >
-                        <BarChart3 className="w-5 h-5 mr-2" />
-                        Comparison
-                      </Button>
-                    </div>
+              {/* Analytics link — compact, not a large card */}
+              {ad.price && (
+                <div className="bg-white border border-gray-200 rounded p-3 flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-medium text-gray-700">Price Analytics</div>
+                    <div className="text-[11px] text-gray-400">Compare with similar vehicles</div>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => router.push(`/ads/${adId}/analytics`)}
+                      className="text-xs text-[#024950] hover:underline flex items-center gap-1"
+                    >
+                      Analytics <ExternalLink className="w-3 h-3" />
+                    </button>
+                    <span className="text-gray-200">|</span>
+                    <button
+                      onClick={() => router.push(`/compare?vehicle1=${adId}`)}
+                      className="text-xs text-[#024950] hover:underline flex items-center gap-1"
+                    >
+                      Compare <ExternalLink className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              )}
 
-            {/* Similar Vehicle Comparison */}
-            {(ad as any).type !== 'AUTO_PARTS' && ad.price && (
-              <SimilarVehicleComparison
-                adId={adId || ""}
-                currentPrice={(ad as any).discountPrice || ad.price}
-                currentVehicle={{
-                  brand: ad.brand,
-                  model: ad.model,
-                  year: ad.manufacturedYear,
-                  mileage: ad.mileage,
-                  fuelType: ad.fuelType,
-                  transmission: ad.transmission,
-                }}
-              />
-            )}
-
-            {/* Safety Tips */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-[#024950]">Safety Tips</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="text-sm space-y-2 text-gray-600">
+              {/* Safety Tips */}
+              <div className="bg-white border border-gray-200 rounded p-4">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Safety Tips</h3>
+                <ul className="text-xs text-gray-500 space-y-1">
                   <li>• Meet in a public place</li>
                   <li>• Inspect the vehicle thoroughly</li>
                   <li>• Verify all documents</li>
                   <li>• Take a test drive</li>
                   <li>{`• Don't pay in advance`}</li>
                 </ul>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </div>
 
-      </div>
-
-      {/* Similar Vehicles (mobile: show last) */}
-      {(ad as any).type !== 'AUTO_PARTS' && (modelFilteredVehicles.length > 0 || isLoadingSimilar) && (
-        <div className="max-w-6xl mx-auto px-4 py-6 sm:hidden">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-[#024950]">Similar Vehicles</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoadingSimilar ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin w-6 h-6 border-4 border-[#024950] border-t-transparent rounded-full"></div>
-                  <span className="ml-2 text-sm text-gray-500">Loading similar vehicles...</span>
-                </div>
-              ) : modelFilteredVehicles.length > 0 ? (
-                <>
-                  <div className="grid grid-cols-3 gap-3 mb-4">
-                    {paginatedSimilarVehicles.map((vehicle) => (
-                      <Card
-                        key={vehicle.id}
-                        className="hover:shadow-md transition-shadow cursor-pointer"
-                        onClick={() => router.push(buildAdUrl(vehicle))}
-                      >
-                        <CardContent className="p-3">
-                          <img
-                            src={vehicle.image || "/placeholder.svg"}
-                            alt={vehicle.title}
-                            className="w-full h-24 object-cover rounded mb-2"
-                          />
-                          <h3 className="font-semibold text-xs mb-1 line-clamp-2">{vehicle.title}</h3>
-                          <div className="text-sm font-bold text-[#024950] mb-1">
-                            {formatPrice(vehicle.price || 0, (vehicle as any).metadata?.isNegotiable)}
-                          </div>
-                          <div className="flex items-center text-xs text-gray-500">
-                            <MapPin className="w-3 h-3 mr-1" />
-                            <span className="truncate">{[vehicle.city, vehicle.district].filter(Boolean).join(", ") || vehicle.location || "N/A"}</span>
-                          </div>
-                          {vehicle.mileage && (
-                            <div className="text-xs text-gray-500 mt-1">
-                              {vehicle.mileage.toLocaleString()} km
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-
-                  {/* Pagination Controls */}
-                  <div className="flex items-center justify-center gap-2 mt-4 pt-4 border-t">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSimilarVehiclesPage(prev => Math.max(1, prev - 1))}
-                      disabled={similarVehiclesPage === 1}
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </Button>
-
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                        <Button
-                          key={page}
-                          variant={similarVehiclesPage === page ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setSimilarVehiclesPage(page)}
-                          className={similarVehiclesPage === page ? "bg-[#024950]" : ""}
-                        >
-                          {page}
-                        </Button>
-                      ))}
+        {/* Similar Vehicles — mobile (shown at bottom) */}
+        {!isAutoPart && (modelFiltered.length > 0 || loadingSimilar) && (
+          <div className="mt-4 sm:hidden bg-white border border-gray-200 rounded p-4">
+            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Similar Vehicles</h2>
+            {loadingSimilar ? (
+              <div className="grid grid-cols-3 gap-2">
+                {[1,2,3].map(i => <Skeleton key={i} className="aspect-video rounded" />)}
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-2">
+                {paginated.map(v => (
+                  <button
+                    key={v.id}
+                    onClick={() => router.push(buildAdUrl(v))}
+                    className="text-left border rounded overflow-hidden hover:shadow-sm"
+                  >
+                    <img src={v.image || "/placeholder.svg"} alt={v.title} className="w-full h-16 object-cover" loading="lazy" />
+                    <div className="p-1.5">
+                      <div className="text-[10px] font-medium line-clamp-1">{v.title}</div>
+                      <div className="text-[10px] font-bold text-[#024950]">
+                        {formatPrice(v.price, (v as any).metadata?.isNegotiable)}
+                      </div>
                     </div>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSimilarVehiclesPage(prev => Math.min(totalPages, prev + 1))}
-                      disabled={similarVehiclesPage === totalPages}
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <p className="text-center text-gray-500 py-4">No similar vehicles found</p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Report Dialog */}
       <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[480px]">
           <DialogHeader>
             <DialogTitle>Report Ad</DialogTitle>
-            <DialogDescription>
-              Help us maintain quality by reporting inappropriate or fraudulent ads.
-            </DialogDescription>
+            <DialogDescription>Help us maintain quality by reporting inappropriate ads.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="reason">Reason *</Label>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="reason" className="text-sm">Reason *</Label>
               <Select value={reportReason} onValueChange={setReportReason}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9 text-sm">
                   <SelectValue placeholder="Select a reason" />
                 </SelectTrigger>
                 <SelectContent>
                   {Object.entries(ReportReasons).map(([key, value]) => (
-                    <SelectItem key={key} value={value}>
-                      {value}
-                    </SelectItem>
+                    <SelectItem key={key} value={value} className="text-sm">{value}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="details">Additional Details (Optional)</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="details" className="text-sm">Additional Details (Optional)</Label>
               <Textarea
                 id="details"
-                placeholder="Provide more information about your report..."
+                placeholder="Provide more information..."
                 value={reportDetails}
-                onChange={(e) => setReportDetails(e.target.value)}
-                rows={4}
+                onChange={e => setReportDetails(e.target.value)}
+                rows={3}
+                className="text-sm"
               />
             </div>
           </div>
-          <div className="flex justify-end space-x-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsReportDialogOpen(false);
-                setReportReason("");
-                setReportDetails("");
-              }}
-              disabled={isSubmittingReport}
-            >
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={() => { setIsReportDialogOpen(false); setReportReason(""); setReportDetails(""); }} disabled={isSubmittingReport}>
               Cancel
             </Button>
-            <Button
-              onClick={handleSubmitReport}
-              disabled={!reportReason || isSubmittingReport}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {isSubmittingReport ? "Submitting..." : "Submit Report"}
+            <Button size="sm" onClick={handleSubmitReport} disabled={!reportReason || isSubmittingReport} className="bg-red-600 hover:bg-red-700">
+              {isSubmittingReport ? "Submitting..." : "Submit"}
             </Button>
           </div>
         </DialogContent>

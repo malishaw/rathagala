@@ -1,18 +1,11 @@
 import React from "react";
 
-import { Logo } from "@/components/logo";
 import { ForgotPasswordForm } from "@/features/auth/components/forgot-password-form";
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function ForgotPasswordPage() {
   return (
-    <div className="space-y-6 flex flex-col items-center w-full">
-      {/* Logo with enhanced styling */}
-      <div className="mb-4">
-        <Logo />
-      </div>
-      
+    <div className="flex flex-col items-center w-full">
       {/* Card container for the form */}
       <Card className="w-full max-w-md border-teal-700/20 bg-white/95 backdrop-blur-sm shadow-2xl">
         <CardHeader className="space-y-0.5 text-center pb-4">
@@ -27,11 +20,7 @@ export default function ForgotPasswordPage() {
           <ForgotPasswordForm />
         </CardContent>
       </Card>
-      
-      {/* Footer text */}
-      <p className="text-sm text-white/70 text-center">
-        Secure authentication powered by Rathagala
-      </p>
     </div>
   );
 }
+

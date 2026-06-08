@@ -14,6 +14,18 @@ interface FilterParams {
   model?: string | null;
   status?: string | null;
   includeExpired?: boolean;
+  type?: string | null;
+  condition?: string | null;
+  minYear?: string | null;
+  maxYear?: string | null;
+  fuelType?: string | null;
+  transmission?: string | null;
+  city?: string | null;
+  district?: string | null;
+  featuredActive?: string | boolean | null;
+  topAdActive?: string | boolean | null;
+  bumpActive?: string | boolean | null;
+  urgentActive?: string | boolean | null;
 }
 
 interface QueryOptions {
@@ -33,27 +45,78 @@ export const useGetAds = (params: FilterParams, options?: QueryOptions) => {
     model,
     status,
     includeExpired,
+    type,
+    condition,
+    minYear,
+    maxYear,
+    fuelType,
+    transmission,
+    city,
+    district,
+    featuredActive,
+    topAdActive,
+    bumpActive,
+    urgentActive,
   } = params;
 
   const query = useQuery({
-    queryKey: ["ads", { page, limit, search, listingType, minPrice, maxPrice, location, brand, model, status, includeExpired }],
+    queryKey: [
+      "ads",
+      {
+        page,
+        limit,
+        search,
+        listingType,
+        minPrice,
+        maxPrice,
+        location,
+        brand,
+        model,
+        status,
+        includeExpired,
+        type,
+        condition,
+        minYear,
+        maxYear,
+        fuelType,
+        transmission,
+        city,
+        district,
+        featuredActive,
+        topAdActive,
+        bumpActive,
+        urgentActive,
+      },
+    ],
     queryFn: async () => {
       const queryParams = {
         page: page.toString(),
         limit: limit.toString(),
         ...(search && { search }),
         ...(listingType && listingType !== "all" && { listingType }),
-        ...(minPrice !== undefined && { minPrice: minPrice.toString() }),
-        ...(maxPrice !== undefined && { maxPrice: maxPrice.toString() }),
+        ...(minPrice !== undefined && minPrice !== null && { minPrice: minPrice.toString() }),
+        ...(maxPrice !== undefined && maxPrice !== null && { maxPrice: maxPrice.toString() }),
         ...(location && { location }),
-        ...(brand && { brand }),
-        ...(model && { model }),
+        ...(brand && brand !== "all" && { brand }),
+        ...(model && model !== "all" && { model }),
         ...(status && status !== "all" && { status }),
         ...(includeExpired && { includeExpired: "true" }),
+        ...(type && type !== "all" && { type }),
+        ...(condition && condition !== "all" && { condition }),
+        ...(minYear && minYear !== "any" && minYear !== "all" && { minYear }),
+        ...(maxYear && maxYear !== "any" && maxYear !== "all" && { maxYear }),
+        ...(fuelType && fuelType !== "all" && { fuelType }),
+        ...(transmission && transmission !== "all" && { transmission }),
+        ...(city && city !== "all" && { city }),
+        ...(district && district !== "all" && { district }),
+        ...(featuredActive && { featuredActive: featuredActive.toString() }),
+        ...(topAdActive && { topAdActive: topAdActive.toString() }),
+        ...(bumpActive && { bumpActive: bumpActive.toString() }),
+        ...(urgentActive && { urgentActive: urgentActive.toString() }),
       };
 
       const response = await client.api.ad.$get({
-        query: queryParams,
+        query: queryParams as any,
       });
 
       if (!response.ok) {

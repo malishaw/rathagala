@@ -149,12 +149,94 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     const brand = typeof rawBrand === "string" ? rawBrand.trim() : null;
     const model = typeof rawModel === "string" ? rawModel.trim() : null;
 
-    if (brand) {
+    if (brand && brand.toLowerCase() !== "all") {
       andFilters.push({ brand: { equals: brand, mode: "insensitive" } });
     }
 
-    if (model) {
+    if (model && model.toLowerCase() !== "all") {
       andFilters.push({ model: { equals: model, mode: "insensitive" } });
+    }
+
+    // New API Filters for database-level search/filter optimization
+    const minPrice = query.minPrice ?? null;
+    const maxPrice = query.maxPrice ?? null;
+    const condition = query.condition ?? null;
+    const minYear = query.minYear ?? null;
+    const maxYear = query.maxYear ?? null;
+    const fuelType = query.fuelType ?? null;
+    const transmission = query.transmission ?? null;
+    const city = query.city ?? null;
+    const district = query.district ?? null;
+    const type = query.type ?? null;
+
+    if (minPrice) {
+      const priceVal = parseInt(minPrice);
+      if (!isNaN(priceVal)) {
+        andFilters.push({ price: { gte: priceVal } });
+      }
+    }
+    if (maxPrice) {
+      const priceVal = parseInt(maxPrice);
+      if (!isNaN(priceVal)) {
+        andFilters.push({ price: { lte: priceVal } });
+      }
+    }
+
+    if (condition && condition.trim() !== "" && condition.toLowerCase() !== "all" && condition.toLowerCase() !== "any") {
+      andFilters.push({ condition: { equals: condition.trim(), mode: "insensitive" } });
+    }
+
+    if (minYear && minYear.trim() !== "" && minYear.toLowerCase() !== "any" && minYear.toLowerCase() !== "all") {
+      const yrStr = minYear.trim();
+      andFilters.push({
+        OR: [
+          { manufacturedYear: { gte: yrStr } },
+          { modelYear: { gte: yrStr } }
+        ]
+      });
+    }
+
+    if (maxYear && maxYear.trim() !== "" && maxYear.toLowerCase() !== "any" && maxYear.toLowerCase() !== "all") {
+      const yrStr = maxYear.trim();
+      andFilters.push({
+        OR: [
+          { manufacturedYear: { lte: yrStr } },
+          { modelYear: { lte: yrStr } }
+        ]
+      });
+    }
+
+    if (fuelType && fuelType.trim() !== "" && fuelType.toLowerCase() !== "all" && fuelType.toLowerCase() !== "any") {
+      andFilters.push({ fuelType: fuelType.trim().toUpperCase() as any });
+    }
+
+    if (transmission && transmission.trim() !== "" && transmission.toLowerCase() !== "all" && transmission.toLowerCase() !== "any") {
+      andFilters.push({ transmission: transmission.trim().toUpperCase() as any });
+    }
+
+    if (city && city.trim() !== "" && city.toLowerCase() !== "all" && city.toLowerCase() !== "any") {
+      andFilters.push({ city: { equals: city.trim(), mode: "insensitive" } });
+    }
+
+    if (district && district.trim() !== "" && district.toLowerCase() !== "all" && district.toLowerCase() !== "any") {
+      andFilters.push({ district: { equals: district.trim(), mode: "insensitive" } });
+    }
+
+    if (type && type.trim() !== "" && type.toLowerCase() !== "all" && type.toLowerCase() !== "any") {
+      andFilters.push({ type: type.trim().toUpperCase() as any });
+    }
+
+    if (query.featuredActive === "true" || query.featuredActive === true) {
+      andFilters.push({ featuredActive: true });
+    }
+    if (query.topAdActive === "true" || query.topAdActive === true) {
+      andFilters.push({ topAdActive: true });
+    }
+    if (query.bumpActive === "true" || query.bumpActive === true) {
+      andFilters.push({ bumpActive: true });
+    }
+    if (query.urgentActive === "true" || query.urgentActive === true) {
+      andFilters.push({ urgentActive: true });
     }
 
     // Filter by status: only show ACTIVE ads for public listings (unless admin is viewing or filtering by user)
@@ -693,9 +775,11 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
     const isObjectId = /^[a-f0-9]{24}$/i.test(adId);
     const whereClause = isObjectId ? { id: adId } : { seoSlug: adId };
 
-    // Full includes for the ideal case
+    // Full includes for the ideal case (including nested Media in one query)
     const fullIncludes = {
-      media: true,
+      media: {
+        include: { media: true },
+      },
       category: true,
       creator: {
         select: { id: true, name: true, email: true, image: true },
@@ -711,7 +795,9 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
 
     // Minimal includes that avoid broken org/creator relations
     const safeIncludes = {
-      media: true,
+      media: {
+        include: { media: true },
+      },
       category: true,
       analytics: true,
       favorites: { select: { userId: true } },
@@ -759,22 +845,12 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
       );
     }
 
-    // Manually hydrate nested Media and filter out orphaned AdMedia entries
+    // Media is now hydrated inline via include — filter out orphaned entries
     const adMediaList = (ad.media || []) as Array<any>;
-    const mediaIds = Array.from(new Set(adMediaList.map((m: any) => m.mediaId).filter(Boolean)));
-    if (mediaIds.length > 0) {
-      const medias = await prisma.media.findMany({ where: { id: { in: mediaIds } } });
-      const mediaById = medias.reduce((acc: any, m: any) => {
-        acc[m.id] = m;
-        return acc;
-      }, {} as Record<string, any>);
-      ad = {
-        ...ad,
-        media: adMediaList
-          .map((am: any) => ({ ...am, media: mediaById[am.mediaId] }))
-          .filter((am: any) => Boolean(am.media)),
-      };
-    }
+    ad = {
+      ...ad,
+      media: adMediaList.filter((am: any) => Boolean(am.media)),
+    };
 
     // Format dates for the response and ensure all fields have correct types
     const formattedAd = {
@@ -884,7 +960,10 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
       boostEndAt: ad.boostEndAt?.toISOString() ?? null,
     };
 
+    // Add cache headers — public cache for 60 seconds, stale-while-revalidate for 5 minutes
+    c.header("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
     return c.json(formattedAd, HttpStatusCodes.OK);
+
   } catch (error: any) {
     console.error("[GET AD] Error:", error);
 

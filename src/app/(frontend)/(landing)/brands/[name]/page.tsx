@@ -18,75 +18,42 @@ import { FavoriteButton } from "@/features/saved-ads/components/favorite-button"
 import { authClient } from "@/lib/auth-client";
 import { buildAdUrl } from "@/lib/ad-url";
 import { useLocations } from "@/hooks/use-locations";
+import Image from "next/image";
 
-// Vehicle type labels
-const vehicleTypeLabels: Record<string, string> = {
-  CAR: "Car",
-  VAN: "Van",
-  MOTORCYCLE: "Motorcycle",
-  BICYCLE: "Bicycle",
-  THREE_WHEEL: "Three Wheeler",
-  BUS: "Bus",
-  LORRY: "Lorry",
-  HEAVY_DUTY: "Heavy Duty",
-  TRACTOR: "Tractor",
-  AUTO_SERVICE: "Auto Service",
-  RENTAL: "Rental",
-  AUTO_PARTS: "Auto Parts",
-  MAINTENANCE: "Maintenance",
-  BOAT: "Boat"
-};
+interface AdData {
+  id: string;
+  title: string;
+  status: string;
+  published: boolean;
+  brand: string | null;
+  model: string | null;
+  grade: string | null;
+  type: string;
+  listingType: string;
+  price: number | null;
+  condition: string | null;
+  fuelType: string | null;
+  transmission: string | null;
+  manufacturedYear: string | null;
+  city: string | null;
+  district: string | null;
+  location: string | null;
+  createdAt: string;
+  updatedAt: string;
+  bumpActive: boolean;
+  topAdActive: boolean;
+  urgentActive: boolean;
+  featuredActive: boolean;
+  bumpStartAt: string | null;
+  boostStartAt: string | null;
+  boostRequestedAt: string | null;
+  metadata: Record<string, unknown> | null;
+  media?: Array<{ media: { url: string } }>;
+  analytics?: { views: number } | null;
+}
 
-// Listing type labels
-const listingTypeLabels: Record<string, string> = {
-  SELL: "For Sale",
-  WANT: "Want to Buy",
-  RENT: "For Rent",
-  HIRE: "For Hire"
-};
-
-// Helper function to format ad title with listing type prefix/suffix
-const formatAdTitle = (ad: any): string => {
-  const vehicleInfo = [ad.brand, ad.model, ad.manufacturedYear, vehicleTypeLabels[ad.type] || ad.type]
-    .filter(Boolean)
-    .join(' ');
-
-  if (ad.listingType === 'WANT') {
-    return `Want ${vehicleInfo}`;
-  } else if (ad.listingType === 'RENT') {
-    return `${vehicleInfo} for Rent`;
-  } else if (ad.listingType === 'HIRE') {
-    return `${vehicleInfo} for Hire`;
-  }
-  return vehicleInfo;
-};
-
-/**
- * Fisher-Yates shuffle — equal probability for every permutation.
- * Called once per pool change so every ad starts with the same chance of
- * landing in any slot.
- */
-const shuffleArray = <T,>(items: T[]): T[] => {
-  const result = [...items];
-  for (let i = result.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
-};
-
-/**
- * Pick `count` items starting at a rotating offset.
- * Because the source array is already shuffled, every item gets an equal
- * chance of appearing. The offset advances each rotation tick so the
- * displayed pair cycles through the full pool before repeating.
- */
-const getRotatingSlice = <T,>(items: T[], startIndex: number, count: number): T[] => {
-  if (items.length === 0 || count <= 0) return [];
-  const normalizedStart = ((startIndex % items.length) + items.length) % items.length;
-  const limit = Math.min(count, items.length);
-  return Array.from({ length: limit }, (_, i) => items[(normalizedStart + i) % items.length]);
-};
+import { vehicleTypeLabels, listingTypeLabels } from "@/lib/vehicle-constants";
+import { formatAdTitle, shuffleArray, getRotatingSlice, getAdSortTime, interleaveFeaturedAds } from "@/lib/ad-helpers";
 
 
 // Filter interface (brand is pre-set from URL)
@@ -194,7 +161,7 @@ export default function BrandPage() {
     });
 
     return districtCities.length > 0 ? districtCities.sort() : sriLankanCities;
-  }, [filters.district]);
+  }, [filters.district, locationData, sriLankanCities]);
 
   // Filter districts based on search input
   const filteredDistricts = useMemo(() => {
@@ -202,7 +169,7 @@ export default function BrandPage() {
     return sriLankanDistricts.filter(district =>
       district.toLowerCase().includes(districtSearch.toLowerCase())
     );
-  }, [districtSearch]);
+  }, [districtSearch, sriLankanDistricts]);
 
   // Filter cities based on search input
   const filteredCities = useMemo(() => {
@@ -238,9 +205,8 @@ export default function BrandPage() {
       .split(/\s+/)
       .filter(term => term.length > 0);
 
-    return data.ads.filter((ad) => {
-      // Only show published ads
-      if ((ad as any).status !== "ACTIVE" || (ad as any).published !== true) {
+    return data.ads.filter((ad: AdData) => {
+      if (ad.status !== "ACTIVE" || ad.published !== true) {
         return false;
       }
 
@@ -260,7 +226,7 @@ export default function BrandPage() {
             vehicleTypeLabels[ad.type as keyof typeof vehicleTypeLabels]?.toLowerCase().includes(term) ||
             ad.city?.toLowerCase().includes(term) ||
             ad.location?.toLowerCase().includes(term) ||
-            (ad as any).district?.toLowerCase().includes(term) ||
+            ad.district?.toLowerCase().includes(term) ||
             ad.manufacturedYear?.toString().includes(term)
           );
         });
@@ -286,7 +252,7 @@ export default function BrandPage() {
       }
 
       // Grade filter
-      if (filters.grade && filters.grade !== 'all' && (ad as any).grade?.toLowerCase() !== filters.grade.toLowerCase()) {
+      if (filters.grade && filters.grade !== 'all' && ad.grade?.toLowerCase() !== filters.grade.toLowerCase()) {
         return false;
       }
 
@@ -318,9 +284,9 @@ export default function BrandPage() {
 
       // Location filter (District)
       if (filters.district && filters.district !== 'all' && filters.district !== 'any') {
-        if ((ad as any).district && (ad as any).district.toLowerCase() !== filters.district.toLowerCase()) {
+        if (ad.district && ad.district.toLowerCase() !== filters.district.toLowerCase()) {
           return false;
-        } else if (!(ad as any).district && ad.city) {
+        } else if (!ad.district && ad.city) {
           let cityDistrict = "";
           Object.values(locationData).forEach(province => {
             Object.entries(province).forEach(([dist, cities]) => {
@@ -342,10 +308,10 @@ export default function BrandPage() {
 
       return true;
     });
-  }, [data?.ads, brandName, filters.query, filters.vehicleType, filters.model, filters.condition, filters.grade, filters.minPrice, filters.maxPrice, filters.minYear, filters.maxYear, filters.fuelType, filters.transmission, filters.district, filters.city]);
+  }, [data?.ads, brandName, filters.query, filters.vehicleType, filters.model, filters.condition, filters.grade, filters.minPrice, filters.maxPrice, filters.minYear, filters.maxYear, filters.fuelType, filters.transmission, filters.district, filters.city, locationData]);
 
   // Handle filter changes
-  const handleFilterChange = (key: keyof BrandPageFilters, value: any) => {
+  const handleFilterChange = (key: keyof BrandPageFilters, value: string) => {
     setFilters(prev => {
       const newFilters = { ...prev, [key]: value };
 
@@ -434,7 +400,7 @@ export default function BrandPage() {
   // TOP ADS — 2 positions, 1-minute rotation, equal probability
   // ──────────────────────────────────────────────────────────
   const topAdsPool = useMemo(() => {
-    return filteredAds.filter((ad) => (ad as any).topAdActive && !(ad as any).featuredActive && !(ad as any).bumpActive);
+    return filteredAds.filter((ad) => ad.topAdActive && !ad.featuredActive && !ad.bumpActive);
   }, [filteredAds]);
 
   // Shuffle once per pool change → equal probability for every ad
@@ -451,7 +417,7 @@ export default function BrandPage() {
   // ──────────────────────────────────────────────────────────
   const featuredAdsPool = useMemo(() => {
     // Exclude topAdActive — top-ad ads only show in Top Ad cards + normal cards
-    return filteredAds.filter((ad) => (ad as any).featuredActive && !(ad as any).topAdActive);
+    return filteredAds.filter((ad) => ad.featuredActive && !ad.topAdActive);
   }, [filteredAds]);
 
   const shuffledFeaturedAdsPool = useMemo(() => shuffleArray(featuredAdsPool), [featuredAdsPool]);
@@ -466,7 +432,7 @@ export default function BrandPage() {
   // Excludes ads that are also top-ads (they have their own section)
   // ──────────────────────────────────────────────────────────
   const featuredInsertPool = useMemo(() => {
-    return shuffledFeaturedAdsPool.filter((ad) => !(ad as any).topAdActive);
+    return shuffledFeaturedAdsPool.filter((ad) => !ad.topAdActive);
   }, [shuffledFeaturedAdsPool]);
 
   // ──────────────────────────────────────────────────────────
@@ -477,37 +443,12 @@ export default function BrandPage() {
   const baseAds = useMemo(() => {
     // Exclude only featuredActive — topAdActive ads appear here as normal cards
     const nonPromoted = filteredAds.filter(
-      (ad) => !(ad as any).featuredActive
+      (ad) => !ad.featuredActive
     );
 
     const now = Date.now();
-    const dayMs = 24 * 60 * 60 * 1000;
-
-    /**
-     * Bump-only = bumpActive AND not topAd, not featured, not urgent.
-     * These ads jump to the top instantly and re-jump every 24h.
-     */
-    const isBumpOnly = (ad: any) =>
-      Boolean(ad?.bumpActive && !ad?.topAdActive && !ad?.featuredActive && !ad?.urgentActive);
-
-    const getSortTime = (ad: any) => {
-      const createdAtMs = ad?.createdAt ? new Date(ad.createdAt).getTime() : 0;
-      if (!isBumpOnly(ad)) return createdAtMs;
-
-      // Bump effective time: resets to "now-like" every 24h from boostStartAt
-      const bumpStart =
-        ad?.bumpStartAt || ad?.boostStartAt || ad?.boostRequestedAt || ad?.updatedAt || ad?.createdAt;
-      const bumpStartMs = bumpStart ? new Date(bumpStart).getTime() : createdAtMs;
-      if (!Number.isFinite(bumpStartMs)) return createdAtMs;
-
-      const elapsed = Math.max(0, now - bumpStartMs);
-      const cycles = Math.floor(elapsed / dayMs);
-      const lastBumpMs = bumpStartMs + cycles * dayMs;
-      return Math.max(createdAtMs, lastBumpMs);
-    };
-
     return [...nonPromoted].sort((a, b) => {
-      const timeDiff = getSortTime(b) - getSortTime(a);
+      const timeDiff = getAdSortTime(b, now) - getAdSortTime(a, now);
       if (timeDiff !== 0) return timeDiff;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
@@ -517,27 +458,7 @@ export default function BrandPage() {
   // INTERLEAVED ADS — insert 2 featured ads after every 16 base ads
   // ──────────────────────────────────────────────────────────
   const interleavedAds = useMemo(() => {
-    if (baseAds.length === 0) return [];
-    if (featuredInsertPool.length === 0) return baseAds;
-
-    const result: any[] = [];
-    const insertCount = Math.min(2, featuredInsertPool.length);
-    const poolLength = featuredInsertPool.length;
-    const startOffset = (rotationIndex * insertCount) % poolLength;
-    let insertOffset = 0;
-
-    baseAds.forEach((ad, index) => {
-      result.push(ad);
-      if ((index + 1) % 16 === 0) {
-        for (let i = 0; i < insertCount; i += 1) {
-          const pos = (startOffset + insertOffset + i) % poolLength;
-          result.push(featuredInsertPool[pos]);
-        }
-        insertOffset += insertCount;
-      }
-    });
-
-    return result;
+    return interleaveFeaturedAds(baseAds, featuredInsertPool, rotationIndex, 16);
   }, [baseAds, featuredInsertPool, rotationIndex]);
 
   return (
@@ -1026,16 +947,16 @@ export default function BrandPage() {
                       vehicleTypeLabels={vehicleTypeLabels}
                       formatPrice={formatPrice}
                       formatAdTitle={formatAdTitle}
-                      isBump={(vehicle as any).bumpActive}
-                      isTopAd={(vehicle as any).topAdActive}
-                      isUrgent={(vehicle as any).urgentActive}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+                      isBump={vehicle.bumpActive}
+                       isTopAd={vehicle.topAdActive}
+                       isUrgent={vehicle.urgentActive}
+                     />
+                   ))}
+                 </div>
+               </div>
+             )}
 
-            {/* No results */}
+             {/* No results */}
             {!isLoading && !error && interleavedAds.length === 0 && displayedTopAds.length === 0 && displayedFeaturedAds.length === 0 && (
               <Card className="p-12 text-center border-dashed border-2 bg-slate-50">
                 <Search className="h-12 w-12 text-slate-300 mx-auto mb-4" />
@@ -1051,7 +972,7 @@ export default function BrandPage() {
             {interleavedAds.length > 0 && !isLoading && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {interleavedAds.slice(0, visibleCount).map((vehicle) => {
-                  const isFeatured = (vehicle as any).featuredActive;
+                  const isFeatured = vehicle.featuredActive;
 
                   // Interleaved featured ads render as FeaturedAdCard
                   if (isFeatured) {
@@ -1062,9 +983,9 @@ export default function BrandPage() {
                         vehicleTypeLabels={vehicleTypeLabels}
                         formatPrice={formatPrice}
                         formatAdTitle={formatAdTitle}
-                        isBump={(vehicle as any).bumpActive}
-                        isTopAd={(vehicle as any).topAdActive}
-                        isUrgent={(vehicle as any).urgentActive}
+                        isBump={vehicle.bumpActive}
+                        isTopAd={vehicle.topAdActive}
+                        isUrgent={vehicle.urgentActive}
                       />
                     );
                   }
@@ -1081,9 +1002,9 @@ export default function BrandPage() {
                         <FavoriteButton adId={vehicle.id} />
                       </div>
 
-                      {((vehicle as any).bumpActive || (vehicle as any).urgentActive) && (
+                      {(vehicle.bumpActive || vehicle.urgentActive) && (
                         <div className="absolute bottom-2 right-2 z-10">
-                          <BoostBadges bumpActive={(vehicle as any).bumpActive} urgentActive={(vehicle as any).urgentActive} />
+                          <BoostBadges bumpActive={vehicle.bumpActive} urgentActive={vehicle.urgentActive} />
                         </div>
                       )}
 
@@ -1096,18 +1017,22 @@ export default function BrandPage() {
                         <div className="flex">
                           {/* Vehicle Image with Time and Views Below */}
                           <div className="w-36 h-30 flex-shrink-0 flex flex-col">
-                            <div className="flex-1">
-                              {(vehicle as any)?.media && (vehicle as any).media.length > 0 && (vehicle as any).media[0]?.media?.url ? (
-                                <img
-                                  src={(vehicle as any).media[0].media.url}
+                            <div className="flex-1 relative">
+                              {vehicle.media?.[0]?.media?.url ? (
+                                <Image
+                                  src={vehicle.media[0].media.url}
                                   alt={vehicle.title || 'Vehicle'}
-                                  className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                                  fill
+                                  sizes="144px"
+                                  className="object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
                                 />
                               ) : (
-                                <img
+                                <Image
                                   src="/placeholder-image.jpg"
                                   alt={vehicle.title || 'Vehicle'}
-                                  className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                                  fill
+                                  sizes="144px"
+                                  className="object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
                                 />
                               )}
                             </div>
@@ -1116,7 +1041,7 @@ export default function BrandPage() {
                               <span>{getRelativeTime(vehicle.createdAt)}</span>
                               <span className="flex items-center gap-0.5">
                                 <Eye className="h-3 w-3" />
-                                {(vehicle as any).analytics?.views || 0}
+                                {vehicle.analytics?.views || 0}
                               </span>
                             </div>
                           </div>
@@ -1129,7 +1054,7 @@ export default function BrandPage() {
                               </div>
 
                               <div className="text-sm font-semibold text-teal-700 mb-1">
-                                {formatPrice(vehicle.price, (vehicle as any).metadata?.isNegotiable)}
+                                {formatPrice(vehicle.price, vehicle.metadata?.isNegotiable as boolean | undefined)}
                               </div>
 
                               <div className="text-xs text-slate-500">

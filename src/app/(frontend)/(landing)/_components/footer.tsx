@@ -1,124 +1,146 @@
 import Link from "next/link";
 import { CarIcon, Facebook, Instagram, Twitter, Youtube } from "lucide-react";
 
+const footerLinks = {
+  quickLinks: [
+    { href: "/signin", label: "Login" },
+    { href: "/signup", label: "Register" },
+    { href: "/profile", label: "My Account" },
+    { href: "/sell/new", label: "Post Free Ad" },
+  ],
+  features: [
+    { href: "/search?listingType=SELL", label: "Buy Vehicles" },
+    { href: "/search?listingType=RENT", label: "Rent Vehicles" },
+    { href: "/compare", label: "Compare" },
+    { href: "/analyse", label: "Analyze Trends" },
+    { href: "/auto-parts", label: "Auto Parts" },
+  ],
+  support: [
+    { href: "/about", label: "About Us" },
+    { href: "/contact", label: "Contact Us" },
+    { href: "/terms", label: "Terms of Service" },
+    { href: "/privacy", label: "Privacy Policy" },
+  ],
+};
+
+const socialLinks = [
+  { href: "https://www.facebook.com/rathagala", Icon: Facebook, label: "Facebook" },
+  { href: "https://www.instagram.com/rathagala", Icon: Instagram, label: "Instagram" },
+  { href: "https://www.twitter.com/rathagala", Icon: Twitter, label: "Twitter" },
+  { href: "https://www.youtube.com/@rathagala", Icon: Youtube, label: "YouTube" },
+];
+
 export function Footer() {
   return (
-    <footer className="bg-gradient-to-r from-slate-900 to-teal-900 text-white py-10 md:py-16">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 md:gap-8">
-          <div className="col-span-2 md:col-span-1">
-            <div className="flex items-center space-x-2 mb-3 md:mb-6">
-              <CarIcon className="h-6 w-6" />
-              <div className="text-2xl font-bold text-white">Rathagala.lk</div>
-            </div>
-            <p className="text-slate-300 leading-relaxed text-sm md:text-base">
-              {`Sri Lanka's most trusted vehicle marketplace connecting buyers
-                and sellers nationwide.`}
-            </p>
-          </div>
-          <div className="col-span-1 md:col-span-1">
-            <h4 className="font-semibold mb-3 md:mb-6 text-lg">Quick Links</h4>
-            <ul className="space-y-2 md:space-y-3 text-slate-300">
-              <li>
-                <Link href="/signin" className="hover:text-white transition-colors">
-                  Login
-                </Link>
-              </li>
-              <li>
-                <Link href="/signup" className="hover:text-white transition-colors">
-                  Register
-                </Link>
-              </li>
-              <li>
-                <Link href="/dashboard" className="hover:text-white transition-colors">
-                  Profile
-                </Link>
-              </li>
-              <li>
-                <Link href="/boost" className="hover:text-white transition-colors">
-                  Boost
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div className="col-span-1 md:col-span-1">
-            <h4 className="font-semibold mb-3 md:mb-6 text-lg">Features</h4>
-            <ul className="space-y-2 md:space-y-3 text-slate-300">
-              <li>
-                <Link href="/compare" className="hover:text-white transition-colors">
-                  Compare Vehicle
-                </Link>
-              </li>
-              <li>
-                <Link href="/analyse" className="hover:text-white transition-colors">
-                  Analyze Trend
-                </Link>
-              </li>
-              <li>
-                <Link href="/profile#saved-ads" className="hover:text-white transition-colors">
-                  Saved Ads
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div className="col-span-1 md:col-span-1">
-            <h4 className="font-semibold mb-3 md:mb-6 text-lg">Support</h4>
-            <ul className="space-y-2 md:space-y-3 text-slate-300">
-              <li>
-                <Link href="/about" className="hover:text-white transition-colors">
-                  About Us
-                </Link>
-              </li>
+    <footer className="bg-[#012a30] text-white">
+      {/* Top accent line matching header brand color */}
+      <div className="h-0.5 bg-gradient-to-r from-teal-700 via-teal-400 to-teal-700" />
 
-              <li>
-                <Link href="/contact" className="hover:text-white transition-colors">
-                  Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link href="/terms" className="hover:text-white transition-colors">
-                  Terms of Service
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacy" className="hover:text-white transition-colors">
-                  Privacy Policy
-                </Link>
-              </li>
+      <div className="container mx-auto px-4 pt-10 pb-6">
+        {/* Main grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-10">
+          {/* Brand column */}
+          <div className="col-span-2 md:col-span-1">
+            <Link href="/" className="inline-flex items-center gap-2 mb-4 group">
+              <div className="bg-teal-500/20 p-1.5 rounded-md group-hover:bg-teal-500/30 transition-colors">
+                <CarIcon className="h-5 w-5 text-teal-400" />
+              </div>
+              <span className="text-lg font-bold tracking-tight text-white">
+                Rathagala<span className="text-teal-400">.lk</span>
+              </span>
+            </Link>
+            <p className="text-slate-400 text-sm leading-relaxed mb-5 max-w-[220px]">
+              Sri Lanka's trusted vehicle marketplace — buy, sell, rent &amp; hire with confidence.
+            </p>
+            {/* Social icons */}
+            <div className="flex items-center gap-2">
+              {socialLinks.map(({ href, Icon, label }) => (
+                <a
+                  key={label}
+                  href={href}
+                  aria-label={label}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center w-8 h-8 rounded-md bg-teal-800/40 text-slate-400 hover:bg-teal-500 hover:text-white transition-colors duration-200"
+                >
+                  <Icon className="h-4 w-4" />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* Quick Links */}
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-teal-400 mb-4">
+              Quick Links
+            </h4>
+            <ul className="space-y-2.5">
+              {footerLinks.quickLinks.map(({ href, label }) => (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    className="text-sm text-slate-400 hover:text-white transition-colors duration-150"
+                  >
+                    {label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
-          <div className="col-span-1 md:col-span-1">
-            <h4 className="font-semibold mb-3 md:mb-6 text-lg">Connect</h4>
-            <ul className="space-y-2 md:space-y-3 text-slate-300">
-              <li>
-                <a href="https://www.facebook.com/rathagala" className="hover:text-white transition-colors flex items-center gap-2">
-                  <Facebook className="h-4 w-4" />
-                  Facebook
-                </a>
-              </li>
-              <li>
-                <a href="Rathagala.lk" className="hover:text-white transition-colors flex items-center gap-2">
-                  <Instagram className="h-4 w-4" />
-                  Instagram
-                </a>
-              </li>
-              <li>
-                <a href="https://www.twitter.com/rathagala" className="hover:text-white transition-colors flex items-center gap-2">
-                  <Twitter className="h-4 w-4" />
-                  Twitter
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors flex items-center gap-2">
-                  <Youtube className="h-4 w-4" />
-                  YouTube
-                </a>
-              </li>
+
+          {/* Features */}
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-teal-400 mb-4">
+              Features
+            </h4>
+            <ul className="space-y-2.5">
+              {footerLinks.features.map(({ href, label }) => (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    className="text-sm text-slate-400 hover:text-white transition-colors duration-150"
+                  >
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Support */}
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-teal-400 mb-4">
+              Support
+            </h4>
+            <ul className="space-y-2.5">
+              {footerLinks.support.map(({ href, label }) => (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    className="text-sm text-slate-400 hover:text-white transition-colors duration-150"
+                  >
+                    {label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
-        <div className="border-t border-slate-800 mt-6 md:mt-10 pt-4 md:pt-8 text-center text-slate-400 text-sm">
-          <p>&copy; 2026 Rathagala.lk. All rights reserved.</p>
+
+        {/* Bottom bar */}
+        <div className="border-t border-teal-900/60 mt-8 pt-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+          <p>&copy; {new Date().getFullYear()} Rathagala.lk. All rights reserved.</p>
+          <div className="flex items-center gap-4">
+            <Link href="/terms" className="hover:text-slate-300 transition-colors">
+              Terms
+            </Link>
+            <Link href="/privacy" className="hover:text-slate-300 transition-colors">
+              Privacy
+            </Link>
+            <Link href="/contact" className="hover:text-slate-300 transition-colors">
+              Contact
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

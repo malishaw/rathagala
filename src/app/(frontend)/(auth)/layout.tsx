@@ -1,9 +1,8 @@
 import React from "react";
 
-// import { Logo } from "@/components/logo";
+import { Logo } from "@/components/logo";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Toaster } from "@/components/ui/sonner";
-import { Footer } from "@/app/(frontend)/(landing)/_components/footer";
 
 type Props = {
   children: React.ReactNode;
@@ -21,12 +20,16 @@ export default async function AuthLayout({ children }: Props) {
           
           <ScrollArea className="w-full max-w-md relative z-10">
             <div className="sm:py-8 py-4 sm:px-8 px-2 flex flex-col items-center justify-center w-full box-border">
+              <div className="mb-6">
+                <Logo />
+              </div>
               {children}
             </div>
           </ScrollArea>
         </main>
-        <Footer />
       </div>
     </>
   );
 }
+
+

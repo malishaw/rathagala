@@ -45,9 +45,9 @@ export function BrandCarouselSection() {
 
   if (isLoading) {
     return (
-      <section className="bg-linear-to-r from-slate-50 to-white py-8">
+      <section className="bg-[#f8fafc] py-4">
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-2xl font-bold text-slate-800 mb-6">Browse by Brand</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-slate-800 mb-3">Browse by Brand</h2>
           <div className="flex gap-6 overflow-hidden">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="shrink-0 flex flex-col items-center gap-2">
@@ -64,10 +64,10 @@ export function BrandCarouselSection() {
   if (!brands || brands.length === 0) return null;
 
   return (
-    <section className="bg-linear-to-r from-slate-50 to-white py-8">
+    <section className="bg-[#f8fafc] py-4">
       <div className="max-w-6xl mx-auto px-4">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-slate-800">Browse by Brand</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg sm:text-xl font-bold text-slate-800">Browse by Brand</h2>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"

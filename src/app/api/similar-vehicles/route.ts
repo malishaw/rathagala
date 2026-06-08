@@ -15,9 +15,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch the current ad
+    // Detect whether the identifier is a MongoDB ObjectId (24 hex chars) or a seoSlug
+    const isObjectId = /^[a-f\d]{24}$/i.test(adId);
+    const whereClause = isObjectId ? { id: adId } : { seoSlug: adId };
+
+    // Fetch the current ad — supports both ObjectId and SEO slug
     const currentAd = await prisma.ad.findUnique({
-      where: { id: adId },
+      where: whereClause,
     });
 
     if (!currentAd) {
@@ -31,7 +35,7 @@ export async function GET(request: NextRequest) {
     const baseConditions: any = {
       status: AdStatus.ACTIVE,
       listingType: "SELL",
-      id: { not: adId }, // Exclude current ad
+      id: { not: currentAd.id }, // Exclude current ad
       price: { not: null }, // Only ads with prices
     };
 
@@ -98,7 +102,7 @@ export async function GET(request: NextRequest) {
       const broaderWhereConditions: any = {
         status: AdStatus.ACTIVE,
         listingType: "SELL",
-        id: { not: adId },
+        id: { not: currentAd.id },
         price: { not: null },
         type: currentAd.type,
       };

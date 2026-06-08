@@ -1,5 +1,3 @@
-
-import { Logo } from "@/components/logo";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SigninForm } from "@/features/auth/components/signin-form";
 
@@ -11,12 +9,7 @@ export default async function LoginPage({
   const { redirect } = await searchParams;
 
   return (
-    <div className="w-full max-w-md space-y-6 flex flex-col items-center">
-      {/* Logo with enhanced styling */}
-      <div className="mb-2">
-        <Logo />
-      </div>
-
+    <div className="w-full max-w-md flex flex-col items-center">
       {/* Card container for the form */}
       <Card className="w-full border-teal-700/20 bg-white shadow-lg">
         <CardHeader className="space-y-1 text-center pb-4 px-4 sm:px-6">
@@ -31,11 +24,7 @@ export default async function LoginPage({
           <SigninForm redirectTo={redirect} />
         </CardContent>
       </Card>
-
-      {/* Footer text */}
-      <p className="text-xs sm:text-sm text-white/70 text-center">
-        Secure authentication powered by Rathagala
-      </p>
     </div>
   );
 }
+

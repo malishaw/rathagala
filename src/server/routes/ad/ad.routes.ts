@@ -27,18 +27,7 @@ export const list = createRoute({
   middleware: [serverAuthMiddleware],
 
   request: {
-    query: schemas.querySchema.extend({
-      filterByUser: z
-        .string()
-        .optional()
-        .transform((val) => val === "true")
-        .pipe(z.boolean().default(false)),
-      includeDeleted: z.string().optional(),
-      includeExpired: z.string().optional(),
-      status: z.string().optional(),
-      brand: z.string().optional(),
-      model: z.string().optional(),
-    }),
+    query: schemas.querySchema,
   },
   responses: {
     [HttpStatusCodes.OK]: jsonContent(

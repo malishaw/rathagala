@@ -37,18 +37,8 @@ import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { getRelativeTime } from "@/lib/utils";
 
-const vehicleTypeLabels: Record<string, string> = {
-  CAR: "Car",
-  VAN: "Van",
-  MOTORCYCLE: "Motorcycle",
-  BICYCLE: "Bicycle",
-  THREE_WHEEL: "Three Wheeler",
-  BUS: "Bus",
-  LORRY: "Lorry",
-  HEAVY_DUTY: "Heavy Duty",
-  TRACTOR: "Tractor",
-  BOAT: "Boat",
-};
+import { vehicleTypeLabels } from "@/lib/vehicle-constants";
+import { formatAdTitle, shuffleArray, getRotatingSlice, getAdSortTime, interleaveFeaturedAds } from "@/lib/ad-helpers";
 
 const formatPrice = (price: number | null, isNegotiable?: boolean): React.ReactNode => {
   if (!price) return "Negotiable";
@@ -63,29 +53,6 @@ const formatPrice = (price: number | null, isNegotiable?: boolean): React.ReactN
       )}
     </>
   );
-};
-
-const formatAdTitle = (ad: any): string => {
-  const partName = (ad as any).partName || ad.title || "Auto Part";
-  const compatLabel = vehicleTypeLabels[(ad as any).compatibleVehicleType || ""] || (ad as any).compatibleVehicleType || "";
-  const forParts = [ad.brand, ad.model, compatLabel].filter(Boolean).join(" ");
-  return forParts ? `${partName} for ${forParts}` : partName;
-};
-
-const shuffleArray = <T,>(items: T[]): T[] => {
-  const result = [...items];
-  for (let i = result.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
-};
-
-const getRotatingSlice = <T,>(items: T[], startIndex: number, count: number): T[] => {
-  if (items.length === 0 || count <= 0) return [];
-  const normalizedStart = ((startIndex % items.length) + items.length) % items.length;
-  const limit = Math.min(count, items.length);
-  return Array.from({ length: limit }, (_, i) => items[(normalizedStart + i) % items.length]);
 };
 
 export default function AutoPartsPage() {
@@ -225,25 +192,8 @@ export default function AutoPartsPage() {
   // Base ads — all filtered ads sorted by newest
   const baseAds = useMemo(() => {
     const now = Date.now();
-    const dayMs = 24 * 60 * 60 * 1000;
-
-    const isBumpOnly = (ad: any) =>
-      Boolean(ad?.bumpActive && !ad?.topAdActive && !ad?.featuredActive && !ad?.urgentActive);
-
-    const getSortTime = (ad: any) => {
-      const createdAtMs = ad?.createdAt ? new Date(ad.createdAt).getTime() : 0;
-      if (!isBumpOnly(ad)) return createdAtMs;
-      const bumpStart = ad?.bumpStartAt || ad?.boostStartAt || ad?.boostRequestedAt || ad?.updatedAt || ad?.createdAt;
-      const bumpStartMs = bumpStart ? new Date(bumpStart).getTime() : createdAtMs;
-      if (!Number.isFinite(bumpStartMs)) return createdAtMs;
-      const elapsed = Math.max(0, now - bumpStartMs);
-      const cycles = Math.floor(elapsed / dayMs);
-      const lastBumpMs = bumpStartMs + cycles * dayMs;
-      return Math.max(createdAtMs, lastBumpMs);
-    };
-
     return [...filteredAds].sort((a, b) => {
-      const timeDiff = getSortTime(b) - getSortTime(a);
+      const timeDiff = getAdSortTime(b, now) - getAdSortTime(a, now);
       if (timeDiff !== 0) return timeDiff;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
@@ -251,30 +201,7 @@ export default function AutoPartsPage() {
 
   // Interleave featured inserts every 16 ads, tagged with _isFeaturedInsert
   const interleavedAds = useMemo(() => {
-    if (baseAds.length === 0) return [];
-    if (featuredInsertPool.length === 0) return baseAds;
-
-    const result: any[] = [];
-    const insertCount = Math.min(2, featuredInsertPool.length);
-    const poolLength = featuredInsertPool.length;
-    const startOffset = (rotationIndex * insertCount) % poolLength;
-    let insertOffset = 0;
-
-    baseAds.forEach((ad, index) => {
-      result.push(ad);
-      if ((index + 1) % 16 === 0) {
-        for (let i = 0; i < insertCount; i += 1) {
-          const pos = (startOffset + insertOffset + i) % poolLength;
-          const insertAd = featuredInsertPool[pos];
-          if (!result.some((r) => r.id === insertAd.id)) {
-            result.push({ ...insertAd, _isFeaturedInsert: true });
-          }
-        }
-        insertOffset += insertCount;
-      }
-    });
-
-    return result;
+    return interleaveFeaturedAds(baseAds, featuredInsertPool, rotationIndex, 16);
   }, [baseAds, featuredInsertPool, rotationIndex]);
 
   const handleFilterChange = (key: string, value: any) => {

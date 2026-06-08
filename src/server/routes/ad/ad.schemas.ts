@@ -14,6 +14,28 @@ export const querySchema = z.object({
   maxPrice: z.string().optional(),
   location: z.string().optional(),
   orgId: z.string().optional(),
+  brand: z.string().optional(),
+  model: z.string().optional(),
+  condition: z.string().optional(),
+  minYear: z.string().optional(),
+  maxYear: z.string().optional(),
+  fuelType: z.string().optional(),
+  transmission: z.string().optional(),
+  city: z.string().optional(),
+  district: z.string().optional(),
+  type: z.string().optional(),
+  filterByUser: z
+    .string()
+    .optional()
+    .transform((val) => val === "true")
+    .pipe(z.boolean().default(false)),
+  includeDeleted: z.string().optional(),
+  includeExpired: z.string().optional(),
+  status: z.string().optional(),
+  featuredActive: z.string().optional(),
+  topAdActive: z.string().optional(),
+  bumpActive: z.string().optional(),
+  urgentActive: z.string().optional(),
 });
 
 export type QueryParams = z.infer<typeof querySchema>;

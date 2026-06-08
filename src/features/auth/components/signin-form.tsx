@@ -6,6 +6,7 @@ import { useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { Mail, Lock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -13,7 +14,6 @@ import {
     FormControl,
     FormField,
     FormItem,
-    FormLabel,
     FormMessage
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -32,9 +32,10 @@ import { GoogleAuthButton } from "./google-auth-button";
 type Props = {
   className?: string;
   redirectTo?: string;
+  variant?: "standard" | "minimal";
 };
 
-export function SigninForm({ className, redirectTo }: Props) {
+export function SigninForm({ className, redirectTo, variant = "standard" }: Props) {
   const [isPending, setIsPending] = useState<boolean>(false);
   const toastId = useId();
   const router = useRouter();
@@ -64,8 +65,13 @@ export function SigninForm({ className, redirectTo }: Props) {
           toast.success("Successfully Signed in", { id: toastId });
           try {
             const res = await fetch("/api/auth/get-session");
-            const sessionData = await res.json();
-            const { user } = sessionData;
+            const sessionData = (await res.json()) as {
+              user?: {
+                role?: string;
+                organizationId?: string | null;
+              } | null;
+            };
+            const user = sessionData?.user;
             
             // Check if user is admin
             if (user?.role === "admin") {
@@ -79,7 +85,9 @@ export function SigninForm({ className, redirectTo }: Props) {
               try {
                 const userRes = await fetch("/api/users/me");
                 if (userRes.ok) {
-                  const userData = await userRes.json();
+                  const userData = (await userRes.json()) as {
+                    organizationId?: string | null;
+                  };
                   organizationId = userData?.organizationId;
                 }
               } catch (error) {
@@ -104,42 +112,40 @@ export function SigninForm({ className, redirectTo }: Props) {
           }
         },
         
-          onError({ error }) {
+        onError(ctx) {
+          const error = ctx.error as { message?: string; code?: string; [key: string]: any };
           console.log(error);
           
-         if (error.code === "EMAIL_NOT_VERIFIED") {
-    // IMPORTANT: prevent infinite loop
-    const alreadyVerified = sessionStorage.getItem("emailJustVerified");
+          if (error.code === "EMAIL_NOT_VERIFIED") {
+            const alreadyVerified = sessionStorage.getItem("emailJustVerified");
 
-    if (alreadyVerified === "true") {
-      toast.error("Email verification is syncing. Please try again in a moment.", {
-        id: toastId,
-      });
-      return;
-    }
+            if (alreadyVerified === "true") {
+              toast.error("Email verification is syncing. Please try again in a moment.", {
+                id: toastId,
+              });
+              return;
+            }
 
-    sessionStorage.setItem("verifyEmail", formData.email);
-    sessionStorage.setItem("verifyName", formData.email.split("@")[0]);
-    sessionStorage.setItem("verifyPassword", formData.password);
-    // Preserve the post-auth redirect across email verification
-    if (redirectTo) {
-      sessionStorage.setItem("postAuthRedirect", redirectTo);
-    }
+            sessionStorage.setItem("verifyEmail", formData.email);
+            sessionStorage.setItem("verifyName", formData.email.split("@")[0]);
+            sessionStorage.setItem("verifyPassword", formData.password);
+            if (redirectTo) {
+              sessionStorage.setItem("postAuthRedirect", redirectTo);
+            }
 
-    toast.info("Email not verified", {
-      id: toastId,
-      description: "Redirecting to verification page..."
-    });
+            toast.info("Email not verified", {
+              id: toastId,
+              description: "Redirecting to verification page..."
+            });
 
-    router.push("/verify-email");
-    return;
-  }
+            router.push("/verify-email");
+            return;
+          }
 
-  toast.error("Sign in Failed!", {
-    id: toastId,
-    description: error.message,
-  });
-              
+          toast.error("Sign in Failed!", {
+            id: toastId,
+            description: error.message,
+          });
         }
       }
     );
@@ -147,28 +153,34 @@ export function SigninForm({ className, redirectTo }: Props) {
     setIsPending(false);
   }
 
+  const isMinimal = variant === "minimal";
+
   return (
-    <div className={cn("grid gap-6", className)}>
+    <div className={cn("grid gap-3 w-full animate-in fade-in slide-in-from-bottom-2 duration-200", className)}>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleFormSubmit)}
-          className="space-y-5 w-full"
+          className="space-y-2.5 w-full"
         >
           <FormField
             control={form.control}
             name="email"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-teal-900 font-medium">Email</FormLabel>
+              <FormItem className="space-y-0">
                 <FormControl>
-                  <Input
-                    disabled={isPending}
-                    placeholder="your.name@email.com"
-                    className="bg-white border-teal-200 focus:border-teal-500 focus:ring-teal-500"
-                    {...field}
-                  />
+                  <div className="relative group">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-teal-600/70 group-focus-within:text-teal-600 transition-colors duration-150">
+                      <Mail className="h-4 w-4" />
+                    </div>
+                    <Input
+                      disabled={isPending}
+                      placeholder="Email Address"
+                      className="bg-white border-teal-200 pl-9 pr-3 h-9 text-xs focus:border-teal-500 focus:ring-1 focus:ring-teal-100 transition-all duration-150 shadow-xs"
+                      {...field}
+                    />
+                  </div>
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-[10px] mt-0.5" />
               </FormItem>
             )}
           />
@@ -176,23 +188,27 @@ export function SigninForm({ className, redirectTo }: Props) {
             control={form.control}
             name="password"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-teal-900 font-medium">Password</FormLabel>
+              <FormItem className="space-y-0">
                 <FormControl>
-                  <PasswordInput
-                    disabled={isPending}
-                    placeholder="***********"
-                    className="bg-white border-teal-200 focus:border-teal-500 focus:ring-teal-500"
-                    {...field}
-                  />
+                  <div className="relative group">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-teal-600/70 group-focus-within:text-teal-600 transition-colors duration-150 z-10">
+                      <Lock className="h-4 w-4" />
+                    </div>
+                    <PasswordInput
+                      disabled={isPending}
+                      placeholder="Password"
+                      className="bg-white border-teal-200 pl-9 pr-10 h-9 text-xs focus:border-teal-500 focus:ring-1 focus:ring-teal-100 transition-all duration-150 shadow-xs"
+                      {...field}
+                    />
+                  </div>
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-[10px] mt-0.5" />
               </FormItem>
             )}
           />
           <Button 
             type="submit" 
-            className="w-full bg-teal-700 hover:bg-teal-800 text-white font-semibold py-6 shadow-lg transition-all duration-200" 
+            className="w-full bg-teal-700 hover:bg-teal-800 active:scale-[0.99] text-white font-semibold h-9 text-xs shadow-sm transition-all duration-150 mt-1" 
             loading={isPending}
           >
             Sign In
@@ -201,29 +217,53 @@ export function SigninForm({ className, redirectTo }: Props) {
       </Form>
 
       {/* Option texts */}
-      <div className="flex text-center items-center justify-center gap-3 text-sm">
-        <Button asChild variant={"link"} className="p-0 h-auto text-teal-700 hover:text-teal-900 whitespace-nowrap">
-          <Link href={redirectTo ? `/signup?redirect=${encodeURIComponent(redirectTo)}` : "/signup"}>Need an account? <span className="font-semibold ml-1">Sign Up</span></Link>
-        </Button>
-        
-      </div>
-      <Button asChild variant={"link"} className="p-0 h-auto text-teal-700 hover:text-teal-900 whitespace-nowrap">
-          <Link href={"/forgot-password"}>Forgot Password?</Link>
-        </Button>
-
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <Separator className="bg-teal-200" />
+      {isMinimal ? (
+        <div className="flex items-center justify-center gap-2 text-[10px] text-teal-700 mt-0.5">
+          <Link 
+            href={redirectTo ? `/signup?redirect=${encodeURIComponent(redirectTo)}` : "/signup"}
+            className="font-medium hover:text-teal-900 hover:underline"
+          >
+            Create Account
+          </Link>
+          <span className="text-teal-300">•</span>
+          <Link 
+            href="/forgot-password" 
+            className="font-medium hover:text-teal-900 hover:underline"
+          >
+            Forgot Password?
+          </Link>
         </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white px-2 text-teal-600">Or continue with</span>
-        </div>
-      </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between text-[11px] px-0.5 mt-0.5">
+            <Link 
+              href={redirectTo ? `/signup?redirect=${encodeURIComponent(redirectTo)}` : "/signup"}
+              className="text-teal-700 hover:text-teal-900 hover:underline font-medium"
+            >
+              Don't have an account? Sign Up
+            </Link>
+            <Link 
+              href="/forgot-password" 
+              className="text-teal-600 hover:text-teal-800 hover:underline font-medium"
+            >
+              Forgot Password?
+            </Link>
+          </div>
 
-      {/* Auth Provider Buttons */}
-      <div className="flex flex-col space-y-3">
-        <GoogleAuthButton mode="login" />
-      </div>
+          <div className="relative my-0.5">
+            <div className="absolute inset-0 flex items-center">
+              <Separator className="bg-teal-100" />
+            </div>
+            <div className="relative flex justify-center text-[10px]">
+              <span className="bg-white px-2 text-teal-500 font-medium">Or continue with</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col">
+            <GoogleAuthButton mode="login" className="w-full h-9 text-xs" />
+          </div>
+        </>
+      )}
     </div>
   );
 }

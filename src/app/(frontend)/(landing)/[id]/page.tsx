@@ -1,30 +1,18 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-"use client";
-
-import { useParams, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { redirect } from "next/navigation";
 
 /**
- * Legacy ad detail page - redirects to new /ads/[...slug] route.
- * Kept for backward compatibility with old bookmarks/links.
+ * Legacy ad detail page — server-side redirect to /ads/[id].
+ * Using Next.js redirect() instead of client useEffect eliminates
+ * the double-navigation penalty (no spinner, no JS bundle loaded first).
  */
-export default function AdDetailPage() {
-  const { id } = useParams();
+export default async function LegacyAdDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
   const adId = Array.isArray(id) ? id[0] : id;
-  const router = useRouter();
 
-  useEffect(() => {
-    if (adId) {
-      router.replace(`/ads/${adId}`);
-    }
-  }, [adId, router]);
-
-  return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#024950] mx-auto mb-4"></div>
-        <p className="text-gray-600">Redirecting...</p>
-      </div>
-    </div>
-  );
+  if (!adId) redirect("/");
+  redirect(`/ads/${adId}`);
 }

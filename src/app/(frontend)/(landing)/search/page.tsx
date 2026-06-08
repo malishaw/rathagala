@@ -20,70 +20,8 @@ import { authClient } from "@/lib/auth-client";
 import { buildAdUrl } from "@/lib/ad-url";
 import { useLocations } from "@/hooks/use-locations";
 
-// Vehicle type labels
-const vehicleTypeLabels: Record<string, string> = {
-  CAR: "Car",
-  VAN: "Van",
-  MOTORCYCLE: "Motorcycle",
-  BICYCLE: "Bicycle",
-  THREE_WHEEL: "Three Wheeler",
-  BUS: "Bus",
-  LORRY: "Lorry",
-  HEAVY_DUTY: "Heavy Duty",
-  TRACTOR: "Tractor",
-  AUTO_SERVICE: "Auto Service",
-  RENTAL: "Rental",
-  AUTO_PARTS: "Auto Parts",
-  MAINTENANCE: "Maintenance",
-  BOAT: "Boat"
-};
-
-// Listing type labels
-const listingTypeLabels: Record<string, string> = {
-  SELL: "For Sale",
-  WANT: "Want to Buy",
-  RENT: "For Rent",
-  HIRE: "For Hire"
-};
-
-// Helper function to format ad title with listing type prefix/suffix
-const formatAdTitle = (ad: any): string => {
-  const vehicleInfo = [ad.brand, ad.model, ad.manufacturedYear, vehicleTypeLabels[ad.type] || ad.type]
-    .filter(Boolean)
-    .join(' ');
-
-  if (ad.listingType === 'WANT') {
-    return `Want ${vehicleInfo}`;
-  } else if (ad.listingType === 'RENT') {
-    return `${vehicleInfo} for Rent`;
-  } else if (ad.listingType === 'HIRE') {
-    return `${vehicleInfo} for Hire`;
-  }
-  return vehicleInfo;
-};
-
-const shuffleArray = <T,>(items: T[]): T[] => {
-  const result = [...items];
-  for (let i = result.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
-};
-
-const getRotatingSlice = <T,>(items: T[], startIndex: number, count: number): T[] => {
-  if (items.length === 0 || count <= 0) return [];
-  const normalizedStart = ((startIndex % items.length) + items.length) % items.length;
-  const limit = Math.min(count, items.length);
-  return Array.from({ length: limit }, (_, i) => items[(normalizedStart + i) % items.length]);
-};
-
-// Vehicle makes
-const vehicleMakes = [
-  "Toyota", "Honda", "Nissan", "BYD", "BMW", "Mercedes-Benz", "Audi", "Hyundai", "Kia",
-  "Volkswagen", "Ford", "Chevrolet", "Mazda", "Subaru", "Mitsubishi", "Suzuki",
-  "Isuzu", "Bajaj", "Hero", "Yamaha", "Kawasaki", "KTM", "TVS", "Other"
-];
+import { vehicleTypeLabels, listingTypeLabels, vehicleMakes } from "@/lib/vehicle-constants";
+import { formatAdTitle, shuffleArray, getRotatingSlice, getAdSortTime, interleaveFeaturedAds } from "@/lib/ad-helpers";
 
 
 // Search filter interface
@@ -150,6 +88,7 @@ export default function SearchPage() {
   const [modelSearch, setModelSearch] = useState('');
   const [gradeSearch, setGradeSearch] = useState('');
   const [visibleCount, setVisibleCount] = useState(12);
+  const [allAds, setAllAds] = useState<any[]>([]);
 
   // Fetch available models when brand changes
   useEffect(() => {
@@ -291,187 +230,94 @@ export default function SearchPage() {
     );
   }, [gradeSearch, availableGrades]);
 
-  // Fetch ads with current filters - fetch all ads to enable comprehensive search
-  // (pagination will be handled client-side after filtering)
-  const { data, isLoading, error } = useGetAds({
-    page: 1, // Always fetch from page 1
-    limit: 10000, // Fetch large number to get all ads for comprehensive search
-    search: filters.query,
-    listingType: filters.listingType,
-    // Add other filter parameters as supported by your API
+  // 1. Fetch Top Ads for search (limit: 10)
+  const { data: topAdsData } = useGetAds({
+    page: 1,
+    limit: 10,
+    topAdActive: "true",
+    search: [filters.query, filters.globalSearch].filter(Boolean).join(" ") || undefined,
+    listingType: filters.listingType !== "all" ? filters.listingType : undefined,
+    brand: filters.brand !== "all" ? filters.brand : undefined,
+    model: filters.model || undefined,
+    type: filters.vehicleType !== "all" ? filters.vehicleType : undefined,
+    condition: filters.condition !== "all" ? filters.condition : undefined,
+    minPrice: filters.minPrice ? parseInt(filters.minPrice) : undefined,
+    maxPrice: filters.maxPrice ? parseInt(filters.maxPrice) : undefined,
+    minYear: filters.minYear !== "any" && filters.minYear !== "all" ? filters.minYear : undefined,
+    maxYear: filters.maxYear !== "any" && filters.maxYear !== "all" ? filters.maxYear : undefined,
+    fuelType: filters.fuelType !== "all" ? filters.fuelType : undefined,
+    transmission: filters.transmission !== "all" ? filters.transmission : undefined,
+    city: filters.city !== "all" && filters.city !== "any" ? filters.city : undefined,
+    district: filters.district !== "all" && filters.district !== "any" ? filters.district : undefined,
   });
 
-  // Filter results based on local filters (client-side filtering for now)
-  const filteredAds = useMemo(() => {
-    if (!data?.ads) return [];
+  // 2. Fetch Featured Ads for search (limit: 10)
+  const { data: featuredAdsData } = useGetAds({
+    page: 1,
+    limit: 10,
+    featuredActive: "true",
+    search: [filters.query, filters.globalSearch].filter(Boolean).join(" ") || undefined,
+    listingType: filters.listingType !== "all" ? filters.listingType : undefined,
+    brand: filters.brand !== "all" ? filters.brand : undefined,
+    model: filters.model || undefined,
+    type: filters.vehicleType !== "all" ? filters.vehicleType : undefined,
+    condition: filters.condition !== "all" ? filters.condition : undefined,
+    minPrice: filters.minPrice ? parseInt(filters.minPrice) : undefined,
+    maxPrice: filters.maxPrice ? parseInt(filters.maxPrice) : undefined,
+    minYear: filters.minYear !== "any" && filters.minYear !== "all" ? filters.minYear : undefined,
+    maxYear: filters.maxYear !== "any" && filters.maxYear !== "all" ? filters.maxYear : undefined,
+    fuelType: filters.fuelType !== "all" ? filters.fuelType : undefined,
+    transmission: filters.transmission !== "all" ? filters.transmission : undefined,
+    city: filters.city !== "all" && filters.city !== "any" ? filters.city : undefined,
+    district: filters.district !== "all" && filters.district !== "any" ? filters.district : undefined,
+  });
 
-    // Split search query into individual terms for comprehensive search
-    const queryTerms = filters.query
-      .toLowerCase()
-      .trim()
-      .split(/\s+/)
-      .filter(term => term.length > 0);
+  // 3. Fetch Main paginated search results
+  const { data, isLoading, error } = useGetAds({
+    page: filters.page,
+    limit: 12,
+    search: [filters.query, filters.globalSearch].filter(Boolean).join(" ") || undefined,
+    listingType: filters.listingType !== "all" ? filters.listingType : undefined,
+    brand: filters.brand !== "all" ? filters.brand : undefined,
+    model: filters.model || undefined,
+    type: filters.vehicleType !== "all" ? filters.vehicleType : undefined,
+    condition: filters.condition !== "all" ? filters.condition : undefined,
+    minPrice: filters.minPrice ? parseInt(filters.minPrice) : undefined,
+    maxPrice: filters.maxPrice ? parseInt(filters.maxPrice) : undefined,
+    minYear: filters.minYear !== "any" && filters.minYear !== "all" ? filters.minYear : undefined,
+    maxYear: filters.maxYear !== "any" && filters.maxYear !== "all" ? filters.maxYear : undefined,
+    fuelType: filters.fuelType !== "all" ? filters.fuelType : undefined,
+    transmission: filters.transmission !== "all" ? filters.transmission : undefined,
+    city: filters.city !== "all" && filters.city !== "any" ? filters.city : undefined,
+    district: filters.district !== "all" && filters.district !== "any" ? filters.district : undefined,
+  });
 
-    // Split global search into individual terms
-    const globalSearchTerms = filters.globalSearch
-      .toLowerCase()
-      .trim()
-      .split(/\s+/)
-      .filter(term => term.length > 0);
-
-    return data.ads.filter((ad) => {
-      // Only show published ads (status must be ACTIVE and published flag must be true)
-      if ((ad as any).status !== "ACTIVE" || (ad as any).published !== true) {
-        return false;
-      }
-
-      // Query filter - ALL search terms must match (AND logic)
-      if (queryTerms.length > 0) {
-        const matchesAllQueryTerms = queryTerms.every(term => {
-          return (
-            // Ad ID
-            ad.id?.toLowerCase().includes(term) ||
-            // Title
-            ad.title?.toLowerCase().includes(term) ||
-            // Brand
-            ad.brand?.toLowerCase().includes(term) ||
-            // Model
-            ad.model?.toLowerCase().includes(term) ||
-            // Vehicle Type
-            vehicleTypeLabels[ad.type as keyof typeof vehicleTypeLabels]?.toLowerCase().includes(term) ||
-            // City
-            ad.city?.toLowerCase().includes(term) ||
-            // Location
-            ad.location?.toLowerCase().includes(term) ||
-            // District (if available in ad object)
-            (ad as any).district?.toLowerCase().includes(term) ||
-            // Manufacture Year
-            ad.manufacturedYear?.toString().includes(term)
-          );
-        });
-
-        if (!matchesAllQueryTerms) {
-          return false;
-        }
-      }
-
-      // Global search filter - ALL search terms must match (AND logic)
-      if (globalSearchTerms.length > 0) {
-        const matchesAllGlobalTerms = globalSearchTerms.every(term => {
-          return (
-            ad.id?.toLowerCase().includes(term) ||
-            ad.brand?.toLowerCase().includes(term) ||
-            ad.model?.toLowerCase().includes(term) ||
-            ad.city?.toLowerCase().includes(term) ||
-            ad.description?.toLowerCase().includes(term) ||
-            (ad as any).phoneNumber?.toString().includes(term) ||
-            (ad as any).whatsappNumber?.toString().includes(term) ||
-            (ad as any).creator?.name?.toLowerCase().includes(term) ||
-            (ad as any).creator?.email?.toLowerCase().includes(term) ||
-            vehicleTypeLabels[ad.type as keyof typeof vehicleTypeLabels]?.toLowerCase().includes(term) ||
-            ad.title?.toLowerCase().includes(term) ||
-            ad.location?.toLowerCase().includes(term) ||
-            (ad as any).district?.toLowerCase().includes(term) ||
-            ad.manufacturedYear?.toString().includes(term)
-          );
-        });
-
-        if (!matchesAllGlobalTerms) {
-          return false;
-        }
-      }
-
-      // Vehicle type filter
-      if (filters.vehicleType && filters.vehicleType !== 'all' && ad.type !== filters.vehicleType) {
-        return false;
-      }
-
-      // Brand filter
-      if (filters.brand && filters.brand !== 'all' && ad.brand?.toLowerCase() !== filters.brand.toLowerCase()) {
-        return false;
-      }
-
-      // Model filter
-      if (filters.model && !ad.model?.toLowerCase().includes(filters.model.toLowerCase())) {
-        return false;
-      }
-
-      // Condition filter
-      if (filters.condition && filters.condition !== 'all' && ad.condition?.toLowerCase() !== filters.condition.toLowerCase()) {
-        return false;
-      }
-
-      // Grade filter
-      if (filters.grade && filters.grade !== 'all' && (ad as any).grade?.toLowerCase() !== filters.grade.toLowerCase()) {
-        return false;
-      }
-
-      // Price filters
-      if (filters.minPrice && ad.price && ad.price < parseInt(filters.minPrice)) {
-        return false;
-      }
-      if (filters.maxPrice && ad.price && ad.price > parseInt(filters.maxPrice)) {
-        return false;
-      }
-
-      // Year filters
-      if (filters.minYear && filters.minYear !== 'any' && ad.manufacturedYear && parseInt(ad.manufacturedYear) < parseInt(filters.minYear)) {
-        return false;
-      }
-      if (filters.maxYear && filters.maxYear !== 'any' && ad.manufacturedYear && parseInt(ad.manufacturedYear) > parseInt(filters.maxYear)) {
-        return false;
-      }
-
-      // Fuel type filter
-      if (filters.fuelType && filters.fuelType !== 'all' && ad.fuelType !== filters.fuelType) {
-        return false;
-      }
-
-      // Transmission filter
-      if (filters.transmission && filters.transmission !== 'all' && ad.transmission !== filters.transmission) {
-        return false;
-      }
-
-      // Location filter (District)
-      if (filters.district && filters.district !== 'all' && filters.district !== 'any') {
-        if ((ad as any).district && (ad as any).district.toLowerCase() !== filters.district.toLowerCase()) {
-          return false;
-        } else if (!(ad as any).district && ad.city) {
-          let cityDistrict = "";
-          Object.values(locationData).forEach(province => {
-            Object.entries(province).forEach(([dist, cities]) => {
-              if (cities.some(c => c.toLowerCase() === ad.city.toLowerCase())) {
-                cityDistrict = dist;
-              }
-            });
-          });
-          if (cityDistrict && cityDistrict.toLowerCase() !== filters.district.toLowerCase()) {
-            return false;
+  // Accumulate ads when new data arrives
+  useEffect(() => {
+    if (data?.ads && data.ads.length >= 0) {
+      if (filters.page === 1) {
+        setAllAds(data.ads);
+      } else {
+        setAllAds((prevAds) => {
+          const existingIds = new Set(prevAds.map((ad) => ad.id));
+          const newAds = data.ads.filter((ad) => !existingIds.has(ad.id));
+          if (newAds.length > 0) {
+            return [...prevAds, ...newAds];
           }
-        }
+          return prevAds;
+        });
       }
+    }
+  }, [data, filters.page]);
 
-      // Location filter (City)
-      if (filters.city && filters.city !== 'all' && filters.city !== 'any' && ad.city?.toLowerCase() !== filters.city.toLowerCase()) {
-        return false;
-      }
+  // Reset pagination accumulator when search query or major filters change
+  useEffect(() => {
+    setFilters(prev => ({ ...prev, page: 1 }));
+  }, [filters.query, filters.globalSearch, filters.listingType, filters.brand, filters.model, filters.condition, filters.grade, filters.minPrice, filters.maxPrice, filters.minYear, filters.maxYear, filters.fuelType, filters.transmission, filters.district, filters.city, filters.seller, filters.urgentOnly]);
 
-      // Seller filter (match common seller fields)
-      if (filters.seller && filters.seller !== 'all') {
-        const sid = String((ad as any).userId || (ad as any).user_id || (ad as any).sellerId || (ad as any).ownerId || (ad as any).user?.id || (ad as any).seller?.id || (ad as any).createdBy || "");
-        if (!sid || sid !== filters.seller) {
-          return false;
-        }
-      }
-
-      // Urgent filter
-      if (filters.urgentOnly && !(ad as any).urgentActive) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [data?.ads, filters.query, filters.vehicleType, filters.brand, filters.model, filters.condition, filters.grade, filters.minPrice, filters.maxPrice, filters.minYear, filters.maxYear, filters.fuelType, filters.transmission, filters.district, filters.city, filters.globalSearch, filters.seller, filters.urgentOnly]);
+  const filteredAds = useMemo(() => {
+    return allAds;
+  }, [allAds]);
 
   // Handle filter changes
   const handleFilterChange = (key: keyof SearchFilters, value: any) => {
@@ -577,32 +423,17 @@ export default function SearchPage() {
 
     const ads = [...filteredAds];
     const now = Date.now();
-    const dayMs = 24 * 60 * 60 * 1000;
-    const isBumpOnly = (ad: any) =>
-      Boolean(ad?.bumpActive && !ad?.topAdActive && !ad?.featuredActive && !ad?.urgentActive);
-    const getSortTime = (ad: any) => {
-      const createdAtMs = ad?.createdAt ? new Date(ad.createdAt).getTime() : 0;
-      if (!isBumpOnly(ad)) return createdAtMs;
-      const bumpStart = ad?.bumpStartAt || ad?.boostStartAt || ad?.boostRequestedAt || ad?.updatedAt || ad?.createdAt;
-      const bumpStartMs = bumpStart ? new Date(bumpStart).getTime() : createdAtMs;
-      if (!Number.isFinite(bumpStartMs)) return createdAtMs;
-      const elapsed = Math.max(0, now - bumpStartMs);
-      const cycles = Math.floor(elapsed / dayMs);
-      const lastBumpMs = bumpStartMs + cycles * dayMs;
-      return Math.max(createdAtMs, lastBumpMs);
-    };
 
     return ads.sort((a, b) => {
-      const timeDiff = getSortTime(b) - getSortTime(a);
+      const timeDiff = getAdSortTime(b, now) - getAdSortTime(a, now);
       if (timeDiff !== 0) return timeDiff;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
   }, [filteredAds]);
 
   const topAdsPool = useMemo(() => {
-    if (!filteredAds.length) return [];
-    return filteredAds.filter((ad) => (ad as any).topAdActive && !(ad as any).featuredActive && !(ad as any).bumpActive);
-  }, [filteredAds]);
+    return topAdsData?.ads || [];
+  }, [topAdsData]);
 
   const shuffledTopAdsPool = useMemo(() => shuffleArray(topAdsPool), [topAdsPool]);
 
@@ -612,9 +443,8 @@ export default function SearchPage() {
   }, [shuffledTopAdsPool, topAdRotationIndex]);
 
   const featuredAdsPool = useMemo(() => {
-    if (!filteredAds.length) return [];
-    return filteredAds.filter((ad) => (ad as any).featuredActive);
-  }, [filteredAds]);
+    return featuredAdsData?.ads || [];
+  }, [featuredAdsData]);
 
   const shuffledFeaturedAdsPool = useMemo(() => shuffleArray(featuredAdsPool), [featuredAdsPool]);
 
@@ -632,27 +462,7 @@ export default function SearchPage() {
   }, [sortedAds]);
 
   const interleavedAds = useMemo(() => {
-    if (baseAds.length === 0) return [];
-    if (featuredInsertPool.length === 0) return baseAds;
-
-    const result: any[] = [];
-    const insertCount = Math.min(2, featuredInsertPool.length);
-    const poolLength = featuredInsertPool.length;
-    const startOffset = (featuredRotationIndex * insertCount) % poolLength;
-    let insertOffset = 0;
-
-    baseAds.forEach((ad, index) => {
-      result.push(ad);
-      if ((index + 1) % 16 === 0) {
-        for (let i = 0; i < insertCount; i += 1) {
-          const pos = (startOffset + insertOffset + i) % poolLength;
-          result.push(featuredInsertPool[pos]);
-        }
-        insertOffset += insertCount;
-      }
-    });
-
-    return result;
+    return interleaveFeaturedAds(baseAds, featuredInsertPool, featuredRotationIndex, 16);
   }, [baseAds, featuredInsertPool, featuredRotationIndex]);
 
   // Validate price range
@@ -1240,7 +1050,7 @@ export default function SearchPage() {
             {!isLoading && !error && interleavedAds.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {interleavedAds.slice(0, visibleCount).map((vehicle) => {
+                  {interleavedAds.map((vehicle) => {
                     const isFeatured = (vehicle as any).featuredActive;
                     const isUrgent = (vehicle as any).urgentActive;
                     const isBump = (vehicle as any).bumpActive;
@@ -1264,7 +1074,7 @@ export default function SearchPage() {
                     return (
                       <div
                         key={vehicle.id}
-                        className="rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative bg-white border-slate-200 hover:border-slate-300"
+                        className="rounded-sm border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative bg-white border-slate-200 hover:border-slate-300"
                         onClick={() => router.push(buildAdUrl(vehicle))}
                       >
                         {/* Favorite Button */}
@@ -1278,52 +1088,58 @@ export default function SearchPage() {
                           </div>
                         )}
 
-                        <div className="p-3">
-                          {/* Vehicle Title - Centered */}
-                          <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
-                            {formatAdTitle(vehicle)}
-                          </h3>
-
-                          <div className="flex">
-                            {/* Vehicle Image */}
-                            <div className="w-36 h-30 flex-shrink-0">
+                        <div className="p-2">
+                          <div className="flex gap-3">
+                            {/* Vehicle Image - Compact */}
+                            <div className="w-24 sm:w-28 h-18 sm:h-20 flex-shrink-0 relative overflow-hidden bg-slate-55 border border-slate-100 rounded-sm">
                               {(vehicle as any)?.media && (vehicle as any).media.length > 0 && (vehicle as any).media[0]?.media?.url ? (
                                 <img
                                   src={(vehicle as any).media[0].media.url}
                                   alt={vehicle.title || 'Vehicle'}
-                                  className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                 />
                               ) : (
                                 <img
                                   src="/placeholder-image.jpg"
                                   alt={vehicle.title || 'Vehicle'}
-                                  className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                 />
                               )}
                             </div>
 
                             {/* Vehicle Details */}
-                            <div className="flex-1 pl-3 flex flex-col justify-between">
+                            <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
                               <div>
-                                <div className="text-xs text-slate-600 mb-1 line-clamp-1">
+                                {/* Category Badge */}
+                                <span className="text-[9px] uppercase font-bold tracking-wider text-slate-400 block mb-0.5">
+                                  {vehicle.type === 'AUTO_PARTS' 
+                                    ? (vehicle as any).partCategory?.name || 'Auto Part'
+                                    : vehicleTypeLabels[vehicle.type] || vehicle.type}
+                                </span>
+
+                                {/* Vehicle Title */}
+                                <h3 className="font-semibold text-slate-800 text-xs sm:text-sm group-hover:text-teal-700 transition-colors line-clamp-1 leading-tight">
+                                  {formatAdTitle(vehicle)}
+                                </h3>
+
+                                <div className="text-[10px] text-slate-500 mt-0.5 line-clamp-1">
                                   {vehicle.city || vehicle.location || ""}
-                                </div>
-
-                                <div className="text-sm font-semibold text-teal-700 mb-1">
-                                  {formatPrice(vehicle.price, (vehicle as any).metadata?.isNegotiable)}
-                                </div>
-
-                                <div className="text-xs text-slate-500">
-                                  {vehicle.condition || vehicle.type}
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
-                                <span>{getRelativeTime(vehicle.createdAt)}</span>
-                                <span className="flex items-center gap-0.5">
-                                  <Eye className="h-3 w-3" />
-                                  {(vehicle as any).analytics?.views || 0}
-                                </span>
+                              <div className="flex items-end justify-between mt-1">
+                                <div className="text-xs sm:text-sm font-bold text-teal-700 leading-none">
+                                  {formatPrice(vehicle.price, (vehicle as any).metadata?.isNegotiable)}
+                                </div>
+
+                                {/* Views and relative time */}
+                                <div className="flex items-center gap-2 text-[9px] sm:text-[10px] text-slate-400 pr-1">
+                                  <span>{getRelativeTime(vehicle.createdAt)}</span>
+                                  <span className="flex items-center gap-0.5">
+                                    <Eye className="h-3 w-3" />
+                                    {(vehicle as any).analytics?.views || 0}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -1333,14 +1149,15 @@ export default function SearchPage() {
                   })}
                 </div>
                 <div className="text-center mt-8">
-                  {visibleCount < interleavedAds.length ? (
+                  {data?.pagination && filters.page < data.pagination.totalPages ? (
                     <Button
                       size="lg"
                       variant="outline"
-                      className="px-8 py-5 border-teal-700 text-teal-700 hover:bg-teal-700 hover:text-white transition-all duration-300"
-                      onClick={() => setVisibleCount((prev) => prev + 12)}
+                      className="px-8 py-5 border-teal-700 text-teal-700 hover:bg-teal-700 hover:text-white transition-all duration-300 rounded-sm"
+                      onClick={() => handleFilterChange('page', filters.page + 1)}
+                      disabled={isLoading}
                     >
-                      Load More Vehicles
+                      {isLoading ? "Loading..." : "Load More Vehicles"}
                     </Button>
                   ) : interleavedAds.length > 12 ? (
                     <p className="text-slate-500 text-sm">No more vehicles to load</p>

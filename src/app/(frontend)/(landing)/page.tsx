@@ -50,70 +50,9 @@ import { FavoriteButton } from "@/features/saved-ads/components/favorite-button"
 
 import { authClient } from "@/lib/auth-client";
 
-// Vehicle type labels
-const vehicleTypeLabels: Record<string, string> = {
-  CAR: "Car",
-  VAN: "Van",
-  SUV_JEEP: "SUV / Jeep",
-  MOTORCYCLE: "Motorcycle",
-  CREW_CAB: "Crew Cab",
-  PICKUP_DOUBLE_CAB: "Pickup / Double Cab",
-  BUS: "Bus",
-  LORRY: "Lorry",
-  THREE_WHEEL: "Three Wheel",
-  OTHER: "Other",
-  TRACTOR: "Tractor",
-  HEAVY_DUTY: "Heavy-Duty",
-  BICYCLE: "Bicycle"
-};
-
-// List of vehicle makes for dropdown
-const vehicleMakes = [
-  "Toyota", "Honda", "Nissan", "BMW", "Mercedes-Benz", "Land-Rover", "Aprilia", "Ashok-Leyland", "Aston", "Atco", "ATHER",
-  "Audi", "Austin", "Baic", "Bajaj", "Bentley", "Borgward", "BYD",
-  "Cadillac", "CAT", "Changan", "Chery", "Chevrolet", "Chrysler", "Citroen",
-  "Daewoo", "Daihatsu", "Datsun", "DFSK", "Ducati", "Fiat", "Ford", "Hero",
-  "Alfa-Romeo", "Hyundai", "Isuzu", "Jaguar", "Jeep", "Kawasaki", "Kia", "KTM",
-  "Lexus", "Mahindra", "Mazda", "Micro", "Mini",
-  "Mitsubishi", "Perodua", "Peugeot", "Porsche", "Proton", "Renault",
-  "Skoda", "Subaru", "Suzuki", "Tata", "Tesla", "Acura", "TVS", "Volkswagen",
-  "Volvo", "Yamaha"
-];
-
 import { useLocations } from "@/hooks/use-locations";
-
-// Helper function to format ad title with special handling for AUTO_PARTS
-const formatAdTitle = (ad: any): string => {
-  // AUTO_PARTS: use part-specific title format
-  if (ad.type === 'AUTO_PARTS') {
-    const partName = ad.partName || 'Auto Part';
-    const compatLabel = vehicleTypeLabels[ad.compatibleVehicleType || ''] || ad.compatibleVehicleType || '';
-    const forParts = [ad.brand, ad.model, compatLabel].filter(Boolean).join(' ');
-    return forParts ? `${partName} for ${forParts}` : partName;
-  }
-
-  // Vehicle: build standard title (brand model year type)
-  const typeLabel = vehicleTypeLabels[ad.type] || '';
-  return [ad.brand, ad.model, ad.manufacturedYear, typeLabel]
-    .filter(Boolean)
-    .join(' ');
-};
-
-const shuffleArray = <T,>(items: T[]): T[] => {
-  const result = [...items];
-  for (let i = result.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
-};
-
-const getRotatingSlice = <T,>(items: T[], startIndex: number, count: number): T[] => {
-  if (items.length === 0 || count <= 0) return [];
-  const normalizedStart = ((startIndex % items.length) + items.length) % items.length;
-  const limit = Math.min(count, items.length);
-  return Array.from({ length: limit }, (_, i) => items[(normalizedStart + i) % items.length]);
-};
+import { vehicleTypeLabels, vehicleMakes } from "@/lib/vehicle-constants";
+import { formatAdTitle, shuffleArray, getRotatingSlice, getAdSortTime, interleaveFeaturedAds } from "@/lib/ad-helpers";
 
 // Define filter state interface with updated fields
 interface FilterState {
@@ -184,7 +123,6 @@ export default function VehicleMarketplace() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [allAds, setAllAds] = useState<any[]>([]);
-  const [visibleCount, setVisibleCount] = useState(12); // State to track how many vehicles to show
 
   // Featured ad rotation (every 1 minute)
   const [featuredRotationIndex, setFeaturedRotationIndex] = useState(0);
@@ -193,11 +131,45 @@ export default function VehicleMarketplace() {
     return () => clearInterval(interval);
   }, []);
 
-  // Use the existing hook to fetch real vehicle data
-  // Don't use backend search - we'll do comprehensive client-side search instead
+  // Must be defined before useGetAds hooks that depend on it
+  const isSearchActive = searchQuery.trim().length > 0;
+
+  // 1. Fetch Top Ads Pool (limit: 20, topAdActive)
+  const { data: topAdsData } = useGetAds({
+    page: 1,
+    limit: 20,
+    topAdActive: "true",
+  }, {
+    enabled: sortBy === "default" && !isSearchActive
+  });
+
+  // 2. Fetch Featured Ads Pool (limit: 20, featuredActive)
+  const { data: featuredAdsData } = useGetAds({
+    page: 1,
+    limit: 20,
+    featuredActive: "true",
+  }, {
+    enabled: sortBy === "default" && !isSearchActive
+  });
+
+  // 3. Fetch Main paginated ads feed with active filters
   const { data, isLoading, error } = useGetAds({
     page: currentPage,
-    limit: 10000, // Fetch more items to allow comprehensive client-side filtering
+    limit: 12,
+    search: searchQuery || undefined,
+    listingType: "SELL",
+    brand: activeFilters.make || undefined,
+    model: activeFilters.model || undefined,
+    type: activeFilters.vehicleType || undefined,
+    condition: activeFilters.condition || undefined,
+    minPrice: activeFilters.minPrice ? parseInt(activeFilters.minPrice) : undefined,
+    maxPrice: activeFilters.maxPrice ? parseInt(activeFilters.maxPrice) : undefined,
+    minYear: activeFilters.minYear || undefined,
+    maxYear: activeFilters.maxYear || undefined,
+    fuelType: activeFilters.fuelType || undefined,
+    transmission: activeFilters.transmission || undefined,
+    city: activeFilters.city || undefined,
+    district: activeFilters.district || undefined,
   });
 
   // Accumulate ads when new data arrives
@@ -223,7 +195,6 @@ export default function VehicleMarketplace() {
   // Reset pagination when filters or search change
   useEffect(() => {
     setCurrentPage(1);
-    setVisibleCount(12); // Reset visible count when filters/search change
     // Don't clear allAds here - let the data fetch update it
   }, [activeFilters, searchQuery]);
 
@@ -238,147 +209,8 @@ export default function VehicleMarketplace() {
   // Also ensure only ACTIVE ads are shown (safety filter in case backend doesn't filter correctly)
   const filteredAds = useMemo(() => {
     if (!allAds || allAds.length === 0) return [];
-
-    // Split search query into individual terms
-    const searchTerms = searchQuery
-      .toLowerCase()
-      .trim()
-      .split(/\s+/)
-      .filter(term => term.length > 0);
-
-    return allAds.filter((ad) => {
-      // Only show ACTIVE ads on the landing page
-      if (ad.status !== "ACTIVE" || (ad as any).published !== true) {
-        return false;
-      }
-
-      // If there's a search query, ALL search terms must match (AND logic)
-      if (searchTerms.length > 0) {
-        const matchesAllSearchTerms = searchTerms.every(term => {
-          return (
-            // Ad ID
-            ad.id?.toLowerCase().includes(term) ||
-            // Title
-            ad.title?.toLowerCase().includes(term) ||
-            // Brand
-            ad.brand?.toLowerCase().includes(term) ||
-            // Model
-            ad.model?.toLowerCase().includes(term) ||
-            // Vehicle Type
-            vehicleTypeLabels[ad.type as keyof typeof vehicleTypeLabels]?.toLowerCase().includes(term) ||
-            // City
-            ad.city?.toLowerCase().includes(term) ||
-            // Location
-            ad.location?.toLowerCase().includes(term) ||
-            // District (if available in ad object)
-            (ad as any).district?.toLowerCase().includes(term) ||
-            // Manufacture Year
-            ad.manufacturedYear?.toString().includes(term)
-          );
-        });
-
-        if (!matchesAllSearchTerms) {
-          return false;
-        }
-      }
-
-      // Make filter
-      if (
-        activeFilters.make &&
-        ad.brand?.toLowerCase() !== activeFilters.make.toLowerCase()
-      ) {
-        return false;
-      }
-
-      // Model filter (case insensitive partial match)
-      // Only apply if using specific model filter, not general search
-      if (
-        activeFilters.model &&
-        !searchQuery && // Don't apply model filter when using general search
-        !ad.model?.toLowerCase().includes(activeFilters.model.toLowerCase())
-      ) {
-        return false;
-      }
-
-      // Vehicle type filter
-      if (
-        activeFilters.vehicleType &&
-        ad.type !== activeFilters.vehicleType.toUpperCase()
-      ) {
-        return false;
-      }
-
-      // City filter
-      if (
-        activeFilters.city &&
-        ad.city?.toLowerCase() !== activeFilters.city.toLowerCase()
-      ) {
-        return false;
-      }
-
-      // Condition filter
-      if (
-        activeFilters.condition &&
-        ad.condition?.toLowerCase() !== activeFilters.condition.toLowerCase()
-      ) {
-        return false;
-      }
-
-      // Min price filter
-      if (
-        activeFilters.minPrice &&
-        ad.price &&
-        ad.price < parseInt(activeFilters.minPrice)
-      ) {
-        return false;
-      }
-
-      // Max price filter
-      if (
-        activeFilters.maxPrice &&
-        ad.price &&
-        ad.price > parseInt(activeFilters.maxPrice)
-      ) {
-        return false;
-      }
-
-      // Min year filter
-      if (
-        activeFilters.minYear &&
-        ad.manufacturedYear &&
-        parseInt(ad.manufacturedYear) < parseInt(activeFilters.minYear)
-      ) {
-        return false;
-      }
-
-      // Max year filter
-      if (
-        activeFilters.maxYear &&
-        ad.manufacturedYear &&
-        parseInt(ad.manufacturedYear) > parseInt(activeFilters.maxYear)
-      ) {
-        return false;
-      }
-
-      // Fuel type filter
-      if (
-        activeFilters.fuelType &&
-        ad.fuelType?.toLowerCase() !== activeFilters.fuelType.toLowerCase()
-      ) {
-        return false;
-      }
-
-      // Transmission filter
-      if (
-        activeFilters.transmission &&
-        ad.transmission?.toLowerCase() !== activeFilters.transmission.toLowerCase()
-      ) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [allAds, activeFilters, searchQuery]);
+    return allAds;
+  }, [allAds]);
 
   // Apply sorting to filtered ads
   const sortedAds = useMemo(() => {
@@ -386,20 +218,6 @@ export default function VehicleMarketplace() {
     
     const ads = [...filteredAds];
     const now = Date.now();
-    const dayMs = 24 * 60 * 60 * 1000;
-    const isBumpOnly = (ad: any) =>
-      Boolean(ad?.bumpActive && !ad?.topAdActive && !ad?.featuredActive && !ad?.urgentActive);
-    const getSortTime = (ad: any) => {
-      const createdAtMs = ad?.createdAt ? new Date(ad.createdAt).getTime() : 0;
-      if (!isBumpOnly(ad)) return createdAtMs;
-      const bumpStart = ad?.bumpStartAt || ad?.boostStartAt || ad?.boostRequestedAt || ad?.updatedAt || ad?.createdAt;
-      const bumpStartMs = bumpStart ? new Date(bumpStart).getTime() : createdAtMs;
-      if (!Number.isFinite(bumpStartMs)) return createdAtMs;
-      const elapsed = Math.max(0, now - bumpStartMs);
-      const cycles = Math.floor(elapsed / dayMs);
-      const lastBumpMs = bumpStartMs + cycles * dayMs;
-      return Math.max(createdAtMs, lastBumpMs);
-    };
 
     switch (sortBy) {
       case "price-low":
@@ -421,7 +239,7 @@ export default function VehicleMarketplace() {
             if (aBoosted && !bBoosted) return -1;
             if (!aBoosted && bBoosted) return 1;
           }
-          const timeDiff = getSortTime(b) - getSortTime(a);
+          const timeDiff = getAdSortTime(b, now) - getAdSortTime(a, now);
           if (timeDiff !== 0) return timeDiff;
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         });
@@ -430,8 +248,8 @@ export default function VehicleMarketplace() {
   }, [filteredAds, sortBy, searchQuery]);
 
   const topAdsPool = useMemo(() => {
-    return allAds.filter((ad) => (ad as any).topAdActive && !(ad as any).featuredActive && !(ad as any).bumpActive && ad.status === "ACTIVE" && (ad as any).published);
-  }, [allAds]);
+    return topAdsData?.ads || [];
+  }, [topAdsData]);
 
   const shuffledTopAdsPool = useMemo(() => shuffleArray(topAdsPool), [topAdsPool]);
 
@@ -442,8 +260,8 @@ export default function VehicleMarketplace() {
 
   // Featured ads pool (for rotation)
   const featuredAdsPool = useMemo(() => {
-    return allAds.filter((ad) => (ad as any).featuredActive && ad.status === "ACTIVE" && (ad as any).published);
-  }, [allAds]);
+    return featuredAdsData?.ads || [];
+  }, [featuredAdsData]);
 
   const shuffledFeaturedAdsPool = useMemo(() => shuffleArray(featuredAdsPool), [featuredAdsPool]);
 
@@ -457,7 +275,7 @@ export default function VehicleMarketplace() {
     return shuffledFeaturedAdsPool.filter((ad) => !(ad as any).topAdActive);
   }, [shuffledFeaturedAdsPool]);
 
-  const isSearchActive = searchQuery.trim().length > 0;
+  // isSearchActive is defined earlier (above the useGetAds hooks)
 
   const baseAds = useMemo(() => {
     if (sortBy !== "default" || isSearchActive) return sortedAds;
@@ -467,25 +285,7 @@ export default function VehicleMarketplace() {
   const interleavedAds = useMemo(() => {
     if (baseAds.length === 0) return [];
     if (sortBy !== "default" || isSearchActive || featuredInsertPool.length === 0) return baseAds;
-
-    const result: any[] = [];
-    const insertCount = Math.min(2, featuredInsertPool.length);
-    const poolLength = featuredInsertPool.length;
-    const startOffset = (featuredRotationIndex * insertCount) % poolLength;
-    let insertOffset = 0;
-
-    baseAds.forEach((ad, index) => {
-      result.push(ad);
-      if ((index + 1) % 16 === 0) {
-        for (let i = 0; i < insertCount; i += 1) {
-          const pos = (startOffset + insertOffset + i) % poolLength;
-          result.push(featuredInsertPool[pos]);
-        }
-        insertOffset += insertCount;
-      }
-    });
-
-    return result;
+    return interleaveFeaturedAds(baseAds, featuredInsertPool, featuredRotationIndex, 16);
   }, [baseAds, featuredInsertPool, featuredRotationIndex, sortBy, isSearchActive]);
 
   // Featured Ads Carousel (latest 6 - featured only, no other promotions)
@@ -619,28 +419,31 @@ export default function VehicleMarketplace() {
     // Organization card component to reuse in both views
     const OrganizationCard = ({ org }: { org: Organization }) => (
       <div
-        className="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg hover:bg-teal-50 transition-all duration-200 cursor-pointer"
+        className="flex items-center space-x-3 p-3 bg-slate-50/60 hover:bg-teal-50/30 border border-slate-150/40 hover:border-teal-500/10 rounded-xl hover:shadow-[0_4px_12px_rgba(2,73,80,0.03)] hover:scale-[1.01] transition-all duration-200 cursor-pointer group/card"
         onClick={() => window.location.href = `/organizations/${org.id}`}
       >
-        <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center overflow-hidden">
+        <div className="w-11 h-11 bg-gradient-to-br from-teal-50 to-teal-100/50 rounded-full flex items-center justify-center overflow-hidden border border-slate-200/50 relative shadow-inner">
           {org.logo ? (
             <img
               src={org.logo}
               alt={org.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-300"
             />
           ) : (
-            <span className="text-teal-700 font-semibold">
+            <span className="text-teal-700 font-bold text-xs uppercase">
               {org.name?.charAt(0) || 'D'}
             </span>
           )}
+          {org.verified && (
+            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border border-white rounded-full shadow-sm" title="Verified Dealer"></span>
+          )}
         </div>
-        <div>
-          <div className="font-medium text-slate-800">
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold text-slate-800 text-sm truncate group-hover/card:text-teal-700 transition-colors">
             {org.name || "Unnamed Dealer"}
           </div>
-          <div className="text-sm text-slate-500">
-            {(org as any).verified ? "Verified Dealer" : "Dealer"} • {(org as any)._count?.ads || 0} listing{(org as any)._count?.ads !== 1 ? "s" : ""}
+          <div className="text-[11px] text-slate-500 font-medium mt-0.5">
+            {org.verified ? "Verified Partner" : "Dealer"} • {org._count?.ads || 0} listing{org._count?.ads !== 1 ? "s" : ""}
           </div>
         </div>
       </div>
@@ -649,15 +452,15 @@ export default function VehicleMarketplace() {
     // Loading state
     if (isLoading) {
       return (
-        <Card className="p-5 bg-white rounded-xl border border-slate-100">
-          <h3 className="font-semibold mb-4 text-slate-800">Featured Dealers</h3>
+        <Card className="p-5 bg-white rounded-xl border border-slate-100/80">
+          <h3 className="font-bold text-slate-800 mb-4 tracking-tight">Featured Dealers</h3>
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg animate-pulse">
-                <div className="w-12 h-12 bg-slate-200 rounded-full"></div>
+              <div key={i} className="flex items-center space-x-3 p-3 bg-slate-50/50 rounded-xl animate-pulse">
+                <div className="w-11 h-11 bg-slate-200 rounded-full"></div>
                 <div className="flex-1">
-                  <div className="h-4 bg-slate-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-3 bg-slate-200 rounded w-1/2"></div>
+                  <div className="h-3.5 bg-slate-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-2.5 bg-slate-200 rounded w-1/2"></div>
                 </div>
               </div>
             ))}
@@ -669,9 +472,9 @@ export default function VehicleMarketplace() {
     // Error or empty state
     if (error || !data?.organizations || data.organizations.length === 0) {
       return (
-        <Card className="p-5 bg-white rounded-xl border border-slate-100">
-          <h3 className="font-semibold mb-4 text-slate-800">Featured Dealers</h3>
-          <div className="p-3 text-center text-slate-500">
+        <Card className="p-5 bg-white rounded-xl border border-slate-100/80">
+          <h3 className="font-bold text-slate-800 mb-4 tracking-tight">Featured Dealers</h3>
+          <div className="p-3 text-center text-slate-500 text-sm">
             No dealers available at the moment
           </div>
         </Card>
@@ -681,20 +484,20 @@ export default function VehicleMarketplace() {
     // Success state with real data
     return (
       <>
-        <Card className="p-5 bg-white rounded-xl border border-slate-100">
+        <Card className="p-5 bg-white rounded-xl border border-slate-100/80">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-slate-800">Featured Dealers</h3>
+            <h3 className="font-bold text-slate-800 tracking-tight">Featured Dealers</h3>
             <Button
               variant="ghost"
               size="sm"
-              className="text-teal-700 hover:text-teal-800 hover:bg-teal-50 text-sm"
+              className="text-teal-700 hover:text-teal-800 hover:bg-teal-50 text-xs font-semibold rounded-lg"
               onClick={() => setShowAllDealers(true)}
             >
               View All
             </Button>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {data.organizations.map((org) => (
               <OrganizationCard key={org.id} org={org} />
             ))}
@@ -734,40 +537,28 @@ export default function VehicleMarketplace() {
   return (
     <div>
       {/* Hero Section with Search */}
-      <section className="relative py-12 md:py-20 bg-gradient-to-r from-teal-900 via-teal-800 to-teal-700 overflow-hidden">
-        {/* Abstract shapes for visual interest */}
-        <div className="absolute inset-0 overflow-hidden opacity-10">
-          <div className="absolute -right-40 -top-40 w-80 h-80 bg-teal-400 rounded-full"></div>
-          <div className="absolute -left-20 bottom-10 w-60 h-60 bg-teal-300 rounded-full"></div>
-        </div>
-
-        <div className="relative container mx-auto px-4">
-          <div className="text-center mb-8 md:mb-10">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 md:mb-5 font-heading">
+      <section className="relative py-8 md:py-12 bg-[#024950] text-white">
+        <div className="relative container mx-auto px-4 z-10">
+          {/* <div className="text-center mb-6 md:mb-8">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-2 font-heading tracking-tight text-wrap-balance">
               Find Your Perfect Vehicle
             </h1>
-            <p className="text-base sm:text-lg md:text-xl text-teal-100 max-w-2xl mx-auto">
+            <p className="text-sm sm:text-base md:text-lg text-teal-100 max-w-2xl mx-auto font-normal text-wrap-balance">
               {`Sri Lanka's largest automobile marketplace`}
             </p>
-          </div>
+          </div> */}
 
-          {/* Search Form - Simplified and minimal */}
-          <div className="max-w-4xl mx-auto">
-            {/* Simple search bar with filter button */}
-            <div className="flex gap-3 items-center">
+          {/* Search Form - Minimalist solid layout */}
+          <div className="max-w-3xl mx-auto bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm">
+            <div className="flex gap-2 items-center">
               <div className="flex-1 relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <Input
-                  placeholder="Search by make, model, city, or ad ID..."
-                  className="w-full h-14 pl-12 pr-14 rounded-xl border-slate-200 bg-white shadow-md text-base"
+                  placeholder="Search by make, model, city..."
+                  className="w-full h-12 pl-12 pr-14 rounded-lg border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus-visible:ring-[#024950] focus-visible:ring-offset-0 text-sm md:text-base focus:border-[#024950]"
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      // Search happens automatically via useEffect
-                    }
                   }}
                 />
                 {/* Show clear button when there's text */}
@@ -776,30 +567,30 @@ export default function VehicleMarketplace() {
                     onClick={() => {
                       setSearchQuery("");
                     }}
-                    className="absolute right-14 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    className="absolute right-14 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                   >
                     <X className="w-5 h-5" />
                   </button>
                 )}
                 <Button
                   disabled={isLoading}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-11 w-11 p-0 bg-teal-700 hover:bg-teal-600 rounded-lg"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 w-9 p-0 bg-[#024950] hover:bg-[#024950]/90 rounded-md transition-colors"
                 >
-                  <Search className="w-5 h-5 text-white" />
+                  <Search className="w-4 h-4 text-white" />
                 </Button>
               </div>
 
               <Sheet open={showFilterSheet} onOpenChange={setShowFilterSheet}>
                 <SheetTrigger asChild>
                   <button
-                    className="inline-flex items-center justify-center h-14 px-5 rounded-xl border border-slate-200 bg-white shadow-md hover:bg-slate-100 hover:border-slate-300 active:scale-95 transition-all duration-150 gap-2 cursor-pointer"
+                    className="inline-flex items-center justify-center h-12 px-4 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 active:scale-95 transition-all duration-150 gap-2 cursor-pointer shadow-xs"
                     aria-label="Open filters"
                   >
-                    <Filter className="w-5 h-5" aria-hidden="true" />
-                    <span className="hidden sm:inline text-sm font-medium">Filters</span>
+                    <Filter className="w-4 h-4 text-slate-500" aria-hidden="true" />
+                    <span className="hidden sm:inline text-xs sm:text-sm font-medium">Filters</span>
                     {hasActiveFilters && (
                       <span
-                        className="ml-2 bg-teal-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
+                        className="ml-1.5 bg-[#024950] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-xs"
                       >
                         {Object.values(activeFilters).filter(v => v !== null).length}
                       </span>
@@ -932,7 +723,7 @@ export default function VehicleMarketplace() {
                           </SelectTrigger>
                           <SelectContent className="max-h-[200px]">
                             <SelectItem value="any">Any</SelectItem>
-                            {sriLankanDistricts.map((district) => (
+                             {sriLankanDistricts.map((district: string) => (
                               <SelectItem key={district} value={district.toLowerCase()}>
                                 {district}
                               </SelectItem>
@@ -970,12 +761,12 @@ export default function VehicleMarketplace() {
                             </div>
                             <SelectItem value="any">Any</SelectItem>
                             {availableCities
-                              .filter((c) =>
+                              .filter((c: string) =>
                                 cityQuery.trim()
                                   ? c.toLowerCase().includes(cityQuery.toLowerCase())
                                   : true
                               )
-                              .map((city) => (
+                              .map((city: string) => (
                                 <SelectItem key={city} value={city.toLowerCase()}>
                                   {city}
                                 </SelectItem>
@@ -1225,12 +1016,46 @@ export default function VehicleMarketplace() {
                 </button>
               </div>
             )}
+            {/* Quick Category Text Pills */}
+            <div className="flex flex-wrap justify-center gap-2 mt-5">
+              {[
+                { type: "CAR", label: "Cars" },
+                { type: "SUV_JEEP", label: "SUVs" },
+                { type: "VAN", label: "Vans" },
+                { type: "MOTORCYCLE", label: "Bikes" },
+                { type: "THREE_WHEEL", label: "Three Wheelers" },
+                { type: "AUTO_PARTS", label: "Auto Parts" }
+              ].map((cat) => {
+                const isActive = activeFilters.vehicleType === cat.type;
+                return (
+                  <button
+                    key={cat.type}
+                    onClick={() => {
+                      if (isActive) {
+                        handleFilterChange("vehicleType", null);
+                        setActiveFilters(prev => ({ ...prev, vehicleType: null }));
+                      } else {
+                        handleFilterChange("vehicleType", cat.type);
+                        setActiveFilters(prev => ({ ...prev, vehicleType: cat.type }));
+                      }
+                    }}
+                    className={`px-4 py-1.5 rounded-full border text-xs font-semibold transition-colors cursor-pointer shadow-xs ${
+                      isActive
+                        ? "bg-[#024950] text-white border-transparent"
+                        : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    <span>{cat.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </section >
+      </section>
 
       {/* Main Content Area */}
-      < div className="bg-slate-50 py-8 md:py-12" >
+      <div className="bg-slate-50 py-4 md:py-6">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Vehicle Listings */}
@@ -1375,7 +1200,7 @@ export default function VehicleMarketplace() {
               {/* Vehicle Grid - Using Real Data */}
               {interleavedAds.length > 0 && !isLoading && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {interleavedAds.slice(0, visibleCount).map((vehicle) => {
+                  {interleavedAds.map((vehicle) => {
                     const isFeatured = (vehicle as any).featuredActive;
 
                     if (isFeatured) {
@@ -1396,69 +1221,71 @@ export default function VehicleMarketplace() {
                     return (
                       <div
                         key={vehicle.id}
-                        className={`rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative bg-white border-slate-200 hover:border-slate-300`}
+                        className="rounded-sm border bg-white border-slate-200 hover:border-slate-350 transition-colors cursor-pointer group relative overflow-hidden"
                         onClick={() => (window.location.href = buildAdUrl(vehicle))}
                       >
                         {/* Favorite Button */}
-                        <div className="absolute top-10 right-2 z-10">
+                        <div className="absolute top-2 right-2 z-20 opacity-90 scale-90">
                           <FavoriteButton adId={vehicle.id} />
                         </div>
 
                         {((vehicle as any).bumpActive || (vehicle as any).urgentActive || (vehicle as any).topAdActive || (vehicle as any).featuredActive) && (
-                          <div className="absolute bottom-2 right-2 z-10">
+                          <div className="absolute bottom-2 right-2 z-10 scale-90">
                             <BoostBadges bumpActive={(vehicle as any).bumpActive} urgentActive={(vehicle as any).urgentActive} topAdActive={(vehicle as any).topAdActive} featuredActive={(vehicle as any).featuredActive} />
                           </div>
                         )}
 
-                        <div className="p-2 pb-5">
-                          {/* Vehicle Title - Centered */}
-                          <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
-                            {formatAdTitle(vehicle)}
-                          </h3>
-
-                          <div className="flex">
-                            {/* Vehicle Image with Time and Views Below */}
-                            <div className="w-36 h-30 flex-shrink-0 flex flex-col">
-                              <div className="flex-1">
-                                {vehicle?.media && vehicle.media.length > 0 && vehicle.media[0]?.media?.url ? (
-                                  <img
-                                    src={vehicle.media[0].media.url}
-                                    alt={vehicle.title}
-                                    className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
-                                  />
-                                ) : (
-                                  <img
-                                    src="/placeholder-image.jpg"
-                                    alt={vehicle.title}
-                                    className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
-                                  />
-                                )}
-                              </div>
-                              {/* Time and Views Below Image */}
-                              <div className="flex items-center gap-1 mt-1 text-xs text-slate-400">
-                                <span>{getRelativeTime(vehicle.createdAt)}</span>
-                                <span className="flex items-center gap-0.5">
-                                  <Eye className="h-3 w-3" />
-                                  {(vehicle as any).analytics?.views || 0}
-                                </span>
-                              </div>
+                        <div className="p-2">
+                          <div className="flex gap-3">
+                            {/* Vehicle Image Container - Ultra compact */}
+                            <div className="w-24 sm:w-28 h-18 sm:h-20 flex-shrink-0 rounded-sm overflow-hidden bg-slate-55 border border-slate-100 relative">
+                              {vehicle?.media && vehicle.media.length > 0 && vehicle.media[0]?.media?.url ? (
+                                <img
+                                  src={vehicle.media[0].media.url}
+                                  alt={vehicle.title}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <img
+                                  src="/placeholder-image.jpg"
+                                  alt={vehicle.title}
+                                  className="w-full h-full object-cover"
+                                />
+                              )}
                             </div>
 
                             {/* Vehicle Details */}
-                            <div className="flex-1 pl-3 flex flex-col justify-between">
+                            <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
                               <div>
-                                <div className="text-xs text-slate-600 mb-1 line-clamp-1">
-                                  {vehicle.city || vehicle.location || ""}
-                                </div>
-
-                                <div className="text-sm font-semibold text-teal-700 mb-1">
-                                  {formatPrice(vehicle.price, (vehicle as any).metadata?.isNegotiable)}
-                                </div>
-
-                                <div className="text-xs text-slate-500">
+                                {/* Category Badge */}
+                                <span className="text-[9px] uppercase font-bold tracking-wider text-slate-400 block mb-0.5">
                                   {vehicle.type === 'AUTO_PARTS' 
                                     ? (vehicle as any).partCategory?.name || 'Auto Part'
                                     : vehicleTypeLabels[vehicle.type] || vehicle.type}
+                                </span>
+
+                                {/* Vehicle Title */}
+                                <h3 className="font-semibold text-slate-800 text-xs sm:text-sm group-hover:text-teal-700 transition-colors line-clamp-1 leading-tight">
+                                  {formatAdTitle(vehicle)}
+                                </h3>
+
+                                <div className="text-[10px] text-slate-500 mt-0.5 line-clamp-1">
+                                  {vehicle.city || vehicle.location || ""}
+                                </div>
+                              </div>
+
+                              <div className="flex items-end justify-between mt-1">
+                                <div className="text-xs sm:text-sm font-bold text-teal-700 leading-none">
+                                  {formatPrice(vehicle.price, (vehicle as any).metadata?.isNegotiable)}
+                                </div>
+
+                                {/* Views and relative time */}
+                                <div className="flex items-center gap-2 text-[9px] sm:text-[10px] text-slate-400 pr-1">
+                                  <span>{getRelativeTime(vehicle.createdAt)}</span>
+                                  <span className="flex items-center gap-0.5">
+                                    <Eye className="h-3 w-3" />
+                                    {(vehicle as any).analytics?.views || 0}
+                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -1473,14 +1300,15 @@ export default function VehicleMarketplace() {
               {/* Load More */}
               {interleavedAds.length > 0 && (
                 <div className="text-center mt-8">
-                  {visibleCount < interleavedAds.length ? (
+                  {data?.pagination && currentPage < data.pagination.totalPages ? (
                     <Button
                       size="lg"
                       variant="outline"
-                      className="px-8 py-5 border-teal-700 text-teal-700 hover:bg-teal-700 hover:text-white transition-all duration-300"
-                      onClick={() => setVisibleCount((prev) => prev + 12)}
+                      className="px-8 py-5 border-teal-700 text-teal-700 hover:bg-teal-700 hover:text-white transition-all duration-300 rounded-sm"
+                      onClick={handleLoadMore}
+                      disabled={isLoading}
                     >
-                      Load More Vehicles
+                      {isLoading ? "Loading..." : "Load More Vehicles"}
                     </Button>
                   ) : interleavedAds.length > 12 ? (
                     <p className="text-slate-500 text-sm">No more vehicles to load</p>
@@ -1532,7 +1360,7 @@ export default function VehicleMarketplace() {
 
       {/* Featured Ads Carousel Section */}
       {!isLoading && featuredBoostedAds.length > 0 && (
-        <section className="bg-white py-12 md:py-16 border-b border-slate-100">
+        <section className="bg-white py-6 md:py-8 border-b border-slate-100">
           <div className="max-w-6xl mx-auto px-4">
             <Carousel
               opts={{
@@ -1549,10 +1377,10 @@ export default function VehicleMarketplace() {
               ]}
               className="w-full"
             >
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Zap className="h-5 w-5 text-amber-500" />
-                  <h2 className="text-2xl font-bold text-slate-800">Featured Ads</h2>
+                  <Zap className="h-4 w-4 text-amber-500" />
+                  <h2 className="text-lg sm:text-xl font-bold text-slate-800">Featured Ads</h2>
                 </div>
                 <div className="flex items-center gap-2">
                   <CarouselPrevious className="static translate-y-0 h-8 w-8" />
@@ -1581,11 +1409,11 @@ export default function VehicleMarketplace() {
       )}
 
       {/* Trending Vehicles Section */}
-      <section className="bg-white py-12 md:py-16 border-b border-slate-100">
+      <section className="bg-white py-6 md:py-8 border-b border-slate-100">
         <div className="max-w-6xl mx-auto px-4">
           {/* Trending Vehicles */}
           <div>
-            <h2 className="text-2xl md:text-2xl font-bold text-slate-800 mb-6">Trending Vehicles</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-slate-800 mb-3">Trending Vehicles</h2>
             {isLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[...Array(6)].map((_, index) => (
@@ -1607,59 +1435,80 @@ export default function VehicleMarketplace() {
                   .map((vehicle) => {
                     const isFeatured = (vehicle as any).featuredActive;
                     return (
-                    <div
-                      key={vehicle.id}
-                      className={`rounded-lg border overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group relative ${isFeatured ? 'bg-yellow-50 border-yellow-300 hover:border-yellow-400' : 'bg-white border-slate-200 hover:border-slate-300'}`}
-                      onClick={() => (window.location.href = buildAdUrl(vehicle))}
-                    >
+                      <div
+                        key={vehicle.id}
+                        className={`rounded-lg border overflow-hidden hover:border-slate-350 transition-colors cursor-pointer group relative bg-white border-slate-200 ${isFeatured ? 'bg-yellow-50/30' : ''}`}
+                        onClick={() => (window.location.href = buildAdUrl(vehicle))}
+                      >
+                        {/* Vehicle Image */}
+                        <div className="w-full h-32 overflow-hidden bg-slate-50 relative border-b border-slate-100">
+                          {vehicle?.media && vehicle.media.length > 0 && vehicle.media[0]?.media?.url ? (
+                            <img
+                              src={vehicle.media[0].media.url}
+                              alt={vehicle.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <img
+                              src="/placeholder-image.jpg"
+                              alt={vehicle.title}
+                              className="w-full h-full object-cover"
+                            />
+                          )}
+                          
+                          {/* Badge for Trending */}
+                          <div className="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded shadow-sm z-10">
+                            <TrendingUp className="w-3 h-3 inline-block mr-0.5" />
+                            <span>Trending</span>
+                          </div>
+                        </div>
 
-
-                      {/* Vehicle Image */}
-                      <div className="w-full h-40 overflow-hidden bg-slate-100 relative">
-                        {vehicle?.media && vehicle.media.length > 0 && vehicle.media[0]?.media?.url ? (
-                          <img
-                            src={vehicle.media[0].media.url}
-                            alt={vehicle.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        ) : (
-                          <img
-                            src="/placeholder-image.jpg"
-                            alt={vehicle.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
+                        {/* Boost Badges */}
+                        {((vehicle as any).bumpActive || (vehicle as any).urgentActive || (vehicle as any).topAdActive || (vehicle as any).featuredActive) && (
+                          <div className="absolute top-2 right-2 z-10 scale-90">
+                            <BoostBadges
+                              bumpActive={(vehicle as any).bumpActive}
+                              urgentActive={(vehicle as any).urgentActive}
+                              topAdActive={(vehicle as any).topAdActive}
+                              featuredActive={(vehicle as any).featuredActive}
+                            />
+                          </div>
                         )}
-                        {/* Badge for Trending with view count */}
-                        <div className="absolute top-2 left-2 bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-md flex items-center gap-1">
-                          <TrendingUp className="w-3 h-3" /><span className="font-semibold italic" >Trending</span>
+
+                        {/* Vehicle Details */}
+                        <div className="p-2.5 flex flex-col justify-between flex-1 min-h-[100px]">
+                          <div>
+                            {/* Category Tag */}
+                            <span className="text-[9px] uppercase font-bold tracking-wider text-slate-400 block mb-0.5">
+                              {vehicle.type === 'AUTO_PARTS' 
+                                ? (vehicle as any).partCategory?.name || 'Auto Part'
+                                : vehicleTypeLabels[vehicle.type] || vehicle.type}
+                            </span>
+                            
+                            {/* Title */}
+                            <h3 className="font-semibold text-xs text-slate-800 line-clamp-1 group-hover:text-teal-700 transition-colors leading-tight">
+                              {formatAdTitle(vehicle)}
+                            </h3>
+
+                            <div className="text-[10px] text-slate-500 mt-0.5 truncate">{vehicle.city || vehicle.location || ""}</div>
+                          </div>
+
+                          <div className="flex items-end justify-between mt-2 pt-1.5 border-t border-slate-100">
+                            <div className="text-xs sm:text-sm font-bold text-teal-700 leading-none">
+                              {formatPrice(vehicle.price, (vehicle as any).metadata?.isNegotiable)}
+                            </div>
+
+                            {/* Views and relative time */}
+                            <div className="flex items-center gap-1.5 text-[9px] text-slate-400">
+                              <span>{getRelativeTime(vehicle.createdAt)}</span>
+                              <span className="flex items-center gap-0.5">
+                                <Eye className="h-3 w-3" />
+                                {(vehicle as any).analytics?.views || 0}
+                              </span>
+                            </div>
+                          </div>
                         </div>
                       </div>
-
-                      {/* Boost Badges */}
-                      {((vehicle as any).bumpActive || (vehicle as any).urgentActive || (vehicle as any).topAdActive || (vehicle as any).featuredActive) && (
-                        <div className="absolute bottom-2 right-2 z-10">
-                          <BoostBadges
-                            bumpActive={(vehicle as any).bumpActive}
-                            urgentActive={(vehicle as any).urgentActive}
-                            topAdActive={(vehicle as any).topAdActive}
-                            featuredActive={(vehicle as any).featuredActive}
-                          />
-                        </div>
-                      )}
-
-                      {/* Vehicle Details */}
-                      <div className="p-3 pb-5">
-                        <h3 className="font-semibold text-sm text-slate-800 mb-2 line-clamp-2 group-hover:text-teal-700">
-                          {formatAdTitle(vehicle)}
-                        </h3>
-
-                        <div className="text-xs text-slate-600 mb-2">{vehicle.city || vehicle.location || ""}</div>
-
-                        <div className="text-sm font-semibold text-teal-700">
-                          {formatPrice(vehicle.price, (vehicle as any).metadata?.isNegotiable)}
-                        </div>
-                      </div>
-                    </div>
                     );
                   })}
               </div>

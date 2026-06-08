@@ -1,5 +1,4 @@
 import React from "react";
-import { Logo } from "@/components/logo";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type Props = {
@@ -8,22 +7,21 @@ type Props = {
 
 export default function ResetPasswordLayout({}: Props) {
   return (
-    <div className="space-y-6 flex flex-col items-center">
-      <Logo />
-
-      {/* Form Skelaton */}
-      <div className="space-y-6">
+    <div className="w-full max-w-md space-y-4">
+      {/* Form Skeleton */}
+      <div className="space-y-4">
         <div className="space-y-1">
-          <Skeleton className="w-1/2 h-4" />
-          <Skeleton className="w-full h-12" />
+          <Skeleton className="w-1/2 h-3" />
+          <Skeleton className="w-full h-9" />
         </div>
         <div className="space-y-1">
-          <Skeleton className="w-1/2 h-4" />
-          <Skeleton className="w-full h-12" />
+          <Skeleton className="w-1/2 h-3" />
+          <Skeleton className="w-full h-9" />
         </div>
 
-        <Skeleton className="w-full h-14" />
+        <Skeleton className="w-full h-9" />
       </div>
     </div>
   );
 }
+

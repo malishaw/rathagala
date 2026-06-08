@@ -81,16 +81,13 @@ export function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-all duration-300 ${scrolled
-        ? "bg-gradient-to-r from-teal-900 to-teal-800 text-white shadow-md"
-        : "bg-gradient-to-r from-teal-900 via-teal-800 to-teal-700 text-white"
-        }`}
+      className={`sticky top-0 z-50 transition-colors duration-200 border-b border-teal-800 bg-[#024950] text-white shadow-sm`}
     >
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between py-4">
+        <div className="flex items-center justify-between py-3">
           <Link
             href="/"
-            className="flex items-center space-x-2 hover:opacity-90 transition-opacity"
+            className="flex items-center space-x-2 font-bold text-white"
             onClick={(e) => {
               // If already on home page, force refresh
               if (window.location.pathname === '/') {
@@ -99,126 +96,71 @@ export function Header() {
               }
             }}
           >
-            <CarIcon className="h-6 w-6" />
-            <div className="text-xl md:text-2xl font-bold text-white font-heading">
-              Rathagala<span className="text-teal-600">.lk</span>
+            <CarIcon className="h-6 w-6 text-white" />
+            <div className="text-xl md:text-2xl font-bold tracking-tight font-heading">
+              Rathagala.lk
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <Link
-              href="/"
-              className="hover:text-teal-200 transition-colors font-medium"
-              onClick={(e) => {
-                // If already on home page, force refresh
-                if (window.location.pathname === '/') {
-                  e.preventDefault();
-                  window.location.reload();
-                }
-              }}
-            >
-              Home
-            </Link>
-            <Link
-              href="/search?listingType=SELL"
-              className="hover:text-teal-200 transition-colors font-medium"
-            >
-              Buy
-            </Link>
-            <Link
-              href="/search?listingType=WANT"
-              className="hover:text-teal-200 transition-colors font-medium"
-            >
-              Want
-            </Link>
-            <Link
-              href="/search?listingType=RENT"
-              className="hover:text-teal-200 transition-colors font-medium"
-            >
-              Rent
-            </Link>
-            <Link
-              href="/search?listingType=HIRE"
-              className="hover:text-teal-200 transition-colors font-medium"
-            >
-              Hire
-            </Link>
-            <Link
-              href="/auto-parts"
-              className="hover:text-teal-200 transition-colors font-medium"
-            >
-              Auto Parts
-            </Link>
-            <Link
-              href="/compare"
-              className="hover:text-teal-200 transition-colors font-medium"
-            >
-              Compare
-            </Link>
-            <Link
-              href="/analyse"
-              className="hover:text-teal-200 transition-colors font-medium"
-            >
-              Analyze
-            </Link>
-            {/* <Link
-              href="/search"
-              className="hover:text-teal-200 transition-colors font-medium"
-            >
-              Search
-            </Link> */}
-            {/* <Link
-              href="/about"
-              className="hover:text-teal-200 transition-colors font-medium"
-            >
-              About
-            </Link> */}
-            {/* <Link
-              href="/contact"
-              className="hover:text-teal-200 transition-colors font-medium"
-            >
-              Contact
-            </Link> */}
-            {/* <Link
-              href="/profile"
-              className="hover:text-teal-200 transition-colors font-medium"
-            >
-              Profile
-            </Link> */}
+          <nav className="hidden md:flex items-center space-x-5 lg:space-x-6">
+            {[
+              { href: "/", label: "Home", forceRefresh: true },
+              { href: "/search?listingType=SELL", label: "Buy" },
+              { href: "/search?listingType=WANT", label: "Want" },
+              { href: "/search?listingType=RENT", label: "Rent" },
+              { href: "/search?listingType=HIRE", label: "Hire" },
+              { href: "/auto-parts", label: "Auto Parts" },
+              { href: "/compare", label: "Compare" },
+              { href: "/analyse", label: "Analyze" },
+            ].map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                className="py-1 text-sm font-medium text-teal-100 hover:text-white transition-colors duration-150"
+                onClick={(e) => {
+                  if (link.forceRefresh && window.location.pathname === '/') {
+                    e.preventDefault();
+                    window.location.reload();
+                  }
+                }}
+              >
+                {link.label}
+              </Link>
+            ))}
           </nav>
 
           {/* Desktop Auth Buttons */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-3">
             {isLoading ? (
-              <div className="w-24 h-10 bg-teal-700 rounded animate-pulse"></div>
+              <div className="w-20 h-9 bg-teal-800/40 rounded animate-pulse"></div>
             ) : user ? (
               <div className="group relative">
                 <Link href="/profile">
                   <Button
                     variant="outline"
-                    className="text-white border-white bg-teal-600/20 hover:bg-white hover:text-teal-900 transition-all duration-200 cursor-pointer flex items-center gap-1"
+                    className="text-white border-white/30 bg-transparent hover:bg-white hover:text-[#024950] h-9 px-3 text-sm font-medium transition-colors"
                   >
-                    <UserIcon className="h-4 w-4" />
+                    <UserIcon className="h-4 w-4 mr-1" />
                     Account
                   </Button>
                 </Link>
-                {/* Dropdown appears on hover */}
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 ease-in-out transform group-hover:translate-y-0 -translate-y-2 z-50">
+                {/* Dropdown menu */}
+                <div className="absolute right-0 mt-2 w-44 bg-white rounded-sm shadow-lg border border-slate-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
                   <div className="py-1">
                     <Link
                       href="/profile"
-                      className="flex items-center gap-3 px-4 py-2.5 hover:bg-teal-50 transition-colors cursor-pointer"
+                      className="flex items-center gap-2 px-4 py-2 hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-sm font-medium"
                     >
-                      <UserIcon className="h-4 w-4 text-teal-700" />
-                      <span className="text-sm font-medium text-gray-700">View Account</span>
+                      <UserIcon className="h-4 w-4 text-slate-500" />
+                      View Account
                     </Link>
                     <button
                       onClick={handleSignOut}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 transition-colors cursor-pointer"
+                      className="w-full flex items-center gap-2 px-4 py-2 hover:bg-red-50 text-red-600 hover:text-red-700 text-sm font-medium text-left"
                     >
-                      <LogOut className="h-4 w-4 text-red-600" />
-                      <span className="text-sm font-medium text-red-600">Sign out</span>
+                      <LogOut className="h-4 w-4 text-red-500" />
+                      Sign out
                     </button>
                   </div>
                 </div>
@@ -227,7 +169,7 @@ export function Header() {
               <Link href="/signin">
                 <Button
                   variant="ghost"
-                  className="text-white hover:bg-teal-600/20 hover:text-white transition-colors duration-200 cursor-pointer"
+                  className="text-white hover:bg-white/10 h-9 px-3 text-sm font-medium transition-colors"
                 >
                   Login
                 </Button>
@@ -238,19 +180,19 @@ export function Header() {
               <Link href="/dashboard">
                 <Button
                   variant="outline"
-                  className="text-white border-white bg-teal-600/20 hover:bg-white hover:text-teal-900 transition-colors duration-200 cursor-pointer flex items-center gap-1"
+                  className="text-white border-white/30 bg-transparent hover:bg-white hover:text-[#024950] h-9 px-3 text-sm font-medium transition-colors"
                 >
-                  <LayoutDashboard className="h-4 w-4" />
-                  {user.role === 'admin' ? 'Admin Dashboard' : 'Dashboard'}
+                  <LayoutDashboard className="h-4 w-4 mr-1" />
+                  Dashboard
                 </Button>
               </Link>
             )}
 
             <Link href={user ? "/sell/new" : "/signin?redirect=/sell/new"}>
               <Button
-                className="bg-white text-teal-900 hover:bg-teal-50 hover:shadow-md font-medium transition-all duration-200 cursor-pointer"
+                className="bg-teal-500 hover:bg-teal-400 text-white border-0 h-9 px-4 text-sm font-bold shadow-sm transition-colors cursor-pointer"
               >
-                Post Free Ad <ArrowRight className="ml-1 h-4 w-4" />
+                Post Free Ad
               </Button>
             </Link>
           </div>
@@ -266,7 +208,7 @@ export function Header() {
               <SheetContent
                 side="right"
                 hideCloseButton
-                className="w-[85%] sm:w-[360px] bg-gradient-to-r from-teal-900 to-teal-800 text-white border-teal-900 px-6 py-8 rounded-l-3xl"
+                className="w-[85%] sm:w-[360px] bg-gradient-to-r from-teal-900 to-teal-800 text-white border-teal-900 px-6 py-8 rounded-none"
               >
                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                 <div className="flex items-center justify-between mb-10">
@@ -297,7 +239,7 @@ export function Header() {
                       }
                     }}
                   >
-                    <div className="bg-white/10 p-1.5 rounded-lg">
+                    <div className="bg-white/10 p-1.5 rounded-sm">
                       <LayoutDashboard className="h-4 w-4" />
                     </div>
                     Home
@@ -307,7 +249,7 @@ export function Header() {
                     className="text-base font-semibold flex items-center gap-3 py-2 border-b border-white/5 hover:text-teal-200 transition-colors"
                     onClick={() => setIsOpen(false)}
                   >
-                    <div className="bg-white/10 p-1.5 rounded-lg">
+                    <div className="bg-white/10 p-1.5 rounded-sm">
                       <CarIcon className="h-4 w-4" />
                     </div>
                     Buy
@@ -318,7 +260,7 @@ export function Header() {
                     className="text-base font-semibold flex items-center gap-3 py-2 border-b border-white/5 hover:text-teal-200 transition-colors"
                     onClick={() => setIsOpen(false)}
                   >
-                    <div className="bg-white/10 p-1.5 rounded-lg">
+                    <div className="bg-white/10 p-1.5 rounded-sm">
                       <Search className="h-4 w-4" />
                     </div>
                     Want
@@ -329,7 +271,7 @@ export function Header() {
                     className="text-base font-semibold flex items-center gap-3 py-2 border-b border-white/5 hover:text-teal-200 transition-colors"
                     onClick={() => setIsOpen(false)}
                   >
-                    <div className="bg-white/10 p-1.5 rounded-lg">
+                    <div className="bg-white/10 p-1.5 rounded-sm">
                       <Calendar className="h-4 w-4" />
                     </div>
                     Rent
@@ -340,7 +282,7 @@ export function Header() {
                     className="text-base font-semibold flex items-center gap-3 py-2 border-b border-white/5 hover:text-teal-200 transition-colors"
                     onClick={() => setIsOpen(false)}
                   >
-                    <div className="bg-white/10 p-1.5 rounded-lg">
+                    <div className="bg-white/10 p-1.5 rounded-sm">
                       <UserIcon className="h-4 w-4" />
                     </div>
                     Hire
@@ -351,7 +293,7 @@ export function Header() {
                     className="text-base font-semibold flex items-center gap-3 py-2 border-b border-white/5 hover:text-teal-200 transition-colors"
                     onClick={() => setIsOpen(false)}
                   >
-                    <div className="bg-white/10 p-1.5 rounded-lg">
+                    <div className="bg-white/10 p-1.5 rounded-sm">
                       <Wrench className="h-4 w-4" />
                     </div>
                     Auto Parts
@@ -362,7 +304,7 @@ export function Header() {
                     className="text-base font-semibold flex items-center gap-3 py-2 border-b border-white/5 hover:text-teal-200 transition-colors"
                     onClick={() => setIsOpen(false)}
                   >
-                    <div className="bg-white/10 p-1.5 rounded-lg">
+                    <div className="bg-white/10 p-1.5 rounded-sm">
                       <Check className="h-4 w-4" />
                     </div>
                     Compare
@@ -373,7 +315,7 @@ export function Header() {
                     className="text-base font-semibold flex items-center gap-3 py-2 border-b border-white/5 hover:text-teal-200 transition-colors"
                     onClick={() => setIsOpen(false)}
                   >
-                    <div className="bg-white/10 p-1.5 rounded-lg">
+                    <div className="bg-white/10 p-1.5 rounded-sm">
                       <TrendingUp className="h-4 w-4" />
                     </div>
                     Analyze
@@ -388,7 +330,7 @@ export function Header() {
                         void handleSignOut();
                       }}
                     >
-                      <div className="bg-red-500/10 p-1.5 rounded-lg">
+                      <div className="bg-red-500/10 p-1.5 rounded-sm">
                         <LogOut className="h-4 w-4" />
                       </div>
                       Logout
@@ -396,7 +338,7 @@ export function Header() {
                   )}
                   <div className="pt-4 mt-2 border-t border-white/10 space-y-3">
                     {isLoading ? (
-                      <div className="w-full h-10 bg-teal-700/60 rounded-lg animate-pulse" />
+                      <div className="w-full h-10 bg-teal-700/60 rounded-sm animate-pulse" />
                     ) : user ? (
                       <>
                         <Button
@@ -426,7 +368,7 @@ export function Header() {
                       <Button
                         asChild
                         variant="outline"
-                        className="w-full justify-center text-teal-900 border-white/60 hover:bg-white hover:text-teal-900 transition-colors duration-200 rounded-md py-5"
+                        className="w-full justify-center text-teal-900 border-white/60 hover:bg-white hover:text-teal-900 transition-colors duration-200 rounded-sm py-5"
                       >
                         <Link href="/signin">Login</Link>
                       </Button>
@@ -434,7 +376,7 @@ export function Header() {
 
                     <Button
                       asChild
-                      className="w-full justify-center bg-white hover:text-white border-1 hover:border-white text-teal-900 hover:bg-teal-900 rounded-md shadow-sm py-5 font-bold"
+                      className="w-full justify-center bg-white hover:text-white border-1 hover:border-white text-teal-900 hover:bg-teal-900 rounded-sm shadow-sm py-5 font-bold"
                     >
                       <Link href={user ? "/sell/new" : "/signin?redirect=/sell/new"}>Post Free Ad</Link>
                     </Button>

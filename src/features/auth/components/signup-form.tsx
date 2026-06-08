@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { User, Mail, Lock } from "lucide-react";
 
 import {
     signupSchema,
@@ -19,9 +20,7 @@ import {
     FormControl,
     FormField,
     FormItem,
-    FormLabel,
-    FormMessage,
-  FormDescription
+    FormMessage
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -33,9 +32,10 @@ import { GoogleAuthButton } from "./google-auth-button";
 type Props = {
   className?: string;
   redirectTo?: string;
+  variant?: "standard" | "minimal";
 };
 
-export function SignupForm({ className, redirectTo }: Props) {
+export function SignupForm({ className, redirectTo, variant = "standard" }: Props) {
   const [isPending, setIsPending] = useState<boolean>(false);
   const toastId = useId();
   const router = useRouter();
@@ -60,7 +60,7 @@ export function SignupForm({ className, redirectTo }: Props) {
         name: formData.name,
         password: formData.password,
         isOrganization: formData.registerAsOrganization
-      },
+      } as Parameters<typeof authClient.signUp.email>[0] & { isOrganization?: boolean },
       {
         onRequest: () => {
           toast.loading("Signing up...", { id: toastId });
@@ -68,7 +68,6 @@ export function SignupForm({ className, redirectTo }: Props) {
         onSuccess: async () => {
           toast.loading("Sending verification code...", { id: toastId });
 
-          // Send verification code
           try {
             const response = await fetch("/api/verification/send-verification-code", {
               method: "POST",
@@ -85,14 +84,12 @@ export function SignupForm({ className, redirectTo }: Props) {
                 description: "Please check your inbox"
               });
               form.reset();
-              // Store email, name, password, and organization intent in sessionStorage
               sessionStorage.setItem("verifyEmail", formData.email);
               sessionStorage.setItem("verifyName", formData.name);
               sessionStorage.setItem("verifyPassword", formData.password);
               if (formData.registerAsOrganization) {
                 sessionStorage.setItem("setupOrganization", "true");
               }
-              // Preserve the post-auth redirect destination across the verify-email flow
               if (redirectTo) {
                 sessionStorage.setItem("postAuthRedirect", redirectTo);
               } else {
@@ -103,7 +100,6 @@ export function SignupForm({ className, redirectTo }: Props) {
               toast.error("Failed to send verification code. Please contact support.", {
                 id: toastId,
               });
-              // Don't redirect to signin if verification failed
             }
           } catch (error) {
             console.error("Error sending verification code:", error);
@@ -113,9 +109,9 @@ export function SignupForm({ className, redirectTo }: Props) {
           }
         },
         onError: (ctx) => {
-          // Check if error is about existing email
-          if (ctx.error.message?.toLowerCase().includes("existing email") || 
-              ctx.error.message?.toLowerCase().includes("already exists")) {
+          const error = ctx.error as { message?: string; [key: string]: any };
+          if (error.message?.toLowerCase().includes("existing email") || 
+              error.message?.toLowerCase().includes("already exists")) {
             toast.error("Email already registered!", {
               id: toastId,
               description: "Please sign in or use a different email"
@@ -123,7 +119,7 @@ export function SignupForm({ className, redirectTo }: Props) {
           } else {
             toast.error("Signup failed!", {
               id: toastId,
-              description: ctx.error.message || "Something went wrong"
+              description: error.message || "Something went wrong"
             });
           }
         }
@@ -133,28 +129,34 @@ export function SignupForm({ className, redirectTo }: Props) {
     setIsPending(false);
   }
 
+  const isMinimal = variant === "minimal";
+
   return (
-    <div className={cn("grid gap-3", className)}>
+    <div className={cn("grid gap-2.5 w-full animate-in fade-in slide-in-from-bottom-2 duration-200", className)}>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleFormSubmit)}
-          className="space-y-2.5 w-full"
+          className="space-y-2 w-full"
         >
           <FormField
             control={form.control}
             name="name"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-teal-900 font-medium text-xs">Full Name</FormLabel>
+              <FormItem className="space-y-0">
                 <FormControl>
-                  <Input
-                    disabled={isPending}
-                    placeholder="Your Name"
-                    className="bg-white border-teal-200 focus:border-teal-500 focus:ring-teal-500 h-9"
-                    {...field}
-                  />
+                  <div className="relative group">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-teal-600/70 group-focus-within:text-teal-600 transition-colors duration-150">
+                      <User className="h-3.5 w-3.5" />
+                    </div>
+                    <Input
+                      disabled={isPending}
+                      placeholder="Full Name"
+                      className="bg-white border-teal-200 pl-9 pr-3 focus:border-teal-500 focus:ring-1 focus:ring-teal-100 transition-all duration-150 shadow-xs h-9 text-xs"
+                      {...field}
+                    />
+                  </div>
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-[10px] mt-0.5" />
               </FormItem>
             )}
           />
@@ -162,17 +164,21 @@ export function SignupForm({ className, redirectTo }: Props) {
             control={form.control}
             name="email"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-teal-900 font-medium text-xs">Email</FormLabel>
+              <FormItem className="space-y-0">
                 <FormControl>
-                  <Input
-                    disabled={isPending}
-                    placeholder="your.name@email.com"
-                    className="bg-white border-teal-200 focus:border-teal-500 focus:ring-teal-500 h-9"
-                    {...field}
-                  />
+                  <div className="relative group">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-teal-600/70 group-focus-within:text-teal-600 transition-colors duration-150">
+                      <Mail className="h-3.5 w-3.5" />
+                    </div>
+                    <Input
+                      disabled={isPending}
+                      placeholder="Email Address"
+                      className="bg-white border-teal-200 pl-9 pr-3 focus:border-teal-500 focus:ring-1 focus:ring-teal-100 transition-all duration-150 shadow-xs h-9 text-xs"
+                      {...field}
+                    />
+                  </div>
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-[10px] mt-0.5" />
               </FormItem>
             )}
           />
@@ -180,17 +186,21 @@ export function SignupForm({ className, redirectTo }: Props) {
             control={form.control}
             name="password"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-teal-900 font-medium text-xs">Password</FormLabel>
+              <FormItem className="space-y-0">
                 <FormControl>
-                  <PasswordInput
-                    disabled={isPending}
-                    placeholder="***********"
-                    className="bg-white border-teal-200 focus:border-teal-500 focus:ring-teal-500 h-9"
-                    {...field}
-                  />
+                  <div className="relative group">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-teal-600/70 group-focus-within:text-teal-600 transition-colors duration-150 z-10">
+                      <Lock className="h-3.5 w-3.5" />
+                    </div>
+                    <PasswordInput
+                      disabled={isPending}
+                      placeholder="Password"
+                      className="bg-white border-teal-200 pl-9 pr-10 focus:border-teal-500 focus:ring-1 focus:ring-teal-100 transition-all duration-150 shadow-xs h-9 text-xs"
+                      {...field}
+                    />
+                  </div>
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-[10px] mt-0.5" />
               </FormItem>
             )}
           />
@@ -198,46 +208,49 @@ export function SignupForm({ className, redirectTo }: Props) {
             control={form.control}
             name="confirmPassword"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-teal-900 font-medium text-xs">Confirm Password</FormLabel>
+              <FormItem className="space-y-0">
                 <FormControl>
-                  <PasswordInput
-                    disabled={isPending}
-                    placeholder="***********"
-                    className="bg-white border-teal-200 focus:border-teal-500 focus:ring-teal-500 h-9"
-                    {...field}
-                  />
+                  <div className="relative group">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-teal-600/70 group-focus-within:text-teal-600 transition-colors duration-150 z-10">
+                      <Lock className="h-3.5 w-3.5" />
+                    </div>
+                    <PasswordInput
+                      disabled={isPending}
+                      placeholder="Confirm Password"
+                      className="bg-white border-teal-200 pl-9 pr-10 focus:border-teal-500 focus:ring-1 focus:ring-teal-100 transition-all duration-150 shadow-xs h-9 text-xs"
+                      {...field}
+                    />
+                  </div>
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-[10px] mt-0.5" />
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="registerAsOrganization"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-2.5 space-y-0 rounded-md border p-2.5">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    disabled={isPending}
-                  />
-                </FormControl>
-                <div className="space-y-0.5 leading-none">
-                  <FormLabel className="text-xs">
+          
+          {!isMinimal && (
+            <FormField
+              control={form.control}
+              name="registerAsOrganization"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-2 space-y-0 py-1 px-0.5">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={isPending}
+                    />
+                  </FormControl>
+                  <label className="text-[11px] font-medium text-teal-800 cursor-pointer select-none">
                     Register as an Organization
-                  </FormLabel>
-                  <FormDescription className="text-xs">
-                    You will be able to create an organization after signing up
-                  </FormDescription>
-                </div>
-              </FormItem>
-            )}
-          />
+                  </label>
+                </FormItem>
+              )}
+            />
+          )}
+
           <Button 
             type="submit" 
-            className="w-full bg-teal-700 hover:bg-teal-800 text-white font-semibold h-9 shadow-lg transition-all duration-200 mt-3" 
+            className="w-full bg-teal-700 hover:bg-teal-800 active:scale-[0.99] text-white font-semibold h-9 text-xs shadow-sm transition-all duration-150 mt-1" 
             loading={isPending}
           >
             Create Account
@@ -246,25 +259,37 @@ export function SignupForm({ className, redirectTo }: Props) {
       </Form>
 
       {/* Option texts */}
-      <div className="flex items-center text-center justify-center text-xs -mt-1">
-        <Button asChild variant={"link"} className="my-3 h-auto text-teal-700 hover:text-teal-900 text-sm">
-          <Link href={"/signin"}>Already have an account? <span className="font-semibold ml-1 text-sm">Sign In</span></Link>
-        </Button>
-      </div>
-
-      <div className="relative -my-2">
-        <div className="absolute inset-0 flex items-center">
-          <Separator className="bg-teal-200" />
+      {isMinimal ? (
+        <div className="flex items-center text-center justify-center text-[10px] mt-0.5">
+          <span className="text-teal-800/75">Already have an account? </span>
+          <Link href={"/signin"} className="font-semibold text-teal-700 hover:text-teal-900 ml-1 hover:underline">
+            Sign In
+          </Link>
         </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white px-2 text-teal-600">Or continue with</span>
-        </div>
-      </div>
+      ) : (
+        <>
+          <div className="flex items-center text-center justify-center text-[11px] mt-0.5">
+            <span className="text-teal-800/75">Already have an account? </span>
+            <Link href={"/signin"} className="font-semibold text-teal-700 hover:text-teal-900 ml-1 hover:underline">
+              Sign In
+            </Link>
+          </div>
 
-      {/* Auth Provider Buttons */}
-      <div className="flex flex-col space-y-2 -mb-1">
-        <GoogleAuthButton mode="signup" />
-      </div>
+          <div className="relative my-0.5">
+            <div className="absolute inset-0 flex items-center">
+              <Separator className="bg-teal-100" />
+            </div>
+            <div className="relative flex justify-center text-[10px] uppercase">
+              <span className="bg-white px-2 text-teal-500 font-medium">Or continue with</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col">
+            <GoogleAuthButton mode="signup" className="w-full h-9 text-xs" />
+          </div>
+        </>
+      )}
     </div>
   );
 }
+

@@ -1,14 +1,12 @@
 import React from "react";
 
-import { Logo } from "@/components/logo";
 import { ArrowLeftIcon, CheckCircleIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export default function EmailVerifiedPage() {
   return (
-    <div className="space-y-6 flex flex-col items-center">
-      <Logo />
+    <div className="flex flex-col items-center">
       <div className="flex flex-col space-y-1 text-center">
         <h1 className="text-3xl font-bold tracking-tight font-heading">
           Great news!
@@ -36,3 +34,4 @@ export default function EmailVerifiedPage() {
     </div>
   );
 }
+
