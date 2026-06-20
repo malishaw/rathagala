@@ -522,35 +522,63 @@ export const getRevenue: AppRouteHandler<GetRevenueRoute> = async (c) => {
     return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
   }
 
-  const { filter = "all" } = c.req.query();
-
-  let dateFilter: Date | undefined;
-  const now = new Date();
-  if (filter === "today") {
-    dateFilter = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  } else if (filter === "7days") {
-    dateFilter = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  } else if (filter === "30days") {
-    dateFilter = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  }
+  const { filter = "all", startDate, endDate, page = "1", limit = "20" } = c.req.query() as any;
+  const pageNum = parseInt(page);
+  const limitNum = parseInt(limit);
+  const skip = (pageNum - 1) * limitNum;
 
   const where: any = {};
-  if (dateFilter) {
-    where.recordedAt = { gte: dateFilter };
+  const now = new Date();
+  
+  if (filter === "today") {
+    where.recordedAt = { gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()) };
+  } else if (filter === "7days") {
+    where.recordedAt = { gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) };
+  } else if (filter === "30days") {
+    where.recordedAt = { gte: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) };
+  } else if (filter === "custom") {
+    const recordedAtFilter: any = {};
+    if (startDate) {
+      recordedAtFilter.gte = new Date(startDate);
+    }
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      recordedAtFilter.lte = end;
+    }
+    if (Object.keys(recordedAtFilter).length > 0) {
+      where.recordedAt = recordedAtFilter;
+    }
   }
 
-  const records = await prisma.revenueRecord.findMany({
-    where,
-    orderBy: { recordedAt: "desc" },
-    include: {
-      boostRequest: {
-        include: {
-          ad: { select: { id: true, title: true, brand: true, model: true } },
-          user: { select: { id: true, name: true, email: true } },
+  const [recordsForStats, paginatedRecords, totalRecordsCount] = await Promise.all([
+    prisma.revenueRecord.findMany({
+      where,
+      select: {
+        totalAmount: true,
+        bumpAmount: true,
+        topAdAmount: true,
+        urgentAmount: true,
+        featuredAmount: true,
+        boostTypes: true,
+      },
+    }),
+    prisma.revenueRecord.findMany({
+      where,
+      orderBy: { recordedAt: "desc" },
+      skip,
+      take: limitNum,
+      include: {
+        boostRequest: {
+          include: {
+            ad: { select: { id: true, title: true, brand: true, model: true, status: true } },
+            user: { select: { id: true, name: true, email: true } },
+          },
         },
       },
-    },
-  });
+    }),
+    prisma.revenueRecord.count({ where }),
+  ]);
 
   let totalRevenue = 0;
   let bumpRevenue = 0;
@@ -562,7 +590,7 @@ export const getRevenue: AppRouteHandler<GetRevenueRoute> = async (c) => {
   let urgentCount = 0;
   let featuredCount = 0;
 
-  for (const record of records) {
+  for (const record of recordsForStats) {
     totalRevenue += record.totalAmount;
     bumpRevenue += record.bumpAmount ?? 0;
     topAdRevenue += record.topAdAmount ?? 0;
@@ -575,7 +603,7 @@ export const getRevenue: AppRouteHandler<GetRevenueRoute> = async (c) => {
     if (types.includes("FEATURED")) featuredCount++;
   }
 
-  const totalBoostedCount = records.length;
+  const totalBoostedCount = recordsForStats.length;
 
   // Count currently active boosted ads by type
   const [activeBumpCount, activeTopAdCount, activeUrgentCount, activeFeaturedCount] = await Promise.all([
@@ -590,7 +618,13 @@ export const getRevenue: AppRouteHandler<GetRevenueRoute> = async (c) => {
       totalRevenue, bumpRevenue, topAdRevenue, urgentRevenue, featuredRevenue,
       bumpCount, topAdCount, urgentCount, featuredCount, totalBoostedCount,
       activeBumpCount, activeTopAdCount, activeUrgentCount, activeFeaturedCount,
-      records,
+      records: paginatedRecords,
+      pagination: {
+        total: totalRecordsCount,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(totalRecordsCount / limitNum),
+      },
     },
     HttpStatusCodes.OK
   );

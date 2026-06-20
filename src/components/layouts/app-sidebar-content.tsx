@@ -22,7 +22,7 @@ import {
   Car,
   Sparkles,
   Zap,
-  DollarSign,
+  TrendingUp,
   MapPin,
   CalendarDays,
   DatabaseBackup,
@@ -127,7 +127,7 @@ export default function AppSidebarContent({ activeMember, session }: Props) {
       {
         title: "Revenue",
         url: "/dashboard/revenue",
-        icon: DollarSign
+        icon: TrendingUp
       }
     ],
     catalogueItems: [

@@ -31,9 +31,9 @@ export function NavAccordion({
   const [open, setOpen] = useState(isAnyActive);
 
   return (
-    <SidebarGroup>
+    <SidebarGroup className="py-2">
       <SidebarGroupLabel
-        className="text-xs font-semibold text-slate-600 uppercase tracking-wider px-2 mb-1 cursor-pointer select-none flex items-center justify-between hover:text-slate-800 transition-colors"
+        className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2.5 mb-1.5 cursor-pointer select-none flex items-center justify-between hover:text-slate-700 transition-colors"
         onClick={() => setOpen((v) => !v)}
       >
         <span className="flex items-center gap-2">
@@ -42,14 +42,14 @@ export function NavAccordion({
         </span>
         <ChevronDown
           className={cn(
-            "w-3.5 h-3.5 transition-transform duration-200",
+            "w-3 h-3 transition-transform duration-200",
             open && "rotate-180"
           )}
         />
       </SidebarGroupLabel>
 
       {open && (
-        <SidebarMenu className="space-y-2">
+        <SidebarMenu className="space-y-0.5">
           {items.map((item) => (
             <SidebarMenuItem key={item.url}>
               <SidebarMenuButton
@@ -57,29 +57,22 @@ export function NavAccordion({
                 asChild
                 isActive={pathname === item.url}
                 className={cn(
-                  "transition-all duration-300 rounded-xl mx-1 group relative overflow-hidden",
+                  "transition-all duration-200 rounded-lg py-1.5 h-8.5 group relative",
                   pathname === item.url
-                    ? "bg-white/90 backdrop-blur-xl border border-white/20 text-[#0D5C63] font-semibold"
-                    : "hover:bg-white/50 hover:backdrop-blur-lg hover:border hover:border-white/30"
+                    ? "bg-teal-50/60 text-[#0D5C63] font-semibold border-l-2 border-[#0D5C63] rounded-l-none"
+                    : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-950"
                 )}
               >
-                <Link href={item.url} className="flex items-center gap-3 relative z-10">
+                <Link href={item.url} className="flex items-center gap-2.5 px-2">
                   {item.icon && (
-                    <div
-                      className={cn(
-                        "p-1.5 rounded-lg transition-all duration-300",
-                        pathname === item.url
-                          ? "bg-gradient-to-br from-[#0D5C63] to-[#0a4a50] text-white"
-                          : "bg-gradient-to-br from-slate-100 to-slate-200 text-[#0D5C63] group-hover:from-[#0D5C63]/10 group-hover:to-[#0D5C63]/20 group-hover:scale-110"
-                      )}
-                    >
-                      <item.icon className="w-4 h-4" />
-                    </div>
+                    <item.icon className={cn(
+                      "w-4 h-4 transition-colors duration-200",
+                      pathname === item.url
+                        ? "text-[#0D5C63]"
+                        : "text-slate-400 group-hover:text-slate-700"
+                    )} />
                   )}
-                  <span className="font-medium">{item.title}</span>
-                  {pathname === item.url && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -z-10" />
-                  )}
+                  <span className="text-xs">{item.title}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

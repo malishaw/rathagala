@@ -51,5 +51,9 @@ export const adminPromoteSchema = z.object({
 });
 
 export const revenueFilterSchema = z.object({
-  filter: z.enum(["today", "7days", "30days", "all"]).optional().default("all"),
+  filter: z.enum(["today", "7days", "30days", "all", "custom"]).optional().default("all"),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  page: z.string().optional().default("1"),
+  limit: z.string().optional().default("20"),
 });

@@ -15,6 +15,7 @@ import { useGetAds } from "@/features/ads/api/use-get-ads";
 import { useGetOrganizations } from "@/features/organizations/api/use-get-orgs";
 import { buildAdUrl } from "@/lib/ad-url";
 import { useGetUsers } from "@/features/users/api/use-get-users";
+import { useGetAdSummary } from "@/features/report/api/use-get-analytics";
 import { getRelativeTime } from "@/lib/utils";
 import { Bell, Car, Clock, Lightbulb, Building2, Users, ArrowRight, Star, TrendingUp, FileText, CheckCircle } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
@@ -26,8 +27,16 @@ export default function DashboardPage() {
   const { data: session } = authClient.useSession();
   const isAdmin = (session?.user as any)?.role === "admin";
 
-  // Request all ads for admin view - use high limit to get accurate counts
-  const latestAdsQuery = useGetAds({ page: 1, limit: 1000, search: "" });
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
+  // Request paginated ads for the current page
+  const latestAdsQuery = useGetAds({
+    page: currentPage,
+    limit: ITEMS_PER_PAGE,
+    search: "",
+    ...(!isAdmin && { filterByUser: true })
+  });
   const { data, isLoading, error } = latestAdsQuery;
 
   // Fetch organizations for admin
@@ -35,27 +44,43 @@ export default function DashboardPage() {
     page: 1,
     limit: 5,
     search: ""
-  });
+  }, { enabled: isAdmin });
 
   // Fetch users for admin
   const { data: usersData, isLoading: usersLoading } = useGetUsers({
     page: 1,
     limit: 5,
     search: ""
+  }, { enabled: isAdmin });
+
+  // Stats queries for admin (site-wide summary counts)
+  const adSummaryQuery = useGetAdSummary();
+  const adSummary = adSummaryQuery.data;
+
+  // Stats queries for regular user (only run if not admin and session is ready)
+  const liveAdsQuery = useGetAds({
+    page: 1,
+    limit: 1,
+    status: "ACTIVE",
+    filterByUser: true,
+  }, {
+    enabled: !isAdmin && !!session,
+  });
+
+  const draftAdsQuery = useGetAds({
+    page: 1,
+    limit: 1,
+    status: "DRAFT",
+    filterByUser: true,
+  }, {
+    enabled: !isAdmin && !!session,
   });
 
   const ads = data?.ads ?? [];
   const organizations = orgsData?.organizations ?? [];
 
-  // Client-side pagination for Latest Ads
-  const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 10;
-
-  const totalPages = Math.ceil(ads.length / ITEMS_PER_PAGE);
-  const currentAds = ads.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  const totalPages = data?.pagination?.totalPages ?? 1;
+  const currentAds = ads; // Already paginated and sliced on server side
 
   return (
     <div className="min-h-screen bg-[#fafbfc]">
@@ -99,7 +124,7 @@ export default function DashboardPage() {
                     <FileText className="w-5 h-5" />
                   </div>
                   <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Total Ads</div>
-                  <div className="text-2xl font-bold text-slate-800 tracking-tight">{data?.pagination?.total ?? "—"}</div>
+                  <div className="text-2xl font-bold text-slate-800 tracking-tight">{adSummary?.totalAds ?? "—"}</div>
                 </Link>
 
                 <Link href="/dashboard/ads-manage?status=ACTIVE" className="group bg-white p-5 rounded-xl border border-slate-200/60 transition-colors hover:border-green-500/40">
@@ -113,7 +138,7 @@ export default function DashboardPage() {
                     </span>
                   </div>
                   <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Live Ads</div>
-                  <div className="text-2xl font-bold text-slate-800 tracking-tight">{ads.filter(a => a.status === "ACTIVE").length}</div>
+                  <div className="text-2xl font-bold text-slate-800 tracking-tight">{adSummary?.approvedAds ?? "—"}</div>
                 </Link>
 
                 <Link href="/dashboard/ads-manage?status=PENDING_REVIEW" className="group bg-white p-5 rounded-xl border border-slate-200/60 transition-colors hover:border-amber-500/40">
@@ -121,7 +146,7 @@ export default function DashboardPage() {
                     <Clock className="w-5 h-5" />
                   </div>
                   <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Pending</div>
-                  <div className="text-2xl font-bold text-slate-800 tracking-tight">{ads.filter(a => a.status === "PENDING_REVIEW").length}</div>
+                  <div className="text-2xl font-bold text-slate-800 tracking-tight">{adSummary?.pendingAds ?? "—"}</div>
                 </Link>
 
                 <div className="bg-white p-5 rounded-xl border border-slate-200/60 transition-colors hover:border-purple-500/40 group cursor-default">
@@ -164,7 +189,7 @@ export default function DashboardPage() {
                     </span>
                   </div>
                   <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Live Ads</div>
-                  <div className="text-2xl font-bold text-slate-800 tracking-tight">{ads.filter(a => a.status === "ACTIVE").length}</div>
+                  <div className="text-2xl font-bold text-slate-800 tracking-tight">{liveAdsQuery.data?.pagination?.total ?? "—"}</div>
                 </div>
 
                 <div className="group bg-white p-5 rounded-xl border border-slate-200/60 transition-colors hover:border-orange-500/40">
@@ -172,7 +197,7 @@ export default function DashboardPage() {
                     <Clock className="w-5 h-5" />
                   </div>
                   <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Drafts</div>
-                  <div className="text-2xl font-bold text-slate-800 tracking-tight">{ads.filter(a => a.isDraft).length}</div>
+                  <div className="text-2xl font-bold text-slate-800 tracking-tight">{draftAdsQuery.data?.pagination?.total ?? "—"}</div>
                 </div>
               </div>
             )}
