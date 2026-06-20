@@ -183,7 +183,7 @@ export default function BrandPage() {
   const filteredVehicleTypes = useMemo(() => {
     if (!vehicleTypeSearch) return Object.entries(vehicleTypeLabels);
     return Object.entries(vehicleTypeLabels).filter(([, label]) =>
-      label.toLowerCase().includes(vehicleTypeSearch.toLowerCase())
+      (label as string).toLowerCase().includes(vehicleTypeSearch.toLowerCase())
     );
   }, [vehicleTypeSearch]);
 
@@ -197,7 +197,8 @@ export default function BrandPage() {
 
   // Filter results client-side — always filter by brand from URL
   const filteredAds = useMemo(() => {
-    if (!data?.ads) return [];
+    const adsAll = (data?.ads ?? []) as unknown as AdData[];
+    if (adsAll.length === 0) return [];
 
     const queryTerms = filters.query
       .toLowerCase()
@@ -205,7 +206,7 @@ export default function BrandPage() {
       .split(/\s+/)
       .filter(term => term.length > 0);
 
-    return data.ads.filter((ad: AdData) => {
+    return adsAll.filter((ad) => {
       if (ad.status !== "ACTIVE" || ad.published !== true) {
         return false;
       }
@@ -287,10 +288,11 @@ export default function BrandPage() {
         if (ad.district && ad.district.toLowerCase() !== filters.district.toLowerCase()) {
           return false;
         } else if (!ad.district && ad.city) {
+          const cityLower = ad.city.toLowerCase();
           let cityDistrict = "";
           Object.values(locationData).forEach(province => {
             Object.entries(province).forEach(([dist, cities]) => {
-              if (cities.some(c => c.toLowerCase() === ad.city.toLowerCase())) {
+              if (cities.some(c => c.toLowerCase() === cityLower)) {
                 cityDistrict = dist;
               }
             });

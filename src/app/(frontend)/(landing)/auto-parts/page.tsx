@@ -16,15 +16,12 @@ import {
   Loader2,
   Search,
   X,
-  MapPin,
   Package,
   Filter,
   ChevronDown,
   ChevronUp,
   TrendingUp,
   Eye,
-  Star,
-  Sparkles,
 } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
@@ -36,9 +33,46 @@ import { FeaturedAdCard } from "@/features/ads/components/featured-ad-card";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { getRelativeTime } from "@/lib/utils";
+import Image from "next/image";
 
 import { vehicleTypeLabels } from "@/lib/vehicle-constants";
 import { formatAdTitle, shuffleArray, getRotatingSlice, getAdSortTime, interleaveFeaturedAds } from "@/lib/ad-helpers";
+
+interface AdData {
+  id: string;
+  title: string;
+  status: string;
+  published: boolean;
+  brand: string | null;
+  model: string | null;
+  grade: string | null;
+  type: string;
+  listingType: string;
+  price: number | null;
+  condition: string | null;
+  fuelType: string | null;
+  transmission: string | null;
+  manufacturedYear: string | null;
+  city: string | null;
+  district: string | null;
+  location: string | null;
+  createdAt: string;
+  updatedAt: string;
+  bumpActive: boolean;
+  topAdActive: boolean;
+  urgentActive: boolean;
+  featuredActive: boolean;
+  bumpStartAt: string | null;
+  boostStartAt: string | null;
+  boostRequestedAt: string | null;
+  metadata: Record<string, unknown> | null;
+  media?: Array<{ media: { url: string } }>;
+  analytics?: { views: number } | null;
+  _isFeaturedInsert?: boolean;
+  partCategoryId?: string;
+  compatibleVehicleType?: string;
+  partName?: string;
+}
 
 const formatPrice = (price: number | null, isNegotiable?: boolean): React.ReactNode => {
   if (!price) return "Negotiable";
@@ -81,7 +115,7 @@ export default function AutoPartsPage() {
   });
 
   const districts = useMemo(() => {
-    const adsAll = data?.ads ?? [];
+    const adsAll = (data?.ads ?? []) as unknown as AdData[];
     const set = new Set<string>();
     adsAll.forEach((ad) => {
       if (ad.type === "AUTO_PARTS" && ad.district) set.add(ad.district);
@@ -90,7 +124,7 @@ export default function AutoPartsPage() {
   }, [data]);
 
   const brands = useMemo(() => {
-    const adsAll = data?.ads ?? [];
+    const adsAll = (data?.ads ?? []) as unknown as AdData[];
     const set = new Set<string>();
     adsAll.forEach((ad) => {
       if (ad.type === "AUTO_PARTS" && ad.brand) set.add(ad.brand);
@@ -104,7 +138,7 @@ export default function AutoPartsPage() {
   }, [brands, brandSearch]);
 
   const filteredAds = useMemo(() => {
-    const adsAll = data?.ads ?? [];
+    const adsAll = (data?.ads ?? []) as unknown as AdData[];
     const searchTerms = searchQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);
     const min = minPrice ? parseInt(minPrice) : null;
     const max = maxPrice ? parseInt(maxPrice) : null;
@@ -113,15 +147,9 @@ export default function AutoPartsPage() {
       if (ad.status !== "ACTIVE" || !ad.published) return false;
       if (ad.type !== "AUTO_PARTS") return false;
 
-      const adExt = ad as typeof ad & {
-        partCategoryId?: string;
-        compatibleVehicleType?: string;
-        partName?: string;
-      };
-
-      if (selectedCategory !== "all" && adExt.partCategoryId !== selectedCategory) return false;
+      if (selectedCategory !== "all" && ad.partCategoryId !== selectedCategory) return false;
       if (selectedBrand !== "all" && ad.brand !== selectedBrand) return false;
-      if (selectedVehicleType !== "all" && adExt.compatibleVehicleType !== selectedVehicleType) return false;
+      if (selectedVehicleType !== "all" && ad.compatibleVehicleType !== selectedVehicleType) return false;
       if (selectedCondition !== "all" && ad.condition !== selectedCondition) return false;
       if (selectedDistrict !== "all" && ad.district !== selectedDistrict) return false;
       if (min !== null && ad.price !== null && ad.price !== undefined && ad.price < min) return false;
@@ -133,7 +161,7 @@ export default function AutoPartsPage() {
           ad.description,
           ad.brand,
           ad.model,
-          adExt.partName,
+          ad.partName,
           ad.city,
           ad.district,
         ]
@@ -143,7 +171,7 @@ export default function AutoPartsPage() {
         if (!searchTerms.every((term) => searchText.includes(term))) return false;
       }
 
-      if (urgentOnly && !(ad as any).urgentActive) return false;
+      if (urgentOnly && !ad.urgentActive) return false;
 
       return true;
     });
@@ -159,7 +187,7 @@ export default function AutoPartsPage() {
   // Top ads pool — topAdActive only, no featuredActive, no bumpActive
   const topAdsPool = useMemo(() => {
     return filteredAds.filter(
-      (ad) => (ad as any).topAdActive && !(ad as any).featuredActive && !(ad as any).bumpActive
+      (ad) => ad.topAdActive && !ad.featuredActive && !ad.bumpActive
     );
   }, [filteredAds]);
 
@@ -172,7 +200,7 @@ export default function AutoPartsPage() {
 
   // Featured ads pool
   const featuredAdsPool = useMemo(() => {
-    return filteredAds.filter((ad) => (ad as any).featuredActive);
+    return filteredAds.filter((ad) => ad.featuredActive);
   }, [filteredAds]);
 
   const shuffledFeaturedAdsPool = useMemo(() => shuffleArray(featuredAdsPool), [featuredAdsPool]);
@@ -185,7 +213,7 @@ export default function AutoPartsPage() {
   // Featured insert pool — featured-only or featured+urgent (no topAd, no bump)
   const featuredInsertPool = useMemo(() => {
     return shuffledFeaturedAdsPool.filter(
-      (ad) => !(ad as any).topAdActive && !(ad as any).bumpActive
+      (ad) => !ad.topAdActive && !ad.bumpActive
     );
   }, [shuffledFeaturedAdsPool]);
 
@@ -204,7 +232,7 @@ export default function AutoPartsPage() {
     return interleaveFeaturedAds(baseAds, featuredInsertPool, rotationIndex, 16);
   }, [baseAds, featuredInsertPool, rotationIndex]);
 
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (key: string, value: string) => {
     if (key === "searchQuery") setSearchQuery(value);
     else if (key === "selectedCategory") setSelectedCategory(value);
     else if (key === "selectedBrand") { setSelectedBrand(value); setBrandSearch(""); }
@@ -525,7 +553,7 @@ export default function AutoPartsPage() {
                       vehicleTypeLabels={vehicleTypeLabels}
                       formatPrice={formatPrice}
                       formatAdTitle={formatAdTitle}
-                      isUrgent={(vehicle as any).urgentActive}
+                      isUrgent={vehicle.urgentActive}
                     />
                   ))}
                 </div>
@@ -546,13 +574,6 @@ export default function AutoPartsPage() {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {interleavedAds.slice(0, visibleCount).map((vehicle) => {
-                    const adExt = vehicle as typeof vehicle & {
-                      partCategoryId?: string;
-                      compatibleVehicleType?: string;
-                      partName?: string;
-                      media?: Array<{ media?: { url?: string } }>;
-                    };
-
                     if (vehicle._isFeaturedInsert) {
                       return (
                         <FeaturedAdCard
@@ -561,16 +582,16 @@ export default function AutoPartsPage() {
                           vehicleTypeLabels={vehicleTypeLabels}
                           formatPrice={formatPrice}
                           formatAdTitle={formatAdTitle}
-                          isUrgent={(vehicle as any).urgentActive}
+                          isUrgent={vehicle.urgentActive}
                         />
                       );
                     }
 
-                    const categoryName = adExt.partCategoryId ? getCategoryName(adExt.partCategoryId) : null;
-                    const compatVehicle = adExt.compatibleVehicleType
-                      ? vehicleTypeLabels[adExt.compatibleVehicleType] || adExt.compatibleVehicleType
+                    const categoryName = vehicle.partCategoryId ? getCategoryName(vehicle.partCategoryId) : null;
+                    const compatVehicle = vehicle.compatibleVehicleType
+                      ? vehicleTypeLabels[vehicle.compatibleVehicleType] || vehicle.compatibleVehicleType
                       : null;
-                    const mainImage = adExt.media?.[0]?.media?.url;
+                    const mainImage = vehicle.media?.[0]?.media?.url;
                     const displayTitle = formatAdTitle(vehicle);
 
                     return (
@@ -584,13 +605,13 @@ export default function AutoPartsPage() {
                           <FavoriteButton adId={vehicle.id} />
                         </div>
 
-                        {((vehicle as any).bumpActive || (vehicle as any).urgentActive || (vehicle as any).topAdActive || (vehicle as any).featuredActive) && (
+                        {(vehicle.bumpActive || vehicle.urgentActive || vehicle.topAdActive || vehicle.featuredActive) && (
                           <div className="absolute bottom-2 right-2 z-10">
                             <BoostBadges
-                              bumpActive={(vehicle as any).bumpActive}
-                              urgentActive={(vehicle as any).urgentActive}
-                              topAdActive={(vehicle as any).topAdActive}
-                              featuredActive={(vehicle as any).featuredActive}
+                              bumpActive={vehicle.bumpActive}
+                              urgentActive={vehicle.urgentActive}
+                              topAdActive={vehicle.topAdActive}
+                              featuredActive={vehicle.featuredActive}
                             />
                           </div>
                         )}
@@ -602,12 +623,14 @@ export default function AutoPartsPage() {
 
                           <div className="flex">
                             <div className="w-36 h-30 flex-shrink-0 flex flex-col">
-                              <div className="flex-1">
+                              <div className="flex-1 relative">
                                 {mainImage ? (
-                                  <img
+                                  <Image
                                     src={mainImage}
-                                    alt={displayTitle}
-                                    className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                                    alt={displayTitle as string}
+                                    fill
+                                    sizes="144px"
+                                    className="object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
                                   />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center bg-slate-100 rounded-md">
@@ -619,7 +642,7 @@ export default function AutoPartsPage() {
                                 <span>{getRelativeTime(vehicle.createdAt)}</span>
                                 <span className="flex items-center gap-0.5">
                                   <Eye className="h-3 w-3" />
-                                  {(vehicle as any).analytics?.views || 0}
+                                  {vehicle.analytics?.views || 0}
                                 </span>
                               </div>
                             </div>
@@ -630,7 +653,7 @@ export default function AutoPartsPage() {
                                   {vehicle.city || vehicle.location || ""}
                                 </div>
                                 <div className="text-sm font-semibold text-teal-700 mb-1">
-                                  {formatPrice(vehicle.price, (vehicle as any).metadata?.isNegotiable)}
+                                  {formatPrice(vehicle.price, vehicle.metadata?.isNegotiable as boolean | undefined)}
                                 </div>
                                 {categoryName && (
                                   <div className="text-xs text-slate-500 truncate">{categoryName}</div>

@@ -599,7 +599,7 @@ export default function VehicleMarketplace() {
                 </SheetTrigger>
                 <SheetContent
                   side="top"
-                  className="h-auto max-h-[90vh] rounded-b-3xl p-0 sm:max-h-[95vh] sm:rounded-b-2xl sm:mt-4 left-1/2 -translate-x-1/2"
+                  className="h-auto max-h-[95vh] rounded-[0.5rem] p-0 sm:max-h-[98vh] sm:rounded-[1rem] sm:mt-4 left-1/2 -translate-x-1/2"
                   style={{ width: '900px', maxWidth: '95vw' }}
                 >
                   <div className="px-4 pt-4 pb-0">
@@ -611,7 +611,7 @@ export default function VehicleMarketplace() {
                             variant="ghost"
                             size="sm"
                             onClick={clearFilters}
-                            className="text-teal-700 hover:text-teal-800 h-7 text-xs"
+                            className="text-teal-700 hover:text-teal-800 h-7 text-xs rounded-lg"
                           >
                             Reset
                           </Button>
@@ -621,7 +621,7 @@ export default function VehicleMarketplace() {
                   </div>
 
                   {/* Filters Container - Layout Updated */}
-                  <div className="px-4 pb-24 space-y-4 overflow-y-auto max-h-[calc(85vh-120px)] sm:max-h-[calc(90vh-120px)]">
+                  <div className="px-4 pb-24 space-y-4 rounded-xl overflow-y-auto max-h-[calc(95vh-100px)] sm:max-h-[calc(98vh-100px)] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-300/80">
                     {/* Row 1: Vehicle Type & Make */}
                     <div className="grid grid-cols-2 gap-3 w-full">
                       <div>
@@ -630,7 +630,7 @@ export default function VehicleMarketplace() {
                           value={filters.vehicleType || "any"}
                           onValueChange={(value) => handleFilterChange("vehicleType", value)}
                         >
-                          <SelectTrigger className="w-full h-9 bg-white text-xs px-3">
+                          <SelectTrigger className="w-full h-9 bg-white text-xs px-3 rounded-xl">
                             <SelectValue placeholder="Any Type" />
                           </SelectTrigger>
                           <SelectContent>
@@ -650,7 +650,7 @@ export default function VehicleMarketplace() {
                           value={filters.make || "any"}
                           onValueChange={(value) => handleFilterChange("make", value)}
                         >
-                          <SelectTrigger className="w-full h-9 bg-white text-xs px-3">
+                          <SelectTrigger className="w-full h-9 bg-white text-xs px-3 rounded-xl">
                             <SelectValue placeholder="Any" />
                           </SelectTrigger>
                           <SelectContent className="max-h-[280px]">
@@ -675,7 +675,7 @@ export default function VehicleMarketplace() {
                           value={filters.minYear || "any"}
                           onValueChange={(value) => handleFilterChange("minYear", value)}
                         >
-                          <SelectTrigger className="w-full h-9 bg-white text-xs px-3">
+                          <SelectTrigger className="w-full h-9 bg-white text-xs px-3 rounded-xl">
                             <SelectValue placeholder="Any" />
                           </SelectTrigger>
                           <SelectContent className="max-h-[200px]">
@@ -695,7 +695,7 @@ export default function VehicleMarketplace() {
                           value={filters.maxYear || "any"}
                           onValueChange={(value) => handleFilterChange("maxYear", value)}
                         >
-                          <SelectTrigger className="w-full h-9 bg-white text-xs px-3">
+                          <SelectTrigger className="w-full h-9 bg-white text-xs px-3 rounded-xl">
                             <SelectValue placeholder="Any" />
                           </SelectTrigger>
                           <SelectContent className="max-h-[200px]">
@@ -718,7 +718,7 @@ export default function VehicleMarketplace() {
                           value={filters.district || "any"}
                           onValueChange={(value) => handleFilterChange("district", value)}
                         >
-                          <SelectTrigger className="w-full h-9 bg-white text-xs px-3">
+                          <SelectTrigger className="w-full h-9 bg-white text-xs px-3 rounded-xl">
                             <SelectValue placeholder="Any" />
                           </SelectTrigger>
                           <SelectContent className="max-h-[200px]">
@@ -744,7 +744,7 @@ export default function VehicleMarketplace() {
                             if (!open) setCityQuery("");
                           }}
                         >
-                          <SelectTrigger className="w-full h-9 bg-white text-xs px-3">
+                          <SelectTrigger className="w-full h-9 bg-white text-xs px-3 rounded-xl">
                             <SelectValue placeholder="Any" />
                           </SelectTrigger>
                           <SelectContent className="max-h-[280px]">
@@ -756,7 +756,7 @@ export default function VehicleMarketplace() {
                                 onChange={(e) => setCityQuery(e.target.value)}
                                 onKeyDown={(e) => e.stopPropagation()}
                                 onClick={(e) => e.stopPropagation()}
-                                className="w-full rounded-md py-1 px-2 bg-slate-50 border border-slate-200 text-xs"
+                                className="w-full rounded-xl py-1 px-2 bg-slate-50 border border-slate-200 text-xs"
                               />
                             </div>
                             <SelectItem value="any">Any</SelectItem>
@@ -809,7 +809,7 @@ export default function VehicleMarketplace() {
                               handleFilterChange("minPrice", null);
                               handleFilterChange("maxPrice", "2000000");
                             }}
-                            className="px-2 py-1 text-xs rounded-md bg-slate-50 hover:bg-teal-50 hover:text-teal-700 border border-slate-200"
+                            className="px-2 py-1 text-xs rounded-xl bg-slate-50 hover:bg-teal-50 hover:text-teal-700 border border-slate-200 cursor-pointer"
                           >
                             Under 2M
                           </button>
@@ -818,7 +818,7 @@ export default function VehicleMarketplace() {
                               handleFilterChange("minPrice", "2000000");
                               handleFilterChange("maxPrice", "5000000");
                             }}
-                            className="px-2 py-1 text-xs rounded-md bg-slate-50 hover:bg-teal-50 hover:text-teal-700 border border-slate-200"
+                            className="px-2 py-1 text-xs rounded-xl bg-slate-50 hover:bg-teal-50 hover:text-teal-700 border border-slate-200 cursor-pointer"
                           >
                             2M-5M
                           </button>
@@ -827,7 +827,7 @@ export default function VehicleMarketplace() {
                               handleFilterChange("minPrice", "5000000");
                               handleFilterChange("maxPrice", "10000000");
                             }}
-                            className="px-2 py-1 text-xs rounded-md bg-slate-50 hover:bg-teal-50 hover:text-teal-700 border border-slate-200"
+                            className="px-2 py-1 text-xs rounded-xl bg-slate-50 hover:bg-teal-50 hover:text-teal-700 border border-slate-200 cursor-pointer"
                           >
                             5M-10M
                           </button>
@@ -836,7 +836,7 @@ export default function VehicleMarketplace() {
                               handleFilterChange("minPrice", "10000000");
                               handleFilterChange("maxPrice", null);
                             }}
-                            className="px-2 py-1 text-xs rounded-md bg-slate-50 hover:bg-teal-50 hover:text-teal-700 border border-slate-200"
+                            className="px-2 py-1 text-xs rounded-xl bg-slate-50 hover:bg-teal-50 hover:text-teal-700 border border-slate-200 cursor-pointer"
                           >
                             10M+
                           </button>
@@ -852,7 +852,7 @@ export default function VehicleMarketplace() {
                           value={filters.condition || "any"}
                           onValueChange={(value) => handleFilterChange("condition", value)}
                         >
-                          <SelectTrigger className="w-full h-9 bg-white text-xs px-3">
+                          <SelectTrigger className="w-full h-9 bg-white text-xs px-3 rounded-xl">
                             <SelectValue placeholder="Any" />
                           </SelectTrigger>
                           <SelectContent>
@@ -870,7 +870,7 @@ export default function VehicleMarketplace() {
                           value={filters.fuelType || "any"}
                           onValueChange={(value) => handleFilterChange("fuelType", value)}
                         >
-                          <SelectTrigger className="w-full h-9 bg-white text-xs px-3">
+                          <SelectTrigger className="w-full h-9 bg-white text-xs px-3 rounded-xl">
                             <SelectValue placeholder="Any" />
                           </SelectTrigger>
                           <SelectContent>
@@ -886,9 +886,9 @@ export default function VehicleMarketplace() {
                   </div>
 
                   {/* Bottom action button - Fixed */}
-                  <div className="absolute bottom-0 left-0 right-0 p-3 bg-white border-t shadow-lg flex justify-center">
+                  <div className="absolute bottom-0 left-0 right-0 p-3 bg-white border-t shadow-lg flex justify-center rounded-b-[0.5rem] sm:rounded-b-[1rem]">
                     <Button
-                      className="w-fit min-w-[200px] px-8 h-10 bg-teal-700 hover:bg-teal-600 text-white font-medium rounded-lg text-sm"
+                      className="w-fit min-w-[200px] px-8 h-10 bg-teal-700 hover:bg-teal-600 text-white font-medium rounded-xl text-sm"
                       onClick={() => {
                         applyFilters();
                         setShowFilterSheet(false);
