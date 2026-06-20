@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 
 // Import the existing hook
@@ -45,6 +46,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
+import { useGetTrendingAds } from "@/features/ads/api/use-get-trending-ads";
 import { useGetOrganizations } from "@/features/organizations/api/use-get-orgs";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
 
@@ -140,7 +142,8 @@ export default function VehicleMarketplace() {
     limit: 20,
     topAdActive: "true",
   }, {
-    enabled: sortBy === "default" && !isSearchActive
+    enabled: sortBy === "default" && !isSearchActive,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // 2. Fetch Featured Ads Pool (limit: 20, featuredActive)
@@ -149,7 +152,8 @@ export default function VehicleMarketplace() {
     limit: 20,
     featuredActive: "true",
   }, {
-    enabled: sortBy === "default" && !isSearchActive
+    enabled: sortBy === "default" && !isSearchActive,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // 3. Fetch Main paginated ads feed with active filters
@@ -170,6 +174,13 @@ export default function VehicleMarketplace() {
     transmission: activeFilters.transmission || undefined,
     city: activeFilters.city || undefined,
     district: activeFilters.district || undefined,
+  }, {
+    staleTime: 30 * 1000, // 30 seconds
+  });
+
+  // 4. Fetch Trending Ads Pool (limit: 6)
+  const { data: trendingAdsData, isLoading: isTrendingLoading } = useGetTrendingAds(6, {
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Accumulate ads when new data arrives
@@ -424,10 +435,13 @@ export default function VehicleMarketplace() {
       >
         <div className="w-11 h-11 bg-gradient-to-br from-teal-50 to-teal-100/50 rounded-full flex items-center justify-center overflow-hidden border border-slate-200/50 relative shadow-inner">
           {org.logo ? (
-            <img
+            <Image
               src={org.logo}
-              alt={org.name}
-              className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-300"
+              alt={org.name || "Dealer logo"}
+              fill
+              sizes="44px"
+              loading="lazy"
+              className="object-cover group-hover/card:scale-105 transition-transform duration-300"
             />
           ) : (
             <span className="text-teal-700 font-bold text-xs uppercase">
@@ -1039,10 +1053,10 @@ export default function VehicleMarketplace() {
                         setActiveFilters(prev => ({ ...prev, vehicleType: cat.type }));
                       }
                     }}
-                    className={`px-4 py-1.5 rounded-full border text-xs font-semibold transition-colors cursor-pointer shadow-xs ${
+                    className={`px-4 py-1.5 rounded-full border text-xs font-semibold transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer shadow-xs ${
                       isActive
                         ? "bg-[#024950] text-white border-transparent"
-                        : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                        : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300"
                     }`}
                   >
                     <span>{cat.label}</span>
@@ -1221,7 +1235,7 @@ export default function VehicleMarketplace() {
                     return (
                       <div
                         key={vehicle.id}
-                        className="rounded-sm border bg-white border-slate-200 hover:border-slate-350 transition-colors cursor-pointer group relative overflow-hidden"
+                        className="rounded-xl border bg-white border-slate-200 hover:border-teal-500/30 hover:shadow-md hover:scale-[1.01] transition-all duration-300 cursor-pointer group relative overflow-hidden"
                         onClick={() => (window.location.href = buildAdUrl(vehicle))}
                       >
                         {/* Favorite Button */}
@@ -1238,20 +1252,15 @@ export default function VehicleMarketplace() {
                         <div className="p-2">
                           <div className="flex gap-3">
                             {/* Vehicle Image Container - Ultra compact */}
-                            <div className="w-24 sm:w-28 h-18 sm:h-20 flex-shrink-0 rounded-sm overflow-hidden bg-slate-55 border border-slate-100 relative">
-                              {vehicle?.media && vehicle.media.length > 0 && vehicle.media[0]?.media?.url ? (
-                                <img
-                                  src={vehicle.media[0].media.url}
-                                  alt={vehicle.title}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <img
-                                  src="/placeholder-image.jpg"
-                                  alt={vehicle.title}
-                                  className="w-full h-full object-cover"
-                                />
-                              )}
+                            <div className="w-24 sm:w-28 h-18 sm:h-20 flex-shrink-0 rounded-lg overflow-hidden bg-slate-55 border border-slate-100 relative">
+                              <Image
+                                src={vehicle?.media?.[0]?.media?.url || "/placeholder-image.jpg"}
+                                alt={vehicle.title || "Vehicle"}
+                                fill
+                                sizes="(max-width: 640px) 96px, 112px"
+                                loading="lazy"
+                                className="object-cover"
+                              />
                             </div>
 
                             {/* Vehicle Details */}
@@ -1324,11 +1333,14 @@ export default function VehicleMarketplace() {
                 <div className="text-center text-slate-500">
 
                   <Link href="/search" className="block cursor-pointer">
-                    <div className="bg-slate-100 h-64 flex items-center justify-center rounded-lg overflow-hidden">
-                      <img
+                    <div className="bg-slate-100 h-64 flex items-center justify-center rounded-lg overflow-hidden relative w-full">
+                      <Image
                         src="/assets/Sidebar 01 new.jpg"
                         alt="Advertisement"
-                        className="w-full h-full object-cover"
+                        fill
+                        sizes="(max-width: 1024px) 100vw, 320px"
+                        priority
+                        className="object-cover"
                       />
                     </div>
                   </Link>
@@ -1343,11 +1355,14 @@ export default function VehicleMarketplace() {
                 <div className="text-center text-slate-500">
 
                   <Link href="/compare" className="block cursor-pointer">
-                    <div className="bg-slate-100 h-48 flex items-center justify-center rounded-lg overflow-hidden">
-                      <img
+                    <div className="bg-slate-100 h-48 flex items-center justify-center rounded-lg overflow-hidden relative w-full">
+                      <Image
                         src="/assets/Sidebar 02.jpg"
                         alt="Advertisement"
-                        className="w-full h-full object-cover"
+                        fill
+                        sizes="(max-width: 1024px) 100vw, 320px"
+                        loading="lazy"
+                        className="object-cover"
                       />
                     </div>
                   </Link>
@@ -1414,7 +1429,7 @@ export default function VehicleMarketplace() {
           {/* Trending Vehicles */}
           <div>
             <h2 className="text-lg sm:text-xl font-bold text-slate-800 mb-3">Trending Vehicles</h2>
-            {isLoading ? (
+            {isTrendingLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[...Array(6)].map((_, index) => (
                   <div key={index} className="bg-slate-100 rounded-lg border border-slate-200 overflow-hidden animate-pulse">
@@ -1428,33 +1443,25 @@ export default function VehicleMarketplace() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {allAds
-                  .filter(ad => ad.status === "ACTIVE" && (ad as any).published === true)
-                  .sort((a, b) => ((b as any).analytics?.views || 0) - ((a as any).analytics?.views || 0))
-                  .slice(0, 6)
-                  .map((vehicle) => {
+                {trendingAdsData
+                  ?.map((vehicle) => {
                     const isFeatured = (vehicle as any).featuredActive;
                     return (
                       <div
                         key={vehicle.id}
-                        className={`rounded-lg border overflow-hidden hover:border-slate-350 transition-colors cursor-pointer group relative bg-white border-slate-200 ${isFeatured ? 'bg-yellow-50/30' : ''}`}
+                        className={`rounded-lg border overflow-hidden hover:border-teal-500/30 hover:shadow-md hover:scale-[1.01] transition-all duration-300 cursor-pointer group relative bg-white border-slate-200 ${isFeatured ? 'bg-yellow-50/30' : ''}`}
                         onClick={() => (window.location.href = buildAdUrl(vehicle))}
                       >
                         {/* Vehicle Image */}
                         <div className="w-full h-32 overflow-hidden bg-slate-50 relative border-b border-slate-100">
-                          {vehicle?.media && vehicle.media.length > 0 && vehicle.media[0]?.media?.url ? (
-                            <img
-                              src={vehicle.media[0].media.url}
-                              alt={vehicle.title}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <img
-                              src="/placeholder-image.jpg"
-                              alt={vehicle.title}
-                              className="w-full h-full object-cover"
-                            />
-                          )}
+                          <Image
+                            src={vehicle?.media?.[0]?.media?.url || "/placeholder-image.jpg"}
+                            alt={vehicle.title || "Vehicle"}
+                            fill
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            loading="lazy"
+                            className="object-cover"
+                          />
                           
                           {/* Badge for Trending */}
                           <div className="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded shadow-sm z-10">
@@ -1527,19 +1534,25 @@ export default function VehicleMarketplace() {
             <div className="text-center text-slate-500">
               <Link href="/sell/new" className="block">
                 {/* Desktop View Banner */}
-                <div className="hidden sm:flex bg-slate-100 h-24 items-center justify-center rounded-lg overflow-hidden">
-                  <img
+                <div className="hidden sm:flex bg-slate-100 h-24 items-center justify-center rounded-lg overflow-hidden relative w-full">
+                  <Image
                     src="/assets/Bottom Banner.jpg"
                     alt="Free Advertisement"
-                    className="w-full h-full object-cover"
+                    fill
+                    sizes="100vw"
+                    loading="lazy"
+                    className="object-cover"
                   />
                 </div>
                 {/* Mobile View Banner - Added new slot for mobile and fixed alignment */}
-                <div className="flex sm:hidden bg-slate-100 h-32 items-center justify-center rounded-lg overflow-hidden">
-                  <img
+                <div className="flex sm:hidden bg-slate-100 h-32 items-center justify-center rounded-lg overflow-hidden relative w-full">
+                  <Image
                     src="/assets/Bottom Banner - Mobile New.jpg"
                     alt="Free Advertisement"
-                    className="w-full h-full object-cover object-center"
+                    fill
+                    sizes="100vw"
+                    loading="lazy"
+                    className="object-cover object-center"
                   />
                 </div>
               </Link>

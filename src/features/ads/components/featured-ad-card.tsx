@@ -1,5 +1,4 @@
-"use client";
-
+import Image from "next/image";
 import { Eye } from "lucide-react";
 import { BoostBadges } from "@/features/boost/components/boost-badges";
 import { getRelativeTime } from "@/lib/utils";
@@ -28,7 +27,7 @@ export function FeaturedAdCard({
 }: FeaturedAdCardProps) {
   return (
     <div
-      className="rounded-sm border-2 bg-yellow-50/20 border-amber-300 hover:border-amber-400 transition-colors cursor-pointer group relative overflow-hidden"
+      className="rounded-xl border-2 bg-yellow-50/20 border-amber-300 hover:border-amber-400 transition-colors cursor-pointer group relative overflow-hidden"
       onClick={() => buildAdUrl(vehicle) && (window.location.href = buildAdUrl(vehicle))}
     >
       {/* Featured Ad Label Badge */}
@@ -43,11 +42,14 @@ export function FeaturedAdCard({
       <div className="p-2">
         <div className="flex gap-3">
           {/* Image Container - Single Compact Image */}
-          <div className="w-24 sm:w-28 h-18 sm:h-20 flex-shrink-0 rounded-sm overflow-hidden bg-slate-55 border border-slate-100 relative">
-            <img
+          <div className="w-24 sm:w-28 h-18 sm:h-20 flex-shrink-0 rounded-lg overflow-hidden bg-slate-55 border border-slate-100 relative">
+            <Image
               src={vehicle?.media?.[0]?.media?.url || "/placeholder-image.jpg"}
               alt={vehicle.title || "Vehicle"}
-              className="w-full h-full object-cover"
+              fill
+              sizes="(max-width: 640px) 96px, 112px"
+              loading="lazy"
+              className="object-cover"
             />
           </div>
 

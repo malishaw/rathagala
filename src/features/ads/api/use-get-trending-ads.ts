@@ -4,6 +4,8 @@ import { client } from "@/lib/rpc";
 
 interface QueryOptions {
   enabled?: boolean;
+  staleTime?: number;
+  gcTime?: number;
 }
 
 export const useGetTrendingAds = (limit: number = 10, options?: QueryOptions) => {
@@ -27,6 +29,8 @@ export const useGetTrendingAds = (limit: number = 10, options?: QueryOptions) =>
       return data;
     },
     enabled: options?.enabled ?? true,
+    staleTime: options?.staleTime,
+    gcTime: options?.gcTime,
   });
 
   return query;

@@ -17,7 +17,7 @@ import { buildAdUrl } from "@/lib/ad-url";
 import { betterFetch } from "@better-fetch/fetch";
 import { format } from "date-fns";
 import { getRelativeTime } from "@/lib/utils";
-import { Building2, Calendar, Car, CheckCircle, ChevronRight, CreditCard, Edit, Eye, Heart, Loader2, Lock, MapPin, MessageCircle, Phone, Shield, Trash2, Camera, Zap, TrendingUp, Star, AlertCircle } from "lucide-react";
+import { Building2, Calendar, Car, CheckCircle, ChevronRight, CreditCard, Edit, Eye, Bookmark, Loader2, Lock, MapPin, MessageCircle, Phone, Shield, Trash2, Camera, Zap, TrendingUp, Star, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { BoostSelector, type BoostSelection } from "@/features/boost/components/boost-selector";
 import { useRequestBoost } from "@/features/boost/api/use-request-boost";
@@ -851,7 +851,7 @@ export default function ProfilePage() {
                     }`}
                   onClick={() => setSidebarActive("favorites")}
                 >
-                  <Heart className="w-4 h-4" />
+                  <Bookmark className="w-4 h-4" />
                   Saved Ads
                 </button>
               </div>
@@ -1443,7 +1443,7 @@ export default function ProfilePage() {
                 ) : !favorites || favorites.length === 0 ? (
                   <div className="p-12 text-center">
                     <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 mx-auto flex items-center justify-center mb-4">
-                      <Heart className="h-10 w-10 text-slate-400" />
+                      <Bookmark className="h-10 w-10 text-slate-400" />
                     </div>
                     <p className="text-slate-600 mb-5 text-lg font-medium">You haven't saved any ads yet</p>
                     <Button

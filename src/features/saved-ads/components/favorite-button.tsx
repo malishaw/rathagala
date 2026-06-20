@@ -5,7 +5,7 @@ import { useIsSaved } from "@/features/saved-ads/api/use-is-saved";
 import { useRemoveSaved } from "@/features/saved-ads/api/use-remove-saved";
 import { useSaveAd } from "@/features/saved-ads/api/use-save-ad";
 import { cn } from "@/lib/utils";
-import { Heart, Loader2 } from "lucide-react";
+import { Bookmark, Loader2 } from "lucide-react";
 
 interface FavoriteButtonProps {
   adId: string;
@@ -46,12 +46,12 @@ export function FavoriteButton({ adId, className, iconClassName }: FavoriteButto
         isProcessing && "opacity-50 cursor-not-allowed",
         className
       )}
-      title={isSaved ? "Remove from favorites" : "Add to favorites"}
+      title={isSaved ? "Remove from saved ads" : "Save ad"}
     >
       {(isSaving || isRemoving) ? (
         <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
       ) : (
-        <Heart
+        <Bookmark
           className={cn(
             "w-5 h-5 transition-all duration-300",
             isSaved ? "fill-primary text-primary" : "text-slate-400 hover:text-primary",

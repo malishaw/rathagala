@@ -7,6 +7,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function Header() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -25,9 +34,12 @@ export function Header() {
         // session.user usually has role and other added fields
         if (!userData.organizationId) {
           try {
-            const userRes = await betterFetch<any>("/api/users/me");
-            if (userRes.data && userRes.data.organizationId) {
-              userData = { ...userData, organizationId: userRes.data.organizationId };
+            const res = await fetch("/api/users/me");
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data.organizationId) {
+                userData = { ...userData, organizationId: data.organizationId };
+              }
             }
           } catch (error) {
             console.error("Failed to fetch user organization:", error);
@@ -133,38 +145,50 @@ export function Header() {
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-3">
             {isLoading ? (
-              <div className="w-20 h-9 bg-teal-800/40 rounded animate-pulse"></div>
+              <div className="w-9 h-9 bg-teal-800/40 rounded-full animate-pulse"></div>
             ) : user ? (
-              <div className="group relative">
-                <Link href="/profile">
-                  <Button
-                    variant="outline"
-                    className="text-white border-white/30 bg-transparent hover:bg-white hover:text-[#024950] h-9 px-3 text-sm font-medium transition-colors"
-                  >
-                    <UserIcon className="h-4 w-4 mr-1" />
-                    Account
-                  </Button>
-                </Link>
-                {/* Dropdown menu */}
-                <div className="absolute right-0 mt-2 w-44 bg-white rounded-sm shadow-lg border border-slate-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
-                  <div className="py-1">
-                    <Link
-                      href="/profile"
-                      className="flex items-center gap-2 px-4 py-2 hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-sm font-medium"
-                    >
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center focus:outline-none cursor-pointer group transition-transform duration-200 active:scale-95">
+                    <Avatar className="h-9 w-9 border-2 border-teal-400/50 hover:border-teal-300 transition-colors">
+                      <AvatarImage src={user.image} alt={user.name} />
+                      <AvatarFallback className="bg-teal-700 text-white font-bold text-sm">
+                        {user.name ? user.name.charAt(0).toUpperCase() : <UserIcon className="h-4 w-4" />}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 mt-1.5 bg-white border border-slate-100 shadow-xl rounded-xl p-1.5 z-[100] text-slate-800">
+                  <DropdownMenuLabel className="px-2.5 py-2 font-normal">
+                    <div className="flex flex-col space-y-0.5">
+                      <p className="text-sm font-bold text-slate-800 line-clamp-1">{user.name}</p>
+                      <p className="text-xs text-slate-500 font-medium line-clamp-1">{user.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-slate-100" />
+                  <DropdownMenuItem asChild className="focus:bg-teal-50 focus:text-teal-700 hover:bg-teal-50 cursor-pointer rounded-lg px-2.5 py-2 text-sm font-medium">
+                    <Link href="/profile" className="flex w-full items-center gap-2.5">
                       <UserIcon className="h-4 w-4 text-slate-500" />
                       View Account
                     </Link>
-                    <button
-                      onClick={handleSignOut}
-                      className="w-full flex items-center gap-2 px-4 py-2 hover:bg-red-50 text-red-600 hover:text-red-700 text-sm font-medium text-left"
-                    >
+                  </DropdownMenuItem>
+                  {user.role === 'admin' || user.organizationId ? (
+                    <DropdownMenuItem asChild className="focus:bg-teal-50 focus:text-teal-700 hover:bg-teal-50 cursor-pointer rounded-lg px-2.5 py-2 text-sm font-medium">
+                      <Link href="/dashboard" className="flex w-full items-center gap-2.5">
+                        <LayoutDashboard className="h-4 w-4 text-slate-500" />
+                        Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                  ) : null}
+                  <DropdownMenuSeparator className="bg-slate-100" />
+                  <DropdownMenuItem onClick={handleSignOut} className="focus:bg-red-50 focus:text-red-700 hover:bg-red-50 text-red-600 hover:text-red-700 cursor-pointer rounded-lg px-2.5 py-2 text-sm font-medium">
+                    <div className="flex w-full items-center gap-2.5">
                       <LogOut className="h-4 w-4 text-red-500" />
                       Sign out
-                    </button>
-                  </div>
-                </div>
-              </div>
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <Link href="/signin">
                 <Button
@@ -176,21 +200,9 @@ export function Header() {
               </Link>
             )}
 
-            {user && (user.role === 'admin' || user.organizationId) && (
-              <Link href="/dashboard">
-                <Button
-                  variant="outline"
-                  className="text-white border-white/30 bg-transparent hover:bg-white hover:text-[#024950] h-9 px-3 text-sm font-medium transition-colors"
-                >
-                  <LayoutDashboard className="h-4 w-4 mr-1" />
-                  Dashboard
-                </Button>
-              </Link>
-            )}
-
             <Link href={user ? "/sell/new" : "/signin?redirect=/sell/new"}>
               <Button
-                className="bg-teal-500 hover:bg-teal-400 text-white border-0 h-9 px-4 text-sm font-bold shadow-sm transition-colors cursor-pointer"
+                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0 h-9 px-4 text-sm font-bold shadow-[0_4px_12px_rgba(249,115,22,0.25)] hover:shadow-[0_4px_16px_rgba(249,115,22,0.35)] transition-all duration-300 rounded-lg hover:scale-[1.03] active:scale-[0.97] cursor-pointer"
               >
                 Post Free Ad
               </Button>
@@ -376,7 +388,7 @@ export function Header() {
 
                     <Button
                       asChild
-                      className="w-full justify-center bg-white hover:text-white border-1 hover:border-white text-teal-900 hover:bg-teal-900 rounded-sm shadow-sm py-5 font-bold"
+                      className="w-full justify-center bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white hover:text-white border-0 shadow-[0_4px_12px_rgba(249,115,22,0.25)] py-5 font-bold rounded-lg transition-all duration-200"
                     >
                       <Link href={user ? "/sell/new" : "/signin?redirect=/sell/new"}>Post Free Ad</Link>
                     </Button>

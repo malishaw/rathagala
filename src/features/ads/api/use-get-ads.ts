@@ -30,6 +30,8 @@ interface FilterParams {
 
 interface QueryOptions {
   enabled?: boolean;
+  staleTime?: number;
+  gcTime?: number;
 }
 
 export const useGetAds = (params: FilterParams, options?: QueryOptions) => {
@@ -130,6 +132,8 @@ export const useGetAds = (params: FilterParams, options?: QueryOptions) => {
       return data;
     },
     enabled: options?.enabled ?? true,
+    staleTime: options?.staleTime,
+    gcTime: options?.gcTime,
   });
 
   return query;
