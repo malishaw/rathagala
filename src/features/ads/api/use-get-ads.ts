@@ -12,6 +12,7 @@ interface FilterParams {
   location?: string;
   brand?: string | null;
   model?: string | null;
+  grade?: string | null;
   status?: string | null;
   includeExpired?: boolean;
   type?: string | null;
@@ -26,6 +27,7 @@ interface FilterParams {
   topAdActive?: string | boolean | null;
   bumpActive?: string | boolean | null;
   urgentActive?: string | boolean | null;
+  seller?: string | null;
 }
 
 interface QueryOptions {
@@ -45,6 +47,7 @@ export const useGetAds = (params: FilterParams, options?: QueryOptions) => {
     location,
     brand,
     model,
+    grade,
     status,
     includeExpired,
     type,
@@ -59,6 +62,7 @@ export const useGetAds = (params: FilterParams, options?: QueryOptions) => {
     topAdActive,
     bumpActive,
     urgentActive,
+    seller,
   } = params;
 
   const query = useQuery({
@@ -74,6 +78,7 @@ export const useGetAds = (params: FilterParams, options?: QueryOptions) => {
         location,
         brand,
         model,
+        grade,
         status,
         includeExpired,
         type,
@@ -88,6 +93,7 @@ export const useGetAds = (params: FilterParams, options?: QueryOptions) => {
         topAdActive,
         bumpActive,
         urgentActive,
+        seller,
       },
     ],
     queryFn: async () => {
@@ -101,6 +107,7 @@ export const useGetAds = (params: FilterParams, options?: QueryOptions) => {
         ...(location && { location }),
         ...(brand && brand !== "all" && { brand }),
         ...(model && model !== "all" && { model }),
+        ...(grade && grade !== "all" && { grade }),
         ...(status && status !== "all" && { status }),
         ...(includeExpired && { includeExpired: "true" }),
         ...(type && type !== "all" && { type }),
@@ -115,6 +122,7 @@ export const useGetAds = (params: FilterParams, options?: QueryOptions) => {
         ...(topAdActive && { topAdActive: topAdActive.toString() }),
         ...(bumpActive && { bumpActive: bumpActive.toString() }),
         ...(urgentActive && { urgentActive: urgentActive.toString() }),
+        ...(seller && { seller }),
       };
 
       const response = await client.api.ad.$get({

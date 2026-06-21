@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -37,6 +38,7 @@ interface BoostSelectorProps {
   onChange: (selection: BoostSelection) => void;
   showPaymentDetails?: boolean;
   whatsappNumber?: string;
+  layout?: "single" | "two-column";
 }
 
 const BOOST_INFO: Record<BoostType, { label: string; description: string; icon: React.ReactNode; color: string }> = {
@@ -68,7 +70,7 @@ const BOOST_INFO: Record<BoostType, { label: string; description: string; icon: 
 
 const DURATION_OPTIONS = [3, 7, 15];
 
-export function BoostSelector({ onChange, showPaymentDetails = false, whatsappNumber = "0766220170" }: BoostSelectorProps) {
+export function BoostSelector({ onChange, showPaymentDetails = false, whatsappNumber = "0766220170", layout = "single" }: BoostSelectorProps) {
   const { data: pricing, isLoading } = useGetBoostPricing();
   const [selected, setSelected] = useState<Set<BoostType>>(new Set());
   const [durations, setDurations] = useState<Record<BoostType, number>>({
@@ -120,7 +122,7 @@ export function BoostSelector({ onChange, showPaymentDetails = false, whatsappNu
     );
   }
 
-  return (
+  const optionsList = (
     <div className="space-y-4">
       <p className="text-sm text-slate-500">Select up to 3 boost options</p>
 
@@ -134,8 +136,8 @@ export function BoostSelector({ onChange, showPaymentDetails = false, whatsappNu
             <Card
               key={type}
               className={cn(
-                "p-4 cursor-pointer border-2 transition-all",
-                isSelected ? "border-teal-500 bg-teal-50" : "border-transparent bg-slate-50 hover:border-slate-300",
+                "p-4 cursor-pointer border-2 transition-all shadow-none",
+                isSelected ? "border-teal-500 bg-teal-50" : "border-transparent bg-slate-50 hover:border-slate-350",
                 isDisabled && "opacity-50 cursor-not-allowed"
               )}
               onClick={() => !isDisabled && toggleType(type)}
@@ -182,40 +184,71 @@ export function BoostSelector({ onChange, showPaymentDetails = false, whatsappNu
           );
         })}
       </div>
+    </div>
+  );
 
-      {selected.size > 0 && (
-        <div className="border-t pt-4">
-          <div className="flex items-center justify-between text-base font-bold">
-            <span>Total Amount</span>
-            <span className="text-teal-700">Rs. {totalAmount.toLocaleString()}</span>
+  const summaryAndPayment = (
+    <div className="space-y-4">
+      {selected.size > 0 ? (
+        <>
+          <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-1">
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Amount</div>
+            <div className="text-xl font-bold text-teal-700">
+              Rs. {totalAmount.toLocaleString()}
+            </div>
           </div>
-        </div>
-      )}
 
-      {showPaymentDetails && selected.size > 0 && (
-        <Accordion type="single" collapsible>
-          <AccordionItem value="payment">
-            <AccordionTrigger className="text-sm font-medium">Payment Details</AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-2 text-sm text-slate-600 bg-slate-50 rounded-md p-4">
-                <p className="font-semibold text-slate-800">How to pay:</p>
-                <ol className="list-decimal list-inside space-y-1">
+          {showPaymentDetails && (
+            <div className="space-y-2 pt-2">
+              <p className="font-bold text-slate-800 text-sm">How to Pay</p>
+              <div className="space-y-2.5 text-xs text-slate-650 bg-slate-50 border border-slate-100 rounded-xl p-4">
+                <ol className="list-decimal list-inside space-y-1.5 text-xs leading-relaxed">
                   <li>Transfer <strong>Rs. {totalAmount.toLocaleString()}</strong> to the account below</li>
                   <li>Take a screenshot of the payment slip</li>
                   <li>Send it via WhatsApp to <strong>{whatsappNumber}</strong></li>
-                  <li>Admin will approve your boost as soon as possible </li>
+                  <li>Admin will approve your boost as soon as possible</li>
                 </ol>
-                <div className="mt-3 border rounded-md p-3 bg-white space-y-1">
+                <div className="mt-3 border border-slate-200/60 rounded-lg p-3 bg-white space-y-1 text-xs text-slate-700">
                   <p><strong>Bank:</strong> Commercial Bank of Ceylon</p>
                   <p><strong>Account Name:</strong> R.A. Amila</p>
                   <p><strong>Account No:</strong> 8005862029</p>
                   <p><strong>Branch:</strong> Pita Kotte Branch</p>
                 </div>
               </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="h-full min-h-[150px] flex flex-col items-center justify-center text-center p-6 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+          <Zap className="h-6 w-6 text-slate-300 mb-2 animate-pulse" />
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Summary</p>
+          <p className="text-[11px] text-slate-500 mt-1 max-w-[200px]">
+            Select a boost package to see pricing and payment details.
+          </p>
+        </div>
       )}
+    </div>
+  );
+
+  if (layout === "two-column") {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-4">
+        {/* Left Column */}
+        <div className="max-h-[50vh] overflow-y-auto py-1 px-1 space-y-4 md:border-r md:border-slate-100 md:pr-4">
+          {optionsList}
+        </div>
+        {/* Right Column */}
+        <div className="max-h-[50vh] overflow-y-auto py-1 px-1 space-y-4">
+          {summaryAndPayment}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-h-[60vh] overflow-y-auto my-4 py-1 px-1 space-y-4 border-y border-slate-100 pr-2">
+      {optionsList}
+      {summaryAndPayment}
     </div>
   );
 }

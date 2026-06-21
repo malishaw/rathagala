@@ -367,7 +367,7 @@ export default function VehicleMarketplace() {
     if (price === null) return "Price on request";
     const formatted = `Rs. ${price.toLocaleString()}`;
     if (isNegotiable) {
-      return <>{formatted}<div className="text-sm font-normal opacity-70"> Negotiable</div></>;
+      return <>{formatted}<span className="text-[10px] font-normal opacity-70 ml-1">Negotiable</span></>;
     }
     return formatted;
   };
@@ -1135,7 +1135,7 @@ export default function VehicleMarketplace() {
               )}
 
               {/* Loading state with shimmer effect */}
-              {isLoading && (
+              {isLoading && currentPage === 1 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[...Array(6)].map((_, index) => (
                     <div key={index} className="bg-white rounded-lg border border-slate-200 overflow-hidden">
@@ -1212,7 +1212,7 @@ export default function VehicleMarketplace() {
               )}
 
               {/* Vehicle Grid - Using Real Data */}
-              {interleavedAds.length > 0 && !isLoading && (
+              {interleavedAds.length > 0 && (!isLoading || currentPage > 1) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {interleavedAds.map((vehicle) => {
                     const isFeatured = (vehicle as any).featuredActive;
@@ -1243,12 +1243,6 @@ export default function VehicleMarketplace() {
                           <FavoriteButton adId={vehicle.id} />
                         </div>
 
-                        {((vehicle as any).bumpActive || (vehicle as any).urgentActive || (vehicle as any).topAdActive || (vehicle as any).featuredActive) && (
-                          <div className="absolute bottom-2 right-2 z-10 scale-90">
-                            <BoostBadges bumpActive={(vehicle as any).bumpActive} urgentActive={(vehicle as any).urgentActive} topAdActive={(vehicle as any).topAdActive} featuredActive={(vehicle as any).featuredActive} />
-                          </div>
-                        )}
-
                         <div className="p-2">
                           <div className="flex gap-3">
                             {/* Vehicle Image Container - Ultra compact */}
@@ -1261,6 +1255,11 @@ export default function VehicleMarketplace() {
                                 loading="lazy"
                                 className="object-cover"
                               />
+                              {((vehicle as any).bumpActive || (vehicle as any).urgentActive || (vehicle as any).topAdActive || (vehicle as any).featuredActive) && (
+                                <div className="absolute bottom-1 right-1 z-10 scale-[0.75] origin-bottom-right">
+                                  <BoostBadges bumpActive={(vehicle as any).bumpActive} urgentActive={(vehicle as any).urgentActive} topAdActive={(vehicle as any).topAdActive} featuredActive={(vehicle as any).featuredActive} />
+                                </div>
+                              )}
                             </div>
 
                             {/* Vehicle Details */}
@@ -1278,8 +1277,14 @@ export default function VehicleMarketplace() {
                                   {formatAdTitle(vehicle)}
                                 </h3>
 
-                                <div className="text-[10px] text-slate-500 mt-0.5 line-clamp-1">
-                                  {vehicle.city || vehicle.location || ""}
+                                <div className="text-[10px] text-slate-500 mt-0.5 line-clamp-1 flex items-center gap-1.5">
+                                  <span>{vehicle.city || vehicle.location || ""}</span>
+                                  {vehicle.mileage !== undefined && vehicle.mileage !== null && (
+                                    <>
+                                      <span className="text-slate-300">•</span>
+                                      <span>{vehicle.mileage.toLocaleString()} km</span>
+                                    </>
+                                  )}
                                 </div>
                               </div>
 
@@ -1452,8 +1457,8 @@ export default function VehicleMarketplace() {
                         className={`rounded-lg border overflow-hidden hover:border-teal-500/30 hover:shadow-md hover:scale-[1.01] transition-all duration-300 cursor-pointer group relative bg-white border-slate-200 ${isFeatured ? 'bg-yellow-50/30' : ''}`}
                         onClick={() => (window.location.href = buildAdUrl(vehicle))}
                       >
-                        {/* Vehicle Image */}
-                        <div className="w-full h-32 overflow-hidden bg-slate-50 relative border-b border-slate-100">
+                                              {/* Vehicle Image */}
+                        <div className="w-full h-32 overflow-hidden bg-slate-55 relative border-b border-slate-100">
                           <Image
                             src={vehicle?.media?.[0]?.media?.url || "/placeholder-image.jpg"}
                             alt={vehicle.title || "Vehicle"}
@@ -1470,34 +1475,42 @@ export default function VehicleMarketplace() {
                           </div>
                         </div>
 
-                        {/* Boost Badges */}
-                        {((vehicle as any).bumpActive || (vehicle as any).urgentActive || (vehicle as any).topAdActive || (vehicle as any).featuredActive) && (
-                          <div className="absolute top-2 right-2 z-10 scale-90">
-                            <BoostBadges
-                              bumpActive={(vehicle as any).bumpActive}
-                              urgentActive={(vehicle as any).urgentActive}
-                              topAdActive={(vehicle as any).topAdActive}
-                              featuredActive={(vehicle as any).featuredActive}
-                            />
-                          </div>
-                        )}
-
                         {/* Vehicle Details */}
                         <div className="p-2.5 flex flex-col justify-between flex-1 min-h-[100px]">
                           <div>
                             {/* Category Tag */}
-                            <span className="text-[9px] uppercase font-bold tracking-wider text-slate-400 block mb-0.5">
-                              {vehicle.type === 'AUTO_PARTS' 
-                                ? (vehicle as any).partCategory?.name || 'Auto Part'
-                                : vehicleTypeLabels[vehicle.type] || vehicle.type}
-                            </span>
+                            <div className="flex items-center justify-between mb-0.5">
+                              <span className="text-[9px] uppercase font-bold tracking-wider text-slate-400 block">
+                                {vehicle.type === 'AUTO_PARTS' 
+                                  ? (vehicle as any).partCategory?.name || 'Auto Part'
+                                  : vehicleTypeLabels[vehicle.type] || vehicle.type}
+                              </span>
+                              {((vehicle as any).bumpActive || (vehicle as any).urgentActive || (vehicle as any).topAdActive || (vehicle as any).featuredActive) && (
+                                <div className="scale-90 origin-right">
+                                  <BoostBadges
+                                    bumpActive={(vehicle as any).bumpActive}
+                                    urgentActive={(vehicle as any).urgentActive}
+                                    topAdActive={(vehicle as any).topAdActive}
+                                    featuredActive={(vehicle as any).featuredActive}
+                                  />
+                                </div>
+                              )}
+                            </div>
                             
                             {/* Title */}
                             <h3 className="font-semibold text-xs text-slate-800 line-clamp-1 group-hover:text-teal-700 transition-colors leading-tight">
                               {formatAdTitle(vehicle)}
                             </h3>
 
-                            <div className="text-[10px] text-slate-500 mt-0.5 truncate">{vehicle.city || vehicle.location || ""}</div>
+                             <div className="text-[10px] text-slate-500 mt-0.5 truncate flex items-center gap-1.5">
+                               <span>{vehicle.city || vehicle.location || ""}</span>
+                               {vehicle.mileage !== undefined && vehicle.mileage !== null && (
+                                 <>
+                                   <span className="text-slate-300">•</span>
+                                   <span>{vehicle.mileage.toLocaleString()} km</span>
+                                 </>
+                               )}
+                             </div>
                           </div>
 
                           <div className="flex items-end justify-between mt-2 pt-1.5 border-t border-slate-100">

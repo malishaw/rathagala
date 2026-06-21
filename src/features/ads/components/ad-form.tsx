@@ -321,7 +321,16 @@ export function AdForm({
   };
 
   const handleInputChange = useCallback((field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const updated = { ...prev, [field]: value };
+      if (field === "province") {
+        updated.district = "";
+        updated.city = "";
+      } else if (field === "district") {
+        updated.city = "";
+      }
+      return updated;
+    });
   }, []);
 
   // addTag/removeTag/addOption/removeOption — used by Tags section (commented out)
@@ -555,10 +564,12 @@ export function AdForm({
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">{title}</h1>
-        <p className="text-muted-foreground mt-2">{description}</p>
-      </div>
+      {(title || description) && (
+        <div className="mb-8">
+          {title && <h1 className="text-3xl font-bold">{title}</h1>}
+          {description && <p className="text-muted-foreground mt-2">{description}</p>}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         <Tabs

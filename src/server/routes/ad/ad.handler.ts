@@ -94,6 +94,11 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       andFilters.push({ createdBy: session?.userId });
     }
 
+    // Filter by specific seller/user
+    if (query.seller && query.seller.trim() !== "" && query.seller.toLowerCase() !== "all") {
+      andFilters.push({ createdBy: query.seller.trim() });
+    }
+
     // Add search functionality if search term is provided
     // Search by: title, description, brand, model, phone number, user name, ad ID
     if (search && search.trim() !== "") {
@@ -988,9 +993,13 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
       );
     }
 
+    // Detect whether the identifier is a MongoDB ObjectId (24 hex chars) or a seoSlug
+    const isObjectId = /^[a-f0-9]{24}$/i.test(adId);
+    const whereClause = isObjectId ? { id: adId } : { seoSlug: adId };
+
     // Check if ad exists and if user has permission
-    const existingAd = await prisma.ad.findUnique({
-      where: { id: adId },
+    const existingAd = await prisma.ad.findFirst({
+      where: whereClause,
     });
 
     if (!existingAd) {
@@ -1121,14 +1130,14 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
     if (adUpdates.mediaIds !== undefined && Array.isArray(adUpdates.mediaIds)) {
       // Delete existing media relationships
       await prisma.adMedia.deleteMany({
-        where: { adId },
+        where: { adId: existingAd.id },
       });
 
       // Create new media relationships if any
       if (adUpdates.mediaIds.length > 0) {
         const mediaRelations = adUpdates.mediaIds.map(
           (mediaId: string, index: number) => ({
-            adId: adId,
+            adId: existingAd.id,
             mediaId: mediaId,
             order: index,
           })
@@ -1142,7 +1151,7 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
 
     // Make the update
     const updatedAd = await prisma.ad.update({
-      where: { id: adId },
+      where: { id: existingAd.id },
       data: updateData,
     });
 
@@ -1164,7 +1173,7 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
         email: user.email,
         name: user.name || "User",
         adTitle: updatedAd.title,
-        adId: adId,
+        adId: existingAd.id,
       }).catch((err) => console.error("[UPDATE AD] Failed to send update email:", err));
     }
 

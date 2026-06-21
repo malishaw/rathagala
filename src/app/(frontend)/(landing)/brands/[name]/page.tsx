@@ -366,7 +366,7 @@ export default function BrandPage() {
     if (!price) return "Negotiable";
     const formatted = `Rs. ${price.toLocaleString()}`;
     if (isNegotiable) {
-      return <>{formatted}<div className="text-sm font-normal opacity-70"> Negotiable</div></>;
+      return <>{formatted}<span className="text-[10px] font-normal opacity-70 ml-1">Negotiable</span></>;
     }
     return formatted;
   };
@@ -1004,12 +1004,6 @@ export default function BrandPage() {
                         <FavoriteButton adId={vehicle.id} />
                       </div>
 
-                      {(vehicle.bumpActive || vehicle.urgentActive) && (
-                        <div className="absolute bottom-2 right-2 z-10">
-                          <BoostBadges bumpActive={vehicle.bumpActive} urgentActive={vehicle.urgentActive} />
-                        </div>
-                      )}
-
                       <div className="p-2 pb-5">
                         {/* Vehicle Title - Centered */}
                         <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
@@ -1019,7 +1013,7 @@ export default function BrandPage() {
                         <div className="flex">
                           {/* Vehicle Image with Time and Views Below */}
                           <div className="w-36 h-30 flex-shrink-0 flex flex-col">
-                            <div className="flex-1 relative">
+                            <div className="flex-1 relative overflow-hidden rounded-md">
                               {vehicle.media?.[0]?.media?.url ? (
                                 <Image
                                   src={vehicle.media[0].media.url}
@@ -1037,6 +1031,11 @@ export default function BrandPage() {
                                   className="object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
                                 />
                               )}
+                              {(vehicle.bumpActive || vehicle.urgentActive) && (
+                                <div className="absolute bottom-1 right-1 z-10 scale-[0.75] origin-bottom-right">
+                                  <BoostBadges bumpActive={vehicle.bumpActive} urgentActive={vehicle.urgentActive} />
+                                </div>
+                              )}
                             </div>
                             {/* Time and Views Below Image */}
                             <div className="flex items-center gap-1 mt-1 text-xs text-slate-400">
@@ -1051,8 +1050,14 @@ export default function BrandPage() {
                           {/* Vehicle Details */}
                           <div className="flex-1 pl-3 flex flex-col justify-between">
                             <div>
-                              <div className="text-xs text-slate-600 mb-1 line-clamp-1">
-                                {vehicle.city || vehicle.location || ""}
+                              <div className="text-xs text-slate-600 mb-1 line-clamp-1 flex items-center gap-1.5">
+                                <span>{vehicle.city || vehicle.location || ""}</span>
+                                {vehicle.mileage !== undefined && vehicle.mileage !== null && (
+                                  <>
+                                    <span className="text-slate-300">•</span>
+                                    <span>{vehicle.mileage.toLocaleString()} km</span>
+                                  </>
+                                )}
                               </div>
 
                               <div className="text-sm font-semibold text-teal-700 mb-1">

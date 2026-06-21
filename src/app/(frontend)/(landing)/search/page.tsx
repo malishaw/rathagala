@@ -184,50 +184,50 @@ export default function SearchPage() {
 
   // Filter districts based on search input
   const filteredDistricts = useMemo(() => {
-    if (!districtSearch) return sriLankanDistricts;
-    return sriLankanDistricts.filter(district =>
+    const list = !districtSearch ? sriLankanDistricts : sriLankanDistricts.filter(district =>
       district.toLowerCase().includes(districtSearch.toLowerCase())
     );
-  }, [districtSearch]);
+    return [...list].sort((a, b) => a.localeCompare(b));
+  }, [districtSearch, sriLankanDistricts]);
 
   // Filter cities based on search input
   const filteredCities = useMemo(() => {
-    if (!citySearch) return availableCities;
-    return availableCities.filter(city =>
+    const list = !citySearch ? availableCities : availableCities.filter(city =>
       city.toLowerCase().includes(citySearch.toLowerCase())
     );
+    return [...list].sort((a, b) => a.localeCompare(b));
   }, [citySearch, availableCities]);
 
   // Filter vehicle types based on search input
   const filteredVehicleTypes = useMemo(() => {
-    if (!vehicleTypeSearch) return Object.entries(vehicleTypeLabels);
-    return Object.entries(vehicleTypeLabels).filter(([_, label]) =>
+    const list = !vehicleTypeSearch ? Object.entries(vehicleTypeLabels) : Object.entries(vehicleTypeLabels).filter(([_, label]) =>
       label.toLowerCase().includes(vehicleTypeSearch.toLowerCase())
     );
+    return [...list].sort((a, b) => a[1].localeCompare(b[1]));
   }, [vehicleTypeSearch]);
 
   // Filter brands based on search input
   const filteredBrands = useMemo(() => {
-    if (!brandSearch) return vehicleMakes;
-    return vehicleMakes.filter(brand =>
+    const list = !brandSearch ? vehicleMakes : vehicleMakes.filter(brand =>
       brand.toLowerCase().includes(brandSearch.toLowerCase())
     );
+    return [...list].sort((a, b) => a.localeCompare(b));
   }, [brandSearch]);
 
   // Filter models based on search input
   const filteredModels = useMemo(() => {
-    if (!modelSearch) return availableModels;
-    return availableModels.filter(m =>
+    const list = !modelSearch ? availableModels : availableModels.filter(m =>
       m.name.toLowerCase().includes(modelSearch.toLowerCase())
     );
+    return [...list].sort((a, b) => a.name.localeCompare(b.name));
   }, [modelSearch, availableModels]);
 
   // Filter grades based on search input
   const filteredGrades = useMemo(() => {
-    if (!gradeSearch) return availableGrades;
-    return availableGrades.filter(g =>
+    const list = !gradeSearch ? availableGrades : availableGrades.filter(g =>
       g.name.toLowerCase().includes(gradeSearch.toLowerCase())
     );
+    return [...list].sort((a, b) => a.name.localeCompare(b.name));
   }, [gradeSearch, availableGrades]);
 
   // 1. Fetch Top Ads for search (limit: 10)
@@ -239,6 +239,7 @@ export default function SearchPage() {
     listingType: filters.listingType !== "all" ? filters.listingType : undefined,
     brand: filters.brand !== "all" ? filters.brand : undefined,
     model: filters.model || undefined,
+    grade: filters.grade !== "all" ? filters.grade : undefined,
     type: filters.vehicleType !== "all" ? filters.vehicleType : undefined,
     condition: filters.condition !== "all" ? filters.condition : undefined,
     minPrice: filters.minPrice ? parseInt(filters.minPrice) : undefined,
@@ -249,6 +250,8 @@ export default function SearchPage() {
     transmission: filters.transmission !== "all" ? filters.transmission : undefined,
     city: filters.city !== "all" && filters.city !== "any" ? filters.city : undefined,
     district: filters.district !== "all" && filters.district !== "any" ? filters.district : undefined,
+    urgentActive: filters.urgentOnly ? "true" : undefined,
+    seller: filters.seller !== "all" ? filters.seller : undefined,
   });
 
   // 2. Fetch Featured Ads for search (limit: 10)
@@ -260,6 +263,7 @@ export default function SearchPage() {
     listingType: filters.listingType !== "all" ? filters.listingType : undefined,
     brand: filters.brand !== "all" ? filters.brand : undefined,
     model: filters.model || undefined,
+    grade: filters.grade !== "all" ? filters.grade : undefined,
     type: filters.vehicleType !== "all" ? filters.vehicleType : undefined,
     condition: filters.condition !== "all" ? filters.condition : undefined,
     minPrice: filters.minPrice ? parseInt(filters.minPrice) : undefined,
@@ -270,6 +274,8 @@ export default function SearchPage() {
     transmission: filters.transmission !== "all" ? filters.transmission : undefined,
     city: filters.city !== "all" && filters.city !== "any" ? filters.city : undefined,
     district: filters.district !== "all" && filters.district !== "any" ? filters.district : undefined,
+    urgentActive: filters.urgentOnly ? "true" : undefined,
+    seller: filters.seller !== "all" ? filters.seller : undefined,
   });
 
   // 3. Fetch Main paginated search results
@@ -280,6 +286,7 @@ export default function SearchPage() {
     listingType: filters.listingType !== "all" ? filters.listingType : undefined,
     brand: filters.brand !== "all" ? filters.brand : undefined,
     model: filters.model || undefined,
+    grade: filters.grade !== "all" ? filters.grade : undefined,
     type: filters.vehicleType !== "all" ? filters.vehicleType : undefined,
     condition: filters.condition !== "all" ? filters.condition : undefined,
     minPrice: filters.minPrice ? parseInt(filters.minPrice) : undefined,
@@ -290,6 +297,8 @@ export default function SearchPage() {
     transmission: filters.transmission !== "all" ? filters.transmission : undefined,
     city: filters.city !== "all" && filters.city !== "any" ? filters.city : undefined,
     district: filters.district !== "all" && filters.district !== "any" ? filters.district : undefined,
+    urgentActive: filters.urgentOnly ? "true" : undefined,
+    seller: filters.seller !== "all" ? filters.seller : undefined,
   });
 
   // Accumulate ads when new data arrives
@@ -324,6 +333,18 @@ export default function SearchPage() {
     setFilters(prev => {
       const newFilters = { ...prev, [key]: value, page: key === 'page' ? (value as number) : 1 };
 
+      // Reset dependent fields when parent fields change to avoid invalid combinations
+      if (key === 'brand') {
+        newFilters.model = '';
+        newFilters.grade = 'all';
+      }
+      if (key === 'model') {
+        newFilters.grade = 'all';
+      }
+      if (key === 'district') {
+        newFilters.city = 'all';
+      }
+
       // Auto-correct Year Range logic
       if (key === 'minYear' && value !== 'any') {
         if (prev.maxYear && prev.maxYear !== 'any' && parseInt(prev.maxYear) < parseInt(value)) {
@@ -340,6 +361,14 @@ export default function SearchPage() {
     });
     if (key !== 'page') {
       setVisibleCount(12);
+    }
+
+    // Smoothly scroll back to the top of the search results grid
+    if (typeof window !== "undefined") {
+      const resultsElement = document.getElementById("search-results-start");
+      if (resultsElement) {
+        resultsElement.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     }
   };
 
@@ -380,7 +409,7 @@ export default function SearchPage() {
     if (!price) return "Negotiable";
     const formatted = `Rs. ${price.toLocaleString()}`;
     if (isNegotiable) {
-      return <>{formatted}<div className="text-sm font-normal opacity-70"> Negotiable</div></>;
+      return <>{formatted}<span className="text-[10px] font-normal opacity-70 ml-1">Negotiable</span></>;
     }
     return formatted;
   };
@@ -505,7 +534,7 @@ export default function SearchPage() {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left Sidebar - Search Filters */}
           <div className="w-full lg:w-72 flex-shrink-0">
-            <Card className="p-4 shadow-sm border-slate-200">
+            <Card className="p-4 shadow-none border border-slate-200/80 rounded-xl bg-white">
               <div
                 className="flex items-center justify-between mb-4 cursor-pointer lg:cursor-default"
                 onClick={() => setIsFiltersOpen(!isFiltersOpen)}
@@ -534,7 +563,6 @@ export default function SearchPage() {
                   </div>
                 </div>
               </div>
-
               <div className={`${isFiltersOpen ? 'block' : 'hidden'} lg:block space-y-4`}>
                 {/* Global Search Bar */}
                 <div>
@@ -543,89 +571,92 @@ export default function SearchPage() {
                     Search
                   </label>
                   <Input
-                    placeholder="Search by ID, make, model, city, phone..."
+                    placeholder="Search by ID, make, model..."
                     value={filters.globalSearch}
                     onChange={(e) => handleFilterChange('globalSearch', e.target.value)}
-                    className="h-10 text-sm border-slate-200 focus:ring-teal-500"
+                    className="h-10 text-sm border-slate-200 bg-white rounded-lg shadow-none focus:ring-teal-500 focus:border-teal-500"
                   />
-                  <p className="text-xs text-slate-500 mt-1">Search by ad ID, make, model, city, title</p>
-                </div>
+                 </div>
 
                 <Separator className="my-3" />
 
-                {/* Row 1: Location */}
-                <div className="grid grid-cols-2 gap-4">
+                {/* Row 1: Brand & Model */}
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
-                      District
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
+                      Brand
                     </label>
                     <Select
-                      value={filters.district}
+                      value={filters.brand}
                       onValueChange={(value) => {
-                        handleFilterChange('district', value);
-                        setDistrictSearch('');
+                        handleFilterChange('brand', value);
+                        setBrandSearch('');
                       }}
                     >
-                      <SelectTrigger className="h-10 text-sm border-slate-200 focus:ring-teal-500">
-                        <SelectValue placeholder="All Districts" />
+                      <SelectTrigger className="h-10 text-sm border-slate-200 bg-white rounded-lg shadow-none focus:ring-teal-500 focus:border-teal-500">
+                        <SelectValue placeholder="All" />
                       </SelectTrigger>
-                      <SelectContent className="max-h-[300px]">
+                      <SelectContent className="max-h-[250px]">
                         <div className="p-2 border-b sticky top-0 bg-white z-10">
                           <Input
                             autoFocus
-                            placeholder="Search districts..."
-                            value={districtSearch}
-                            onChange={(e) => setDistrictSearch(e.target.value)}
+                            placeholder="Search brands..."
+                            value={brandSearch}
+                            onChange={(e) => setBrandSearch(e.target.value)}
                             className="h-8 text-sm"
                             onMouseDown={(e) => e.stopPropagation()}
                             onKeyDown={(e) => e.stopPropagation()}
                           />
                         </div>
                         <SelectItem value="all">All</SelectItem>
-                        {filteredDistricts.map((district) => (
-                          <SelectItem key={district} value={district}>{district}</SelectItem>
+                        {filteredBrands.map((make) => (
+                          <SelectItem key={make} value={make}>{make}</SelectItem>
                         ))}
-                        {filteredDistricts.length === 0 && (
-                          <div className="p-2 text-sm text-slate-500 text-center">No districts found</div>
+                        {filteredBrands.length === 0 && (
+                          <div className="p-2 text-sm text-slate-550 text-center">No brands found</div>
                         )}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
-                      City
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
+                      Model
                     </label>
                     <Select
-                      value={filters.city}
+                      value={filters.model || 'all'}
                       onValueChange={(value) => {
-                        handleFilterChange('city', value);
-                        setCitySearch('');
+                        handleFilterChange('model', value === 'all' ? '' : value);
+                        setModelSearch('');
                       }}
+                      disabled={!filters.brand || filters.brand === 'all' || loadingModels}
                     >
-                      <SelectTrigger className="h-10 text-sm border-slate-200 focus:ring-teal-500">
-                        <SelectValue placeholder="All Cities" />
+                      <SelectTrigger className="h-10 text-sm border-slate-200 bg-white rounded-lg shadow-none focus:ring-teal-500 focus:border-teal-500">
+                        <SelectValue placeholder={loadingModels ? "Loading..." : "All"} />
                       </SelectTrigger>
-                      <SelectContent className="max-h-[300px]">
+                      <SelectContent className="max-h-62.5">
                         <div className="p-2 border-b sticky top-0 bg-white z-10">
                           <Input
                             autoFocus
-                            placeholder="Search cities..."
-                            value={citySearch}
-                            onChange={(e) => setCitySearch(e.target.value)}
+                            placeholder="Search models..."
+                            value={modelSearch}
+                            onChange={(e) => setModelSearch(e.target.value)}
                             className="h-8 text-sm"
                             onMouseDown={(e) => e.stopPropagation()}
                             onKeyDown={(e) => e.stopPropagation()}
                           />
                         </div>
                         <SelectItem value="all">All</SelectItem>
-                        {filteredCities.map((city) => (
-                          <SelectItem key={city} value={city}>{city}</SelectItem>
+                        {filteredModels.map((m) => (
+                          <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>
                         ))}
-                        {filteredCities.length === 0 && (
-                          <div className="p-2 text-sm text-slate-500 text-center">No cities found</div>
+                        {filteredModels.length === 0 && (
+                          <div className="p-2 text-sm text-slate-550 text-center">No models found</div>
                         )}
                       </SelectContent>
                     </Select>
+                    {(!filters.brand || filters.brand === 'all') && (
+                      <p className="text-xs text-muted-foreground mt-1">Select a brand first</p>
+                    )}
                   </div>
                 </div>
 
@@ -641,7 +672,7 @@ export default function SearchPage() {
                       value={filters.listingType}
                       onValueChange={(value) => handleFilterChange('listingType', value)}
                     >
-                      <SelectTrigger className="h-9 text-sm">
+                      <SelectTrigger className="h-10 text-sm border-slate-200 bg-white rounded-lg shadow-none focus:ring-teal-500 focus:border-teal-500">
                         <SelectValue placeholder="All" />
                       </SelectTrigger>
                       <SelectContent>
@@ -664,7 +695,7 @@ export default function SearchPage() {
                         setVehicleTypeSearch('');
                       }}
                     >
-                      <SelectTrigger className="h-9 text-sm">
+                      <SelectTrigger className="h-10 text-sm border-slate-200 bg-white rounded-lg shadow-none focus:ring-teal-500 focus:border-teal-500">
                         <SelectValue placeholder="All" />
                       </SelectTrigger>
                       <SelectContent className="max-h-[300px]">
@@ -684,7 +715,7 @@ export default function SearchPage() {
                           <SelectItem key={key} value={key}>{label}</SelectItem>
                         ))}
                         {filteredVehicleTypes.length === 0 && (
-                          <div className="p-2 text-sm text-slate-500 text-center">No types found</div>
+                          <div className="p-2 text-sm text-slate-550 text-center">No types found</div>
                         )}
                       </SelectContent>
                     </Select>
@@ -693,89 +724,7 @@ export default function SearchPage() {
 
                 <Separator className="my-3" />
 
-                {/* Row 3: Brand & Model */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
-                      Brand
-                    </label>
-                    <Select
-                      value={filters.brand}
-                      onValueChange={(value) => {
-                        handleFilterChange('brand', value);
-                        setBrandSearch('');
-                      }}
-                    >
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue placeholder="All" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-[250px]">
-                        <div className="p-2 border-b sticky top-0 bg-white z-10">
-                          <Input
-                            autoFocus
-                            placeholder="Search brands..."
-                            value={brandSearch}
-                            onChange={(e) => setBrandSearch(e.target.value)}
-                            className="h-8 text-sm"
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onKeyDown={(e) => e.stopPropagation()}
-                          />
-                        </div>
-                        <SelectItem value="all">All</SelectItem>
-                        {filteredBrands.map((make) => (
-                          <SelectItem key={make} value={make}>{make}</SelectItem>
-                        ))}
-                        {filteredBrands.length === 0 && (
-                          <div className="p-2 text-sm text-slate-500 text-center">No brands found</div>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
-                      Model
-                    </label>
-                    <Select
-                      value={filters.model || 'all'}
-                      onValueChange={(value) => {
-                        handleFilterChange('model', value === 'all' ? '' : value);
-                        setModelSearch('');
-                      }}
-                      disabled={!filters.brand || filters.brand === 'all' || loadingModels}
-                    >
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue placeholder={loadingModels ? "Loading..." : "All"} />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-62.5">
-                        <div className="p-2 border-b sticky top-0 bg-white z-10">
-                          <Input
-                            autoFocus
-                            placeholder="Search models..."
-                            value={modelSearch}
-                            onChange={(e) => setModelSearch(e.target.value)}
-                            className="h-8 text-sm"
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onKeyDown={(e) => e.stopPropagation()}
-                          />
-                        </div>
-                        <SelectItem value="all">All</SelectItem>
-                        {filteredModels.map((m) => (
-                          <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>
-                        ))}
-                        {filteredModels.length === 0 && (
-                          <div className="p-2 text-sm text-slate-500 text-center">No models found</div>
-                        )}
-                      </SelectContent>
-                    </Select>
-                    {(!filters.brand || filters.brand === 'all') && (
-                      <p className="text-xs text-muted-foreground mt-1">Select a brand first</p>
-                    )}
-                  </div>
-                </div>
-
-                <Separator className="my-3" />
-
-                {/* Row 4: Grade & Condition */}
+                {/* Row 3: Grade & Condition */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
@@ -789,7 +738,7 @@ export default function SearchPage() {
                       }}
                       disabled={!filters.brand || filters.brand === 'all' || loadingGrades}
                     >
-                      <SelectTrigger className="h-9 text-sm">
+                      <SelectTrigger className="h-10 text-sm border-slate-200 bg-white rounded-lg shadow-none focus:ring-teal-500 focus:border-teal-500">
                         <SelectValue placeholder={loadingGrades ? "Loading..." : "All"} />
                       </SelectTrigger>
                       <SelectContent className="max-h-[250px]">
@@ -811,7 +760,7 @@ export default function SearchPage() {
                           </SelectItem>
                         ))}
                         {filteredGrades.length === 0 && (
-                          <div className="p-2 text-sm text-slate-500 text-center">No grades found</div>
+                          <div className="p-2 text-sm text-slate-550 text-center">No grades found</div>
                         )}
                       </SelectContent>
                     </Select>
@@ -827,7 +776,7 @@ export default function SearchPage() {
                       value={filters.condition}
                       onValueChange={(value) => handleFilterChange('condition', value)}
                     >
-                      <SelectTrigger className="h-9 text-sm">
+                      <SelectTrigger className="h-10 text-sm border-slate-200 bg-white rounded-lg shadow-none focus:ring-teal-500 focus:border-teal-500">
                         <SelectValue placeholder="All" />
                       </SelectTrigger>
                       <SelectContent>
@@ -842,74 +791,7 @@ export default function SearchPage() {
 
                 <Separator className="my-3" />
 
-                {/* Row 5: Price Range */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
-                    Price Range (Rs.)
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Input
-                      placeholder="Min"
-                      type="number"
-                      value={filters.minPrice}
-                      onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-                      className={`h-9 text-sm ${isPriceRangeInvalid ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                    />
-                    <Input
-                      placeholder="Max"
-                      type="number"
-                      value={filters.maxPrice}
-                      onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-                      className={`h-9 text-sm ${isPriceRangeInvalid ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                    />
-                  </div>
-                  {isPriceRangeInvalid && (
-                    <p className="text-xs text-red-500 mt-1">Min cannot exceed Max</p>
-                  )}
-                </div>
-
-                <Separator className="my-3" />
-
-                {/* Row 6: Year Range */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
-                    Manufacture Year
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Select
-                      value={filters.minYear}
-                      onValueChange={(value) => handleFilterChange('minYear', value)}
-                    >
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue placeholder="Min" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="any">Any</SelectItem>
-                        {years.map((year) => (
-                          <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select
-                      value={filters.maxYear}
-                      onValueChange={(value) => handleFilterChange('maxYear', value)}
-                    >
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue placeholder="Max" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="any">Any</SelectItem>
-                        {maxYearOptions.map((year) => (
-                          <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <Separator className="my-3" />
-
-                {/* Row 7: Fuel Type & Transmission */}
+                {/* Row 4: Fuel Type & Transmission */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
@@ -919,7 +801,7 @@ export default function SearchPage() {
                       value={filters.fuelType}
                       onValueChange={(value) => handleFilterChange('fuelType', value)}
                     >
-                      <SelectTrigger className="h-9 text-sm">
+                      <SelectTrigger className="h-10 text-sm border-slate-200 bg-white rounded-lg shadow-none focus:ring-teal-500 focus:border-teal-500">
                         <SelectValue placeholder="All" />
                       </SelectTrigger>
                       <SelectContent>
@@ -940,13 +822,158 @@ export default function SearchPage() {
                       value={filters.transmission}
                       onValueChange={(value) => handleFilterChange('transmission', value)}
                     >
-                      <SelectTrigger className="h-9 text-sm">
+                      <SelectTrigger className="h-10 text-sm border-slate-200 bg-white rounded-lg shadow-none focus:ring-teal-500 focus:border-teal-500">
                         <SelectValue placeholder="All" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All</SelectItem>
                         <SelectItem value="Automatic">Automatic</SelectItem>
                         <SelectItem value="Manual">Manual</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <Separator className="my-3" />
+
+                {/* Row 5: Price Range */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
+                    Price Range (Rs.)
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input
+                      placeholder="Min"
+                      type="number"
+                      value={filters.minPrice}
+                      onChange={(e) => handleFilterChange('minPrice', e.target.value)}
+                      className={`h-10 text-sm border-slate-200 bg-white rounded-lg shadow-none focus:ring-teal-500 focus:border-teal-500 ${isPriceRangeInvalid ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+                    />
+                    <Input
+                      placeholder="Max"
+                      type="number"
+                      value={filters.maxPrice}
+                      onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+                      className={`h-10 text-sm border-slate-200 bg-white rounded-lg shadow-none focus:ring-teal-500 focus:border-teal-500 ${isPriceRangeInvalid ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+                    />
+                  </div>
+                  {isPriceRangeInvalid && (
+                    <p className="text-xs text-red-550 mt-1">Min cannot exceed Max</p>
+                  )}
+                </div>
+
+                <Separator className="my-3" />
+
+                {/* Row 6: Manufacture Year */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
+                    Manufacture Year
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Select
+                      value={filters.minYear}
+                      onValueChange={(value) => handleFilterChange('minYear', value)}
+                    >
+                      <SelectTrigger className="h-10 text-sm border-slate-200 bg-white rounded-lg shadow-none focus:ring-teal-500 focus:border-teal-500">
+                        <SelectValue placeholder="Min" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="any">Any</SelectItem>
+                        {years.map((year) => (
+                          <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={filters.maxYear}
+                      onValueChange={(value) => handleFilterChange('maxYear', value)}
+                    >
+                      <SelectTrigger className="h-10 text-sm border-slate-200 bg-white rounded-lg shadow-none focus:ring-teal-500 focus:border-teal-500">
+                        <SelectValue placeholder="Max" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="any">Any</SelectItem>
+                        {maxYearOptions.map((year) => (
+                          <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <Separator className="my-3" />
+
+                {/* Row 7: Location */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
+                      District
+                    </label>
+                    <Select
+                      value={filters.district}
+                      onValueChange={(value) => {
+                        handleFilterChange('district', value);
+                        setDistrictSearch('');
+                      }}
+                    >
+                      <SelectTrigger className="h-10 text-sm border-slate-200 bg-white rounded-lg shadow-none focus:ring-teal-500 focus:border-teal-500">
+                        <SelectValue placeholder="All Districts" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[300px]">
+                        <div className="p-2 border-b sticky top-0 bg-white z-10">
+                          <Input
+                            autoFocus
+                            placeholder="Search districts..."
+                            value={districtSearch}
+                            onChange={(e) => setDistrictSearch(e.target.value)}
+                            className="h-8 text-sm"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                        <SelectItem value="all">All</SelectItem>
+                        {filteredDistricts.map((district) => (
+                          <SelectItem key={district} value={district}>{district}</SelectItem>
+                        ))}
+                        {filteredDistricts.length === 0 && (
+                          <div className="p-2 text-sm text-slate-550 text-center">No districts found</div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
+                      City
+                    </label>
+                    <Select
+                      value={filters.city}
+                      onValueChange={(value) => {
+                        handleFilterChange('city', value);
+                        setCitySearch('');
+                      }}
+                    >
+                      <SelectTrigger className="h-10 text-sm border-slate-200 bg-white rounded-lg shadow-none focus:ring-teal-500 focus:border-teal-500">
+                        <SelectValue placeholder="All Cities" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[300px]">
+                        <div className="p-2 border-b sticky top-0 bg-white z-10">
+                          <Input
+                            autoFocus
+                            placeholder="Search cities..."
+                            value={citySearch}
+                            onChange={(e) => setCitySearch(e.target.value)}
+                            className="h-8 text-sm"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                        <SelectItem value="all">All</SelectItem>
+                        {filteredCities.map((city) => (
+                          <SelectItem key={city} value={city}>{city}</SelectItem>
+                        ))}
+                        {filteredCities.length === 0 && (
+                          <div className="p-2 text-sm text-slate-550 text-center">No cities found</div>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -969,9 +996,7 @@ export default function SearchPage() {
               </div>
             </Card>
           </div>
-
-          {/* Center Column - Search Results */}
-          <div className="flex-1 min-w-0">
+          <div id="search-results-start" className="flex-1 min-w-0">
             {/* Seller Name Display */}
             {filters.seller && filters.seller !== 'all' && filteredAds.length > 0 && (
               <div className="mb-6 pb-4 border-b border-slate-200">
@@ -986,26 +1011,117 @@ export default function SearchPage() {
 
             {/* Active Filters Display */}
             {activeFilterCount > 0 && (
-              <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-                <span className="text-sm font-medium text-slate-500 whitespace-nowrap">Active filters:</span>
+              <div className="flex flex-wrap items-center gap-2 mb-6">
+                <span className="text-sm font-semibold text-slate-500 mr-1">Active filters:</span>
+                {filters.globalSearch && (
+                  <Badge variant="secondary" className="bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200 py-1 pl-2.5 pr-1.5 rounded-full flex items-center gap-1 shadow-none">
+                    Search: "{filters.globalSearch}"
+                    <button onClick={() => handleFilterChange('globalSearch', '')} className="text-slate-400 hover:text-slate-700 w-4 h-4 rounded-full flex items-center justify-center hover:bg-slate-350/40 transition-colors font-medium">✕</button>
+                  </Badge>
+                )}
                 {filters.listingType && filters.listingType !== 'all' && (
-                  <Badge variant="secondary" className="bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-100 py-1">
-                    {listingTypeLabels[filters.listingType]}
-                    <button onClick={() => handleFilterChange('listingType', 'all')} className="ml-1.5">×</button>
+                  <Badge variant="secondary" className="bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-100 py-1 pl-2.5 pr-1.5 rounded-full flex items-center gap-1 shadow-none">
+                    Type: {listingTypeLabels[filters.listingType]}
+                    <button onClick={() => handleFilterChange('listingType', 'all')} className="text-teal-400 hover:text-teal-700 w-4 h-4 rounded-full flex items-center justify-center hover:bg-teal-300/40 transition-colors font-medium">✕</button>
                   </Badge>
                 )}
                 {filters.brand && filters.brand !== 'all' && (
-                  <Badge variant="secondary" className="bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-100 py-1">
-                    {filters.brand}
-                    <button onClick={() => handleFilterChange('brand', 'all')} className="ml-1.5">×</button>
+                  <Badge variant="secondary" className="bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-100 py-1 pl-2.5 pr-1.5 rounded-full flex items-center gap-1 shadow-none">
+                    Brand: {filters.brand}
+                    <button onClick={() => handleFilterChange('brand', 'all')} className="text-teal-400 hover:text-teal-700 w-4 h-4 rounded-full flex items-center justify-center hover:bg-teal-300/40 transition-colors font-medium">✕</button>
+                  </Badge>
+                )}
+                {filters.model && (
+                  <Badge variant="secondary" className="bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-100 py-1 pl-2.5 pr-1.5 rounded-full flex items-center gap-1 shadow-none">
+                    Model: {filters.model}
+                    <button onClick={() => handleFilterChange('model', '')} className="text-teal-400 hover:text-teal-700 w-4 h-4 rounded-full flex items-center justify-center hover:bg-teal-300/40 transition-colors font-medium">✕</button>
+                  </Badge>
+                )}
+                {filters.grade && filters.grade !== 'all' && (
+                  <Badge variant="secondary" className="bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-100 py-1 pl-2.5 pr-1.5 rounded-full flex items-center gap-1 shadow-none">
+                    Grade: {filters.grade}
+                    <button onClick={() => handleFilterChange('grade', 'all')} className="text-teal-400 hover:text-teal-700 w-4 h-4 rounded-full flex items-center justify-center hover:bg-teal-300/40 transition-colors font-medium">✕</button>
+                  </Badge>
+                )}
+                {filters.condition && filters.condition !== 'all' && (
+                  <Badge variant="secondary" className="bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-100 py-1 pl-2.5 pr-1.5 rounded-full flex items-center gap-1 shadow-none">
+                    Condition: {filters.condition}
+                    <button onClick={() => handleFilterChange('condition', 'all')} className="text-teal-400 hover:text-teal-700 w-4 h-4 rounded-full flex items-center justify-center hover:bg-teal-300/40 transition-colors font-medium">✕</button>
+                  </Badge>
+                )}
+                {filters.vehicleType && filters.vehicleType !== 'all' && (
+                  <Badge variant="secondary" className="bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-100 py-1 pl-2.5 pr-1.5 rounded-full flex items-center gap-1 shadow-none">
+                    Vehicle: {vehicleTypeLabels[filters.vehicleType] || filters.vehicleType}
+                    <button onClick={() => handleFilterChange('vehicleType', 'all')} className="text-teal-400 hover:text-teal-700 w-4 h-4 rounded-full flex items-center justify-center hover:bg-teal-300/40 transition-colors font-medium">✕</button>
                   </Badge>
                 )}
                 {filters.district && filters.district !== 'all' && (
-                  <Badge variant="secondary" className="bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-100 py-1">
-                    {filters.district}
-                    <button onClick={() => handleFilterChange('district', 'all')} className="ml-1.5">×</button>
+                  <Badge variant="secondary" className="bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-100 py-1 pl-2.5 pr-1.5 rounded-full flex items-center gap-1 shadow-none">
+                    District: {filters.district}
+                    <button onClick={() => handleFilterChange('district', 'all')} className="text-teal-400 hover:text-teal-700 w-4 h-4 rounded-full flex items-center justify-center hover:bg-teal-300/40 transition-colors font-medium">✕</button>
                   </Badge>
                 )}
+                {filters.city && filters.city !== 'all' && (
+                  <Badge variant="secondary" className="bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-100 py-1 pl-2.5 pr-1.5 rounded-full flex items-center gap-1 shadow-none">
+                    City: {filters.city}
+                    <button onClick={() => handleFilterChange('city', 'all')} className="text-teal-400 hover:text-teal-700 w-4 h-4 rounded-full flex items-center justify-center hover:bg-teal-300/40 transition-colors font-medium">✕</button>
+                  </Badge>
+                )}
+                {filters.fuelType && filters.fuelType !== 'all' && (
+                  <Badge variant="secondary" className="bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-100 py-1 pl-2.5 pr-1.5 rounded-full flex items-center gap-1 shadow-none">
+                    Fuel: {filters.fuelType}
+                    <button onClick={() => handleFilterChange('fuelType', 'all')} className="text-teal-400 hover:text-teal-700 w-4 h-4 rounded-full flex items-center justify-center hover:bg-teal-300/40 transition-colors font-medium">✕</button>
+                  </Badge>
+                )}
+                {filters.transmission && filters.transmission !== 'all' && (
+                  <Badge variant="secondary" className="bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-100 py-1 pl-2.5 pr-1.5 rounded-full flex items-center gap-1 shadow-none">
+                    Trans: {filters.transmission}
+                    <button onClick={() => handleFilterChange('transmission', 'all')} className="text-teal-400 hover:text-teal-700 w-4 h-4 rounded-full flex items-center justify-center hover:bg-teal-300/40 transition-colors font-medium">✕</button>
+                  </Badge>
+                )}
+                {(filters.minPrice || filters.maxPrice) && (
+                  <Badge variant="secondary" className="bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-100 py-1 pl-2.5 pr-1.5 rounded-full flex items-center gap-1 shadow-none">
+                    Price: {filters.minPrice ? `Rs. ${parseInt(filters.minPrice).toLocaleString()}` : 'Any'} - {filters.maxPrice ? `Rs. ${parseInt(filters.maxPrice).toLocaleString()}` : 'Any'}
+                    <button onClick={() => { handleFilterChange('minPrice', ''); handleFilterChange('maxPrice', ''); }} className="text-teal-400 hover:text-teal-700 w-4 h-4 rounded-full flex items-center justify-center hover:bg-teal-300/40 transition-colors font-medium">✕</button>
+                  </Badge>
+                )}
+                {(filters.minYear !== 'any' || filters.maxYear !== 'any') && (
+                  <Badge variant="secondary" className="bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-100 py-1 pl-2.5 pr-1.5 rounded-full flex items-center gap-1 shadow-none">
+                    Year: {filters.minYear} - {filters.maxYear}
+                    <button onClick={() => { handleFilterChange('minYear', 'any'); handleFilterChange('maxYear', 'any'); }} className="text-teal-400 hover:text-teal-700 w-4 h-4 rounded-full flex items-center justify-center hover:bg-teal-300/40 transition-colors font-medium">✕</button>
+                  </Badge>
+                )}
+                {filters.urgentOnly && (
+                  <Badge variant="secondary" className="bg-red-50 text-red-700 hover:bg-red-100 border-red-100 py-1 pl-2.5 pr-1.5 rounded-full flex items-center gap-1 shadow-none">
+                    Urgent Only
+                    <button onClick={() => handleFilterChange('urgentOnly', false)} className="text-red-400 hover:text-red-700 w-4 h-4 rounded-full flex items-center justify-center hover:bg-slate-350/40 transition-colors font-medium">✕</button>
+                  </Badge>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="text-xs text-slate-500 hover:text-slate-700 hover:bg-slate-100 h-7 px-2.5 rounded-full font-medium"
+                >
+                  Clear all
+                </Button>
+              </div>
+            )}
+
+            {/* Skeleton Loaders (Active during fetching) */}
+            {isLoading && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Array.from({ length: 6 }).map((_, idx) => (
+                  <div key={idx} className="rounded-xl border border-slate-200/60 p-3 bg-white flex gap-3 animate-pulse">
+                    <div className="w-24 sm:w-28 h-18 sm:h-20 bg-slate-100 rounded-lg flex-shrink-0" />
+                    <div className="flex-1 space-y-2 py-1">
+                      <div className="h-2.5 bg-slate-100 rounded w-1/4" />
+                      <div className="h-4 bg-slate-100 rounded w-3/4" />
+                      <div className="h-3 bg-slate-100 rounded w-1/2" />
+                      <div className="h-4 bg-slate-100 rounded w-1/3 mt-2" />
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 
@@ -1074,7 +1190,7 @@ export default function SearchPage() {
                     return (
                       <div
                         key={vehicle.id}
-                        className="rounded-sm border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative bg-white border-slate-200 hover:border-slate-300"
+                        className="rounded-xl border overflow-hidden transition-all duration-300 cursor-pointer group relative bg-white border-slate-200/70 hover:border-slate-350 shadow-none hover:shadow-none hover:bg-slate-50/10"
                         onClick={() => router.push(buildAdUrl(vehicle))}
                       >
                         {/* Favorite Button */}
@@ -1082,16 +1198,17 @@ export default function SearchPage() {
                           <FavoriteButton adId={vehicle.id} />
                         </div>
 
-                        {(isBump || isUrgent) && (
-                          <div className="absolute bottom-2 right-2 z-10">
-                            <BoostBadges bumpActive={isBump} urgentActive={isUrgent} />
-                          </div>
-                        )}
-
-                        <div className="p-2">
+                        <div className="p-3">
                           <div className="flex gap-3">
-                            {/* Vehicle Image - Compact */}
-                            <div className="w-24 sm:w-28 h-18 sm:h-20 flex-shrink-0 relative overflow-hidden bg-slate-55 border border-slate-100 rounded-sm">
+                            {/* Vehicle Image Container */}
+                            <div className="w-24 sm:w-28 h-18 sm:h-20 flex-shrink-0 relative overflow-hidden bg-slate-55 border border-slate-100 rounded-lg">
+                              {/* Urgency Badge */}
+                              {isUrgent && (
+                                <Badge className="absolute top-1 left-1 z-10 bg-red-600 text-white border-0 text-[8px] font-bold px-1.5 py-0.5 shadow-[0_2px_4px_rgba(220,38,38,0.2)] rounded-full uppercase tracking-wider animate-pulse flex items-center gap-0.5">
+                                  <Zap className="h-2 w-2 fill-white" /> Urgent
+                                </Badge>
+                              )}
+
                               {(vehicle as any)?.media && (vehicle as any).media.length > 0 && (vehicle as any).media[0]?.media?.url ? (
                                 <img
                                   src={(vehicle as any).media[0].media.url}
@@ -1104,6 +1221,12 @@ export default function SearchPage() {
                                   alt={vehicle.title || 'Vehicle'}
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                 />
+                              )}
+
+                              {((vehicle as any).bumpActive || (vehicle as any).urgentActive || (vehicle as any).topAdActive || (vehicle as any).featuredActive) && (
+                                <div className="absolute bottom-1 right-1 z-10 scale-[0.75] origin-bottom-right">
+                                  <BoostBadges bumpActive={(vehicle as any).bumpActive} urgentActive={(vehicle as any).urgentActive} topAdActive={(vehicle as any).topAdActive} featuredActive={(vehicle as any).featuredActive} />
+                                </div>
                               )}
                             </div>
 
@@ -1122,8 +1245,14 @@ export default function SearchPage() {
                                   {formatAdTitle(vehicle)}
                                 </h3>
 
-                                <div className="text-[10px] text-slate-500 mt-0.5 line-clamp-1">
-                                  {vehicle.city || vehicle.location || ""}
+                                <div className="text-[10px] text-slate-550 mt-0.5 line-clamp-1 flex items-center gap-1.5">
+                                  <span>{vehicle.city || vehicle.location || ""}</span>
+                                  {vehicle.mileage !== undefined && vehicle.mileage !== null && (
+                                    <>
+                                      <span className="text-slate-300">•</span>
+                                      <span>{vehicle.mileage.toLocaleString()} km</span>
+                                    </>
+                                  )}
                                 </div>
                               </div>
 
@@ -1165,13 +1294,19 @@ export default function SearchPage() {
                 </div>
               </>
             ) : !isLoading && (
-              <Card className="p-12 text-center border-dashed border-2 bg-slate-50">
-                <Search className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-slate-900">No results found</h3>
-                <p className="text-slate-500 mt-1 max-w-xs mx-auto">Try adjusting your filters or clearing them to see more vehicles.</p>
-                <Button onClick={clearFilters} variant="outline" className="mt-6 border-slate-300">
-                  Clear all filters
-                </Button>
+              <Card className="p-10 text-center border border-slate-200/80 bg-white rounded-xl shadow-none">
+                <div className="mx-auto w-16 h-16 bg-teal-50 rounded-full flex items-center justify-center mb-4 text-teal-600">
+                  <Search className="h-8 w-8" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900">No matches found</h3>
+                <p className="text-slate-500 mt-2 text-sm max-w-sm mx-auto leading-relaxed">
+                  We couldn't find any vehicles matching your exact criteria. Try relaxing some of your filters to discover more options.
+                </p>
+                <div className="mt-6 flex justify-center gap-3">
+                  <Button onClick={clearFilters} className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-5 h-10 shadow-none font-semibold">
+                    Reset All Filters
+                  </Button>
+                </div>
               </Card>
             )}
 

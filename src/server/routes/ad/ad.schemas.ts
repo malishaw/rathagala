@@ -24,6 +24,7 @@ export const querySchema = z.object({
   city: z.string().optional(),
   district: z.string().optional(),
   type: z.string().optional(),
+  seller: z.string().optional(),
   filterByUser: z
     .string()
     .optional()

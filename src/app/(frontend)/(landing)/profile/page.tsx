@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, react/no-unescaped-entities */
 "use client"
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -17,7 +18,7 @@ import { buildAdUrl } from "@/lib/ad-url";
 import { betterFetch } from "@better-fetch/fetch";
 import { format } from "date-fns";
 import { getRelativeTime } from "@/lib/utils";
-import { Building2, Calendar, Car, CheckCircle, ChevronRight, CreditCard, Edit, Eye, Bookmark, Loader2, Lock, MapPin, MessageCircle, Phone, Shield, Trash2, Camera, Zap, TrendingUp, Star, AlertCircle } from "lucide-react";
+import { Building2, Calendar, Car, CheckCircle, ChevronRight, Edit, Eye, Bookmark, Loader2, Lock, MapPin, MessageCircle, Phone, Trash2, Camera, Zap, Mail, User } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { BoostSelector, type BoostSelection } from "@/features/boost/components/boost-selector";
 import { useRequestBoost } from "@/features/boost/api/use-request-boost";
@@ -47,10 +48,6 @@ interface User {
   } | null;
 }
 
-interface Session {
-  user: User;
-}
-
 // Ad type
 interface UserAd {
   id: string;
@@ -58,6 +55,8 @@ interface UserAd {
   price: number | null;
   location: string | null;
   createdAt: string;
+  updatedAt?: string | null;
+  seoSlug?: string | null;
   status?: string;
   media?: Array<{
     media: {
@@ -89,7 +88,6 @@ export default function ProfilePage() {
   const { locationData, provinces: locationProvinces } = useLocations();
   const [showSuccess, setShowSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState<string | null>(null);
   const [sidebarActive, setSidebarActive] = useState("personal");
   const [isSavingPhoto, setIsSavingPhoto] = useState(false);
   const [adsFilter, setAdsFilter] = useState<string>("all");
@@ -101,7 +99,7 @@ export default function ProfilePage() {
   const userAdsQuery = useGetUserAds();
 
   // Fetch favorites
-  const { data: favorites, isLoading: isFavoritesLoading, refetch: refetchFavorites } = useGetFavorites();
+  const { data: favorites, isLoading: isFavoritesLoading } = useGetFavorites();
 
   // Form data for profile edit
   const [formData, setFormData] = useState({
@@ -118,82 +116,53 @@ export default function ProfilePage() {
     confirmPassword: ""
   });
 
-  // Fetch actual user data from session
+  // Fetch user data directly from /api/users/me
   useEffect(() => {
     const fetchUserData = async () => {
       setIsLoading(true);
 
       try {
-        // Get user session from API
-        const { data: session, error } = await betterFetch<Session>("/api/auth/get-session");
+        const { data: meData, error } = await betterFetch<any>("/api/users/me");
 
-        if (error || !session) {
-          // If error or no session, redirect to signin
-          // Note: Middleware should handle this, but this is a fallback
+        if (error || !meData) {
           router.push("/signin?callbackUrl=/profile");
           return;
         }
 
-        // Fetch full user data to get organization info and phoneVerified
-        try {
-          const { data: meData } = await betterFetch<any>("/api/users/me");
+        const fullUser = {
+          id: meData.id,
+          name: meData.name,
+          email: meData.email,
+          avatar: meData.image || meData.avatar,
+          phone: meData.phone,
+          phoneVerified: meData.phoneVerified,
+          organization: meData.organization,
+          whatsappNumber: meData.whatsappNumber,
+          province: meData.province,
+          district: meData.district,
+          city: meData.city,
+          location: meData.location
+        };
 
-          console.log("meData from /api/users/me:", meData);
+        setUser(fullUser);
 
-          // Merge session user with full user data from API
-          const fullUser = {
-            ...session.user,
-            avatar: meData?.image || meData?.avatar || session.user.avatar,
-            phone: meData?.phone || session.user.phone,
-            phoneVerified: meData?.phoneVerified || session.user.phoneVerified,
-            organization: meData?.organization,
-            whatsappNumber: meData?.whatsappNumber || session.user.whatsappNumber,
-            province: meData?.province || session.user.province,
-            district: meData?.district || session.user.district,
-            city: meData?.city || session.user.city,
-            location: meData?.location || session.user.location
-          };
-
-          console.log("fullUser after merge:", fullUser);
-          setUser(fullUser);
-
-          // Initialize form data with user info
-          setFormData({
-            name: fullUser.name || "",
-            email: fullUser.email || "",
-            phone: fullUser.phone || "",
-            whatsappNumber: fullUser.whatsappNumber || "",
-            province: fullUser.province || "",
-            district: fullUser.district || "",
-            city: fullUser.city || "",
-            location: fullUser.location || "",
-            currentPassword: "",
-            newPassword: "",
-            confirmPassword: ""
-          });
-        } catch (meError) {
-          console.error("Error fetching full user data:", meError);
-
-          // Fallback to session data if /api/users/me fails
-          setUser(session.user);
-
-          setFormData({
-            name: session.user.name || "",
-            email: session.user.email || "",
-            phone: session.user.phone || "",
-            whatsappNumber: session.user.whatsappNumber || "",
-            province: session.user.province || "",
-            district: session.user.district || "",
-            city: session.user.city || "",
-            location: session.user.location || "",
-            currentPassword: "",
-            newPassword: "",
-            confirmPassword: ""
-          });
-        }
+        // Initialize form data with user info
+        setFormData({
+          name: fullUser.name || "",
+          email: fullUser.email || "",
+          phone: fullUser.phone || "",
+          whatsappNumber: fullUser.whatsappNumber || "",
+          province: fullUser.province || "",
+          district: fullUser.district || "",
+          city: fullUser.city || "",
+          location: fullUser.location || "",
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: ""
+        });
       } catch (error) {
         console.error("Error fetching user data:", error);
-        toast.error("Failed to load profile data");
+        router.push("/signin?callbackUrl=/profile");
       } finally {
         setIsLoading(false);
       }
@@ -224,10 +193,8 @@ export default function ProfilePage() {
   // Handle select change for location fields
   const handleFilterChange = (field: string, value: string) => {
     if (field === "province") {
-      // Reset district and city when province changes
       setFormData(prev => ({ ...prev, province: value, district: "", city: "" }));
     } else if (field === "district") {
-      // Reset city when district changes
       setFormData(prev => ({ ...prev, district: value, city: "" }));
     } else {
       setFormData(prev => ({ ...prev, [field]: value }));
@@ -249,11 +216,10 @@ export default function ProfilePage() {
   // Handle profile update
   const handleUpdateProfile = async () => {
     setIsSaving(true);
-    setErrorMessage(null); // Clear any previous error
+    setErrorMessage(null);
 
     try {
-      // Update user profile via API
-      const response = await betterFetch("/api/user/profile", {
+      const response = await betterFetch<any>("/api/user/profile", {
         method: "PATCH",
         body: {
           name: formData.name,
@@ -266,9 +232,7 @@ export default function ProfilePage() {
         }
       });
 
-      // Check if response has error or missing user data (validation error)
       if (!response.data?.user) {
-        // Try to extract error message from various possible paths
         const message =
           (response.error as any)?.message ||
           (response.data as any)?.message ||
@@ -279,7 +243,6 @@ export default function ProfilePage() {
         return;
       }
 
-      // Update local state
       if (user) {
         setUser({
           ...user,
@@ -293,15 +256,12 @@ export default function ProfilePage() {
         });
       }
 
-      // Show success message
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2000);
       toast.success("Profile updated successfully");
-      setActiveSection(null);
 
     } catch (error: any) {
       console.error("Error updating profile:", error);
-      // Extract error message from betterFetch thrown error - try multiple paths
       const message =
         error?.error?.message ||
         error?.data?.message ||
@@ -321,8 +281,7 @@ export default function ProfilePage() {
     setIsSaving(true);
 
     try {
-      // Update password via API
-      const { data, error } = await betterFetch("/api/user/change-password", {
+      const { error } = await betterFetch("/api/user/change-password", {
         method: "POST",
         body: {
           currentPassword: formData.currentPassword,
@@ -334,7 +293,6 @@ export default function ProfilePage() {
         throw new Error(error.message || "Failed to change password");
       }
 
-      // Reset password fields
       setFormData(prev => ({
         ...prev,
         currentPassword: "",
@@ -342,7 +300,6 @@ export default function ProfilePage() {
         confirmPassword: ""
       }));
 
-      // Show success message
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2000);
       toast.success("Password changed successfully");
@@ -351,7 +308,6 @@ export default function ProfilePage() {
       console.error("Error changing password:", error);
       toast.error("Failed to change password");
     } finally {
-      setActiveSection(null);
       setIsSaving(false);
     }
   };
@@ -370,17 +326,17 @@ export default function ProfilePage() {
   // Get phone verification badge
   const getPhoneVerificationBadge = (status: "verified" | "not_verified" | "rejected" | null | undefined) => {
     if (!status) {
-      return <Badge variant="outline" className="text-gray-500 text-xs">Not Verified</Badge>;
+      return <Badge variant="outline" className="text-zinc-500 text-xs border-zinc-200">Not Verified</Badge>;
     }
 
     switch (status) {
       case "verified":
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100 text-xs">Verified</Badge>;
+        return <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50 border border-emerald-200 text-xs">Verified</Badge>;
       case "rejected":
         return <Badge variant="destructive" className="text-xs">Rejected</Badge>;
       case "not_verified":
       default:
-        return <Badge variant="outline" className="text-yellow-600 text-xs">Not Verified</Badge>;
+        return <Badge variant="outline" className="text-amber-700 text-xs border-amber-200">Not Verified</Badge>;
     }
   };
 
@@ -397,7 +353,7 @@ export default function ProfilePage() {
   const handleDeleteAd = async (ad: UserAd) => {
     setIsDeleting(true);
     try {
-      const { data, error } = await betterFetch<{ message?: string }>(`/api/ad/${ad.id}`, {
+      const { error } = await betterFetch<{ message?: string }>(`/api/ad/${ad.id}`, {
         method: "DELETE",
         body: { reason: deleteReason },
       });
@@ -406,7 +362,6 @@ export default function ProfilePage() {
       }
       userAdsQuery.refetch();
 
-      // Build descriptive message: brand + model + year + vehicle type
       const parts = [
         ad.brand,
         ad.model,
@@ -437,8 +392,7 @@ export default function ProfilePage() {
     setIsSavingPhoto(true);
 
     try {
-      // Include all profile fields to avoid validation errors
-      const response = await betterFetch("/api/user/profile", {
+      const response = await betterFetch<any>("/api/user/profile", {
         method: "PATCH",
         body: {
           name: formData.name,
@@ -483,8 +437,7 @@ export default function ProfilePage() {
     setIsSavingPhoto(true);
 
     try {
-      // Include all profile fields to avoid validation errors
-      const response = await betterFetch("/api/user/profile", {
+      const response = await betterFetch<any>("/api/user/profile", {
         method: "PATCH",
         body: {
           name: formData.name,
@@ -585,17 +538,17 @@ export default function ProfilePage() {
 
     switch (status) {
       case "ACTIVE":
-        return <Badge className="bg-green-500 text-white">Active</Badge>;
+        return <Badge className="bg-emerald-500 text-white border-0">Active</Badge>;
       case "PENDING_REVIEW":
-        return <Badge className="bg-yellow-500 text-white">Pending Review</Badge>;
+        return <Badge className="bg-amber-500 text-white border-0">Pending Review</Badge>;
       case "REJECTED":
-        return <Badge className="bg-red-500 text-white">Rejected</Badge>;
+        return <Badge className="bg-red-500 text-white border-0">Rejected</Badge>;
       case "DRAFT":
-        return <Badge variant="outline">Draft</Badge>;
+        return <Badge variant="outline" className="border-zinc-200">Draft</Badge>;
       case "EXPIRED":
-        return <Badge variant="outline">Expired</Badge>;
+        return <Badge variant="outline" className="border-zinc-200">Expired</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline" className="border-zinc-200">{status}</Badge>;
     }
   };
 
@@ -605,7 +558,7 @@ export default function ProfilePage() {
   }, [userAdsQuery.data]);
 
   const sortByUpdatedDesc = (ads: UserAd[]) =>
-    [...ads].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    [...ads].sort((a, b) => new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime());
 
   const filteredAds = useMemo(() => {
     if (adsFilter === "pending") return sortByUpdatedDesc(userAds.filter((ad: UserAd) => ad.status === "PENDING_REVIEW"));
@@ -622,41 +575,37 @@ export default function ProfilePage() {
     return sortByUpdatedDesc(activeAds);
   }, [userAds, adsFilter]);
 
-  // Loading state for the entire page
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <Loader2 className="h-6 w-6 animate-spin text-[#024950]" />
       </div>
     );
   }
 
   if (!user) return null;
 
-  // First letter for avatar
   const firstLetter = user.name?.charAt(0).toUpperCase() || "U";
-
   const isAdsLoading = userAdsQuery.isLoading;
 
   return (
-    <div className="min-h-screen bg-slate-100 py-20 px-4">
+    <div className="min-h-screen bg-[#fafafa] py-16 px-4 md:px-8">
       <div className="max-w-6xl mx-auto">
-        {/* Boost Now Dialog */}
         <Dialog open={boostDialog.open} onOpenChange={(open) => setBoostDialog({ open, adId: open ? boostDialog.adId : null })}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-3xl bg-white border border-zinc-200">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
+              <DialogTitle className="flex items-center gap-2 text-zinc-900">
                 <Zap className="h-5 w-5 text-teal-600" />
                 Boost Your Ad
               </DialogTitle>
             </DialogHeader>
-            <BoostSelector onChange={setBoostSelection} showPaymentDetails={true} />
+            <BoostSelector onChange={setBoostSelection} showPaymentDetails={true} layout="two-column" />
             <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={() => setBoostDialog({ open: false, adId: null })}>
+              <Button variant="outline" className="border-zinc-200 hover:bg-zinc-50" onClick={() => setBoostDialog({ open: false, adId: null })}>
                 Cancel
               </Button>
               <Button
-                className="bg-teal-600 hover:bg-green-600 text-white"
+                className="bg-[#024950] hover:bg-[#0D5C63] text-white"
                 disabled={!boostSelection || boostSelection.boostTypes.length === 0 || isBoostPending}
                 onClick={() => {
                   if (!boostDialog.adId || !boostSelection || boostSelection.boostTypes.length === 0) return;
@@ -682,17 +631,17 @@ export default function ProfilePage() {
 
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={deleteDialog.open} onOpenChange={open => setDeleteDialog(d => ({ ...d, open }))}>
-          <AlertDialogContent className="bg-white/95 backdrop-blur-xl border-2 border-white/20">
+          <AlertDialogContent className="bg-white border border-zinc-200">
             <AlertDialogHeader>
-              <AlertDialogTitle className="text-slate-800">Are you absolutely sure?</AlertDialogTitle>
-              <AlertDialogDescription className="text-slate-600">
+              <AlertDialogTitle className="text-zinc-800 font-bold">Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription className="text-zinc-500">
                 This action cannot be undone. This will permanently delete the advertisement "{deleteDialog.ad?.title}" and remove its data from our servers.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="space-y-2 py-2">
-              <label className="text-sm font-medium text-slate-700">Reason for deletion</label>
+              <label className="text-xs font-semibold text-zinc-700">Reason for deletion</label>
               <Select value={deleteReason} onValueChange={value => setDeleteReason(value as DeleteAdReason)}>
-                <SelectTrigger>
+                <SelectTrigger className="border-zinc-200">
                   <SelectValue placeholder="Select reason" />
                 </SelectTrigger>
                 <SelectContent>
@@ -705,7 +654,7 @@ export default function ProfilePage() {
               </Select>
             </div>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting} className="bg-white/50 hover:bg-white/70 backdrop-blur-md border border-white/30">Cancel</AlertDialogCancel>
+              <AlertDialogCancel disabled={isDeleting} className="border border-zinc-200 bg-white hover:bg-zinc-50">Cancel</AlertDialogCancel>
               <AlertDialogAction
                 asChild
                 onClick={e => {
@@ -713,7 +662,7 @@ export default function ProfilePage() {
                   if (deleteDialog.ad) handleDeleteAd(deleteDialog.ad);
                 }}
               >
-                <Button variant="destructive" disabled={isDeleting} className="bg-gradient-to-r from-red-500 to-red-600">
+                <Button variant="destructive" disabled={isDeleting} className="bg-red-600 hover:bg-red-700 text-white">
                   {isDeleting ? "Deleting..." : "Delete"}
                 </Button>
               </AlertDialogAction>
@@ -723,19 +672,19 @@ export default function ProfilePage() {
 
         {/* Delete Success Popup */}
         <AlertDialog open={deleteSuccessDialog.open} onOpenChange={open => { if (!open) setDeleteSuccessDialog({ open: false, message: "" }); }}>
-          <AlertDialogContent className="bg-white/95 backdrop-blur-xl border-2 border-emerald-200 max-w-md">
+          <AlertDialogContent className="bg-white border border-zinc-200 max-w-md">
             <AlertDialogHeader className="text-center">
-              <div className="mx-auto mb-3 h-16 w-16 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
-                <CheckCircle className="h-8 w-8 text-white" />
+              <div className="mx-auto mb-3 h-12 w-12 rounded-full border border-emerald-200 bg-emerald-50 flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-emerald-600" />
               </div>
-              <AlertDialogTitle className="text-xl font-bold text-slate-800">Ad Deleted</AlertDialogTitle>
-              <AlertDialogDescription className="text-base text-slate-600 pt-2">
+              <AlertDialogTitle className="text-lg font-bold text-zinc-800">Ad Deleted</AlertDialogTitle>
+              <AlertDialogDescription className="text-sm text-zinc-500 pt-2">
                 {deleteSuccessDialog.message}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="justify-center sm:justify-center">
               <AlertDialogAction
-                className="bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700 border-0 px-8"
+                className="bg-[#024950] text-white hover:bg-[#0D5C63] border-0 px-8"
                 onClick={() => setDeleteSuccessDialog({ open: false, message: "" })}
               >
                 OK
@@ -746,16 +695,16 @@ export default function ProfilePage() {
 
         {/* Success indicator */}
         {showSuccess && (
-          <div className="fixed top-4 right-4 bg-white/90 backdrop-blur-xl border border-emerald-200 text-emerald-700 px-6 py-3 rounded-xl flex items-center z-50 animate-in slide-in-from-top">
-            <CheckCircle className="h-5 w-5 mr-2" />
+          <div className="fixed top-4 right-4 bg-white border border-emerald-200 text-emerald-700 px-4 py-2.5 rounded-lg flex items-center z-50 animate-in slide-in-from-top text-sm font-medium">
+            <CheckCircle className="h-4 w-4 mr-2" />
             Changes saved successfully!
           </div>
         )}
 
         {/* Error indicator */}
         {errorMessage && (
-          <div className="fixed top-4 right-4 bg-white/90 backdrop-blur-xl border border-red-200 text-red-700 px-6 py-3 rounded-xl flex items-center z-50 animate-in slide-in-from-top">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+          <div className="fixed top-4 right-4 bg-white border border-red-200 text-red-700 px-4 py-2.5 rounded-lg flex items-center z-50 animate-in slide-in-from-top text-sm font-medium">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
             {errorMessage}
@@ -763,16 +712,16 @@ export default function ProfilePage() {
         )}
 
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-[#0D5C63] via-teal-600 to-emerald-600 bg-clip-text text-transparent">Profile</h1>
+        <div className="flex justify-between items-center mb-8 border-b border-zinc-200 pb-4">
+          <h1 className="text-2xl font-bold text-zinc-950">My Account</h1>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-6 mt-6">
+        <div className="flex flex-col md:flex-row gap-8">
           {/* Left sidebar navigation */}
           <div className="md:w-1/4">
-            <div className="bg-white/80 backdrop-blur-xl border-2 border-white/20 rounded-2xl p-6 space-y-6">
+            <div className="bg-white border border-zinc-200 rounded-2xl p-5 space-y-6">
               {/* User info at the top of sidebar */}
-              <div className="text-center">
+              <div className="text-center flex flex-col items-center border-b border-zinc-100 pb-5">
                 <div className="relative inline-block mb-3 group">
                   <MediaGallery
                     onMediaSelect={handlePhotoSelect}
@@ -780,29 +729,28 @@ export default function ProfilePage() {
                     title="Change Profile Photo"
                   >
                     <button
-                      className="relative cursor-pointer transition-transform hover:scale-105"
+                      className="relative cursor-pointer transition-all hover:opacity-90 focus:outline-none"
                       disabled={isSavingPhoto}
                     >
-                      <Avatar className="h-20 w-20 ring-4 ring-white/50 group-hover:ring-teal-500/50 transition-all">
+                      <Avatar className="h-20 w-20 border border-zinc-200">
                         <AvatarImage src={user.avatar} alt={user.name} />
-                        <AvatarFallback className="bg-gradient-to-br from-[#0D5C63] to-teal-600 text-white text-2xl font-semibold">
+                        <AvatarFallback className="bg-zinc-100 text-zinc-700 text-2xl font-bold">
                           {firstLetter}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <Camera className="h-6 w-6 text-white" />
                       </div>
                     </button>
                   </MediaGallery>
-                  <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-emerald-500 border-2 border-white rounded-full"></div>
                 </div>
-                <h2 className="font-semibold text-lg text-slate-800">{user.name}</h2>
-                <p className="text-sm text-slate-500">{user.email}</p>
+                <h2 className="font-bold text-base text-zinc-900 tracking-tight">{user.name}</h2>
+                <p className="text-xs text-zinc-500 mt-1 font-medium bg-zinc-50 border border-zinc-200/50 px-2.5 py-0.5 rounded-full">{user.email}</p>
                 {user.avatar && (
                   <button
                     onClick={handleRemovePhoto}
                     disabled={isSavingPhoto}
-                    className="text-xs cursor-pointer text-red-600 hover:text-red-700 mt-2 transition-colors"
+                    className="text-xs cursor-pointer text-red-500 hover:text-red-600 font-semibold mt-2.5 transition-colors"
                   >
                     Remove photo
                   </button>
@@ -812,20 +760,20 @@ export default function ProfilePage() {
               {/* Navigation options */}
               <div className="space-y-1">
                 <button
-                  className={`cursor-pointer hover:bg-gray-100 w-full text-left py-3 px-4 rounded-xl transition-all duration-300 flex items-center gap-3 ${sidebarActive === "personal"
-                    ? "bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white font-semibold"
-                    : "text-slate-700  hover:backdrop-blur-md"
+                  className={`cursor-pointer w-full text-left py-2.5 px-3.5 rounded-xl transition-colors flex items-center gap-3 text-sm font-medium ${sidebarActive === "personal"
+                    ? "bg-[#024950] text-white"
+                    : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
                     }`}
                   onClick={() => setSidebarActive("personal")}
                 >
-                  <Shield className="w-4 h-4" />
-                  Personal Information
+                  <User className="w-4 h-4" />
+                  Personal Info
                 </button>
 
                 <button
-                  className={`cursor-pointer w-full text-left py-3 px-4 rounded-xl transition-all duration-300 flex items-center gap-3 ${sidebarActive === "security"
-                    ? "bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white font-semibold"
-                    : "text-slate-700 hover:bg-gray-100 hover:backdrop-blur-md"
+                  className={`cursor-pointer w-full text-left py-2.5 px-3.5 rounded-xl transition-colors flex items-center gap-3 text-sm font-medium ${sidebarActive === "security"
+                    ? "bg-[#024950] text-white"
+                    : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
                     }`}
                   onClick={() => setSidebarActive("security")}
                 >
@@ -834,9 +782,9 @@ export default function ProfilePage() {
                 </button>
 
                 <button
-                  className={`w-full cursor-pointer text-left py-3 px-4 rounded-xl transition-all duration-300 flex items-center gap-3 ${sidebarActive === "ads"
-                    ? "bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white font-semibold"
-                    : "text-slate-700 hover:bg-gray-100 hover:backdrop-blur-md"
+                  className={`w-full cursor-pointer text-left py-2.5 px-3.5 rounded-xl transition-colors flex items-center gap-3 text-sm font-medium ${sidebarActive === "ads"
+                    ? "bg-[#024950] text-white"
+                    : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
                     }`}
                   onClick={() => setSidebarActive("ads")}
                 >
@@ -845,9 +793,9 @@ export default function ProfilePage() {
                 </button>
 
                 <button
-                  className={`w-full cursor-pointer text-left py-3 px-4 rounded-xl transition-all duration-300 flex items-center gap-3 ${sidebarActive === "favorites"
-                    ? "bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white font-semibold"
-                    : "text-slate-700 hover:bg-gray-100 hover:backdrop-blur-md"
+                  className={`w-full cursor-pointer text-left py-2.5 px-3.5 rounded-xl transition-colors flex items-center gap-3 text-sm font-medium ${sidebarActive === "favorites"
+                    ? "bg-[#024950] text-white"
+                    : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
                     }`}
                   onClick={() => setSidebarActive("favorites")}
                 >
@@ -857,248 +805,155 @@ export default function ProfilePage() {
               </div>
 
               {/* Signout Button */}
-              <div className="pt-4 border-t border-white/30">
+              <div className="pt-4 border-t border-zinc-100">
                 <SignoutButton
                   variant="outline"
-                  className="w-full bg-white/80 backdrop-blur-md text-red-600 hover:bg-red-50 border-2 hover:text-red-600  border-white/30 hover:border-red-200 transition-all duration-300"
+                  className="w-full bg-white text-zinc-700 hover:bg-zinc-50 border border-zinc-200 rounded-xl py-2.5 text-sm font-medium"
                 />
               </div>
             </div>
           </div>
 
           {/* Right content area */}
-          <div className="md:w-3/4 space-y-6">
+          <div className="md:w-3/4">
             {/* Personal Information */}
             {sidebarActive === "personal" && (
-              <div className="bg-white/80 backdrop-blur-xl border-2 border-white/20 rounded-2xl p-8 space-y-6">
-                <div className="border-b border-white/30 pb-4">
-                  <h2 className="text-2xl font-bold bg-gradient-to-r from-[#0D5C63] to-teal-600 bg-clip-text text-transparent mb-2">
+              <div className="bg-white border border-zinc-200 rounded-2xl p-6 md:p-8 space-y-6">
+                <div className="border-b border-zinc-100 pb-4">
+                  <h2 className="text-xl font-bold text-zinc-900 mb-1">
                     Personal Information
                   </h2>
-                  <p className="text-sm text-slate-600">
-                    Update your personal details here.
+                  <p className="text-xs text-zinc-500">
+                    Update your details and location settings.
                   </p>
                 </div>
 
-                <div className="space-y-5">
-                  {activeSection === "personal" ? (
-                    <div className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-6 space-y-4">
-                      <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">Name</label>
-                        <Input
-                          name="name"
-                          value={formData.name}
-                          onChange={handleChange}
-                          className="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 focus:border-[#0D5C63] focus:bg-white/80 transition-all duration-300 rounded-xl h-12 text-slate-800"
-                          placeholder="Your name"
-                        />
+                <div className="space-y-6">
+                  {user.organization && (
+                    <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <Building2 className="h-4 w-4 text-zinc-500" />
+                        <div>
+                          <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Organization</div>
+                          <div className="font-bold text-sm text-zinc-800">{user.organization.name}</div>
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">Phone Number</label>
+                      <Badge className="bg-zinc-100 text-zinc-700 border border-zinc-200 hover:bg-zinc-100 text-xs font-medium px-2 py-0.5 rounded-full">
+                        Assigned
+                      </Badge>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Name</label>
+                      <Input
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        className="w-full bg-white border border-zinc-200 focus:border-[#024950] focus:ring-0 transition-colors rounded-xl h-10 text-sm text-zinc-800"
+                        placeholder="Your name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Email Address</label>
+                      <Input
+                        value={formData.email}
+                        disabled
+                        className="w-full bg-zinc-50 border border-zinc-200 rounded-xl h-10 text-sm text-zinc-500 cursor-not-allowed"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Phone Number</label>
+                      <div className="space-y-2">
                         <Input
                           name="phone"
                           value={formData.phone}
                           onChange={handleChange}
-                          className="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 focus:border-[#0D5C63] focus:bg-white/80 transition-all duration-300 rounded-xl h-12 text-slate-800"
+                          className="w-full bg-white border border-zinc-200 focus:border-[#024950] focus:ring-0 transition-colors rounded-xl h-10 text-sm text-zinc-800"
                           placeholder="Your phone number"
                         />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">WhatsApp Number</label>
-                        <Input
-                          name="whatsappNumber"
-                          value={formData.whatsappNumber}
-                          onChange={handleChange}
-                          className="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 focus:border-[#0D5C63] focus:bg-white/80 transition-all duration-300 rounded-xl h-12 text-slate-800"
-                          placeholder="Your WhatsApp number"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">Province</label>
-                        <Select value={formData.province} onValueChange={(value) => handleFilterChange("province", value)}>
-                          <SelectTrigger className="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 focus:border-[#0D5C63] focus:bg-white/80 transition-all duration-300 rounded-xl h-12 text-slate-800">
-                            <SelectValue placeholder="Select province" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {locationProvinces.map((p) => (
-                              <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">District</label>
-                        <Select
-                          value={formData.district}
-                          onValueChange={(value) => handleFilterChange("district", value)}
-                          disabled={!formData.province}
-                        >
-                          <SelectTrigger className="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 focus:border-[#0D5C63] focus:bg-white/80 transition-all duration-300 rounded-xl h-12 text-slate-800">
-                            <SelectValue placeholder={formData.province ? "Select district" : "Select province first"} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {getDistrictsForProvince(formData.province).map((district) => (
-                              <SelectItem key={district} value={district}>{district}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">City</label>
-                        <CitySearchDropdown
-                          cities={getCitiesForDistrict(formData.province, formData.district)}
-                          value={formData.city}
-                          onChange={(value) => handleFilterChange("city", value)}
-                          disabled={!formData.district}
-                          placeholder="Select city"
-                          disabledPlaceholder="Select district first"
-                          triggerClassName="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 rounded-xl h-12 text-slate-800"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">Location</label>
-                        <Input
-                          name="location"
-                          value={formData.location}
-                          onChange={handleChange}
-                          className="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 focus:border-[#0D5C63] focus:bg-white/80 transition-all duration-300 rounded-xl h-12 text-slate-800"
-                          placeholder="Your detailed location"
-                        />
-                      </div>
-                      <div className="flex gap-3 pt-2">
-                        <Button
-                          variant="outline"
-                          className="flex-1 cursor-pointer bg-white hover:bg-gray-100 text-black hover:text-black border-2 border-white/30"
-                          onClick={() => setActiveSection(null)}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          className="flex-1 cursor-pointer  bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700 border-0"
-                          onClick={handleUpdateProfile}
-                        >
-                          {isSaving ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Saving...
-                            </>
-                          ) : "Save Changes"}
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          {getPhoneVerificationBadge(user.phoneVerified)}
+                        </div>
                       </div>
                     </div>
-                  ) : (
-                    <>
-                      <div
-                        className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-6 flex justify-between items-center cursor-pointer hover:bg-white/70 hover:border-[#0D5C63]/30 transition-all duration-300 group"
-                        onClick={() => setActiveSection("personal")}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#0D5C63] to-teal-600 flex items-center justify-center">
-                            <Shield className="h-6 w-6 text-white" />
-                          </div>
-                          <div>
-                            <div className="text-sm text-slate-500 font-medium">Name</div>
-                            <div className="font-semibold text-slate-800 mt-1">{user.name}</div>
-                          </div>
-                        </div>
-                        <div className="h-10 w-10 rounded-lg bg-white/50 flex items-center justify-center group-hover:bg-gradient-to-r from-[#0D5C63] to-teal-600 transition-all duration-300">
-                          <ChevronRight className="h-5 w-5 text-slate-600 group-hover:text-white" />
-                        </div>
-                      </div>
-
-                      {user.organization && (
-                        <div
-                          className="bg-blue-50/50 backdrop-blur-md rounded-xl border-2 border-blue-100 p-6 flex justify-between items-center hover:bg-blue-100/50 transition-all duration-300 group"
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
-                              <Building2 className="h-6 w-6 text-white" />
-                            </div>
-                            <div>
-                              <div className="text-sm text-blue-600 font-medium">Organization</div>
-                              <div className="font-semibold text-slate-800 mt-1">{user.organization.name}</div>
-                            </div>
-                          </div>
-                          <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100 font-normal">
-                            Assigned
-                          </Badge>
-                        </div>
-                      )}
-
-                      <div
-                        className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-6 flex justify-between items-center cursor-pointer hover:bg-white/70 hover:border-[#0D5C63]/30 transition-all duration-300 group"
-                        onClick={() => setActiveSection("personal")}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                            <Phone className="h-6 w-6 text-white" />
-                          </div>
-                          <div>
-                            <div className="text-sm text-slate-500 font-medium">Phone Number</div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <div className="font-semibold text-slate-800">{user.phone || "Not set"}</div>
-                              {user.phone && getPhoneVerificationBadge(user.phoneVerified)}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="h-10 w-10 rounded-lg bg-white/50 flex items-center justify-center group-hover:bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300">
-                          <ChevronRight className="h-5 w-5 text-slate-600 group-hover:text-white" />
-                        </div>
-                      </div>
-
-                      <div
-                        className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-6 flex justify-between items-center cursor-pointer hover:bg-white/70 hover:border-[#0D5C63]/30 transition-all duration-300 group"
-                        onClick={() => setActiveSection("personal")}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
-                            <MessageCircle className="h-6 w-6 text-white" />
-                          </div>
-                          <div>
-                            <div className="text-sm text-slate-500 font-medium">WhatsApp Number</div>
-                            <div className="font-semibold text-slate-800 mt-1">{user.whatsappNumber || "Not set"}</div>
-                          </div>
-                        </div>
-                        <div className="h-10 w-10 rounded-lg bg-white/50 flex items-center justify-center group-hover:bg-gradient-to-r from-green-500 to-green-600 transition-all duration-300">
-                          <ChevronRight className="h-5 w-5 text-slate-600 group-hover:text-white" />
-                        </div>
-                      </div>
-
-                      <div
-                        className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-6 flex justify-between items-center cursor-pointer hover:bg-white/70 hover:border-[#0D5C63]/30 transition-all duration-300 group"
-                        onClick={() => setActiveSection("personal")}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
-                            <MapPin className="h-6 w-6 text-white" />
-                          </div>
-                          <div>
-                            <div className="text-sm text-slate-500 font-medium">Location</div>
-                            <div className="font-semibold text-slate-800 mt-1">
-                              {user.city && user.province ? `${user.city}, ${user.province}` : user.city || user.province || "Not set"}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="h-10 w-10 rounded-lg bg-white/50 flex items-center justify-center group-hover:bg-gradient-to-r from-purple-500 to-purple-600 transition-all duration-300">
-                          <ChevronRight className="h-5 w-5 text-slate-600 group-hover:text-white" />
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  <div className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-6 flex justify-between items-center hover:bg-white/70 hover:border-teal-500/30 transition-all duration-300 group">
-                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center">
-                        <CreditCard className="h-6 w-6 text-white" />
-                      </div>
-                      <div>
-                        <div className="text-sm text-slate-500 font-medium">Email</div>
-                        <div className="font-semibold text-slate-800 mt-1">{user.email}</div>
-                      </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">WhatsApp Number</label>
+                      <Input
+                        name="whatsappNumber"
+                        value={formData.whatsappNumber}
+                        onChange={handleChange}
+                        className="w-full bg-white border border-zinc-200 focus:border-[#024950] focus:ring-0 transition-colors rounded-xl h-10 text-sm text-zinc-800"
+                        placeholder="Your WhatsApp number"
+                      />
                     </div>
-                    <div className="h-10 w-10 rounded-lg bg-white/50 flex items-center justify-center group-hover:bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-300">
-                      <ChevronRight className="h-5 w-5 text-slate-600 group-hover:text-white" />
+                    <div>
+                      <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Province</label>
+                      <Select value={formData.province} onValueChange={(value) => handleFilterChange("province", value)}>
+                        <SelectTrigger className="w-full bg-white border border-zinc-200 focus:border-[#024950] focus:ring-0 transition-colors rounded-xl h-10 text-sm text-zinc-800">
+                          <SelectValue placeholder="Select province" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {locationProvinces.map((p) => (
+                            <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">District</label>
+                      <Select
+                        value={formData.district}
+                        onValueChange={(value) => handleFilterChange("district", value)}
+                        disabled={!formData.province}
+                      >
+                        <SelectTrigger className="w-full bg-white border border-zinc-200 focus:border-[#024950] focus:ring-0 transition-colors rounded-xl h-10 text-sm text-zinc-800">
+                          <SelectValue placeholder={formData.province ? "Select district" : "Select province first"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {getDistrictsForProvince(formData.province).map((district) => (
+                            <SelectItem key={district} value={district}>{district}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">City</label>
+                      <CitySearchDropdown
+                        cities={getCitiesForDistrict(formData.province, formData.district)}
+                        value={formData.city}
+                        onChange={(value) => handleFilterChange("city", value)}
+                        disabled={!formData.district}
+                        placeholder="Select city"
+                        disabledPlaceholder="Select district first"
+                        triggerClassName="w-full bg-white border border-zinc-200 rounded-xl h-10 text-sm text-zinc-800"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Detailed Location</label>
+                      <Input
+                        name="location"
+                        value={formData.location}
+                        onChange={handleChange}
+                        className="w-full bg-white border border-zinc-200 focus:border-[#024950] focus:ring-0 transition-colors rounded-xl h-10 text-sm text-zinc-800"
+                        placeholder="Your detailed location"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-4 border-t border-zinc-100">
+                    <Button
+                      className="bg-[#024950] hover:bg-[#0D5C63] text-white rounded-xl h-10 px-6 border-0 text-sm font-medium transition-colors"
+                      onClick={handleUpdateProfile}
+                    >
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : "Save Changes"}
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -1106,121 +961,82 @@ export default function ProfilePage() {
 
             {/* Security Settings */}
             {sidebarActive === "security" && (
-              <div className="bg-white/80 backdrop-blur-xl border-2 border-white/20 rounded-2xl p-8 space-y-6">
-                <div className="border-b border-white/30 pb-4">
-                  <h2 className="text-2xl font-bold bg-gradient-to-r from-[#0D5C63] to-teal-600 bg-clip-text text-transparent mb-2">
+              <div className="bg-white border border-zinc-200 rounded-2xl p-6 md:p-8 space-y-6">
+                <div className="border-b border-zinc-100 pb-4">
+                  <h2 className="text-xl font-bold text-zinc-900 mb-1">
                     Sign-In and Security
                   </h2>
-                  <p className="text-sm text-slate-600">
-                    Manage settings related to signing in to your account, account security and how to recover your data
-                    when you are having trouble signing in.
+                  <p className="text-xs text-zinc-500">
+                    Manage your password and security credentials.
                   </p>
                 </div>
 
-                <div className="space-y-4">
-                  {/* Password card */}
-                  <div
-                    className="bg-white/60 backdrop-blur-md rounded-xl border-2 border-white/30 p-6 flex justify-between items-center cursor-pointer hover:bg-white/70 hover:border-amber-500/30 transition-all duration-300 group"
-                    onClick={() => setActiveSection("password")}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
-                        <Lock className="h-6 w-6 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-slate-800">Password</h3>
-                        <p className="text-sm text-slate-500 mt-1">Last updated: Not available</p>
-                      </div>
-                    </div>
-                    <div className="h-10 w-10 rounded-lg bg-white/50 flex items-center justify-center group-hover:bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-300">
-                      <ChevronRight className="h-5 w-5 text-slate-600 group-hover:text-white" />
-                    </div>
+                <div className="max-w-md space-y-5">
+                  <div>
+                    <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Current Password</label>
+                    <Input
+                      name="currentPassword"
+                      type="password"
+                      value={formData.currentPassword}
+                      onChange={handleChange}
+                      className="w-full bg-white border border-zinc-200 focus:border-[#024950] focus:ring-0 transition-colors rounded-xl h-10 text-sm text-zinc-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">New Password</label>
+                    <Input
+                      name="newPassword"
+                      type="password"
+                      value={formData.newPassword}
+                      onChange={handleChange}
+                      className="w-full bg-white border border-zinc-200 focus:border-[#024950] focus:ring-0 transition-colors rounded-xl h-10 text-sm text-zinc-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Confirm New Password</label>
+                    <Input
+                      name="confirmPassword"
+                      type="password"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      className="w-full bg-white border border-zinc-200 focus:border-[#024950] focus:ring-0 transition-colors rounded-xl h-10 text-sm text-zinc-800"
+                    />
+                  </div>
+
+                  <div className="pt-2">
+                    <Button
+                      className="w-full bg-[#024950] hover:bg-[#0D5C63] text-white rounded-xl h-10 border-0 transition-colors text-sm font-medium"
+                      onClick={handleChangePassword}
+                      disabled={!formData.currentPassword || !formData.newPassword || formData.newPassword !== formData.confirmPassword}
+                    >
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Changing...
+                        </>
+                      ) : "Change Password"}
+                    </Button>
                   </div>
                 </div>
-
-                {/* Password change form */}
-                {activeSection === "password" && (
-                  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white/95 backdrop-blur-xl rounded-2xl border-2 border-white/20 p-8 max-w-md w-full">
-                      <h3 className="text-2xl font-bold bg-gradient-to-r from-[#0D5C63] to-teal-600 bg-clip-text text-transparent mb-6">
-                        Change Password
-                      </h3>
-                      <div className="space-y-5">
-                        <div>
-                          <label className="block text-sm font-semibold text-slate-700 mb-2">Current Password</label>
-                          <Input
-                            name="currentPassword"
-                            type="password"
-                            value={formData.currentPassword}
-                            onChange={handleChange}
-                            className="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 focus:border-[#0D5C63] focus:bg-white/80 transition-all duration-300 rounded-xl h-12 text-slate-800"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-semibold text-slate-700 mb-2">New Password</label>
-                          <Input
-                            name="newPassword"
-                            type="password"
-                            value={formData.newPassword}
-                            onChange={handleChange}
-                            className="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 focus:border-[#0D5C63] focus:bg-white/80 transition-all duration-300 rounded-xl h-12 text-slate-800"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-semibold text-slate-700 mb-2">Confirm New Password</label>
-                          <Input
-                            name="confirmPassword"
-                            type="password"
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                            className="w-full bg-white/60 backdrop-blur-md border-2 border-white/30 focus:border-[#0D5C63] focus:bg-white/80 transition-all duration-300 rounded-xl h-12 text-slate-800"
-                          />
-                        </div>
-
-                        <div className="flex gap-3 pt-4">
-                          <Button
-                            variant="outline"
-                            className="flex-1 bg-white/50 hover:bg-white/70 backdrop-blur-md border-2 border-white/30"
-                            onClick={() => setActiveSection(null)}
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            className="flex-1 bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700 border-0"
-                            onClick={handleChangePassword}
-                            disabled={!formData.currentPassword || !formData.newPassword || formData.newPassword !== formData.confirmPassword}
-                          >
-                            {isSaving ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Changing...
-                              </>
-                            ) : "Change Password"}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 
-            {/* My Ads - Updated to use the real data from API */}
+            {/* My Ads */}
             {sidebarActive === "ads" && (
-              <div className="bg-white/80 backdrop-blur-xl border-2 border-white/20 rounded-2xl p-8 space-y-6">
-                <div className="flex justify-between items-center border-b border-white/30 pb-4">
+              <div className="bg-white border border-zinc-200 rounded-2xl p-6 md:p-8 space-y-6">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-zinc-100 pb-4">
                   <div id="my-ads">
-                    <h2 className="text-2xl font-bold bg-gradient-to-r from-[#0D5C63] to-teal-600 bg-clip-text text-transparent mb-2">
+                    <h2 className="text-xl font-bold text-zinc-900 mb-1">
                       My Ads
                     </h2>
-                    <p className="text-sm text-slate-600">
+                    <p className="text-xs text-zinc-500">
                       Manage your posted advertisements
                     </p>
                   </div>
                   <Button
-                    className="bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700 border-0 px-6"
+                    className="bg-[#024950] hover:bg-[#0D5C63] text-white rounded-xl px-5 h-10 border-0 self-start sm:self-auto text-sm font-medium transition-colors"
                     onClick={() => router.push("/sell/new")}
                   >
                     Post New Ad
@@ -1229,9 +1045,9 @@ export default function ProfilePage() {
 
                 {/* Filter dropdown */}
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-slate-600">Filter:</span>
+                  <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Filter:</span>
                   <Select value={adsFilter} onValueChange={setAdsFilter}>
-                    <SelectTrigger className="w-48 bg-white/60 border-2 border-white/30 rounded-xl h-9 text-sm text-slate-700">
+                    <SelectTrigger className="w-48 bg-white border border-zinc-200 rounded-xl h-9 text-xs text-zinc-700">
                       <SelectValue placeholder="All Ads" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1247,9 +1063,9 @@ export default function ProfilePage() {
                   {adsFilter !== "all" && (
                     <button
                       onClick={() => setAdsFilter("all")}
-                      className="text-xs text-slate-500 hover:text-slate-700 underline cursor-pointer transition-colors"
+                      className="text-xs text-zinc-500 hover:text-zinc-700 underline cursor-pointer transition-colors font-medium"
                     >
-                      Clear filter
+                      Clear
                     </button>
                   )}
                 </div>
@@ -1257,26 +1073,26 @@ export default function ProfilePage() {
                 <div className="space-y-4">
                   {isAdsLoading ? (
                     <div className="p-12 flex justify-center">
-                      <Loader2 className="h-10 w-10 animate-spin text-[#0D5C63]" />
+                      <Loader2 className="h-6 w-6 animate-spin text-[#024950]" />
                     </div>
                   ) : filteredAds.length === 0 ? (
-                    <div className="p-12 text-center">
-                      <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 mx-auto flex items-center justify-center mb-4">
-                        <Car className="h-10 w-10 text-slate-400" />
+                    <div className="p-12 text-center border border-dashed border-zinc-200 rounded-xl bg-zinc-50/50">
+                      <div className="h-10 w-10 border border-zinc-200 rounded-lg bg-white mx-auto flex items-center justify-center mb-3 text-zinc-400">
+                        <Car className="h-5 w-5" />
                       </div>
                       {userAds.length === 0 ? (
                         <>
-                          <p className="text-slate-600 mb-5 text-lg font-medium">You haven't posted any ads yet</p>
+                          <p className="text-zinc-600 mb-4 text-sm font-semibold">You haven't posted any ads yet</p>
                           <Button
-                            className="bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700 border-0 px-8"
+                            className="bg-[#024950] hover:bg-[#0D5C63] text-white rounded-xl px-6 h-10 border-0 text-sm font-medium transition-colors"
                             onClick={() => router.push("/sell/new")}
                           >
                             Post Your First Ad
                           </Button>
                         </>
                       ) : (
-                        <p className="text-slate-600 text-lg font-medium">
-                          No ads found
+                        <p className="text-zinc-500 text-sm font-semibold">
+                          No ads match this filter
                         </p>
                       )}
                     </div>
@@ -1285,133 +1101,144 @@ export default function ProfilePage() {
                       return (
                         <div
                           key={ad.id}
-                          className="group relative overflow-hidden rounded-sm border border-slate-200/70 bg-white/85 p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-teal-300/70 hover:shadow-lg"
+                          className="group relative overflow-hidden rounded-xl border border-zinc-250/80 bg-white p-4 transition-colors hover:border-zinc-300 flex flex-col gap-4"
                         >
-                          <div className="absolute inset-x-0 top-0 h-1 " />
-
                           <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                             <button
                               type="button"
-                              className="relative h-24 w-full overflow-hidden rounded-xl border border-slate-200 sm:h-24 sm:w-32"
+                              className="relative h-24 w-full overflow-hidden rounded-xl border border-zinc-100 sm:h-20 sm:w-28 flex-shrink-0 cursor-pointer"
                               onClick={() => router.push(buildAdUrl(ad))}
                             >
                               {getAdImage(ad) ? (
                                 <img
                                   src={getAdImage(ad)}
                                   alt={ad.title}
-                                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-102"
                                 />
                               ) : (
-                                <div className="flex h-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
-                                  <Car className="h-10 w-10 text-slate-400" />
+                                <div className="flex h-full items-center justify-center bg-zinc-50">
+                                  <Car className="h-6 w-6 text-zinc-300" />
                                 </div>
                               )}
                             </button>
 
-                            <div className="min-w-0 flex-1">
-                              <div className="mb-2 flex flex-wrap items-start gap-2">
-                                <button
-                                  type="button"
-                                  className="line-clamp-2 text-left text-base font-semibold text-slate-800 transition-colors hover:text-[#0D5C63] sm:text-lg"
-                                  onClick={() => router.push(buildAdUrl(ad))}
-                                >
-                                  {ad.title}
-                                </button>
-                                {getStatusBadge(ad.status)}
+                            <div className="min-w-0 flex-1 flex flex-col justify-between min-h-[80px]">
+                              <div>
+                                <div className="mb-1 flex flex-wrap items-center gap-2">
+                                  <button
+                                    type="button"
+                                    className="line-clamp-2 text-left text-sm font-bold text-zinc-800 transition-colors hover:text-[#024950] cursor-pointer"
+                                    onClick={() => router.push(buildAdUrl(ad))}
+                                  >
+                                    {ad.title}
+                                  </button>
+                                  <span className="inline-block">{getStatusBadge(ad.status)}</span>
+                                </div>
+
+                                <div className="text-sm font-bold text-zinc-900">
+                                  Rs {formatPrice(ad.price, (ad as any).metadata?.isNegotiable)}
+                                </div>
                               </div>
 
-                              <div className="text-sm font-bold text-[#0D5C63]">
-                                Rs {formatPrice(ad.price, (ad as any).metadata?.isNegotiable)}
-                              </div>
-
-                              <div className="mt-3 flex flex-wrap gap-2 text-xs sm:text-xs">
-                                <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">
-                                  <Calendar className="h-3.5 w-3.5" />
+                              <div className="mt-2.5 flex flex-wrap gap-2 text-xs">
+                                <div className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-50 border border-zinc-200/50 px-2 py-0.5 text-zinc-500 font-medium">
+                                  <Calendar className="h-3.5 w-3.5 text-zinc-400" />
                                   <span>Posted: {formatDate(ad.createdAt)}</span>
                                 </div>
                                 {ad.updatedAt && ad.updatedAt !== ad.createdAt && (
-                                  <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-blue-600">
-                                    <Calendar className="h-3.5 w-3.5" />
+                                  <div className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-50 border border-zinc-200/50 px-2 py-0.5 text-zinc-500 font-medium">
+                                    <Calendar className="h-3.5 w-3.5 text-zinc-400" />
                                     <span>Updated: {formatDate(ad.updatedAt)}</span>
                                   </div>
                                 )}
-                                <div className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-2.5 py-1 text-teal-700">
-                                  <Eye className="h-3.5 w-3.5" />
+                                <div className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-50 border border-zinc-200/50 px-2 py-0.5 text-zinc-500 font-medium">
+                                  <Eye className="h-3.5 w-3.5 text-zinc-400" />
                                   {ad.analytics?.views || 0} views
                                 </div>
                               </div>
-
                             </div>
 
-                            <div className="flex shrink-0 flex-col gap-2 sm:items-end">
-                              <div className="flex gap-2 sm:justify-end">
+                            <div className="flex sm:flex-col gap-2 sm:items-end flex-wrap mt-2 sm:mt-0">
+                              <div className="flex gap-2">
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="h-9 rounded-lg border-slate-200 bg-white text-slate-600 hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700"
-                                  onClick={() => router.push(`/edit-ad/${ad.id}`)}
+                                  className="h-8 rounded-lg border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 shadow-none cursor-pointer text-xs"
+                                  onClick={() => router.push(`/edit-ad/${ad.seoSlug || ad.id}`)}
                                 >
-                                  <Edit className="h-4 w-4" />
-                                  <span className="ml-1 hidden sm:inline">Edit</span>
+                                  <Edit className="h-3.5 w-3.5 mr-1" />
+                                  <span>Edit</span>
                                 </Button>
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="h-9 rounded-lg border-slate-200 bg-white text-slate-600 hover:border-red-300 hover:bg-red-50 hover:text-red-600"
+                                  className="h-8 rounded-lg border-zinc-200 bg-white text-red-600 hover:bg-red-50 hover:border-red-200 shadow-none cursor-pointer text-xs"
                                   onClick={() => setDeleteDialog({ open: true, ad })}
                                 >
-                                  <Trash2 className="h-4 w-4" />
-                                  <span className="ml-1 hidden sm:inline">Delete</span>
+                                  <Trash2 className="h-3.5 w-3.5 mr-1" />
+                                  <span>Delete</span>
                                 </Button>
                               </div>
 
-                              {(ad as any).boostStatus === "PENDING" ? (
-                                <Badge className="border-orange-200 bg-orange-100 text-xs text-orange-700">
-                                  Boost Requested
-                                </Badge>
-                              ) : (ad as any).boostStatus === "ACTIVE" ? (
-                                <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-left sm:text-right">
-                                  <Badge className="mb-1 border-green-200 bg-green-100 text-xs text-green-700">Boost Active</Badge>
-                                  {getAddedPromotions(ad).length > 0 && (
-                                    <div className="text-xs text-green-700/90">
-                                      Added: {getAddedPromotions(ad).join(", ")}
-                                    </div>
-                                  )}
-                                  {(ad as any).boostEndAt && (
-                                    <div className="text-xs text-green-700/80">Until {format(new Date((ad as any).boostEndAt), "MMM d, yyyy HH:mm")}</div>
-                                  )}
-                                </div>
-                              ) : ad.status !== "REJECTED" ? (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-9 rounded-lg border-teal-300 bg-white text-xs text-teal-700 hover:bg-green-100 hover:text-green-700"
-                                  onClick={() => {
-                                    setBoostDialog({ open: true, adId: ad.id });
-                                    setBoostSelection(null);
-                                  }}
-                                >
-                                  <Zap className="mr-1 h-3.5 w-3.5" />
-                                  Boost Now
-                                </Button>
-                              ) : null}
+                              <div className="w-full sm:w-auto">
+                                {(ad as any).boostStatus === "PENDING" ? (
+                                  <Badge className="border-amber-250 bg-amber-50 text-[10px] text-amber-800 font-medium rounded-lg px-2.5 py-0.5">
+                                    Boost Requested
+                                  </Badge>
+                                ) : (ad as any).boostStatus === "ACTIVE" ? (
+                                  <div className="rounded-xl border border-emerald-250/50 bg-emerald-50/20 p-2.5 text-left sm:text-right w-full">
+                                    <Badge className="mb-1 border-emerald-200 bg-emerald-50 text-[10px] text-emerald-800 font-semibold rounded-lg">Boost Active</Badge>
+                                    {getAddedPromotions(ad).length > 0 && (
+                                      <div className="text-[10px] font-semibold text-emerald-700">
+                                        Active: {getAddedPromotions(ad).join(", ")}
+                                      </div>
+                                    )}
+                                    {(ad as any).boostEndAt && (
+                                      <div className="text-[9px] text-emerald-600 font-medium mt-0.5">
+                                        Until {format(new Date((ad as any).boostEndAt), "MMM d, yyyy HH:mm")}
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : ad.status !== "REJECTED" ? (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 w-full sm:w-auto rounded-lg border-teal-200 bg-white text-xs text-teal-700 hover:bg-teal-50 hover:border-teal-300 shadow-none cursor-pointer font-semibold"
+                                    onClick={() => {
+                                      setBoostDialog({ open: true, adId: ad.id });
+                                      setBoostSelection(null);
+                                    }}
+                                  >
+                                    <Zap className="mr-1 h-3 w-3 text-teal-600" />
+                                    Boost Now
+                                  </Button>
+                                ) : null}
+                              </div>
                             </div>
                           </div>
 
                           {ad.status === "PENDING_REVIEW" && (
-                            <div className="mt-3 w-full rounded-xl border border-amber-200 bg-amber-50 p-3">
-                              <p className="text-sm text-amber-800">
-                                <span className="font-semibold">To publish your ad</span> please send Your Name via SMS or WhatsApp through the provided mobile number to{" "}
-                                <a href="https://wa.me/94766220170" target="_blank" rel="noopener noreferrer" className="font-bold text-[#0D5C63] hover:underline">0766220170</a>.
+                            <div className="w-full rounded-lg border border-amber-200/60 bg-amber-50/20 p-3.5">
+                              <p className="text-xs text-amber-850">
+                                <span className="font-bold">To publish your ad</span>, please send your name via SMS or WhatsApp to{" "}
+                                <a href="https://wa.me/94766220170" target="_blank" rel="noopener noreferrer" className="font-bold text-[#024950] hover:underline">0766220170</a>.
                               </p>
                             </div>
                           )}
 
                           {(ad as any).boostStatus === "PENDING" && (
-                            <div className="mt-3 w-full rounded-xl border border-orange-200 bg-orange-50 p-3">
-                              <p className="text-sm font-semibold text-orange-800">Boost Requested</p>
-                              <p className="mt-1 text-sm font-medium text-orange-700">Total: Rs. {getBoostTotalAmount(ad)}</p>
-                              <p className="mt-1 text-sm text-orange-700">Pay and WhatsApp the slip to <strong>0766220170</strong>. Please wait for admin approval.</p>
+                            <div className="w-full rounded-xl border border-amber-200 bg-amber-50/20 p-4 space-y-3">
+                              <div>
+                                <p className="text-xs font-bold text-amber-800">Boost Pending Verification</p>
+                                <p className="mt-1 text-xs font-semibold text-amber-705">Amount due: Rs. {getBoostTotalAmount(ad)}</p>
+                                <p className="mt-1 text-[11px] text-amber-650 font-medium">Please transfer the amount and WhatsApp the slip to <strong>0766220170</strong>. The admin will verify shortly.</p>
+                              </div>
+                              <div className="border border-amber-200/40 rounded-lg p-3 bg-white space-y-1 text-xs text-amber-900/80">
+                                <p><strong>Bank:</strong> Commercial Bank of Ceylon</p>
+                                <p><strong>Account Name:</strong> R.A. Amila</p>
+                                <p><strong>Account No:</strong> 8005862029</p>
+                                <p><strong>Branch:</strong> Pita Kotte Branch</p>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -1424,37 +1251,37 @@ export default function ProfilePage() {
 
             {/* Saved Ads Section */}
             {sidebarActive === "favorites" && (
-              <div className="bg-white/80 backdrop-blur-xl border-2 border-white/20 rounded-2xl p-8 space-y-6">
-                <div className="border-b border-white/30 pb-4">
+              <div className="bg-white border border-zinc-200 rounded-2xl p-6 md:p-8 space-y-6">
+                <div className="border-b border-zinc-100 pb-4">
                   <div id="saved-ads">
-                    <h2 className="text-2xl font-bold bg-gradient-to-r from-[#0D5C63] to-teal-600 bg-clip-text text-transparent mb-2">
-                    Saved Ads
-                  </h2>
-                  <p className="text-sm text-slate-600">
-                    Your favorite advertisements
-                  </p>
+                    <h2 className="text-xl font-bold text-zinc-900 mb-1">
+                      Saved Ads
+                    </h2>
+                    <p className="text-xs text-zinc-500">
+                      Your bookmarked and favorite advertisements
+                    </p>
                   </div>
                 </div>
 
                 {isFavoritesLoading ? (
                   <div className="p-12 flex justify-center">
-                    <Loader2 className="h-10 w-10 animate-spin text-[#0D5C63]" />
+                    <Loader2 className="h-6 w-6 animate-spin text-[#024950]" />
                   </div>
                 ) : !favorites || favorites.length === 0 ? (
-                  <div className="p-12 text-center">
-                    <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 mx-auto flex items-center justify-center mb-4">
-                      <Bookmark className="h-10 w-10 text-slate-400" />
+                  <div className="p-12 text-center border border-dashed border-zinc-200 rounded-xl bg-zinc-50/50">
+                    <div className="h-10 w-10 border border-zinc-200 bg-white rounded-lg mx-auto flex items-center justify-center mb-3 text-zinc-400">
+                      <Bookmark className="h-5 w-5" />
                     </div>
-                    <p className="text-slate-600 mb-5 text-lg font-medium">You haven't saved any ads yet</p>
+                    <p className="text-zinc-600 mb-4 text-sm font-semibold">You haven't saved any ads yet</p>
                     <Button
-                      className="bg-gradient-to-r from-[#0D5C63] to-teal-600 text-white hover:from-[#0a4a50] hover:to-teal-700 border-0 px-8"
+                      className="bg-[#024950] hover:bg-[#0D5C63] text-white rounded-xl px-6 h-10 border-0 text-sm font-medium transition-colors"
                       onClick={() => router.push("/")}
                     >
                       Browse Ads
                     </Button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {favorites.map((favorite: any) => {
                       const ad = favorite.ad;
                       const adImage = ad.media?.[0]?.media?.url || "";
@@ -1462,58 +1289,49 @@ export default function ProfilePage() {
                       return (
                         <div
                           key={favorite.id}
-                          className="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group relative"
+                          className="bg-white rounded-xl border border-zinc-200 p-3.5 transition-colors hover:border-zinc-300 cursor-pointer group relative flex gap-4"
                           onClick={() => router.push(buildAdUrl(ad))}
                         >
-                          {/* Favorite Button */}
-                          <div className="absolute top-2 right-2 z-10">
+                          <div className="absolute top-2.5 right-2.5 z-10">
                             <FavoriteButton adId={ad.id} />
                           </div>
 
-                          <div className="p-3">
-                            {/* Ad Title - Centered */}
-                            <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
-                              {ad.title}
-                            </h3>
+                          {/* Ad Image */}
+                          <div className="w-24 h-20 sm:w-28 sm:h-20 flex-shrink-0 overflow-hidden rounded-lg border border-zinc-100 bg-zinc-50">
+                            {adImage ? (
+                              <img
+                                src={adImage}
+                                alt={ad.title}
+                                className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Car className="h-5 w-5 text-zinc-300" />
+                              </div>
+                            )}
+                          </div>
 
-                            <div className="flex">
-                              {/* Ad Image */}
-                              <div className="w-32 h-20 flex-shrink-0">
-                                {adImage ? (
-                                  <img
-                                    src={adImage}
-                                    alt={ad.title}
-                                    className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 rounded-md flex items-center justify-center">
-                                    <Car className="h-8 w-8 text-slate-400" />
-                                  </div>
-                                )}
+                          {/* Ad Details */}
+                          <div className="flex-1 min-w-0 flex flex-col justify-between pr-6">
+                            <div>
+                              <h3 className="font-bold text-xs sm:text-sm text-zinc-800 transition-colors group-hover:text-teal-700 line-clamp-1 mb-1">
+                                {ad.title}
+                              </h3>
+
+                              <div className="text-[10px] sm:text-xs font-semibold text-zinc-400 mb-1 flex items-center gap-1">
+                                <MapPin className="h-3 w-3 text-zinc-400/80" />
+                                <span className="truncate">{ad.location || "No location"}</span>
                               </div>
 
-                              {/* Ad Details */}
-                              <div className="flex-1 pl-3 flex flex-col justify-between">
-                                <div>
-                                  <div className="text-xs text-slate-600 mb-1 line-clamp-1">
-                                    {ad.location || "No location"}
-                                  </div>
-
-                                  <div className="text-sm font-semibold text-teal-700 mb-1">
-                                    {ad.price
-                                      ? <>{`Rs. ${ad.price.toLocaleString()}`}{(ad as any).metadata?.isNegotiable && <span className="text-sm font-normal opacity-70"> Negotiable</span>}</>
-                                      : ((ad as any).metadata?.isNegotiable ? "Negotiable" : "N/A")}
-                                  </div>
-
-                                  <div className="text-xs text-slate-500">
-                                    {ad.type || "Car"}
-                                  </div>
-                                </div>
-
-                                <div className="text-xs text-slate-400 mt-1">
-                                  {getRelativeTime(ad.createdAt || favorite.createdAt)}
-                                </div>
+                              <div className="text-xs sm:text-sm font-bold text-zinc-900">
+                                {ad.price
+                                  ? <>{`Rs. ${ad.price.toLocaleString()}`}{(ad as any).metadata?.isNegotiable && <span className="text-[10px] sm:text-xs font-normal opacity-70"> Neg</span>}</>
+                                  : ((ad as any).metadata?.isNegotiable ? "Negotiable" : "N/A")}
                               </div>
+                            </div>
+
+                            <div className="flex justify-between items-center text-[10px] text-zinc-400 font-semibold mt-1">
+                              <span>{formatDate(ad.createdAt)}</span>
                             </div>
                           </div>
                         </div>
@@ -1526,6 +1344,6 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
-    </div >
+    </div>
   );
 }

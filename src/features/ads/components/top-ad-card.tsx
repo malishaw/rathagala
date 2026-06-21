@@ -26,15 +26,6 @@ export function TopAdCard({ vehicle, vehicleTypeLabels, formatPrice, formatAdTit
         Top Ad
       </div>
 
-      <div className="absolute bottom-2 right-2 z-10 scale-90">
-        <BoostBadges
-          topAdActive
-          featuredActive={(vehicle as any).featuredActive}
-          bumpActive={(vehicle as any).bumpActive}
-          urgentActive={(vehicle as any).urgentActive}
-        />
-      </div>
-
       <div className="p-2">
         <div className="flex gap-3">
           {/* Image Container */}
@@ -53,20 +44,36 @@ export function TopAdCard({ vehicle, vehicleTypeLabels, formatPrice, formatAdTit
           <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
             <div>
               {/* Category / Make */}
-              <span className="text-[9px] uppercase font-bold tracking-wider text-slate-400 block mb-0.5">
-                {vehicle.type === "AUTO_PARTS"
-                  ? (vehicle as any).partCategory?.name || "Auto Part"
-                  : vehicleTypeLabels[vehicle.type] || vehicle.type}
-              </span>
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-[9px] uppercase font-bold tracking-wider text-slate-400 block">
+                  {vehicle.type === "AUTO_PARTS"
+                    ? (vehicle as any).partCategory?.name || "Auto Part"
+                    : vehicleTypeLabels[vehicle.type] || vehicle.type}
+                </span>
+                <div className="scale-90 origin-right">
+                  <BoostBadges
+                    topAdActive
+                    featuredActive={(vehicle as any).featuredActive}
+                    bumpActive={(vehicle as any).bumpActive}
+                    urgentActive={(vehicle as any).urgentActive}
+                  />
+                </div>
+              </div>
 
               {/* Title */}
               <h3 className="font-semibold text-slate-800 text-xs sm:text-sm group-hover:text-teal-700 transition-colors line-clamp-1 leading-tight">
                 {formatAdTitle(vehicle)}
               </h3>
 
-              {/* City */}
-              <div className="text-[10px] text-slate-500 mt-0.5 truncate">
-                {vehicle.city || vehicle.location || ""}
+              {/* City & Mileage */}
+              <div className="text-[10px] text-slate-500 mt-0.5 truncate flex items-center gap-1.5">
+                <span>{vehicle.city || vehicle.location || ""}</span>
+                {vehicle.mileage !== undefined && vehicle.mileage !== null && (
+                  <>
+                    <span className="text-slate-300">•</span>
+                    <span>{vehicle.mileage.toLocaleString()} km</span>
+                  </>
+                )}
               </div>
             </div>
 

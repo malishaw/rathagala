@@ -80,10 +80,7 @@ const formatPrice = (price: number | null, isNegotiable?: boolean): React.ReactN
     <>
       Rs. {price.toLocaleString()}
       {isNegotiable && (
-        <>
-          <br />
-          <span className="text-sm font-semibold ">Negotiable</span>
-        </>
+        <span className="text-[10px] font-normal opacity-70 ml-1">Negotiable</span>
       )}
     </>
   );
@@ -605,66 +602,65 @@ export default function AutoPartsPage() {
                           <FavoriteButton adId={vehicle.id} />
                         </div>
 
-                        {(vehicle.bumpActive || vehicle.urgentActive || vehicle.topAdActive || vehicle.featuredActive) && (
-                          <div className="absolute bottom-2 right-2 z-10">
-                            <BoostBadges
-                              bumpActive={vehicle.bumpActive}
-                              urgentActive={vehicle.urgentActive}
-                              topAdActive={vehicle.topAdActive}
-                              featuredActive={vehicle.featuredActive}
-                            />
-                          </div>
-                        )}
+                      <div className="p-2 pb-5">
+                        <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
+                          {displayTitle}
+                        </h3>
 
-                        <div className="p-2 pb-5">
-                          <h3 className="font-semibold text-sm text-slate-800 text-center mb-2 transition-colors group-hover:text-teal-700 line-clamp-1">
-                            {displayTitle}
-                          </h3>
-
-                          <div className="flex">
-                            <div className="w-36 h-30 flex-shrink-0 flex flex-col">
-                              <div className="flex-1 relative">
-                                {mainImage ? (
-                                  <Image
-                                    src={mainImage}
-                                    alt={displayTitle as string}
-                                    fill
-                                    sizes="144px"
-                                    className="object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                        <div className="flex">
+                          <div className="w-36 h-30 flex-shrink-0 flex flex-col">
+                            <div className="flex-1 relative overflow-hidden rounded-md">
+                              {mainImage ? (
+                                <Image
+                                  src={mainImage}
+                                  alt={displayTitle as string}
+                                  fill
+                                  sizes="144px"
+                                  className="object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-slate-100 rounded-md">
+                                  <Package className="h-8 w-8 text-slate-300" />
+                                </div>
+                              )}
+                              {(vehicle.bumpActive || vehicle.urgentActive || vehicle.topAdActive || vehicle.featuredActive) && (
+                                <div className="absolute bottom-1 right-1 z-10 scale-[0.75] origin-bottom-right">
+                                  <BoostBadges
+                                    bumpActive={vehicle.bumpActive}
+                                    urgentActive={vehicle.urgentActive}
+                                    topAdActive={vehicle.topAdActive}
+                                    featuredActive={vehicle.featuredActive}
                                   />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center bg-slate-100 rounded-md">
-                                    <Package className="h-8 w-8 text-slate-300" />
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-1 mt-1 text-xs text-slate-400">
-                                <span>{getRelativeTime(vehicle.createdAt)}</span>
-                                <span className="flex items-center gap-0.5">
-                                  <Eye className="h-3 w-3" />
-                                  {vehicle.analytics?.views || 0}
-                                </span>
-                              </div>
+                                </div>
+                              )}
                             </div>
+                            <div className="flex items-center gap-1 mt-1 text-xs text-slate-400">
+                              <span>{getRelativeTime(vehicle.createdAt)}</span>
+                              <span className="flex items-center gap-0.5">
+                                <Eye className="h-3 w-3" />
+                                {vehicle.analytics?.views || 0}
+                              </span>
+                            </div>
+                          </div>
 
-                            <div className="flex-1 pl-3 flex flex-col justify-between">
-                              <div>
-                                <div className="text-xs text-slate-600 mb-1 line-clamp-1">
-                                  {vehicle.city || vehicle.location || ""}
-                                </div>
-                                <div className="text-sm font-semibold text-teal-700 mb-1">
-                                  {formatPrice(vehicle.price, vehicle.metadata?.isNegotiable as boolean | undefined)}
-                                </div>
-                                {categoryName && (
-                                  <div className="text-xs text-slate-500 truncate">{categoryName}</div>
-                                )}
-                                {compatVehicle && (
-                                  <div className="text-xs text-slate-400 truncate">{compatVehicle}</div>
-                                )}
+                          <div className="flex-1 pl-3 flex flex-col justify-between">
+                            <div>
+                              <div className="text-xs text-slate-600 mb-1 line-clamp-1">
+                                {vehicle.city || vehicle.location || ""}
+                              </div>
+                              <div className="text-sm font-semibold text-teal-700 mb-1">
+                                {formatPrice(vehicle.price, vehicle.metadata?.isNegotiable as boolean | undefined)}
+                              </div>
+                              {categoryName && (
+                                <div className="text-xs text-slate-500 truncate">{categoryName}</div>
+                              )}
+                              <div className="text-xs text-slate-400 truncate">
+                                {compatVehicle || "Auto Part"}
                               </div>
                             </div>
                           </div>
                         </div>
+                      </div>
                       </div>
                     );
                   })}

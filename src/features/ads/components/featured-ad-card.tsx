@@ -35,10 +35,6 @@ export function FeaturedAdCard({
         Featured
       </div>
 
-      <div className="absolute bottom-2 right-2 z-10 scale-90">
-        <BoostBadges featuredActive bumpActive={isBump} topAdActive={isTopAd} urgentActive={isUrgent} />
-      </div>
-
       <div className="p-2">
         <div className="flex gap-3">
           {/* Image Container - Single Compact Image */}
@@ -57,20 +53,31 @@ export function FeaturedAdCard({
           <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
             <div>
               {/* Category / Make */}
-              <span className="text-[9px] uppercase font-bold tracking-wider text-amber-800 block mb-0.5">
-                {vehicle.type === "AUTO_PARTS"
-                  ? (vehicle as any).partCategory?.name || "Auto Part"
-                  : vehicleTypeLabels[vehicle.type] || vehicle.type}
-              </span>
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-[9px] uppercase font-bold tracking-wider text-amber-800 block">
+                  {vehicle.type === "AUTO_PARTS"
+                    ? (vehicle as any).partCategory?.name || "Auto Part"
+                    : vehicleTypeLabels[vehicle.type] || vehicle.type}
+                </span>
+                <div className="scale-90 origin-right">
+                  <BoostBadges featuredActive bumpActive={isBump} topAdActive={isTopAd} urgentActive={isUrgent} />
+                </div>
+              </div>
 
               {/* Title */}
               <h3 className="font-semibold text-slate-800 text-xs sm:text-sm group-hover:text-teal-700 transition-colors line-clamp-1 leading-tight">
                 {formatAdTitle(vehicle)}
               </h3>
 
-              {/* Location */}
-              <div className="text-[10px] text-slate-500 mt-0.5 truncate">
-                {vehicle.city || vehicle.location || ""}
+              {/* Location & Mileage */}
+              <div className="text-[10px] text-slate-500 mt-0.5 truncate flex items-center gap-1.5">
+                <span>{vehicle.city || vehicle.location || ""}</span>
+                {vehicle.mileage !== undefined && vehicle.mileage !== null && (
+                  <>
+                    <span className="text-slate-300">•</span>
+                    <span>{vehicle.mileage.toLocaleString()} km</span>
+                  </>
+                )}
               </div>
             </div>
 

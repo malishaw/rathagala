@@ -42,23 +42,23 @@ export default function EditAdPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <div className="max-w-7xl mx-auto py-8 px-4">
+      <div className="min-h-screen bg-slate-50 py-8 px-4">
+        <div className="max-w-4xl mx-auto">
           {/* Header with back button */}
-          <div className="mb-6">
+          <div className="mb-4">
             <Button
               variant="ghost"
               onClick={() => router.back()}
-              className="mb-4"
+              className="hover:bg-slate-100 rounded-xl px-4 py-2 transition-all text-slate-600 hover:text-slate-900"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
           </div>
 
-          <div className="flex items-center justify-center h-48">
+          <div className="flex items-center justify-center h-48 bg-white border border-slate-100 rounded-3xl shadow-sm">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <span className="ml-2">Loading ad details...</span>
+            <span className="ml-2 text-slate-600 font-medium">Loading ad details...</span>
           </div>
         </div>
       </div>
@@ -67,22 +67,22 @@ export default function EditAdPage() {
 
   if (isError) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <div className="max-w-7xl mx-auto py-8 px-4">
+      <div className="min-h-screen bg-slate-50 py-8 px-4">
+        <div className="max-w-4xl mx-auto">
           {/* Header with back button */}
-          <div className="mb-6">
+          <div className="mb-4">
             <Button
               variant="ghost"
               onClick={() => router.back()}
-              className="mb-4"
+              className="hover:bg-slate-100 rounded-xl px-4 py-2 transition-all text-slate-600 hover:text-slate-900"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
           </div>
 
-          <div className="flex items-center justify-center h-48">
-            <p className="text-destructive">Failed to load ad details. Please try again.</p>
+          <div className="flex items-center justify-center h-48 bg-white border border-slate-100 rounded-3xl shadow-sm">
+            <p className="text-destructive font-semibold">Failed to load ad details. Please try again.</p>
           </div>
         </div>
       </div>
@@ -90,20 +90,21 @@ export default function EditAdPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto py-8 px-4">
+    <div className="min-h-screen bg-white py-6 px-4">
+      <div className="max-w-4xl mx-auto space-y-6">
         {/* Header with back button */}
-        <div className="mb-6">
+        <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
           <Button
             variant="ghost"
             onClick={() => router.back()}
-            className="mb-4"
+            className="hover:bg-slate-100 rounded-xl p-2 transition-all text-slate-600 hover:text-slate-900"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Profile
+            <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-3xl font-bold text-slate-800">Edit Your Ad</h1>
-          <p className="text-slate-600 mt-2">Update the details of your vehicle listing</p>
+          <div>
+            <h1 className="text-xl font-bold text-slate-800 tracking-tight">Edit Your Ad</h1>
+            <p className="text-xs text-slate-400">Update your vehicle listing details</p>
+          </div>
         </div>
 
         {/* Ad Form */}
@@ -111,8 +112,8 @@ export default function EditAdPage() {
           initialData={ad}
           onSubmit={handleSubmit}
           isSubmitting={isPending}
-          title="Update Ad"
-          description="Edit the details of your vehicle listing"
+          title=""
+          description=""
           submitButtonText="Update Ad"
         />
       </div>

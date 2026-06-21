@@ -45,6 +45,7 @@ import {
   Copy,
   Check,
   ExternalLink,
+  TrendingUp,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useParams, useRouter } from "next/navigation";
@@ -562,11 +563,11 @@ export default function AdDetailPage() {
                               <div className="text-xs font-bold text-[#024950] mt-0.5">
                                 {formatPrice(v.price, (v as any).metadata?.isNegotiable)}
                               </div>
-                              {(v.city || v.district || v.location) && (
+                              {v.location && (
                                 <div className="flex items-center gap-0.5 text-[10px] text-gray-400 mt-0.5">
                                   <MapPin className="w-2.5 h-2.5" />
                                   <span className="truncate">
-                                    {[v.city, v.district].filter(Boolean).join(", ") || v.location}
+                                    {v.location}
                                   </span>
                                 </div>
                               )}
@@ -728,24 +729,37 @@ export default function AdDetailPage() {
                 </Button>
               </div>
 
-              {/* Analytics link — compact, not a large card */}
+              {/* Price Analytics card — highly attention grabbing & premium */}
               {ad.price && (
-                <div className="bg-white border border-gray-200 rounded p-3 flex items-center justify-between">
-                  <div>
-                    <div className="text-xs font-medium text-gray-700">Price Analytics</div>
-                    <div className="text-[11px] text-gray-400">Compare with similar vehicles</div>
+                <div className="bg-gradient-to-r from-teal-50/80 to-emerald-50/20 border border-teal-500/25 border-l-4 border-l-[#0D5C63] rounded-r p-4 shadow-[0_2px_8px_-3px_rgba(13,92,99,0.15)] relative overflow-hidden group">
+                  {/* Decorative background glow */}
+                  <div className="absolute -right-4 -bottom-4 w-12 h-12 bg-teal-500/5 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500" />
+                  
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-[#0D5C63]/10 rounded-md text-[#0D5C63]">
+                        <TrendingUp className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-bold text-gray-800 tracking-wide uppercase">Price Analytics</span>
+                          <span className="bg-teal-600/10 text-[#0D5C63] text-[9px] font-bold px-1.5 py-0.5 rounded">Smart tool</span>
+                        </div>
+                        <p className="text-[11px] text-gray-500 mt-0.5 font-medium">Compare and analyze pricing trends instantly</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
+
+                  <div className="grid grid-cols-2 gap-2 mt-2.5">
                     <button
                       onClick={() => router.push(`/ads/${adId}/analytics`)}
-                      className="text-xs text-[#024950] hover:underline flex items-center gap-1"
+                      className="flex items-center justify-center gap-1 bg-[#024950] hover:bg-[#0D5C63] text-white text-xs font-semibold py-2 px-3 rounded shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all duration-200"
                     >
                       Analytics <ExternalLink className="w-3 h-3" />
                     </button>
-                    <span className="text-gray-200">|</span>
                     <button
                       onClick={() => router.push(`/compare?vehicle1=${adId}`)}
-                      className="text-xs text-[#024950] hover:underline flex items-center gap-1"
+                      className="flex items-center justify-center gap-1 bg-white border border-[#024950]/30 hover:border-[#024950]/60 text-[#024950] text-xs font-semibold py-2 px-3 rounded hover:bg-teal-50/50 active:scale-[0.99] transition-all duration-200"
                     >
                       Compare <ExternalLink className="w-3 h-3" />
                     </button>

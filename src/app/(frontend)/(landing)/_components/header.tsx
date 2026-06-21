@@ -32,7 +32,7 @@ export function Header() {
 
         // If organizationId is not in session, fetch it from user endpoint
         // session.user usually has role and other added fields
-        if (!userData.organizationId) {
+        if (!userData.organizationId && typeof window !== "undefined") {
           try {
             const res = await fetch("/api/users/me");
             if (res.ok) {
