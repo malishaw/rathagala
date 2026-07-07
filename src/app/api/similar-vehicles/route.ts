@@ -156,7 +156,7 @@ export async function GET(request: NextRequest) {
           transmission: ad.transmission,
           condition: ad.condition,
           location: [ad.city, ad.province].filter(Boolean).join(", "),
-          image: ad.media?.[0]?.media?.url || "/placeholder.svg?height=200&width=300",
+          image: ad.media?.[0]?.media?.url || "/placeholder-image.jpg",
         })),
       });
     }
@@ -174,7 +174,7 @@ export async function GET(request: NextRequest) {
         transmission: ad.transmission,
         condition: ad.condition,
         location: [ad.city, ad.province].filter(Boolean).join(", "),
-        image: ad.media?.[0]?.media?.url || "/placeholder.svg?height=200&width=300",
+        image: ad.media?.[0]?.media?.url || "/placeholder-image.jpg",
       })),
     });
   } catch (error) {

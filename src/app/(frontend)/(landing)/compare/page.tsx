@@ -3,7 +3,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import {
     Command,
     CommandEmpty,
@@ -16,14 +16,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useGetAds } from "@/features/ads/api/use-get-ads";
 import { useGetAdById } from "@/features/ads/api/use-get-ad-by-id";
 import {
-    Calendar,
-    Car,
     Check,
     ChevronsUpDown,
-    Fuel,
-    Gauge,
-    MapPin,
-    Sparkles,
     X,
     AlertCircle,
 } from "lucide-react";
@@ -75,8 +69,8 @@ export default function AdComparisonPage() {
     });
 
     // Get vehicles list from search results
-    const vehicles1 = searchData1?.ads || [];
-    const vehicles2 = searchData2?.ads || [];
+    const vehicles1 = useMemo(() => searchData1?.ads || [], [searchData1]);
+    const vehicles2 = useMemo(() => searchData2?.ads || [], [searchData2]);
 
     // Resolve vehicle data: prefer getAdById response, fallback to list data for expired/broken ads
     const vehicle1 = useMemo(() => {
@@ -113,7 +107,7 @@ export default function AdComparisonPage() {
                 return firstMedia.media.url;
             }
         }
-        return "/placeholder.svg?height=300&width=400&text=No+Image";
+        return "/placeholder-image.jpg";
     };
 
     const vehicleTypeLabels: Record<string, string> = {
@@ -183,28 +177,14 @@ export default function AdComparisonPage() {
 
     const filteredVehicles1 = vehicles1.filter((vehicle: any) => isVisibleForCompare(vehicle) && matchesSearch(vehicle, search1));
 
-    const selectedVehicleType = normalizeVehicleType(vehicle1);
     const searchFilteredVehicles2 = vehicles2.filter((vehicle: any) => isVisibleForCompare(vehicle) && matchesSearch(vehicle, search2));
-    const filteredVehicles2 = selectedVehicleType
-        ? searchFilteredVehicles2.filter((vehicle: any) => normalizeVehicleType(vehicle) === selectedVehicleType)
-        : searchFilteredVehicles2;
-
-    useEffect(() => {
-        const type1 = normalizeVehicleType(vehicle1);
-        const type2 = normalizeVehicleType(vehicle2);
-
-        if (vehicle1Id && vehicle2Id && type1 && type2 && type1 !== type2) {
-            setVehicle2Id(null);
-        }
-    }, [vehicle1Id, vehicle2Id, vehicle1, vehicle2]);
-
+    const filteredVehicles2 = searchFilteredVehicles2;
     // Comparison data structure
     const comparisonFields = [
         {
             label: "Price",
             key: "price",
             format: (value: any) => formatPrice(value),
-            icon: Sparkles,
         },
         {
             label: "Brand",
@@ -220,20 +200,17 @@ export default function AdComparisonPage() {
             label: "Year",
             key: "year",
             format: (value: any) => value || "N/A",
-            icon: Calendar,
         },
         {
             label: "Mileage",
             key: "mileage",
             format: (value: any) =>
                 value ? `${value.toLocaleString()} km` : "N/A",
-            icon: Gauge,
         },
         {
             label: "Fuel Type",
             key: "fuelType",
             format: (value: any) => value || "N/A",
-            icon: Fuel,
         },
         {
             label: "Transmission",
@@ -259,7 +236,6 @@ export default function AdComparisonPage() {
             label: "Location",
             key: "location",
             format: (value: any) => value || "N/A",
-            icon: MapPin,
         },
     ];
 
@@ -297,526 +273,385 @@ export default function AdComparisonPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-teal-50/30 to-gray-50">
+        <div className="min-h-screen bg-white text-gray-900 font-sans">
             {/* Header */}
-            <div className="bg-gradient-to-r from-[#024950] to-teal-700 text-white shadow-lg">
-                <div className="max-w-7xl mx-auto px-4 py-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
-                                <Sparkles className="w-8 h-8" />
-                                Vehicle Comparison
-                            </h1>
-                            <p className="text-teal-100">
-                                Compare two vehicles side by side to make the best decision
-                            </p>
-                        </div>
-                        <Button
-                            variant="outline"
-                            className="text-white bg-white/10 border-white/30 hover:bg-white/20"
-                            onClick={() => router.back()}
-                        >
-                            <X className="w-4 h-4 mr-2" />
-                            Close
-                        </Button>
+            <div className="border-b border-gray-100">
+                <div className="max-w-5xl mx-auto px-4 py-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+                            Vehicle Comparison
+                        </h1>
+                        <p className="text-gray-500 mt-1">
+                            Compare specifications and features side-by-side to find the perfect match.
+                        </p>
                     </div>
+                    <Button
+                        variant="ghost"
+                        className="self-start sm:self-auto text-gray-500 hover:text-gray-900 -ml-2 sm:ml-0"
+                        onClick={() => router.back()}
+                    >
+                        <X className="w-4 h-4 mr-2" />
+                        Close
+                    </Button>
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 py-8">
+            <div className="max-w-5xl mx-auto px-4 py-8">
                 {/* Vehicle Selection */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
                     {/* Vehicle 1 Selection */}
-                    <Card className="border-2 border-dashed border-[#024950]/30">
-                        <CardHeader>
-                            <CardTitle className="text-[#024950] flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-full bg-[#024950] text-white flex items-center justify-center font-bold">
-                                    1
-                                </div>
-                                Vehicle 1
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <Popover open={open1} onOpenChange={setOpen1}>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        role="combobox"
-                                        aria-expanded={open1}
-                                        className="w-full justify-between h-12"
-                                    >
-                                        {vehicle1 ? (
-                                            <span className="truncate">
-                                                {getVehicleTitle(vehicle1)}
-                                            </span>
-                                        ) : (
-                                            <span className="text-muted-foreground text-xs md:text-base">
-                                                <span className="md:hidden">Select</span>
-                                                <span className="hidden md:inline">Search and select vehicle...</span>
-                                            </span>
-                                        )}
-                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[400px] p-0" align="start">
-                                    <Command shouldFilter={false}>
-                                        <CommandInput
-                                            placeholder="Search vehicles..."
-                                            value={search1}
-                                            onValueChange={setSearch1}
-                                        />
-                                        <CommandList>
-                                            <CommandEmpty>No vehicles found.</CommandEmpty>
-                                            <CommandGroup>
-                                                {filteredVehicles1.map((vehicle: any) => (
-                                                    <CommandItem
-                                                        key={vehicle.id}
-                                                        value={vehicle.id}
-                                                        onSelect={() => {
-                                                            setVehicle1Id(vehicle.id);
-                                                            setOpen1(false);
-                                                        }}
-                                                        className="cursor-pointer"
-                                                    >
-                                                        <Check
-                                                            className={`mr-2 h-4 w-4 ${vehicle1Id === vehicle.id
-                                                                ? "opacity-100"
-                                                                : "opacity-0"
-                                                                }`}
-                                                        />
-                                                        <div className="flex items-center gap-3 flex-1">
-                                                            <div className="relative w-16 h-12 rounded overflow-hidden flex-shrink-0">
-                                                                <Image
-                                                                    src={getVehicleImage(vehicle)}
-                                                                    alt={getVehicleTitle(vehicle)}
-                                                                    fill
-                                                                    className="object-cover"
-                                                                />
-                                                            </div>
-                                                            <div className="flex-1 min-w-0 hover:text-white">
-                                                                <div className="font-medium truncate flex items-center gap-1">
-                                                                    {getVehicleTitle(vehicle)}
-                                                                    {isExpired(vehicle) && (
-                                                                        <Badge className="bg-orange-100 text-orange-700 text-[10px] px-1 py-0 ml-1 shrink-0">Expired</Badge>
-                                                                    )}
-                                                                </div>
-                                                                <div className="text-sm hover:text-white">
-                                                                    {formatPrice(vehicle.price)}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </CommandItem>
-                                                ))}
-                                            </CommandGroup>
-                                        </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
-
-                            {vehicle1Id && (
+                    <div className="space-y-3">
+                        <label className="text-sm font-medium text-gray-700">First Vehicle</label>
+                        <Popover open={open1} onOpenChange={setOpen1}>
+                            <PopoverTrigger asChild>
                                 <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="w-full mt-2 text-red-600 hover:text-red-600 hover:bg-red-50"
-                                    onClick={() => {
-                                        setVehicle1Id(null);
-                                        setSearch1("");
-                                    }}
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={open1}
+                                    className="w-full justify-between h-14 bg-gray-50/50 hover:bg-gray-50 border-gray-200 font-normal"
                                 >
-                                    <X className="w-4 h-4 mr-2" />
-                                    Clear Selection
+                                    {vehicle1 ? (
+                                        <span className="truncate font-medium text-gray-900">
+                                            {getVehicleTitle(vehicle1)}
+                                        </span>
+                                    ) : (
+                                        <span className="text-gray-400">
+                                            Search to select a vehicle...
+                                        </span>
+                                    )}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
-                            )}
-                        </CardContent>
-                    </Card>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                                <Command shouldFilter={false}>
+                                    <CommandInput
+                                        placeholder="Search vehicles..."
+                                        value={search1}
+                                        onValueChange={setSearch1}
+                                    />
+                                    <CommandList>
+                                        <CommandEmpty>No vehicles found.</CommandEmpty>
+                                        <CommandGroup>
+                                            {filteredVehicles1.map((vehicle: any) => (
+                                                <CommandItem
+                                                    key={vehicle.id}
+                                                    value={vehicle.id}
+                                                    onSelect={() => {
+                                                        setVehicle1Id(vehicle.id);
+                                                        setOpen1(false);
+                                                    }}
+                                                    className="cursor-pointer"
+                                                >
+                                                    <Check
+                                                        className={`mr-2 h-4 w-4 ${vehicle1Id === vehicle.id
+                                                            ? "opacity-100"
+                                                            : "opacity-0"
+                                                            }`}
+                                                    />
+                                                    <div className="flex items-center justify-between flex-1 min-w-0 py-1">
+                                                        <div className="flex items-center gap-2 truncate pr-2">
+                                                            <span className="font-medium truncate text-gray-900">
+                                                                {getVehicleTitle(vehicle)}
+                                                            </span>
+                                                            {isExpired(vehicle) && (
+                                                                <Badge className="bg-orange-100 hover:bg-orange-100 text-orange-700 text-[10px] px-1.5 py-0 shrink-0 border-none">Expired</Badge>
+                                                            )}
+                                                        </div>
+                                                        <span className="text-sm text-gray-500 shrink-0 font-medium">
+                                                            {formatPrice(vehicle.price)}
+                                                        </span>
+                                                    </div>
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
+
+
+                    </div>
 
                     {/* Vehicle 2 Selection */}
-                    <Card className="border-2 border-dashed border-[#024950]/30">
-                        <CardHeader>
-                            <CardTitle className="text-[#024950] flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold">
-                                    2
-                                </div>
-                                Vehicle 2
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <Popover open={open2} onOpenChange={setOpen2}>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        role="combobox"
-                                        aria-expanded={open2}
-                                        className="w-full justify-between h-12"
-                                    >
-                                        {vehicle2 ? (
-                                            <span className="truncate">
-                                                {getVehicleTitle(vehicle2)}
-                                            </span>
-                                        ) : (
-                                            <span className="text-muted-foreground text-xs md:text-base">
-                                                <span className="md:hidden">Select</span>
-                                                <span className="hidden md:inline">Search and select vehicle...</span>
-                                            </span>
-                                        )}
-                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[400px] p-0" align="start">
-                                    <Command shouldFilter={false}>
-                                        <CommandInput
-                                            placeholder="Search vehicles..."
-                                            value={search2}
-                                            onValueChange={setSearch2}
-                                        />
-                                        <CommandList>
-                                            <CommandEmpty>No vehicles found.</CommandEmpty>
-                                            <CommandGroup>
-                                                    {filteredVehicles2.map((vehicle: any) => (
-                                                    <CommandItem
-                                                        key={vehicle.id}
-                                                        value={vehicle.id}
-                                                        onSelect={() => {
-                                                            setVehicle2Id(vehicle.id);
-                                                            setOpen2(false);
-                                                        }}
-                                                        className="cursor-pointer"
-                                                    >
-                                                        <Check
-                                                            className={`mr-2 h-4 w-4 ${vehicle2Id === vehicle.id
-                                                                ? "opacity-100"
-                                                                : "opacity-0"
-                                                                }`}
-                                                        />
-                                                        <div className="flex items-center gap-3 flex-1">
-                                                            <div className="relative w-16 h-12 rounded overflow-hidden flex-shrink-0">
-                                                                <Image
-                                                                    src={getVehicleImage(vehicle)}
-                                                                    alt={getVehicleTitle(vehicle)}
-                                                                    fill
-                                                                    className="object-cover"
-                                                                />
-                                                            </div>
-                                                            <div className="flex-1 min-w-0">
-                                                                <div className="font-medium truncate hover:text-white flex items-center gap-1">
-                                                                    {getVehicleTitle(vehicle)}
-                                                                    {isExpired(vehicle) && (
-                                                                        <Badge className="bg-orange-100 text-orange-700 text-[10px] px-1 py-0 ml-1 shrink-0">Expired</Badge>
-                                                                    )}
-                                                                </div>
-                                                                <div className="text-sm">
-                                                                    {formatPrice(vehicle.price)}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </CommandItem>
-                                                ))}
-                                            </CommandGroup>
-                                        </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
-
-                            {vehicle2Id && (
+                    <div className="space-y-3">
+                        <label className="text-sm font-medium text-gray-700">Second Vehicle</label>
+                        <Popover open={open2} onOpenChange={setOpen2}>
+                            <PopoverTrigger asChild>
                                 <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="w-full mt-2 text-red-600 hover:text-red-600 hover:bg-red-50"
-                                    onClick={() => {
-                                        setVehicle2Id(null);
-                                        setSearch2("");
-                                    }}
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={open2}
+                                    className="w-full justify-between h-14 bg-gray-50/50 hover:bg-gray-50 border-gray-200 font-normal"
                                 >
-                                    <X className="w-4 h-4 mr-2" />
-                                    Clear Selection
+                                    {vehicle2 ? (
+                                        <span className="truncate font-medium text-gray-900">
+                                            {getVehicleTitle(vehicle2)}
+                                        </span>
+                                    ) : (
+                                        <span className="text-gray-400">
+                                            Search to select a vehicle...
+                                        </span>
+                                    )}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
-                            )}
-                        </CardContent>
-                    </Card>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                                <Command shouldFilter={false}>
+                                    <CommandInput
+                                        placeholder="Search vehicles..."
+                                        value={search2}
+                                        onValueChange={setSearch2}
+                                    />
+                                    <CommandList>
+                                        <CommandEmpty>No vehicles found.</CommandEmpty>
+                                        <CommandGroup>
+                                                {filteredVehicles2.map((vehicle: any) => (
+                                                <CommandItem
+                                                    key={vehicle.id}
+                                                    value={vehicle.id}
+                                                    onSelect={() => {
+                                                        setVehicle2Id(vehicle.id);
+                                                        setOpen2(false);
+                                                    }}
+                                                    className="cursor-pointer"
+                                                >
+                                                    <Check
+                                                        className={`mr-2 h-4 w-4 ${vehicle2Id === vehicle.id
+                                                            ? "opacity-100"
+                                                            : "opacity-0"
+                                                            }`}
+                                                    />
+                                                    <div className="flex items-center justify-between flex-1 min-w-0 py-1">
+                                                        <div className="flex items-center gap-2 truncate pr-2">
+                                                            <span className="font-medium truncate text-gray-900">
+                                                                {getVehicleTitle(vehicle)}
+                                                            </span>
+                                                            {isExpired(vehicle) && (
+                                                                <Badge className="bg-orange-100 hover:bg-orange-100 text-orange-700 text-[10px] px-1.5 py-0 shrink-0 border-none">Expired</Badge>
+                                                            )}
+                                                        </div>
+                                                        <span className="text-sm text-gray-500 shrink-0 font-medium">
+                                                            {formatPrice(vehicle.price)}
+                                                        </span>
+                                                    </div>
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
+
+
+                    </div>
                 </div>
 
-                {/* Comparison Table */}
+                {/* Comparison Content */}
                 {vehicle1Id && vehicle2Id && (
-                    <div className="space-y-6">
-                        {/* Vehicle Headers */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4" id="vehicle-headers">
-                            <div className="hidden md:block"></div>
-                            <Card className="border-2 border-[#024950] bg-gradient-to-br from-[#024950] to-teal-700 text-white">
-                                <CardContent className="p-3 md:p-6">
-                                    {loading1 && !vehicle1 ? (
-                                        <div className="text-center py-8">
-                                            <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full mx-auto"></div>
+                    <div className="space-y-12">
+                        {/* Vehicle Headers Overview */}
+                        <div className="grid grid-cols-2 gap-4 md:gap-8 border-b border-gray-100 pb-8">
+                            {/* Vehicle 1 Overview */}
+                            <div>
+                                {loading1 && !vehicle1 ? (
+                                    <div className="animate-pulse bg-gray-100 aspect-[4/3] rounded-xl w-full"></div>
+                                ) : vehicle1 ? (
+                                    <div className="group relative">
+                                        <div className="aspect-[4/3] relative rounded-xl overflow-hidden bg-gray-50 mb-4">
+                                            <Image
+                                                src={getVehicleImage(vehicle1)}
+                                                alt={getVehicleTitle(vehicle1)}
+                                                fill
+                                                className="object-cover"
+                                            />
                                         </div>
-                                    ) : vehicle1 ? (
-                                        <>
-                                            <div className="relative w-full h-24 md:h-48 rounded-lg overflow-hidden mb-2 md:mb-4 bg-white/10">
-                                                <Image
-                                                    src={getVehicleImage(vehicle1)}
-                                                    alt={getVehicleTitle(vehicle1)}
-                                                    fill
-                                                    className="object-cover"
-                                                />
-                                            </div>
-                                            <h3 className="text-sm md:text-xl font-bold mb-1 md:mb-2 line-clamp-2 min-h-[2.5em] md:min-h-0">
-                                                {getVehicleTitle(vehicle1)}
-                                            </h3>
-                                            {isExpired(vehicle1) && (
-                                                <div className="flex items-center gap-1 mb-2 bg-orange-500/30 border border-orange-400/50 rounded-md px-2 py-1">
-                                                    <AlertCircle className="w-3 h-3 text-orange-200 shrink-0" />
-                                                    <span className="text-xs text-orange-200 font-medium">Expired Ad</span>
-                                                </div>
-                                            )}
-                                            <div className="text-sm md:text-2xl font-bold mb-1 md:mb-2">
-                                                {formatPrice(vehicle1.price)}
-                                            </div>
-                                            {!isExpired(vehicle1) && (
-                                                <Link href={`/ads/${vehicle1Id}`}>
-                                                    <Button
-                                                        variant="outline"
-                                                        className="w-full mt-2 md:mt-4 h-8 md:h-10 text-xs md:text-sm bg-white/10 border-white/30 text-white hover:bg-white/20"
-                                                    >
-                                                        View Details
-                                                    </Button>
-                                                </Link>
-                                            )}
-                                        </>
-                                    ) : (
-                                        <div className="text-center py-8">Vehicle not found</div>
-                                    )}
-                                </CardContent>
-                            </Card>
+                                        {isExpired(vehicle1) && (
+                                            <Badge variant="secondary" className="mb-2 bg-orange-100 text-orange-800 hover:bg-orange-100 border-orange-200">
+                                                <AlertCircle className="w-3 h-3 mr-1" /> Expired Ad
+                                            </Badge>
+                                        )}
+                                        <h3 className="font-semibold text-lg md:text-xl line-clamp-2 text-gray-900 leading-tight">
+                                            {getVehicleTitle(vehicle1)}
+                                        </h3>
+                                        <div className="text-xl md:text-2xl font-bold mt-2 text-gray-900">
+                                            {formatPrice(vehicle1.price)}
+                                        </div>
+                                        {!isExpired(vehicle1) && (
+                                            <Link href={`/ads/${vehicle1Id}`}>
+                                                <Button className="w-full mt-6 bg-gray-900 hover:bg-gray-800 text-white rounded-lg h-12">
+                                                    View Details
+                                                </Button>
+                                            </Link>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="text-gray-500 text-center py-8">Vehicle unavailable</div>
+                                )}
+                            </div>
 
-                            <Card className="border-2 border-teal-600 bg-gradient-to-br from-teal-600 to-teal-700 text-white">
-                                <CardContent className="p-3 md:p-6">
-                                    {loading2 && !vehicle2 ? (
-                                        <div className="text-center py-8">
-                                            <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full mx-auto"></div>
+                            {/* Vehicle 2 Overview */}
+                            <div>
+                                {loading2 && !vehicle2 ? (
+                                    <div className="animate-pulse bg-gray-100 aspect-[4/3] rounded-xl w-full"></div>
+                                ) : vehicle2 ? (
+                                    <div className="group relative">
+                                        <div className="aspect-[4/3] relative rounded-xl overflow-hidden bg-gray-50 mb-4">
+                                            <Image
+                                                src={getVehicleImage(vehicle2)}
+                                                alt={getVehicleTitle(vehicle2)}
+                                                fill
+                                                className="object-cover"
+                                            />
                                         </div>
-                                    ) : vehicle2 ? (
-                                        <>
-                                            <div className="relative w-full h-24 md:h-48 rounded-lg overflow-hidden mb-2 md:mb-4 bg-white/10">
-                                                <Image
-                                                    src={getVehicleImage(vehicle2)}
-                                                    alt={getVehicleTitle(vehicle2)}
-                                                    fill
-                                                    className="object-cover"
-                                                />
-                                            </div>
-                                            <h3 className="text-sm md:text-xl font-bold mb-1 md:mb-2 line-clamp-2 min-h-[2.5em] md:min-h-0">
-                                                {getVehicleTitle(vehicle2)}
-                                            </h3>
-                                            {isExpired(vehicle2) && (
-                                                <div className="flex items-center gap-1 mb-2 bg-orange-500/30 border border-orange-400/50 rounded-md px-2 py-1">
-                                                    <AlertCircle className="w-3 h-3 text-orange-200 shrink-0" />
-                                                    <span className="text-xs text-orange-200 font-medium">Expired Ad</span>
-                                                </div>
-                                            )}
-                                            <div className="text-sm md:text-2xl font-bold mb-1 md:mb-2">
-                                                {formatPrice(vehicle2.price)}
-                                            </div>
-                                            {!isExpired(vehicle2) && (
-                                                <Link href={`/ads/${vehicle2Id}`}>
-                                                    <Button
-                                                        variant="outline"
-                                                        className="w-full mt-2 md:mt-4 h-8 md:h-10 text-xs md:text-sm bg-white/10 border-white/30 text-white hover:bg-white/20"
-                                                    >
-                                                        View Details
-                                                    </Button>
-                                                </Link>
-                                            )}
-                                        </>
-                                    ) : (
-                                        <div className="text-center py-8">Vehicle not found</div>
-                                    )}
-                                </CardContent>
-                            </Card>
+                                        {isExpired(vehicle2) && (
+                                            <Badge variant="secondary" className="mb-2 bg-orange-100 text-orange-800 hover:bg-orange-100 border-orange-200">
+                                                <AlertCircle className="w-3 h-3 mr-1" /> Expired Ad
+                                            </Badge>
+                                        )}
+                                        <h3 className="font-semibold text-lg md:text-xl line-clamp-2 text-gray-900 leading-tight">
+                                            {getVehicleTitle(vehicle2)}
+                                        </h3>
+                                        <div className="text-xl md:text-2xl font-bold mt-2 text-gray-900">
+                                            {formatPrice(vehicle2.price)}
+                                        </div>
+                                        {!isExpired(vehicle2) && (
+                                            <Link href={`/ads/${vehicle2Id}`}>
+                                                <Button className="w-full mt-6 bg-gray-900 hover:bg-gray-800 text-white rounded-lg h-12">
+                                                    View Details
+                                                </Button>
+                                            </Link>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="text-gray-500 text-center py-8">Vehicle unavailable</div>
+                                )}
+                            </div>
                         </div>
 
-                        {/* Comparison Details */}
-                        <Card className="overflow-hidden">
-                            <CardHeader className="bg-gradient-to-r from-[#024950] to-teal-700 text-white">
-                                <CardTitle className="text-2xl">Detailed Comparison</CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-0">
-                                <div className="divide-y">
-                                    {comparisonFields.map((field, index) => {
-                                        const value1 = getFieldValue(vehicle1, field);
-                                        const value2 = getFieldValue(vehicle2, field);
-                                        const winner = getWinner(field, value1, value2);
-                                        const Icon = field.icon;
+                        {/* Comparison Table */}
+                        <div className="space-y-6">
+                            <h2 className="text-2xl font-semibold tracking-tight text-gray-900">Key Specifications</h2>
+                            <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white">
+                                <table className="w-full text-sm md:text-base text-left">
+                                    <tbody className="divide-y divide-gray-200">
+                                        {comparisonFields.map((field, index) => {
+                                            const value1 = getFieldValue(vehicle1, field);
+                                            const value2 = getFieldValue(vehicle2, field);
+                                            const winner = getWinner(field, value1, value2);
 
-                                        return (
-                                            <div
-                                                key={index}
-                                                className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 hover:bg-green-50 transition-colors"
-                                            >
-                                                <div className="col-span-2 md:col-span-1 flex items-center gap-2 font-semibold text-gray-700 text-xs md:text-base">
-                                                    {Icon && <Icon className="w-4 h-4 md:w-5 md:h-5 text-[#024950]" />}
-                                                    <span>{field.label}</span>
-                                                </div>
-                                                <div
-                                                    className={`p-3 rounded-lg ${winner === 1
-                                                        ? "bg-green-50 border-2 border-green-500"
-                                                        : "bg-gray-50"
-                                                        }`}
-                                                >
-                                                    <div className="flex flex-wrap items-center gap-1">
-                                                        <span className="font-medium text-sm md:text-base">
-                                                            {field.format(value1)}
-                                                        </span>
-                                                        {winner === 1 && (
-                                                            <Badge className="bg-green-500 text-white shrink-0">
-                                                                Winner
-                                                            </Badge>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div
-                                                    className={`p-3 rounded-lg ${winner === 2
-                                                        ? "bg-green-50 border-2 border-green-500"
-                                                        : "bg-gray-50"
-                                                        }`}
-                                                >
-                                                    <div className="flex flex-wrap items-center gap-1">
-                                                        <span className="font-medium text-sm md:text-base">
-                                                            {field.format(value2)}
-                                                        </span>
-                                                        {winner === 2 && (
-                                                            <Badge className="bg-green-500 text-white shrink-0">
-                                                                Winner
-                                                            </Badge>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </CardContent>
-                        </Card>
+                                            return (
+                                                <tr key={index} className="hover:bg-gray-50/50 transition-colors">
+                                                    <td className="py-4 px-4 md:px-6 font-medium text-gray-500 w-1/3 bg-gray-50/50 align-top md:align-middle">
+                                                        {field.label}
+                                                    </td>
+                                                    <td className={`py-4 px-4 md:px-6 w-1/3 border-l border-gray-100 align-top md:align-middle ${winner === 1 ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
+                                                        <div className="flex items-center gap-2">
+                                                            <span>{field.format(value1)}</span>
+                                                            {winner === 1 && (
+                                                                <span className="inline-block w-2 h-2 rounded-full bg-green-500 shrink-0" title="Better value"></span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className={`py-4 px-4 md:px-6 w-1/3 border-l border-gray-100 align-top md:align-middle ${winner === 2 ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
+                                                        <div className="flex items-center gap-2">
+                                                            <span>{field.format(value2)}</span>
+                                                            {winner === 2 && (
+                                                                <span className="inline-block w-2 h-2 rounded-full bg-green-500 shrink-0" title="Better value"></span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
 
                         {/* Features Comparison */}
-                        {(vehicle1?.tags?.length > 0 || vehicle2?.tags?.length > 0) && (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-[#024950]">
-                                        Features & Equipment
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="grid md:grid-cols-2 gap-6">
-                                        <div>
-                                            <h4 className="font-semibold mb-3 text-[#024950]">
-                                                Vehicle 1 Features
-                                            </h4>
-                                            <div className="space-y-2">
-                                                {vehicle1?.tags?.length > 0 ? (
-                                                    vehicle1.tags.map((tag: string, idx: number) => (
-                                                        <div
-                                                            key={idx}
-                                                            className="flex items-center gap-2 text-sm"
-                                                        >
-                                                            <Check className="w-4 h-4 text-green-500" />
-                                                            <span>{tag}</span>
-                                                        </div>
-                                                    ))
-                                                ) : (
-                                                    <p className="text-sm text-gray-500">No features listed</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <h4 className="font-semibold mb-3 text-teal-600">
-                                                Vehicle 2 Features
-                                            </h4>
-                                            <div className="space-y-2">
-                                                {vehicle2?.tags?.length > 0 ? (
-                                                    vehicle2.tags.map((tag: string, idx: number) => (
-                                                        <div
-                                                            key={idx}
-                                                            className="flex items-center gap-2 text-sm"
-                                                        >
-                                                            <Check className="w-4 h-4 text-green-500" />
-                                                            <span>{tag}</span>
-                                                        </div>
-                                                    ))
-                                                ) : (
-                                                    <p className="text-sm text-gray-500">No features listed</p>
-                                                )}
-                                            </div>
-                                        </div>
+                        {((vehicle1?.tags?.length ?? 0) > 0 || (vehicle2?.tags?.length ?? 0) > 0) && (
+                            <div className="space-y-6 pt-4">
+                                <h2 className="text-2xl font-semibold tracking-tight text-gray-900">Features & Equipment</h2>
+                                <div className="grid grid-cols-2 gap-4 md:gap-8">
+                                    <div className="bg-gray-50 rounded-2xl p-6">
+                                        <ul className="space-y-3">
+                                            {(vehicle1?.tags?.length ?? 0) > 0 ? (
+                                                vehicle1?.tags?.map((tag: string, idx: number) => (
+                                                    <li key={idx} className="flex items-start text-sm md:text-base text-gray-700">
+                                                        <Check className="w-5 h-5 text-gray-400 mr-3 shrink-0" />
+                                                        <span className="mt-0.5">{tag}</span>
+                                                    </li>
+                                                ))
+                                            ) : (
+                                                <li className="text-sm md:text-base text-gray-500">Not specified</li>
+                                            )}
+                                        </ul>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                    <div className="bg-gray-50 rounded-2xl p-6">
+                                        <ul className="space-y-3">
+                                            {(vehicle2?.tags?.length ?? 0) > 0 ? (
+                                                vehicle2?.tags?.map((tag: string, idx: number) => (
+                                                    <li key={idx} className="flex items-start text-sm md:text-base text-gray-700">
+                                                        <Check className="w-5 h-5 text-gray-400 mr-3 shrink-0" />
+                                                        <span className="mt-0.5">{tag}</span>
+                                                    </li>
+                                                ))
+                                            ) : (
+                                                <li className="text-sm md:text-base text-gray-500">Not specified</li>
+                                            )}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
                         )}
 
-                        {/* Summary Card */}
-                        <Card className="bg-gradient-to-r from-blue-50 to-teal-50 border-2 border-blue-200">
-                            <CardHeader>
-                                <CardTitle className="text-[#024950] flex items-center gap-2">
-                                    <Sparkles className="w-6 h-6" />
-                                    Comparison Summary
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-3">
-                                    {vehicle1?.price && vehicle2?.price && (
-                                        <div className="flex items-center justify-between p-3 bg-white rounded-lg">
-                                            <span className="font-medium">Price Difference</span>
-                                            <span className="font-bold text-[#024950]">
-                                                {formatPrice(Math.abs(vehicle1.price - vehicle2.price))}
-                                                {vehicle1.price < vehicle2.price ? (
-                                                    <span className="text-green-600 ml-2">
-                                                        (Vehicle 1 is cheaper)
+                        {/* Summary Block */}
+                        {((vehicle1?.price && vehicle2?.price) || (vehicle1?.mileage && vehicle2?.mileage)) && (
+                            <div className="pt-4">
+                                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 md:p-8">
+                                    <h2 className="text-xl font-semibold mb-6 text-gray-900">Comparison Highlights</h2>
+                                    <div className="space-y-5">
+                                        {vehicle1?.price && vehicle2?.price && (
+                                            <div className="flex flex-col md:flex-row md:items-center justify-between pb-5 border-b border-gray-200 last:border-0 last:pb-0 gap-2">
+                                                <span className="text-gray-600 font-medium">Price Difference</span>
+                                                <span className="font-semibold text-gray-900 text-lg">
+                                                    {formatPrice(Math.abs(vehicle1.price - vehicle2.price))}
+                                                    <span className="text-gray-500 font-normal text-sm md:text-base ml-2">
+                                                        ({vehicle1.price < vehicle2.price ? 'First vehicle is more affordable' : 'Second vehicle is more affordable'})
                                                     </span>
-                                                ) : (
-                                                    <span className="text-green-600 ml-2">
-                                                        (Vehicle 2 is cheaper)
+                                                </span>
+                                            </div>
+                                        )}
+                                        {vehicle1?.mileage && vehicle2?.mileage && (
+                                            <div className="flex flex-col md:flex-row md:items-center justify-between pb-5 border-b border-gray-200 last:border-0 last:pb-0 gap-2">
+                                                <span className="text-gray-600 font-medium">Mileage Difference</span>
+                                                <span className="font-semibold text-gray-900 text-lg">
+                                                    {Math.abs(vehicle1.mileage - vehicle2.mileage).toLocaleString()} km
+                                                    <span className="text-gray-500 font-normal text-sm md:text-base ml-2">
+                                                        ({vehicle1.mileage < vehicle2.mileage ? 'First vehicle has less mileage' : 'Second vehicle has less mileage'})
                                                     </span>
-                                                )}
-                                            </span>
-                                        </div>
-                                    )}
-                                    {vehicle1?.mileage && vehicle2?.mileage && (
-                                        <div className="flex items-center justify-between p-3 bg-white rounded-lg">
-                                            <span className="font-medium">Mileage Difference</span>
-                                            <span className="font-bold text-[#024950]">
-                                                {Math.abs(vehicle1.mileage - vehicle2.mileage).toLocaleString()}{" "}
-                                                km
-                                                {vehicle1.mileage < vehicle2.mileage ? (
-                                                    <span className="text-green-600 ml-2">
-                                                        (Vehicle 1 has lower mileage)
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-green-600 ml-2">
-                                                        (Vehicle 2 has lower mileage)
-                                                    </span>
-                                                )}
-                                            </span>
-                                        </div>
-                                    )}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        )}
                     </div>
                 )}
 
                 {/* Empty State */}
                 {(!vehicle1Id || !vehicle2Id) && (
-                    <Card className="border-2 border-dashed border-gray-300">
-                        <CardContent className="p-12 text-center">
-                            <Car className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                            <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                                Select Two Vehicles to Compare
-                            </h3>
-                            <p className="text-gray-500">
-                                Use the search boxes above to find and select two vehicles you
-                                want to compare side by side.
-                            </p>
-                        </CardContent>
-                    </Card>
+                    <div className="border border-dashed border-gray-300 rounded-2xl bg-gray-50/50 p-12 text-center mt-8">
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2 tracking-tight">
+                            Select Vehicles to Compare
+                        </h3>
+                        <p className="text-gray-500 max-w-md mx-auto">
+                            Please search and select two vehicles from the drop-downs above to view a detailed side-by-side comparison.
+                        </p>
+                    </div>
                 )}
             </div>
-        </div >
+        </div>
     );
 }

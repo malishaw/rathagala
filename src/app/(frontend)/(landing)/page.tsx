@@ -1429,8 +1429,9 @@ export default function VehicleMarketplace() {
       )}
 
       {/* Trending Vehicles Section */}
-      <section className="bg-white py-6 md:py-8 border-b border-slate-100">
-        <div className="max-w-6xl mx-auto px-4">
+      {isTrendingLoading || (trendingAdsData && trendingAdsData.length > 0) ? (
+        <section className="bg-white py-6 md:py-8 border-b border-slate-100">
+          <div className="max-w-6xl mx-auto px-4">
           {/* Trending Vehicles */}
           <div>
             <h2 className="text-lg sm:text-xl font-bold text-slate-800 mb-3">Trending Vehicles</h2>
@@ -1460,7 +1461,7 @@ export default function VehicleMarketplace() {
                                               {/* Vehicle Image */}
                         <div className="w-full h-32 overflow-hidden bg-slate-55 relative border-b border-slate-100">
                           <Image
-                            src={vehicle?.media?.[0]?.media?.url || "/placeholder-image.jpg"}
+                            src={(vehicle as any)?.media?.[0]?.media?.url || "/placeholder-image.jpg"}
                             alt={vehicle.title || "Vehicle"}
                             fill
                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -1499,7 +1500,7 @@ export default function VehicleMarketplace() {
                             
                             {/* Title */}
                             <h3 className="font-semibold text-xs text-slate-800 line-clamp-1 group-hover:text-teal-700 transition-colors leading-tight">
-                              {formatAdTitle(vehicle)}
+                              {formatAdTitle(vehicle as any)}
                             </h3>
 
                              <div className="text-[10px] text-slate-500 mt-0.5 truncate flex items-center gap-1.5">
@@ -1536,43 +1537,12 @@ export default function VehicleMarketplace() {
           </div>
         </div>
       </section>
+      ) : null}
 
       {/* Brand Carousel Section */}
       <BrandCarouselSection />
 
-      {/* Banner Ad Space */}
-      <div className="bg-white py-6">
-        <div className="max-w-6xl mx-auto px-4">
-          <Card className="p-0 bg-white border border-slate-100 rounded-xl overflow-hidden shadow-none">
-            <div className="text-center text-slate-500">
-              <Link href="/sell/new" className="block">
-                {/* Desktop View Banner */}
-                <div className="hidden sm:flex bg-slate-100 h-24 items-center justify-center rounded-lg overflow-hidden relative w-full">
-                  <Image
-                    src="/assets/Bottom Banner.jpg"
-                    alt="Free Advertisement"
-                    fill
-                    sizes="100vw"
-                    loading="lazy"
-                    className="object-cover"
-                  />
-                </div>
-                {/* Mobile View Banner - Added new slot for mobile and fixed alignment */}
-                <div className="flex sm:hidden bg-slate-100 h-32 items-center justify-center rounded-lg overflow-hidden relative w-full">
-                  <Image
-                    src="/assets/Bottom Banner - Mobile New.jpg"
-                    alt="Free Advertisement"
-                    fill
-                    sizes="100vw"
-                    loading="lazy"
-                    className="object-cover object-center"
-                  />
-                </div>
-              </Link>
-            </div>
-          </Card>
-        </div>
-      </div>
+
     </div>
   );
 }

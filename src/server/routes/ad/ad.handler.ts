@@ -1857,6 +1857,9 @@ export const trending: AppRouteHandler<TrendingRoute> = async (c) => {
         media: {
           take: 1, // Only get the first media item
           orderBy: { createdAt: 'asc' },
+          include: {
+            media: true
+          }
         },
         analytics: true,
         user: {
@@ -1887,10 +1890,14 @@ export const trending: AppRouteHandler<TrendingRoute> = async (c) => {
       expiryDate: ad.expiryDate?.toISOString() ?? null,
       boostStartAt: ad.boostStartAt?.toISOString() ?? null,
       boostEndAt: ad.boostEndAt?.toISOString() ?? null,
-      media: ad.media.map((media) => ({
-        ...media,
-        createdAt: media.createdAt.toISOString(),
-        updatedAt: media.updatedAt.toISOString(),
+      media: ad.media.map((am) => ({
+        ...am,
+        createdAt: am.createdAt.toISOString(),
+        updatedAt: am.updatedAt.toISOString(),
+        media: am.media ? {
+          ...am.media,
+          createdAt: am.media.createdAt.toISOString(),
+        } : null
       })),
     }));
 

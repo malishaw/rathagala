@@ -95,6 +95,14 @@ export function Header() {
     <header
       className={`sticky top-0 z-50 transition-colors duration-200 border-b border-teal-800 bg-[#024950] text-white shadow-sm`}
     >
+      {/* Top promotional banner */}
+      <div className="bg-amber-500/10 border-b border-amber-500/20 py-1.5 px-4 text-center">
+        <p className="text-xs md:text-sm font-medium text-amber-100 flex items-center justify-center gap-2">
+          <span className="hidden sm:inline">🚀</span> 
+          <span><strong className="text-amber-400">Free Advertising:</strong> Publish your ad completely free on this site to sell your vehicle!</span>
+        </p>
+      </div>
+
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between py-3">
           <Link
@@ -108,7 +116,7 @@ export function Header() {
               }
             }}
           >
-            <CarIcon className="h-6 w-6 text-white" />
+            <img src="/Rathagala-Favicon.png" alt="Rathagala.lk Logo" className="h-7 w-7 object-contain" />
             <div className="text-xl md:text-2xl font-bold tracking-tight font-heading">
               Rathagala.lk
             </div>
@@ -123,8 +131,8 @@ export function Header() {
               { href: "/search?listingType=RENT", label: "Rent" },
               { href: "/search?listingType=HIRE", label: "Hire" },
               { href: "/auto-parts", label: "Auto Parts" },
-              { href: "/compare", label: "Compare" },
-              { href: "/analyse", label: "Analyze" },
+              { href: "/compare", label: "Compare Vehicles" },
+              { href: "/analyse", label: "Market Trends" },
             ].map((link) => (
               <Link
                 key={link.label}
@@ -225,7 +233,7 @@ export function Header() {
                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                 <div className="flex items-center justify-between mb-10">
                   <div className="text-xl font-bold text-white flex items-center gap-2 tracking-wide">
-                    <CarIcon className="h-5 w-5" />
+                    <img src="/Rathagala-Favicon.png" alt="Rathagala.lk Logo" className="h-6 w-6 object-contain" />
                     Rathagala.lk
                   </div>
                   <SheetClose asChild>
@@ -319,7 +327,7 @@ export function Header() {
                     <div className="bg-white/10 p-1.5 rounded-sm">
                       <Check className="h-4 w-4" />
                     </div>
-                    Compare
+                    Compare Vehicles
                   </Link>
 
                   <Link
@@ -330,7 +338,7 @@ export function Header() {
                     <div className="bg-white/10 p-1.5 rounded-sm">
                       <TrendingUp className="h-4 w-4" />
                     </div>
-                    Analyze
+                    Market Trends
                   </Link>
 
                   {user && (

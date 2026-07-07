@@ -11,8 +11,8 @@ const footerLinks = {
   features: [
     { href: "/search?listingType=SELL", label: "Buy Vehicles" },
     { href: "/search?listingType=RENT", label: "Rent Vehicles" },
-    { href: "/compare", label: "Compare" },
-    { href: "/analyse", label: "Analyze Trends" },
+    { href: "/compare", label: "Compare Vehicles" },
+    { href: "/analyse", label: "Market Trends" },
     { href: "/auto-parts", label: "Auto Parts" },
   ],
   support: [
@@ -43,7 +43,7 @@ export function Footer() {
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="inline-flex items-center gap-2 mb-4 group">
               <div className="bg-teal-500/20 p-1.5 rounded-md group-hover:bg-teal-500/30 transition-colors">
-                <CarIcon className="h-5 w-5 text-teal-400" />
+                <img src="/Rathagala-Favicon.png" alt="Rathagala.lk Logo" className="h-5 w-5 object-contain" />
               </div>
               <span className="text-lg font-bold tracking-tight text-white">
                 Rathagala<span className="text-teal-400">.lk</span>

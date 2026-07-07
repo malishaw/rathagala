@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -11,11 +10,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useGetAds } from "@/features/ads/api/use-get-ads";
-import {
-  TrendingUp,
-} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   LineChart,
   Line,
@@ -27,7 +23,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-export default function ComparisonPage() {
+export default function MarketTrendsPage() {
   const router = useRouter();
 
   // Independent filters for Price Trend Analysis chart
@@ -67,7 +63,14 @@ export default function ComparisonPage() {
     return Array.from(s).sort((a, b) => b - a);
   }, [trendAds]);
 
-  // ... (rest of the hooks) ...
+  // Auto-select initial filters for better UX
+  useEffect(() => {
+    if (availableYears.length > 0 && !trendFilterYear) {
+      setTrendFilterYear(String(availableYears[0]));
+    }
+  }, [availableYears, trendFilterYear]);
+
+
 
   // Get available brands for trend filter
   const availableTrendBrands = useMemo(() => {
@@ -106,6 +109,18 @@ export default function ComparisonPage() {
     });
     return Array.from(models).sort();
   }, [trendFilterYear, trendFilterBrand1, trendAds]);
+
+  useEffect(() => {
+    if (availableTrendBrands.length > 0 && !trendFilterBrand1 && !trendFilterBrand2) {
+      setTrendFilterBrand1(availableTrendBrands[0]);
+    }
+  }, [availableTrendBrands, trendFilterBrand1, trendFilterBrand2]);
+
+  useEffect(() => {
+    if (availableTrendModels1.length > 0 && trendFilterBrand1 && !trendFilterModel1) {
+      setTrendFilterModel1(availableTrendModels1[0]);
+    }
+  }, [availableTrendModels1, trendFilterBrand1, trendFilterModel1]);
 
   // Get available models for Brand 2
   const availableTrendModels2 = useMemo(() => {
@@ -317,68 +332,62 @@ export default function ComparisonPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-teal-50/30 to-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#024950] to-teal-700 text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
-                <TrendingUp className="w-8 h-8" />
-                Price Trend Analysis
-              </h1>
-              <p className="text-teal-100">
-                Analyze price trends over time for different vehicle models
-              </p>
-            </div>
-          </div>
+      <div className="border-b border-gray-100">
+        <div className="max-w-4xl mx-auto px-4 py-8 text-center">
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+            Market Trends
+          </h1>
+          <p className="text-gray-500 mt-2">
+            View historical price trends for different vehicle models.
+          </p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Price Trend Analysis */}
-        <Card className="mb-8">
-          <CardHeader className="bg-gradient-to-r from-[#024950] to-teal-700 text-white">
-            <CardTitle className="text-2xl flex items-center gap-2">
-              <TrendingUp className="w-6 h-6" />
-              Analyze Trends
-            </CardTitle>
-            <p className="text-sm text-teal-100 mt-2">
-              Filter by brand, model, and manufacture year to see historical price data from all posted ads.
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Market Trends */}
+        <div className="mb-8">
+          <div className="mb-8 text-center">
+            <h2 className="text-xl font-semibold tracking-tight text-gray-900">
+              Analysis Filters
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Select a year and vehicle models to compare historical price data.
             </p>
-          </CardHeader>
-          <CardContent className="pt-6">
+          </div>
+          <div>
             {isLoading ? (
-              <div className="space-y-6">
+              <div className="space-y-8">
                 {/* Year Filter Skeleton */}
-                <div className="p-3 bg-white rounded-lg border border-gray-100">
-                  <div className="h-4 w-24 bg-gray-100/80 rounded mb-2 animate-pulse"></div>
-                  <div className="h-10 w-full bg-gray-100/50 rounded animate-pulse"></div>
+                <div>
+                  <div className="h-4 w-24 bg-gray-100 rounded mb-2 animate-pulse"></div>
+                  <div className="h-10 w-64 bg-gray-50 rounded animate-pulse"></div>
                 </div>
 
                 {/* Two Column Layout Skeleton */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* First Comparison Group */}
-                  <div className="p-3 bg-gray-50/50 rounded-lg border border-gray-100">
-                    <div className="h-4 w-32 bg-gray-200/50 rounded mb-4 animate-pulse"></div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <div>
+                    <div className="h-4 w-32 bg-gray-200 rounded mb-4 animate-pulse"></div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {[1, 2, 3].map(i => (
                         <div key={i}>
-                          <div className="h-4 w-16 bg-gray-100/80 rounded mb-1.5 animate-pulse"></div>
-                          <div className="h-10 w-full bg-gray-100/50 rounded animate-pulse"></div>
+                          <div className="h-4 w-16 bg-gray-100 rounded mb-1.5 animate-pulse"></div>
+                          <div className="h-10 w-full bg-gray-50 rounded animate-pulse"></div>
                         </div>
                       ))}
                     </div>
                   </div>
 
                   {/* Second Comparison Group */}
-                  <div className="p-3 bg-gray-50/50 rounded-lg border border-gray-100">
-                    <div className="h-4 w-32 bg-gray-200/50 rounded mb-4 animate-pulse"></div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <div>
+                    <div className="h-4 w-32 bg-gray-200 rounded mb-4 animate-pulse"></div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {[1, 2, 3].map(i => (
                         <div key={i}>
-                          <div className="h-4 w-16 bg-gray-100/80 rounded mb-1.5 animate-pulse"></div>
-                          <div className="h-10 w-full bg-gray-100/50 rounded animate-pulse"></div>
+                          <div className="h-4 w-16 bg-gray-100 rounded mb-1.5 animate-pulse"></div>
+                          <div className="h-10 w-full bg-gray-50 rounded animate-pulse"></div>
                         </div>
                       ))}
                     </div>
@@ -386,20 +395,19 @@ export default function ComparisonPage() {
                 </div>
 
                 {/* Chart Skeleton */}
-                <div className="h-[400px] w-full bg-gray-50/30 rounded-lg border border-gray-100/50 animate-pulse flex items-center justify-center">
-                  <TrendingUp className="w-12 h-12 text-gray-200/50" />
+                <div className="h-[400px] w-full bg-gray-50 rounded-xl animate-pulse flex items-center justify-center">
                 </div>
               </div>
             ) : (
               <>
                 {/* Trend Filters */}
-                <div className="mb-6 space-y-3">
+                <div className="mb-10 space-y-8 border-b border-gray-100 pb-10">
                   {/* Year Filter */}
-                  <div className="p-3 bg-white rounded-lg border border-gray-200">
-                    <div className="max-w-xs">
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Analyze Year</label>
+                  <div className="flex justify-center">
+                    <div className="w-full max-w-xs text-center">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Analysis Year</label>
                       <select
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-[#024950] focus:border-transparent outline-none transition-all"
+                        className="w-full border border-gray-200 rounded-lg px-3 h-10 text-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-all bg-white hover:bg-gray-50 cursor-pointer"
                         value={trendFilterYear}
                         onChange={(e) => {
                           setTrendFilterYear(e.target.value);
@@ -421,14 +429,14 @@ export default function ComparisonPage() {
                     </div>
                   </div>
 
-                  {/* Two Column Layout for Selections - Forced 2 columns even on mobile */}
-                  <div className="grid grid-cols-2 gap-2 md:gap-4">
+                  {/* Two Column Layout for Selections */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
                     {/* First Comparison Group */}
-                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-bold text-blue-900">First Selection</span>
+                    <div>
+                      <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-2">
+                        <span className="text-sm font-semibold text-gray-900">First Vehicle</span>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         {/* Brand 1 */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1.5">Brand</label>
@@ -527,11 +535,11 @@ export default function ComparisonPage() {
                     </div>
 
                     {/* Second Comparison Group */}
-                    <div className="p-3 bg-teal-50 rounded-lg border border-teal-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-bold text-teal-900">Second Selection</span>
+                    <div>
+                      <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-2">
+                        <span className="text-sm font-semibold text-gray-900">Second Vehicle</span>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         {/* Brand 2 */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1.5">Brand</label>
@@ -705,17 +713,17 @@ export default function ComparisonPage() {
                     </div>
 
                     {/* Statistics */}
-                    <div className="mt-6 p-4 bg-[#024950]/5 rounded-lg border border-[#024950]/20">
-                      <div className="grid md:grid-cols-3 gap-4 text-sm">
-                        <div>
-                          <div className="text-sm font-medium text-gray-600 mb-1">Data Points</div>
-                          <div className="text-2xl font-bold text-[#024950]">
-                            {priceTrendData.length} months
+                    <div className="mt-8 pt-8 border-t border-gray-100">
+                      <div className="grid md:grid-cols-3 gap-6">
+                        <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                          <div className="text-sm font-medium text-gray-500 mb-2">Data Points</div>
+                          <div className="text-3xl font-bold tracking-tight text-gray-900">
+                            {priceTrendData.length} <span className="text-lg font-normal text-gray-400">months</span>
                           </div>
                         </div>
-                        <div>
-                          <div className="text-sm font-medium text-gray-600 mb-1">{trendFilterBrand1} {trendFilterModel1} Listings</div>
-                          <div className="text-2xl font-bold text-[#024950]">
+                        <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                          <div className="text-sm font-medium text-gray-500 mb-2">{trendFilterBrand1} {trendFilterModel1 || "First Selection"} Listings</div>
+                          <div className="text-3xl font-bold tracking-tight text-gray-900">
                             {
                               allVehiclesForTrendAnalysis?.ads?.filter((ad: any) => {
                                 if (!ad?.createdAt) return false;
@@ -728,9 +736,9 @@ export default function ComparisonPage() {
                             }
                           </div>
                         </div>
-                        <div>
-                          <div className="text-sm font-medium text-gray-600 mb-1">{trendFilterBrand2} {trendFilterModel2} Listings</div>
-                          <div className="text-2xl font-bold text-[#024950]">
+                        <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                          <div className="text-sm font-medium text-gray-500 mb-2">{trendFilterBrand2} {trendFilterModel2 || "Second Selection"} Listings</div>
+                          <div className="text-3xl font-bold tracking-tight text-gray-900">
                             {
                               allVehiclesForTrendAnalysis?.ads?.filter((ad: any) => {
                                 if (!ad?.createdAt) return false;
@@ -747,21 +755,21 @@ export default function ComparisonPage() {
                     </div>
                   </>
                 ) : (
-                  <div className="text-center py-12 bg-gray-50 rounded-lg">
-                    <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-sm text-gray-600">
+                  <div className="text-center py-16 border border-gray-100 rounded-2xl bg-gray-50/50">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No Data Available</h3>
+                    <p className="text-sm text-gray-500 max-w-md mx-auto">
                       {!trendFilterYear
-                        ? "Select a year to view price trends"
+                        ? "Select an analysis year to view historical price trends for different vehicles."
                         : (!trendFilterBrand1 || !trendFilterModel1) && (!trendFilterBrand2 || !trendFilterModel2)
-                          ? "Select at least one vehicle (Brand & Model) to view trends"
-                          : "No data available for the selected filters"}
+                          ? "Select at least one vehicle (Brand & Model) to generate the trend analysis chart."
+                          : "No historical data available for the selected filters."}
                     </p>
                   </div>
                 )}
               </>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,16 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any, @next/next/no-img-element */
 "use client";
 
 import dynamic from "next/dynamic";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -29,13 +22,10 @@ import { FavoriteButton } from "@/features/saved-ads/components/favorite-button"
 import { useCreateReport } from "@/features/report/api/use-create-report";
 import { ReportReasons } from "@/server/routes/report/report.schemas";
 import {
-  Calendar,
   ChevronLeft,
   ChevronRight,
   Clock,
   Eye,
-  Fuel,
-  Gauge,
   MapPin,
   MessageCircle,
   Phone,
@@ -151,7 +141,7 @@ export default function AdDetailPage() {
   const slugArray = Array.isArray(params.slug)
     ? params.slug
     : params.slug ? [params.slug as string] : [];
-  const isAnalytics = slugArray[slugArray.length - 1] === "analytics";
+  const isAnalytics = slugArray[slugArray.length - 1] === "price-evaluation";
   const adSlug = isAnalytics ? slugArray.slice(0, -1) : slugArray;
   const adId = adSlug.length === 2 ? adSlug[1] : adSlug[0] || "";
 
@@ -211,11 +201,11 @@ export default function AdDetailPage() {
   }, []);
 
   // ── Similar vehicles — useMemo must be before any conditional returns ──
-  const allSimilar = similarData?.vehicles || [];
   const modelFiltered = useMemo(() => {
+    const allSimilar = similarData?.vehicles || [];
     if (!ad?.model) return allSimilar;
     return allSimilar.filter(v => v.model?.toLowerCase() === ad.model?.toLowerCase());
-  }, [allSimilar, ad?.model]);
+  }, [similarData?.vehicles, ad?.model]);
 
   // ── Report ──
   const handleSubmitReport = () => {
@@ -278,8 +268,7 @@ export default function AdDetailPage() {
   const originalImages: string[] = Array.isArray((ad as any).media) && (ad as any).media.length > 0
     ? (ad as any).media
         .map((item: any) => item?.media?.url)
-        .filter((u: any) => typeof u === "string" && u.length > 0)
-    : ["/placeholder.svg?height=400&width=600&text=No+Image"];
+    : ["/placeholder-image.jpg"];
 
   const getWatermarked = (url: string) =>
     url.includes("placeholder") || url.startsWith("/")
@@ -415,6 +404,11 @@ export default function AdDetailPage() {
                   draggable={false}
                   fetchPriority="high"
                   onContextMenu={e => { e.preventDefault(); e.stopPropagation(); }}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.onerror = null;
+                    target.src = "/placeholder-image.jpg";
+                  }}
                 />
                 {/* Transparent overlay blocks right-click */}
                 <div className="absolute inset-0 z-10" style={{ userSelect: "none", WebkitUserSelect: "none" }}
@@ -464,6 +458,11 @@ export default function AdDetailPage() {
                         loading="lazy"
                         draggable={false}
                         onContextMenu={e => e.preventDefault()}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null;
+                          target.src = "/placeholder-image.jpg";
+                        }}
                       />
                     </button>
                   ))}
@@ -553,10 +552,15 @@ export default function AdDetailPage() {
                             className="text-left border border-gray-200 rounded overflow-hidden hover:shadow-sm transition-shadow"
                           >
                             <img
-                              src={v.image || "/placeholder.svg"}
+                              src={v.image || "/placeholder-image.jpg"}
                               alt={v.title}
                               className="w-full h-20 object-cover"
                               loading="lazy"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.onerror = null;
+                                target.src = "/placeholder-image.jpg";
+                              }}
                             />
                             <div className="p-2">
                               <div className="text-xs font-medium text-gray-800 line-clamp-1">{v.title}</div>
@@ -642,11 +646,11 @@ export default function AdDetailPage() {
                 {ad.phoneNumber && (
                   <div className="mb-2">
                     {/* Mobile: dial link */}
-                    <a href={`tel:${ad.phoneNumber}`} className="block sm:hidden">
-                      <Button className="w-full bg-[#024950] hover:bg-[#036b75] text-white text-sm h-9">
+                    <Button asChild className="w-full bg-[#024950] hover:bg-[#036b75] text-white text-sm h-9 sm:hidden">
+                      <a href={`tel:${ad.phoneNumber}`}>
                         <Phone className="w-3.5 h-3.5 mr-2" />{ad.phoneNumber}
-                      </Button>
-                    </a>
+                      </a>
+                    </Button>
                     {/* Desktop: masked reveal */}
                     <div className="hidden sm:block">
                       <RevealPhoneButton phoneNumber={ad.phoneNumber} />
@@ -729,7 +733,7 @@ export default function AdDetailPage() {
                 </Button>
               </div>
 
-              {/* Price Analytics card — highly attention grabbing & premium */}
+              {/* Research Tools card — highly attention grabbing & premium */}
               {ad.price && (
                 <div className="bg-gradient-to-r from-teal-50/80 to-emerald-50/20 border border-teal-500/25 border-l-4 border-l-[#0D5C63] rounded-r p-4 shadow-[0_2px_8px_-3px_rgba(13,92,99,0.15)] relative overflow-hidden group">
                   {/* Decorative background glow */}
@@ -742,26 +746,32 @@ export default function AdDetailPage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-bold text-gray-800 tracking-wide uppercase">Price Analytics</span>
+                          <span className="text-xs font-bold text-gray-800 tracking-wide uppercase">Research Tools</span>
                           <span className="bg-teal-600/10 text-[#0D5C63] text-[9px] font-bold px-1.5 py-0.5 rounded">Smart tool</span>
                         </div>
-                        <p className="text-[11px] text-gray-500 mt-0.5 font-medium">Compare and analyze pricing trends instantly</p>
+                        <p className="text-[11px] text-gray-500 mt-0.5 font-medium">Access tools to evaluate, compare, and analyze market trends.</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 mt-2.5">
+                  <div className="flex flex-col gap-2 mt-2.5">
                     <button
-                      onClick={() => router.push(`/ads/${adId}/analytics`)}
-                      className="flex items-center justify-center gap-1 bg-[#024950] hover:bg-[#0D5C63] text-white text-xs font-semibold py-2 px-3 rounded shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all duration-200"
+                      onClick={() => router.push(`/ads/${adId}/price-evaluation`)}
+                      className="flex items-center justify-center gap-1.5 bg-[#024950] hover:bg-[#0D5C63] text-white text-xs font-semibold py-2 px-3 rounded shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all duration-200"
                     >
-                      Analytics <ExternalLink className="w-3 h-3" />
+                      Price Evaluation <ExternalLink className="w-3 h-3" />
                     </button>
                     <button
                       onClick={() => router.push(`/compare?vehicle1=${adId}`)}
-                      className="flex items-center justify-center gap-1 bg-white border border-[#024950]/30 hover:border-[#024950]/60 text-[#024950] text-xs font-semibold py-2 px-3 rounded hover:bg-teal-50/50 active:scale-[0.99] transition-all duration-200"
+                      className="flex items-center justify-center gap-1.5 bg-white border border-[#024950]/30 hover:border-[#024950]/60 text-[#024950] text-xs font-semibold py-2 px-3 rounded hover:bg-teal-50/50 active:scale-[0.99] transition-all duration-200"
                     >
-                      Compare <ExternalLink className="w-3 h-3" />
+                      Compare Vehicles <ExternalLink className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={() => router.push(`/analyse`)}
+                      className="flex items-center justify-center gap-1.5 bg-white border border-[#024950]/30 hover:border-[#024950]/60 text-[#024950] text-xs font-semibold py-2 px-3 rounded hover:bg-teal-50/50 active:scale-[0.99] transition-all duration-200"
+                    >
+                      Market Trends <ExternalLink className="w-3 h-3" />
                     </button>
                   </div>
                 </div>
@@ -798,7 +808,17 @@ export default function AdDetailPage() {
                     onClick={() => router.push(buildAdUrl(v))}
                     className="text-left border rounded overflow-hidden hover:shadow-sm"
                   >
-                    <img src={v.image || "/placeholder.svg"} alt={v.title} className="w-full h-16 object-cover" loading="lazy" />
+                    <img 
+                      src={v.image || "/placeholder-image.jpg"} 
+                      alt={v.title} 
+                      className="w-full h-16 object-cover" 
+                      loading="lazy" 
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null;
+                        target.src = "/placeholder-image.jpg";
+                      }}
+                    />
                     <div className="p-1.5">
                       <div className="text-[10px] font-medium line-clamp-1">{v.title}</div>
                       <div className="text-[10px] font-bold text-[#024950]">

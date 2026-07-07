@@ -1,16 +1,25 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PriceComparison } from "@/components/ui/price-comparison";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useGetAdById } from "@/features/ads/api/use-get-ad-by-id";
 import { useGetMarketPrice } from "@/features/ads/api/use-get-market-price";
 import { useGetSimilarVehicles } from "@/features/ads/api/use-get-similar-vehicles";
-import { ArrowLeft, TrendingUp, BarChart3 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
-import { Line, LineChart, XAxis, YAxis, CartesianGrid, ReferenceLine } from "recharts";
+import { Line, LineChart, XAxis, YAxis, CartesianGrid, ReferenceLine, ResponsiveContainer } from "recharts";
+
+const vehicleTypeLabels: Record<string, string> = {
+  CAR: "Car", VAN: "Van", SUV_JEEP: "SUV / Jeep", MOTORCYCLE: "Motorcycle",
+  CREW_CAB: "Crew Cab", PICKUP_DOUBLE_CAB: "Pickup / Double Cab", BUS: "Bus",
+  LORRY: "Lorry", THREE_WHEEL: "Three Wheel", OTHER: "Other",
+  TRACTOR: "Tractor", HEAVY_DUTY: "Heavy-Duty", BICYCLE: "Bicycle",
+  AUTO_SERVICE: "Auto Service", RENTAL: "Rental", AUTO_PARTS: "Auto Parts",
+  MAINTENANCE: "Maintenance", BOAT: "Boat",
+};
 
 export default function VehicleAnalyticsContent({ adId }: { adId: string }) {
   const router = useRouter();
@@ -19,31 +28,29 @@ export default function VehicleAnalyticsContent({ adId }: { adId: string }) {
   const { data: marketData } = useGetMarketPrice({ adId: adId || "" });
   const { data: similarVehiclesData, isLoading: isLoadingSimilar } = useGetSimilarVehicles({ 
     adId: adId || "", 
-    limit: 20 
+    limit: 30 
   });
+
+  const [minYear, setMinYear] = useState<string>("all");
+  const [maxYear, setMaxYear] = useState<string>("all");
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin w-12 h-12 border-4 border-[#024950] border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading vehicle analytics...</p>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-2 border-[#024950] border-t-transparent rounded-full" />
       </div>
     );
   }
 
   if (isError || !ad) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50 flex items-center justify-center">
-        <Card className="max-w-md w-full">
-          <CardContent className="pt-6 text-center">
-            <p className="text-destructive mb-4">Failed to load vehicle details</p>
-            <Button onClick={() => router.back()} variant="outline">
-              Go Back
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="text-center">
+          <p className="text-gray-500 text-sm mb-3">Failed to load vehicle details</p>
+          <Button onClick={() => router.back()} variant="outline" size="sm">
+            Go Back
+          </Button>
+        </div>
       </div>
     );
   }
@@ -59,14 +66,15 @@ export default function VehicleAnalyticsContent({ adId }: { adId: string }) {
       .replace("LKR", "Rs.");
   };
 
-  // Prepare chart data: combine current vehicle with similar vehicles
-  const prepareChartData = () => {
-    if (!ad || !similarVehiclesData?.vehicles) return [];
+  const rawType = (ad as any).type ?? ad.vehicleType;
+  const typeLabel = rawType ? (vehicleTypeLabels[rawType as string] || rawType) : "N/A";
+
+  // Prepare chart data
+  const rawChartData = () => {
+    if (!ad) return [];
 
     const currentPrice = (ad as any).discountPrice || ad.price;
     const currentYear = ad.manufacturedYear;
-
-    // Start with current vehicle
     const chartData: Array<{ year: number; price: number; isCurrent: boolean; label: string }> = [];
     
     if (currentYear && currentPrice) {
@@ -74,334 +82,244 @@ export default function VehicleAnalyticsContent({ adId }: { adId: string }) {
         year: typeof currentYear === 'number' ? currentYear : parseInt(String(currentYear)),
         price: currentPrice,
         isCurrent: true,
-        label: `${ad.brand || ''} ${ad.model || ''}`.trim() || 'Current Vehicle'
+        label: 'This Vehicle'
       });
     }
 
-    // Add similar vehicles
-    similarVehiclesData.vehicles.forEach((vehicle) => {
-      if (vehicle.year && vehicle.price) {
-        const year = typeof vehicle.year === 'string' ? parseInt(vehicle.year) : vehicle.year;
-        if (!isNaN(year) && vehicle.price) {
-          chartData.push({
-            year: year,
-            price: vehicle.price,
-            isCurrent: false,
-            label: vehicle.title || `${vehicle.brand || ''} ${vehicle.model || ''}`.trim()
-          });
+    if (similarVehiclesData?.vehicles) {
+      similarVehiclesData.vehicles.forEach((vehicle) => {
+        if (vehicle.year && vehicle.price) {
+          const year = typeof vehicle.year === 'string' ? parseInt(vehicle.year) : vehicle.year;
+          if (!isNaN(year) && vehicle.price) {
+            chartData.push({
+              year: year,
+              price: vehicle.price,
+              isCurrent: false,
+              label: vehicle.title || 'Market Vehicle'
+            });
+          }
         }
-      }
-    });
+      });
+    }
 
-    // Sort by year
     return chartData.sort((a, b) => a.year - b.year);
   };
 
-  const chartData = prepareChartData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const memoizedRawData = useMemo(() => rawChartData(), [ad, similarVehiclesData]);
+
+  const availableYears = Array.from(new Set(memoizedRawData.map(d => d.year))).sort((a, b) => a - b);
+
+  const chartData = memoizedRawData.filter(d => {
+    if (minYear !== "all" && d.year < parseInt(minYear)) return false;
+    if (maxYear !== "all" && d.year > parseInt(maxYear)) return false;
+    return true;
+  });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50">
-      {/* Header */}
-      <header className="bg-gradient-to-r from-[#024950] via-[#036b75] to-[#024950] text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-white hover:bg-white/10"
-                onClick={() => router.back()}
-              >
-                <ArrowLeft className="w-5 h-5 mr-2" />
-                Back
-              </Button>
-              <div className="h-8 w-px bg-white/30" />
-              <div>
-                <h1 className="text-2xl font-bold">
-                  {[ad.brand, ad.model, ad.manufacturedYear, ad.vehicleType]
-                    .filter(Boolean)
-                    .join(" ")}
-                </h1>
-                <p className="text-teal-100 text-sm mt-1">
-                  Vehicle Analytics & Market Insights
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <BarChart3 className="w-6 h-6 text-teal-200" />
-              <Badge className="bg-white/20 text-white border-0">
-                Analytics
-              </Badge>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gray-50 font-sans">
+      <header className="bg-[#024950] text-white">
+        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-1 text-white/80 hover:text-white text-sm transition-colors mr-4"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </button>
+          <div className="h-4 w-px bg-white/30 mr-4" />
+          <h1 className="text-sm font-medium truncate">
+            {ad.brand} {ad.model} Price Evaluation
+          </h1>
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-teal-50/50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Current Price</p>
-                  <p className="text-2xl font-bold text-[#024950]">
-                    {(ad as any).discountPrice
-                      ? formatPrice((ad as any).discountPrice)
-                      : formatPrice(ad.price)}
-                  </p>
-                </div>
-                <div className="p-3 bg-teal-100 rounded-full">
-                  <TrendingUp className="w-6 h-6 text-[#024950]" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-blue-50/50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Vehicle Type</p>
-                  <p className="text-xl font-semibold text-gray-800">
-                    {ad.vehicleType || "N/A"}
-                  </p>
-                </div>
-                <div className="p-3 bg-blue-100 rounded-full">
-                  <BarChart3 className="w-6 h-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-emerald-50/50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Year</p>
-                  <p className="text-xl font-semibold text-gray-800">
-                    {ad.manufacturedYear || "N/A"}
-                  </p>
-                </div>
-                <div className="p-3 bg-emerald-100 rounded-full">
-                  <TrendingUp className="w-6 h-6 text-emerald-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
+        {/* Key Info */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-white border border-gray-200 rounded p-4 text-center">
+            <div className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Current Price</div>
+            <div className="text-lg font-bold text-[#024950]">
+              {(ad as any).discountPrice ? formatPrice((ad as any).discountPrice) : formatPrice(ad.price)}
+            </div>
+          </div>
+          <div className="bg-white border border-gray-200 rounded p-4 text-center">
+            <div className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Vehicle Type</div>
+            <div className="text-sm font-medium text-gray-800 mt-1">{typeLabel}</div>
+          </div>
+          <div className="bg-white border border-gray-200 rounded p-4 text-center">
+            <div className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Year</div>
+            <div className="text-sm font-medium text-gray-800 mt-1">{ad.manufacturedYear || "N/A"}</div>
+          </div>
         </div>
 
-        {/* Market Price Analysis Section */}
-        <div className="space-y-8">
-          <div className="flex items-center space-x-2 mb-4">
-            <div className="p-2 bg-gradient-to-br from-[#024950] to-teal-600 rounded-lg">
-              <TrendingUp className="w-5 h-5 text-white" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-800">Market Price Analysis</h2>
-          </div>
-
-          {/* Market Price Comparison Card */}
-          {ad.price && (
+        {/* Evaluation component */}
+        {ad.price && (
+          <div className="bg-white border border-gray-200 rounded p-5">
+            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Market Evaluation</h2>
             <PriceComparison 
               adId={adId || ""} 
               currentPrice={(ad as any).discountPrice || ad.price}
             />
-          )}
+          </div>
+        )}
 
-          {/* Price vs Year Chart for All Vehicles */}
-          {ad.price && chartData.length > 0 && (
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-teal-50/30">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                  <CardTitle className="text-[#024950] flex items-center space-x-2">
-                    <TrendingUp className="w-5 h-5" />
-                    <span>Price vs Year Analysis</span>
-                  </CardTitle>
-                  <div className="flex items-center gap-4 text-sm flex-wrap">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-[#024950]"></div>
-                      <span className="text-gray-600">Current Vehicle</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                      <span className="text-gray-600">Similar Vehicles</span>
-                    </div>
-                    {marketData?.marketPrice && (
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-1 bg-teal-500"></div>
-                        <span className="text-gray-600">Average Price</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {isLoadingSimilar ? (
-                  <div className="flex items-center justify-center h-[450px]">
-                    <div className="text-center">
-                      <div className="animate-spin w-8 h-8 border-4 border-[#024950] border-t-transparent rounded-full mx-auto mb-2"></div>
-                      <p className="text-sm text-gray-600">Loading vehicle data...</p>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <ChartContainer
-                      config={{
-                        price: {
-                          label: "Price",
-                          color: "#3b82f6",
-                        },
-                        currentPrice: {
-                          label: "Current Vehicle",
-                          color: "#024950",
-                        },
-                        averagePrice: {
-                          label: "Average Price",
-                          color: "#14b8a6",
-                        },
-                      }}
-                      className="h-[450px] w-full"
+        {/* Chart */}
+        {ad.price && chartData.length > 0 && (
+          <div className="bg-white border border-gray-200 rounded p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{ad.brand} {ad.model} Market Trend</h2>
+                <p className="text-xs text-gray-400 mt-1">Price variation across manufacturing years</p>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Select value={minYear} onValueChange={setMinYear}>
+                  <SelectTrigger className="w-[100px] h-8 text-xs border-gray-200 shadow-none">
+                    <SelectValue placeholder="Min Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Any</SelectItem>
+                    {availableYears.map(y => (
+                      <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span className="text-gray-400 text-xs">to</span>
+                <Select value={maxYear} onValueChange={setMaxYear}>
+                  <SelectTrigger className="w-[100px] h-8 text-xs border-gray-200 shadow-none">
+                    <SelectValue placeholder="Max Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Any</SelectItem>
+                    {availableYears.map(y => (
+                      <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {isLoadingSimilar ? (
+              <div className="flex items-center justify-center h-[350px]">
+                <div className="animate-spin w-6 h-6 border-2 border-[#024950] border-t-transparent rounded-full" />
+              </div>
+            ) : (
+              <div className="h-[350px]">
+                <ChartContainer
+                  config={{
+                    price: {
+                      label: "Market Price",
+                      color: "#024950",
+                    },
+                    averagePrice: {
+                      label: "Average",
+                      color: "#9ca3af",
+                    },
+                  }}
+                  className="h-full w-full"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={chartData}
+                      margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
                     >
-                      <LineChart
-                        data={chartData}
-                        margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                      >
-                        <CartesianGrid 
-                          strokeDasharray="3 3" 
-                          stroke="#e5e7eb"
-                          vertical={false}
+                      <CartesianGrid 
+                        strokeDasharray="3 3" 
+                        stroke="#f3f4f6"
+                        vertical={false}
+                      />
+                      <XAxis 
+                        dataKey="year" 
+                        type="number"
+                        scale="linear"
+                        domain={['dataMin - 1', 'dataMax + 1']}
+                        tick={{ fill: "#9ca3af", fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={12}
+                      />
+                      <YAxis 
+                        tick={{ fill: "#9ca3af", fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={12}
+                        tickFormatter={(value) => `Rs.${(value / 1000000).toFixed(1)}M`}
+                      />
+                      {marketData?.marketPrice && (
+                        <ReferenceLine 
+                          y={marketData.marketPrice} 
+                          stroke="#9ca3af" 
+                          strokeWidth={1}
+                          strokeDasharray="4 4"
+                          label={{ value: 'Market Avg', position: "insideTopLeft", fill: "#9ca3af", fontSize: 10 }}
                         />
-                        <XAxis 
-                          dataKey="year" 
-                          type="number"
-                          scale="linear"
-                          domain={['dataMin - 1', 'dataMax + 1']}
-                          tick={{ fill: "#6b7280", fontSize: 12 }}
-                          tickLine={{ stroke: "#9ca3af" }}
-                          axisLine={{ stroke: "#d1d5db" }}
-                          label={{ value: 'Year', position: 'insideBottom', offset: -5, style: { fill: '#6b7280' } }}
-                        />
-                        <YAxis 
-                          tick={{ fill: "#6b7280", fontSize: 12 }}
-                          tickLine={{ stroke: "#9ca3af" }}
-                          axisLine={{ stroke: "#d1d5db" }}
-                          tickFormatter={(value) => {
-                            const millions = value / 1000000;
-                            return `Rs. ${millions.toFixed(1)}M`;
-                          }}
-                          label={{ value: 'Price', angle: -90, position: 'insideLeft', style: { fill: '#6b7280' } }}
-                        />
-                        {marketData?.marketPrice && (
-                          <ReferenceLine 
-                            y={marketData.marketPrice} 
-                            stroke="#14b8a6" 
-                            strokeWidth={2}
-                            strokeDasharray="5 5"
-                            label={{ value: `Avg: ${formatPrice(marketData.marketPrice)}`, position: "right", fill: "#14b8a6", fontSize: 12 }}
-                          />
-                        )}
-                        <ChartTooltip
-                          content={({ active, payload, label }) => {
-                            if (active && payload && payload.length) {
-                              const data = payload[0].payload;
-                              return (
-                                <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-lg">
-                                  <div className="mb-2">
-                                    <p className="text-sm font-semibold text-gray-900">{data.label}</p>
-                                    <p className="text-xs text-gray-500">Year: {label}</p>
-                                  </div>
-                                  <div className="flex items-center justify-between gap-4">
-                                    <div className="flex items-center gap-2">
-                                      <div
-                                        className={`h-2.5 w-2.5 rounded-full ${data.isCurrent ? 'bg-[#024950]' : 'bg-blue-500'}`}
-                                      />
-                                      <span className="text-sm font-medium text-gray-700">Price</span>
-                                    </div>
-                                    <span className="font-mono text-sm font-semibold text-gray-900">
-                                      {formatPrice(data.price)}
-                                    </span>
-                                  </div>
-                                  {data.isCurrent && (
-                                    <div className="mt-2 pt-2 border-t border-gray-200">
-                                      <span className="text-xs text-[#024950] font-medium">Current Vehicle</span>
-                                    </div>
-                                  )}
+                      )}
+                      <ChartTooltip
+                        content={({ active, payload, label }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-white border border-gray-200 p-3 rounded shadow-sm">
+                                <div className="text-xs font-medium text-gray-500 mb-1">
+                                  Year: {label}
                                 </div>
-                              );
-                            }
-                            return null;
-                          }}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="price"
-                          stroke="#3b82f6"
-                          strokeWidth={2}
-                          dot={(props: any) => {
-                            const { cx, cy, payload } = props;
+                                <div className="text-sm font-bold text-[#024950]">
+                                  {formatPrice(data.price)}
+                                </div>
+                                {data.isCurrent && (
+                                  <div className="mt-2 text-[10px] uppercase font-bold text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded inline-block border border-teal-100">
+                                    This Vehicle
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="price"
+                        stroke="#024950"
+                        strokeWidth={2}
+                        dot={(props: any) => {
+                          const { cx, cy, payload } = props;
+                          if (payload.isCurrent) {
                             return (
                               <circle
+                                key={`dot-${cx}-${cy}`}
                                 cx={cx}
                                 cy={cy}
-                                r={payload.isCurrent ? 8 : 5}
-                                fill={payload.isCurrent ? "#024950" : "#3b82f6"}
+                                r={6}
+                                fill="#024950"
                                 stroke="#fff"
                                 strokeWidth={2}
                               />
                             );
-                          }}
-                          activeDot={{ r: 8, strokeWidth: 2, stroke: "#3b82f6" }}
-                          name="price"
-                        />
-                      </LineChart>
-                    </ChartContainer>
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-600">Total Vehicles:</span>
-                          <span className="ml-2 font-semibold text-gray-900">{chartData.length}</span>
-                        </div>
-                        {marketData?.marketPrice && (
-                          <div>
-                            <span className="text-gray-600">Average Price:</span>
-                            <span className="ml-2 font-semibold text-teal-600">{formatPrice(marketData.marketPrice)}</span>
-                          </div>
-                        )}
-                        <div>
-                          <span className="text-gray-600">Year Range:</span>
-                          <span className="ml-2 font-semibold text-gray-900">
-                            {chartData[0]?.year} - {chartData[chartData.length - 1]?.year}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        {/* Additional Info Section */}
-        <Card className="mt-8 border-0 shadow-lg bg-gradient-to-br from-white to-slate-50">
-          <CardHeader>
-            <CardTitle className="text-[#024950] flex items-center space-x-2">
-              <BarChart3 className="w-5 h-5" />
-              <span>Analytics Information</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div>
-              <h3 className="font-semibold text-gray-800 mb-2">Market Price Analysis</h3>
-              <p className="text-sm text-gray-600">
-                Compare this vehicle&apos;s price against the market average based on similar vehicles. 
-                This helps you understand if the price is competitive, above, or below market value. 
-                The chart provides a visual representation of how your vehicle&apos;s price compares to the market average.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+                          }
+                          return (
+                            <circle
+                              key={`dot-${cx}-${cy}`}
+                              cx={cx}
+                              cy={cy}
+                              r={4}
+                              fill="#fff"
+                              stroke="#024950"
+                              strokeWidth={2}
+                            />
+                          );
+                        }}
+                        activeDot={{ r: 6, fill: "#024950", stroke: "#fff", strokeWidth: 2 }}
+                        name="price"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
