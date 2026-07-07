@@ -759,7 +759,7 @@ export default function AdDetailPage() {
                       onClick={() => router.push(`/ads/${adId}/price-evaluation`)}
                       className="flex items-center justify-center gap-1.5 bg-[#024950] hover:bg-[#0D5C63] text-white text-xs font-semibold py-2 px-3 rounded shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all duration-200"
                     >
-                      Price Evaluation <ExternalLink className="w-3 h-3" />
+                      Price Analyse <ExternalLink className="w-3 h-3" />
                     </button>
                     <button
                       onClick={() => router.push(`/compare?vehicle1=${adId}`)}

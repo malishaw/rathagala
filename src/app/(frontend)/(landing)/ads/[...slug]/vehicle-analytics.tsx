@@ -129,7 +129,7 @@ export default function VehicleAnalyticsContent({ adId }: { adId: string }) {
           </button>
           <div className="h-4 w-px bg-white/30 mr-4" />
           <h1 className="text-sm font-medium truncate">
-            {ad.brand} {ad.model} Price Evaluation
+            {ad.brand} {ad.model} Price Analyse
           </h1>
         </div>
       </header>
