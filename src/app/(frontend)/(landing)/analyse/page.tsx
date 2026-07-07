@@ -333,15 +333,15 @@ export default function MarketTrendsPage() {
           {isLoading ? (
             <div className="h-9 w-full bg-gray-50 rounded animate-pulse"></div>
           ) : (
-            <div className="flex flex-col lg:flex-row items-center gap-3 w-full">
+            <div className="flex flex-col lg:flex-row lg:items-end gap-3 w-full">
               
               {/* Year Filter */}
-              <div className="w-full lg:w-32 flex-shrink-0">
-                <select
-                  className="w-full border border-gray-200 rounded-lg px-2 h-9 text-xs focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-all bg-white hover:bg-gray-50 cursor-pointer text-gray-700 font-medium"
+              <div className="w-full lg:w-32 flex-shrink-0 flex flex-col">
+                <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1 ml-0.5">Timeframe</span>
+                <Select
                   value={trendFilterYear}
-                  onChange={(e) => {
-                    setTrendFilterYear(e.target.value);
+                  onValueChange={(value) => {
+                    setTrendFilterYear(value);
                     setTrendFilterBrand1("");
                     setTrendFilterModel1("");
                     setTrendFilterMfgYear1("");
@@ -350,213 +350,227 @@ export default function MarketTrendsPage() {
                     setTrendFilterMfgYear2("");
                   }}
                 >
-                  <option value="">Analysis Year</option>
-                  {availableYears.map((y) => (
-                    <option key={y} value={String(y)}>{y}</option>
-                  ))}
-                </select>
+                  <SelectTrigger className="h-9 text-xs border-gray-200">
+                    <SelectValue placeholder="Select Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableYears.map((y) => (
+                      <SelectItem key={y} value={String(y)} className="text-xs">{y}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="hidden lg:block w-px h-5 bg-gray-200"></div>
+              <div className="hidden lg:block w-px h-9 bg-gray-200 mb-0.5"></div>
 
               {/* Vehicle 1 */}
-              <div className="w-full lg:flex-1 grid grid-cols-3 gap-2">
-                {/* Brand 1 */}
-                <Select
-                  value={trendFilterBrand1}
-                  onValueChange={(value) => {
-                    setTrendFilterBrand1(value);
-                    setBrandSearch1("");
-                    setTrendFilterModel1("");
-                    setTrendFilterMfgYear1("");
-                  }}
-                  disabled={!trendFilterYear}
-                >
-                  <SelectTrigger className="h-9 text-xs border-gray-200">
-                    <SelectValue placeholder="V1 Brand" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-62.5">
-                    <div className="p-2 border-b sticky top-0 bg-white z-10">
-                      <Input
-                        autoFocus
-                        placeholder="Search brands..."
-                        value={brandSearch1}
-                        onChange={(e) => setBrandSearch1(e.target.value)}
-                        className="h-8 text-xs"
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onKeyDown={(e) => e.stopPropagation()}
-                      />
-                    </div>
-                    {filteredTrendBrands1.map((brand) => (
-                      <SelectItem key={brand} value={brand} className="text-xs">{brand}</SelectItem>
-                    ))}
-                    {filteredTrendBrands1.length === 0 && (
-                      <div className="p-2 text-xs text-gray-500 text-center">No brands</div>
-                    )}
-                  </SelectContent>
-                </Select>
+              <div className="w-full lg:flex-1 flex flex-col">
+                <span className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider mb-1 ml-0.5">Primary Vehicle</span>
+                <div className="grid grid-cols-3 gap-2">
+                  {/* Brand 1 */}
+                  <Select
+                    value={trendFilterBrand1}
+                    onValueChange={(value) => {
+                      setTrendFilterBrand1(value);
+                      setBrandSearch1("");
+                      setTrendFilterModel1("");
+                      setTrendFilterMfgYear1("");
+                    }}
+                    disabled={!trendFilterYear}
+                  >
+                    <SelectTrigger className="h-9 text-xs border-gray-200">
+                      <SelectValue placeholder="Brand" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-62.5">
+                      <div className="p-2 border-b sticky top-0 bg-white z-10">
+                        <Input
+                          autoFocus
+                          placeholder="Search brands..."
+                          value={brandSearch1}
+                          onChange={(e) => setBrandSearch1(e.target.value)}
+                          className="h-8 text-xs"
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                      {filteredTrendBrands1.map((brand) => (
+                        <SelectItem key={brand} value={brand} className="text-xs">{brand}</SelectItem>
+                      ))}
+                      {filteredTrendBrands1.length === 0 && (
+                        <div className="p-2 text-xs text-gray-500 text-center">No brands</div>
+                      )}
+                    </SelectContent>
+                  </Select>
 
-                {/* Model 1 */}
-                <Select
-                  value={trendFilterModel1}
-                  onValueChange={(value) => {
-                    setTrendFilterModel1(value);
-                    setModelSearch1("");
-                    setTrendFilterMfgYear1("");
-                  }}
-                  disabled={!trendFilterYear || !trendFilterBrand1}
-                >
-                  <SelectTrigger className="h-9 text-xs border-gray-200">
-                    <SelectValue placeholder="V1 Model" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-62.5">
-                    <div className="p-2 border-b sticky top-0 bg-white z-10">
-                      <Input
-                        autoFocus
-                        placeholder="Search models..."
-                        value={modelSearch1}
-                        onChange={(e) => setModelSearch1(e.target.value)}
-                        className="h-8 text-xs"
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onKeyDown={(e) => e.stopPropagation()}
-                      />
-                    </div>
-                    {filteredTrendModels1.map((model) => (
-                      <SelectItem key={model} value={model} className="text-xs">{model}</SelectItem>
-                    ))}
-                    {filteredTrendModels1.length === 0 && (
-                      <div className="p-2 text-xs text-gray-500 text-center">No models</div>
-                    )}
-                  </SelectContent>
-                </Select>
+                  {/* Model 1 */}
+                  <Select
+                    value={trendFilterModel1}
+                    onValueChange={(value) => {
+                      setTrendFilterModel1(value);
+                      setModelSearch1("");
+                      setTrendFilterMfgYear1("");
+                    }}
+                    disabled={!trendFilterYear || !trendFilterBrand1}
+                  >
+                    <SelectTrigger className="h-9 text-xs border-gray-200">
+                      <SelectValue placeholder="Model" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-62.5">
+                      <div className="p-2 border-b sticky top-0 bg-white z-10">
+                        <Input
+                          autoFocus
+                          placeholder="Search models..."
+                          value={modelSearch1}
+                          onChange={(e) => setModelSearch1(e.target.value)}
+                          className="h-8 text-xs"
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                      {filteredTrendModels1.map((model) => (
+                        <SelectItem key={model} value={model} className="text-xs">{model}</SelectItem>
+                      ))}
+                      {filteredTrendModels1.length === 0 && (
+                        <div className="p-2 text-xs text-gray-500 text-center">No models</div>
+                      )}
+                    </SelectContent>
+                  </Select>
 
-                {/* Mfg Year 1 */}
-                <Select
-                  value={trendFilterMfgYear1 || "all"}
-                  onValueChange={(e) => setTrendFilterMfgYear1(e === "all" ? "" : e)}
-                  disabled={!trendFilterYear || !trendFilterBrand1 || !trendFilterModel1}
-                >
-                  <SelectTrigger className="h-9 text-xs border-gray-200">
-                    <SelectValue placeholder="V1 Year" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="text-xs">All Years</SelectItem>
-                    {availableTrendMfgYears1.map((year) => (
-                      <SelectItem key={year} value={String(year)} className="text-xs">{year}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  {/* Mfg Year 1 */}
+                  <Select
+                    value={trendFilterMfgYear1 || "all"}
+                    onValueChange={(e) => setTrendFilterMfgYear1(e === "all" ? "" : e)}
+                    disabled={!trendFilterYear || !trendFilterBrand1 || !trendFilterModel1}
+                  >
+                    <SelectTrigger className="h-9 text-xs border-gray-200">
+                      <SelectValue placeholder="Mfg Year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all" className="text-xs">All Years</SelectItem>
+                      {availableTrendMfgYears1.map((year) => (
+                        <SelectItem key={year} value={String(year)} className="text-xs">{year}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              <div className="hidden lg:block w-px h-5 bg-gray-200"></div>
+              <div className="hidden lg:block w-px h-9 bg-gray-200 mb-0.5"></div>
 
               {/* Vehicle 2 */}
-              <div className="w-full lg:flex-1 grid grid-cols-3 gap-2">
-                {/* Brand 2 */}
-                <Select
-                  value={trendFilterBrand2}
-                  onValueChange={(value) => {
-                    setTrendFilterBrand2(value);
-                    setBrandSearch2("");
-                    setTrendFilterModel2("");
-                    setTrendFilterMfgYear2("");
-                  }}
-                  disabled={!trendFilterYear}
-                >
-                  <SelectTrigger className="h-9 text-xs border-gray-200">
-                    <SelectValue placeholder="V2 Brand" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-62.5">
-                    <div className="p-2 border-b sticky top-0 bg-white z-10">
-                      <Input
-                        autoFocus
-                        placeholder="Search brands..."
-                        value={brandSearch2}
-                        onChange={(e) => setBrandSearch2(e.target.value)}
-                        className="h-8 text-xs"
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onKeyDown={(e) => e.stopPropagation()}
-                      />
-                    </div>
-                    {filteredTrendBrands2.map((brand) => (
-                      <SelectItem key={brand} value={brand} className="text-xs">{brand}</SelectItem>
-                    ))}
-                    {filteredTrendBrands2.length === 0 && (
-                      <div className="p-2 text-xs text-gray-500 text-center">No brands</div>
-                    )}
-                  </SelectContent>
-                </Select>
+              <div className="w-full lg:flex-1 flex flex-col">
+                <span className="text-[10px] font-semibold text-violet-600 uppercase tracking-wider mb-1 ml-0.5">Compare With</span>
+                <div className="grid grid-cols-3 gap-2">
+                  {/* Brand 2 */}
+                  <Select
+                    value={trendFilterBrand2}
+                    onValueChange={(value) => {
+                      setTrendFilterBrand2(value);
+                      setBrandSearch2("");
+                      setTrendFilterModel2("");
+                      setTrendFilterMfgYear2("");
+                    }}
+                    disabled={!trendFilterYear}
+                  >
+                    <SelectTrigger className="h-9 text-xs border-gray-200">
+                      <SelectValue placeholder="Brand" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-62.5">
+                      <div className="p-2 border-b sticky top-0 bg-white z-10">
+                        <Input
+                          autoFocus
+                          placeholder="Search brands..."
+                          value={brandSearch2}
+                          onChange={(e) => setBrandSearch2(e.target.value)}
+                          className="h-8 text-xs"
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                      {filteredTrendBrands2.map((brand) => (
+                        <SelectItem key={brand} value={brand} className="text-xs">{brand}</SelectItem>
+                      ))}
+                      {filteredTrendBrands2.length === 0 && (
+                        <div className="p-2 text-xs text-gray-500 text-center">No brands</div>
+                      )}
+                    </SelectContent>
+                  </Select>
 
-                {/* Model 2 */}
-                <Select
-                  value={trendFilterModel2}
-                  onValueChange={(value) => {
-                    setTrendFilterModel2(value);
-                    setModelSearch2("");
-                    setTrendFilterMfgYear2("");
-                  }}
-                  disabled={!trendFilterYear || !trendFilterBrand2}
-                >
-                  <SelectTrigger className="h-9 text-xs border-gray-200">
-                    <SelectValue placeholder="V2 Model" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-62.5">
-                    <div className="p-2 border-b sticky top-0 bg-white z-10">
-                      <Input
-                        autoFocus
-                        placeholder="Search models..."
-                        value={modelSearch2}
-                        onChange={(e) => setModelSearch2(e.target.value)}
-                        className="h-8 text-xs"
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onKeyDown={(e) => e.stopPropagation()}
-                      />
-                    </div>
-                    {filteredTrendModels2.map((model) => (
-                      <SelectItem key={model} value={model} className="text-xs">{model}</SelectItem>
-                    ))}
-                    {filteredTrendModels2.length === 0 && (
-                      <div className="p-2 text-xs text-gray-500 text-center">No models</div>
-                    )}
-                  </SelectContent>
-                </Select>
+                  {/* Model 2 */}
+                  <Select
+                    value={trendFilterModel2}
+                    onValueChange={(value) => {
+                      setTrendFilterModel2(value);
+                      setModelSearch2("");
+                      setTrendFilterMfgYear2("");
+                    }}
+                    disabled={!trendFilterYear || !trendFilterBrand2}
+                  >
+                    <SelectTrigger className="h-9 text-xs border-gray-200">
+                      <SelectValue placeholder="Model" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-62.5">
+                      <div className="p-2 border-b sticky top-0 bg-white z-10">
+                        <Input
+                          autoFocus
+                          placeholder="Search models..."
+                          value={modelSearch2}
+                          onChange={(e) => setModelSearch2(e.target.value)}
+                          className="h-8 text-xs"
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                      {filteredTrendModels2.map((model) => (
+                        <SelectItem key={model} value={model} className="text-xs">{model}</SelectItem>
+                      ))}
+                      {filteredTrendModels2.length === 0 && (
+                        <div className="p-2 text-xs text-gray-500 text-center">No models</div>
+                      )}
+                    </SelectContent>
+                  </Select>
 
-                {/* Mfg Year 2 */}
-                <Select
-                  value={trendFilterMfgYear2 || "all"}
-                  onValueChange={(e) => setTrendFilterMfgYear2(e === "all" ? "" : e)}
-                  disabled={!trendFilterYear || !trendFilterBrand2 || !trendFilterModel2}
-                >
-                  <SelectTrigger className="h-9 text-xs border-gray-200">
-                    <SelectValue placeholder="V2 Year" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="text-xs">All Years</SelectItem>
-                    {availableTrendMfgYears2.map((year) => (
-                      <SelectItem key={year} value={String(year)} className="text-xs">{year}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  {/* Mfg Year 2 */}
+                  <Select
+                    value={trendFilterMfgYear2 || "all"}
+                    onValueChange={(e) => setTrendFilterMfgYear2(e === "all" ? "" : e)}
+                    disabled={!trendFilterYear || !trendFilterBrand2 || !trendFilterModel2}
+                  >
+                    <SelectTrigger className="h-9 text-xs border-gray-200">
+                      <SelectValue placeholder="Mfg Year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all" className="text-xs">All Years</SelectItem>
+                      {availableTrendMfgYears2.map((year) => (
+                        <SelectItem key={year} value={String(year)} className="text-xs">{year}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {/* Clear Filters Button */}
+              {/* Clear Filters Button */}
               {(trendFilterYear || trendFilterBrand1 || trendFilterBrand2) && (
-                <button
-                  onClick={() => {
-                    setTrendFilterYear("");
-                    setTrendFilterBrand1("");
-                    setTrendFilterModel1("");
-                    setTrendFilterMfgYear1("");
-                    setTrendFilterBrand2("");
-                    setTrendFilterModel2("");
-                    setTrendFilterMfgYear2("");
-                  }}
-                  className="w-full lg:w-auto px-2 lg:px-2.5 h-9 flex items-center justify-center gap-1.5 text-xs font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg border border-transparent hover:border-red-100 transition-all focus:outline-none focus:ring-1 focus:ring-red-500 flex-shrink-0"
-                  title="Clear all filters"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                  <span className="lg:hidden">Clear Filters</span>
-                </button>
+                <div className="w-full lg:w-auto flex flex-col justify-end h-full">
+                  <span className="hidden lg:block text-[10px] text-transparent mb-1 select-none">Clear</span>
+                  <button
+                    onClick={() => {
+                      setTrendFilterYear("");
+                      setTrendFilterBrand1("");
+                      setTrendFilterModel1("");
+                      setTrendFilterMfgYear1("");
+                      setTrendFilterBrand2("");
+                      setTrendFilterModel2("");
+                      setTrendFilterMfgYear2("");
+                    }}
+                    className="w-full lg:w-auto px-2 lg:px-2.5 h-9 flex items-center justify-center gap-1.5 text-xs font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg border border-transparent hover:border-red-100 transition-all focus:outline-none focus:ring-1 focus:ring-red-500 flex-shrink-0"
+                    title="Clear all filters"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    <span className="lg:hidden">Clear Filters</span>
+                  </button>
+                </div>
               )}
             </div>
           )}
@@ -573,24 +587,25 @@ export default function MarketTrendsPage() {
                   <div className="w-full overflow-x-auto pb-4">
                     <div className="min-w-[800px]">
                       <ResponsiveContainer width="100%" height={450}>
-                        <LineChart data={priceTrendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                        <LineChart data={priceTrendData} margin={{ top: 20, right: 30, left: 30, bottom: 20 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                           <XAxis
                             dataKey="month"
                             stroke="#666"
                             minTickGap={30}
                             style={{ fontSize: "14px", fontWeight: 500 }}
-                            label={{ value: "Posted (Month)", position: "insideBottom", offset: -10, fontSize: 14, fontWeight: 600 }}
+                            label={{ value: "Posted (Month)", position: "bottom", offset: 0, fontSize: 14, fontWeight: 600 }}
                           />
                           <YAxis
                             stroke="#666"
+                            width={90}
                             style={{ fontSize: "14px", fontWeight: 500 }}
                             tickFormatter={(value) =>
                               value >= 1000000
                                 ? `Rs. ${(value / 1000000).toFixed(1)}M`
                                 : `Rs. ${(value / 1000).toFixed(0)}K`
                             }
-                            label={{ value: "Average Price", angle: -90, position: "insideLeft", fontSize: 14, fontWeight: 600 }}
+                            label={{ value: "Average Price", angle: -90, position: "insideLeft", offset: -10, fontSize: 14, fontWeight: 600 }}
                           />
                           <Tooltip 
                             content={<CustomTooltip formatPrice={formatPrice} />} 
