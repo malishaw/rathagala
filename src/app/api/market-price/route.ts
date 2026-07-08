@@ -143,133 +143,13 @@ export async function GET(request: NextRequest) {
     });
 
     if (similarAds.length === 0) {
-      // If no similar ads found, try a broader search (just type and brand, case-insensitive)
-      const broaderWhereConditions: any = {
-        status: AdStatus.ACTIVE,
-        listingType: "SELL",
-        id: { not: currentAd.id },
-        price: { not: null },
-        type: currentAd.type,
-      };
-
-      if (currentAd.brand) {
-        broaderWhereConditions.brand = { contains: currentAd.brand, mode: "insensitive" };
-      }
-
-      const broaderSimilarAds = await prisma.ad.findMany({
-        where: broaderWhereConditions,
-        select: {
-          price: true,
-          mileage: true,
-          manufacturedYear: true,
-          modelYear: true,
-          condition: true,
-        },
-        take: 50,
-      });
-
-      if (broaderSimilarAds.length === 0) {
-        // Last resort: try same vehicle type only (no brand/model/year restrictions)
-        const typeOnlyWhereConditions: any = {
-          status: AdStatus.ACTIVE,
-          listingType: "SELL",
-          id: { not: currentAd.id },
-          price: { not: null },
-          type: currentAd.type,
-        };
-
-        const typeOnlySimilarAds = await prisma.ad.findMany({
-          where: typeOnlyWhereConditions,
-          select: {
-            price: true,
-            mileage: true,
-            manufacturedYear: true,
-            modelYear: true,
-            condition: true,
-          },
-          take: 50,
-        });
-
-        if (typeOnlySimilarAds.length === 0) {
-          return NextResponse.json({
-            currentPrice: currentAd.price,
-            marketPrice: null,
-            priceDifference: null,
-            priceDifferencePercent: null,
-            similarAdsCount: 0,
-            message: "No similar vehicles found in the market",
-          });
-        }
-
-        // Calculate market price from type-only results
-        const prices = typeOnlySimilarAds
-          .map((ad) => ad.price)
-          .filter((price): price is number => price !== null && price > 0);
-
-        if (prices.length === 0) {
-          return NextResponse.json({
-            currentPrice: currentAd.price,
-            marketPrice: null,
-            priceDifference: null,
-            priceDifferencePercent: null,
-            similarAdsCount: 0,
-            message: "No valid prices found in similar vehicles",
-          });
-        }
-
-        // Calculate average market price
-        const marketPrice = Math.round(
-          prices.reduce((sum, price) => sum + price, 0) / prices.length
-        );
-
-        const priceDifference = currentAd.price - marketPrice;
-        const priceDifferencePercent = Math.round(
-          (priceDifference / marketPrice) * 100
-        );
-
-        return NextResponse.json({
-          currentPrice: currentAd.price,
-          marketPrice,
-          priceDifference,
-          priceDifferencePercent,
-          similarAdsCount: typeOnlySimilarAds.length,
-          message: "Based on similar vehicle type",
-        });
-      }
-
-      // Calculate market price from broader results
-      const prices = broaderSimilarAds
-        .map((ad) => ad.price)
-        .filter((price): price is number => price !== null && price > 0);
-
-      if (prices.length === 0) {
-        return NextResponse.json({
-          currentPrice: currentAd.price,
-          marketPrice: null,
-          priceDifference: null,
-          priceDifferencePercent: null,
-          similarAdsCount: 0,
-          message: "No valid prices found in similar vehicles",
-        });
-      }
-
-      // Calculate average market price
-      const marketPrice = Math.round(
-        prices.reduce((sum, price) => sum + price, 0) / prices.length
-      );
-
-      const priceDifference = currentAd.price - marketPrice;
-      const priceDifferencePercent = Math.round(
-        (priceDifference / marketPrice) * 100
-      );
-
       return NextResponse.json({
         currentPrice: currentAd.price,
-        marketPrice,
-        priceDifference,
-        priceDifferencePercent,
-        similarAdsCount: broaderSimilarAds.length,
-        message: "Based on similar brand",
+        marketPrice: null,
+        priceDifference: null,
+        priceDifferencePercent: null,
+        similarAdsCount: 0,
+        message: "Not enough similar vehicles (matching brand, model, and year range) in the market to provide a reliable price analysis.",
       });
     }
 
@@ -285,7 +165,7 @@ export async function GET(request: NextRequest) {
         priceDifference: null,
         priceDifferencePercent: null,
         similarAdsCount: 0,
-        message: "No valid prices found in similar vehicles",
+        message: "Not enough similar vehicles (matching brand, model, and year range) with valid prices to provide a reliable analysis.",
       });
     }
 
@@ -305,7 +185,7 @@ export async function GET(request: NextRequest) {
       priceDifference,
       priceDifferencePercent,
       similarAdsCount: similarAds.length,
-      message: null,
+      message: "Based on average of matching brand, model, and year range",
     });
   } catch (error) {
     console.error("Error fetching market price:", error);

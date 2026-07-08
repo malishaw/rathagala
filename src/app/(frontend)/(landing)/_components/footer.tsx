@@ -11,7 +11,7 @@ const footerLinks = {
   features: [
     { href: "/search?listingType=SELL", label: "Buy Vehicles" },
     { href: "/search?listingType=RENT", label: "Rent Vehicles" },
-    { href: "/compare", label: "Compare Vehicles" },
+    { href: "/compare", label: "Compare Ads" },
     { href: "/analyse", label: "Market Trends" },
     { href: "/auto-parts", label: "Auto Parts" },
   ],

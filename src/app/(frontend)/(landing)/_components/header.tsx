@@ -131,7 +131,7 @@ export function Header() {
               { href: "/search?listingType=RENT", label: "Rent" },
               { href: "/search?listingType=HIRE", label: "Hire" },
               { href: "/auto-parts", label: "Auto Parts" },
-              { href: "/compare", label: "Compare Vehicles" },
+              { href: "/compare", label: "Compare Ads" },
               { href: "/analyse", label: "Market Trends" },
             ].map((link) => (
               <Link
@@ -327,7 +327,7 @@ export function Header() {
                     <div className="bg-white/10 p-1.5 rounded-sm">
                       <Check className="h-4 w-4" />
                     </div>
-                    Compare Vehicles
+                    Compare Ads
                   </Link>
 
                   <Link

@@ -765,7 +765,7 @@ export default function AdDetailPage() {
                       onClick={() => router.push(`/compare?vehicle1=${adId}`)}
                       className="flex items-center justify-center gap-1.5 bg-white border border-[#024950]/30 hover:border-[#024950]/60 text-[#024950] text-xs font-semibold py-2 px-3 rounded hover:bg-teal-50/50 active:scale-[0.99] transition-all duration-200"
                     >
-                      Compare Vehicles <ExternalLink className="w-3 h-3" />
+                      Compare Ads <ExternalLink className="w-3 h-3" />
                     </button>
                     <button
                       onClick={() => router.push(`/analyse`)}

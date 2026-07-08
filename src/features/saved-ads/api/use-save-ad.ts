@@ -49,7 +49,7 @@ export const useSaveAd = () => {
             errorData = { message: text || `Server error (${response.status})` };
           }
           
-          console.error("Save ad error:", errorData);
+          console.log("Save ad error response:", errorData);
           
           // More specific error messages
           if (response.status === 400) {
@@ -67,7 +67,7 @@ export const useSaveAd = () => {
         console.log("✅ Save ad success:", data);
         return data;
       } catch (error) {
-        console.error("Save ad mutation error:", error);
+        console.log("Save ad mutation error:", error);
         throw error;
       }
     },
@@ -79,7 +79,7 @@ export const useSaveAd = () => {
       toast.success("Ad saved to favorites!");
     },
     onError: (error: Error) => {
-      console.error("Save ad onError:", error);
+      console.log("Save ad onError:", error);
       
       // Check if it's an authentication error
       if (error.message.includes("not authenticated") || error.message.includes("Unauthorized")) {
