@@ -1,151 +1,104 @@
-"use client"
+"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { useSetupAd } from "@/features/ads/api/use-setup-ad";
 import { useRouter } from "next/navigation";
-import { CreateAdSchema } from "@/server/routes/ad/ad.schemas";
+import { CreateAdSchema, createAdSchema } from "@/server/routes/ad/ad.schemas";
 import { authClient } from "@/lib/auth-client";
 import { client } from "@/lib/rpc";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Camera, ChevronRight, CheckCircle2, X, PlusCircle, ChevronsUpDown, Check, Zap } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { BoostSelector, type BoostSelection } from "@/features/boost/components/boost-selector";
 import { useRequestBoost } from "@/features/boost/api/use-request-boost";
-import { MediaGallery } from "@/modules/media/components/media-gallery";
 import type { MediaFile } from "@/modules/media/types";
 import { PendingAdModal } from "@/features/ads/components/pending-ad-modal";
 import { AdSubmissionSuccessModal } from "@/features/ads/components/ad-submission-success-modal";
-import { useLocations } from "@/hooks/use-locations";
-import { useManufactureYears } from "@/hooks/use-manufacture-years";
-import { CitySearchDropdown } from "@/components/ui/city-search-dropdown";
-import { ModelSearchDropdown } from "@/components/ui/model-search-dropdown";
-import { GradeSearchDropdown } from "@/components/ui/grade-search-dropdown";
-import { useGetAutoPartCategories } from "@/features/ads/api/use-get-auto-part-categories";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { cn } from "@/lib/utils";
+
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form } from "@/components/ui/form";
+import { Zap } from "lucide-react";
+
+import { Step1VehicleInfo } from "./_components/step-1-vehicle-info";
+import { Step2VehicleDetails } from "./_components/step-2-vehicle-details";
+import { Step3ContactDetails } from "./_components/step-3-contact-details";
 
 export default function QuickAdCreatePage() {
   const router = useRouter();
   const { mutate: createAd, isPending } = useSetupAd();
-  const { mutate: requestBoost, isPending: isBoostPending } = useRequestBoost();
+  const { mutate: requestBoost } = useRequestBoost();
   const [showBoostDialog, setShowBoostDialog] = useState(false);
   const [boostSelection, setBoostSelection] = useState<BoostSelection | null>(null);
   const [createdAdId, setCreatedAdId] = useState<string | null>(null);
   const { data: session } = authClient.useSession();
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showPendingModal, setShowPendingModal] = useState(false);
   const [selectedImages, setSelectedImages] = useState<MediaFile[]>([]);
-  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
-  // Track whether we're in "Sell Auto Part" mode
   const [adMode, setAdMode] = useState<"vehicle" | "auto_part">("vehicle");
-  const { locationData } = useLocations();
-  const { years: manufactureYears } = useManufactureYears();
 
-  // Ref to track whether "Create Another" was chosen in pending modal
-  // (prevents redirect to profile when user wants to stay and create again)
   const pendingModalActionRef = useRef<"createAnother" | "none">("none");
+  const [hasAutoFilled, setHasAutoFilled] = useState(false);
 
-  // Auto part categories
-  const { data: autoPartCategories = [] } = useGetAutoPartCategories(true);
-  const [categoryOpen, setCategoryOpen] = useState(false);
-
-  // Promotion state
-  const [formData, setFormData] = useState({
-    // Listing type
-    listingType: "SELL",
-
-    // Basic info
-    type: "CAR", // API enum value
-    brand: "",
-    model: "",
-    grade: "",
-    manufacturedYear: "",
-    modelYear: "",
-    price: "",
-    isNegotiable: false,
-    condition: "",
-    description: "",
-
-    // Vehicle details based on type
-    transmission: "",
-    fuelType: "",
-    mileage: "",
-    engineCapacity: "",
-    trimEdition: "",
-
-    // Type-specific fields
-    bikeType: "",
-    bodyType: "",
-    serviceType: "",
-    partType: "",
-    maintenanceType: "",
-    vehicleType: "",
-
-    // Auto Parts specific fields
-    partName: "",
-    partCategoryId: "",
-    compatibleVehicleType: "",
-
-    // Contact info
-    name: "",
-    phoneNumber: "",
-    whatsappNumber: "",
-    province: "",
-    district: "",
-    city: "",
-    location: "",
-    termsAndConditions: true,
-
-    // Publication status
-    published: true,
-    isDraft: false,
+  const form = useForm<CreateAdSchema>({
+    resolver: zodResolver(createAdSchema) as any,
+    defaultValues: {
+      listingType: "SELL",
+      type: "CAR",
+      brand: "",
+      model: "",
+      grade: "",
+      manufacturedYear: "",
+      modelYear: "",
+      price: undefined,
+      condition: "",
+      description: "",
+      transmission: undefined,
+      fuelType: undefined,
+      mileage: undefined,
+      engineCapacity: undefined,
+      trimEdition: "",
+      bikeType: undefined,
+      bodyType: undefined,
+      serviceType: "",
+      partType: "",
+      maintenanceType: "",
+      vehicleType: undefined,
+      partName: "",
+      partCategoryId: "",
+      compatibleVehicleType: "",
+      name: "",
+      phoneNumber: "",
+      whatsappNumber: "",
+      province: "",
+      district: "",
+      city: "",
+      location: "",
+      termsAndConditions: true,
+      published: true,
+      isDraft: false,
+      metadata: { isNegotiable: false },
+    },
+    mode: "onChange",
   });
 
-  // Auto-fill user profile data - only when form is first loaded
-  const [hasAutoFilled, setHasAutoFilled] = useState(false);
-  
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
         const response = await client.api.users.me.$get();
         if (response.ok) {
           const userData = await response.json();
-          console.log("Fetched user data:", userData);
+          const currentValues = form.getValues();
           
-          // Only auto-fill empty fields to avoid overwriting user input
-          setFormData(prev => ({
-            ...prev,
-            name: prev.name || userData.name || "",
-            phoneNumber: prev.phoneNumber || userData.phone || "",
-            whatsappNumber: prev.whatsappNumber || userData.whatsappNumber || "",
-            province: prev.province || userData.province || "",
-            district: prev.district || userData.district || "",
-            city: prev.city || userData.city || "",
-            location: prev.location || userData.location || "",
-          }));
+          if (!currentValues.name && userData.name) form.setValue("name", userData.name);
+          if (!currentValues.phoneNumber && userData.phone) form.setValue("phoneNumber", userData.phone);
+          if (!currentValues.whatsappNumber && userData.whatsappNumber) form.setValue("whatsappNumber", userData.whatsappNumber);
+          if (!currentValues.province && userData.province) form.setValue("province", userData.province);
+          if (!currentValues.district && userData.district) form.setValue("district", userData.district);
+          if (!currentValues.city && userData.city) form.setValue("city", userData.city);
+          if (!currentValues.location && userData.location) form.setValue("location", userData.location);
+          
           setHasAutoFilled(true);
-        } else {
-          console.error("Failed to fetch user profile, status:", response.status);
         }
       } catch (error) {
         console.error("Failed to fetch user profile:", error);
@@ -155,253 +108,120 @@ export default function QuickAdCreatePage() {
     if (session?.user && !hasAutoFilled) {
       fetchUserProfile();
     }
-  }, [session, hasAutoFilled]);
+  }, [session, hasAutoFilled, form]);
 
+  const watchAll = form.watch();
 
-  // Vehicle makes list - same as your ad-form.tsx
-  const vehicleMakes = [
-    // Popular brands first
-    "Toyota", "Suzuki", "Honda", "Nissan", "Mitsubishi", "BMW", "Audi", "BYD",
-    // Rest alphabetically
-    "Acura", "Alfa-Romeo", "Aprilia", "Ashok-Leyland", "Aston", "Atco", "ATHER",
-    "Austin", "Baic", "Bajaj", "Bentley", "Borgward",
-    "Cadillac", "Cal", "CAT", "Ceygra", "Changan", "Chery", "Chevrolet",
-    "Chrysler", "Citroen", "Corvette", "Daewoo", "Daido", "Daihatsu", "Datsun",
-    "Demak", "Dfac", "DFSK", "Ducati", "Dyno", "Eicher", "FAW", "Ferrari", "Fiat",
-    "Force", "Ford", "Foton", "Hero", "Hero-Honda", "Higer", "Hillman", "HINO",
-    "Hitachi", "Holden", "Hummer", "Hyundai", "IHI", "Isuzu", "Iveco",
-    "JAC", "Jaguar", "JCB", "Jeep", "JiaLing", "JMC", "John-Deere", "Jonway",
-    "KAPLA", "Kawasaki", "Kia", "Kinetic", "KMC", "Kobelco", "Komatsu", "KTM",
-    "Kubota", "Lamborghini", "Land-Rover", "Lexus", "Loncin", "Longjia", "Lotus",
-    "Lti", "Mahindra", "Maserati", "Massey-Ferguson", "Mazda", "Mercedes-Benz",
-    "Metrocab", "MG", "Mg-Rover", "Micro", "Mini", "Minnelli",
-    "Morgan", "Morris", "New-Holland", "NWOW", "Opel", "Other",
-    "Perodua", "Peugeot", "Piaggio", "Porsche", "Powertrac", "Proton",
-    "Range-Rover", "Ranomoto", "Renault", "Reva", "REVOLT", "Rolls-Royce", "Saab",
-    "Sakai", "Seat", "Senaro", "Singer", "Skoda", "Smart", "Sonalika", "Subaru",
-    "Swaraj", "Syuk", "TAFE", "TAILG", "Tata", "Tesla",
-    "Triumph", "TVS", "Vauxhall", "Vespa", "Volkswagen", "Volvo", "Wave", "Willys",
-    "Yadea", "Yamaha", "Yanmar", "Yuejin", "Zongshen", "Zotye"
-  ];
+  const canProceed = () => {
+    const { 
+      listingType, type, brand, model, manufacturedYear, modelYear, condition, 
+      partCategoryId, compatibleVehicleType, price, description, metadata,
+      fuelType, transmission, bikeType, serviceType, partName, maintenanceType,
+      vehicleType, name, phoneNumber, province, district, city, location, termsAndConditions
+    } = watchAll;
 
-  // Motorcycle brands list
-  const motorbikeBrands = [
-    "Honda", "Yamaha", "Suzuki", "Kawasaki", "BMW Motorrad", "Ducati", "KTM", "Husqvarna",
-    "GasGas", "Aprilia", "Moto Guzzi", "MV Agusta", "Benelli", "CFMoto", "Royal Enfield",
-    "Triumph", "Harley-Davidson", "Indian", "Victory", "Zero Motorcycles", "Energica",
-    "LiveWire", "Bajaj", "TVS", "Hero", "Hero Honda", "Mahindra", "Jawa", "Yezdi",
-    "Lifan", "Loncin", "Zongshen", "QJMotor", "Keeway", "Kymco", "SYM", "PGO",
-    "Aeon", "Daelim", "Hyosung", "Sanyang", "AJP", "Beta", "Sherco", "Fantic",
-    "Rieju", "Derbi", "Montesa", "Bultaco", "Ossa", "MZ", "Ural", "Izh",
-    "Jawa Moto", "CZ", "Zundapp", "NSU", "Horex", "Brough Superior", "Norton", "Vincent",
-    "Matchless", "AJS", "Royal Enfield (UK)", "Lambretta", "Vespa", "Piaggio", "Gilera",
-    "Italjet", "Malaguti", "Cagiva", "SWM", "Mondial", "Kreidler", "Sachs", "Peugeot Motocycles",
-    "MBK", "Romet", "Junak", "Bajaj Auto", "TVS Motor", "Hero MotoCorp", "Kymstone", "Zontes",
-    "Voge", "Haojue", "Dayang", "Husaberg", "Alta Motors", "Buccaneer", "Mash", "Arch Motorcycle"
-  ];
+    switch (currentStep) {
+      case 1:
+        if (listingType !== "SELL") {
+          return !!(listingType && type);
+        }
+        if (["AUTO_SERVICE", "RENTAL", "MAINTENANCE"].includes(type)) {
+          return !!type;
+        }
+        if (type === "BICYCLE") {
+          return !!(type && brand);
+        }
+        if (type === "AUTO_PARTS") {
+          return !!(type && compatibleVehicleType && condition && partCategoryId);
+        }
+        const basicRequired = type && brand && model;
+        const yearRequired = (type === "VAN") ? modelYear : manufacturedYear;
+        return !!(basicRequired && yearRequired);
 
-  // Get available districts based on selected province
-  const getAvailableDistricts = () => {
-    if (!formData.province) return [];
-    return Object.keys(locationData[formData.province] || {});
-  };
+      case 2:
+        if (listingType !== "SELL") {
+          return !!description;
+        }
+        let priceRequired = metadata?.isNegotiable || price;
+        let detailsRequired = priceRequired && condition && description;
 
-  // Get available cities based on selected district
-  const getAvailableCities = () => {
-    if (!formData.province || !formData.district) return [];
-    const provinceData = locationData[formData.province];
-    return provinceData?.[formData.district] || [];
-  };
+        if (type === "CAR") {
+          detailsRequired = detailsRequired && fuelType && transmission;
+        } else if (type === "MOTORCYCLE") {
+          detailsRequired = detailsRequired && bikeType && watchAll.engineCapacity;
+        } else if (type === "AUTO_SERVICE" || type === "RENTAL") {
+          detailsRequired = detailsRequired && serviceType;
+        } else if (type === "AUTO_PARTS") {
+          const partPrice = metadata?.isNegotiable || price;
+          detailsRequired = partPrice && partName && brand && description;
+        } else if (type === "MAINTENANCE") {
+          detailsRequired = detailsRequired && maintenanceType;
+        } else if (type === "HEAVY_DUTY") {
+          detailsRequired = detailsRequired && vehicleType;
+        } else if (["THREE_WHEEL", "BUS", "LORRY", "TRACTOR"].includes(type)) {
+          detailsRequired = detailsRequired && fuelType;
+        }
+        return !!detailsRequired;
 
-  // Simple form field change handler
-  const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => {
-      const newData = { ...prev, [field]: value };
+      case 3:
+        return !!(name && phoneNumber && province && district && city && location && termsAndConditions);
 
-      // Reset dependent fields when province or district changes
-      if (field === "province") {
-        newData.district = "";
-        newData.city = "";
-      } else if (field === "district") {
-        newData.city = "";
-      } else if (field === "brand") {
-        // Reset model and grade when brand changes
-        newData.model = "";
-        newData.grade = "";
-      } else if (field === "model") {
-        // Reset grade when model changes
-        newData.grade = "";
-      }
-
-      return newData;
-    });
-  };
-
-  // Handle media selection from gallery
-  const handleMediaSelect = (media: MediaFile[]) => {
-    // Check if we exceed the maximum allowed (6 images)
-    if (media.length > 6) {
-      setSelectedImages(media.slice(0, 6));
-    } else {
-      setSelectedImages(media);
+      default:
+        return false;
     }
   };
 
-  // Handle removing a media item
-  const removeMedia = (idToRemove: string) => {
-    setSelectedImages(prev => prev.filter((media) => media.id !== idToRemove));
-  };
-
-  // Handle form submission
-  const handleSubmit = () => {
-    // Validate at least 1 image is selected
-    // if (selectedImages.length === 0) {
-    //   alert("Please upload at least 1 image for your ad");
-    //   return;
-    // }
-
-    // Auto-generate title from vehicle details
-    // Vehicle type labels for title generation
+  const onSubmit = (data: CreateAdSchema) => {
+    // Generate Title
     const vehicleTypeLabels: Record<string, string> = {
-      CAR: "Car",
-      VAN: "Van",
-      SUV_JEEP: "SUV / Jeep",
-      MOTORCYCLE: "Motorbike",
-      CREW_CAB: "Crew Cab",
-      PICKUP_DOUBLE_CAB: "Pickup / Double Cab",
-      BUS: "Bus",
-      LORRY: "Lorry",
-      THREE_WHEEL: "Three Wheeler",
-      OTHER: "Other",
-      TRACTOR: "Tractor",
-      HEAVY_DUTY: "Heavy-Duty",
-      BICYCLE: "Bicycle",
-      AUTO_SERVICE: "Auto Service",
-      RENTAL: "Rental",
-      AUTO_PARTS: "Auto Parts",
-      MAINTENANCE: "Maintenance",
-      BOAT: "Boat"
+      CAR: "Car", VAN: "Van", SUV_JEEP: "SUV / Jeep", MOTORCYCLE: "Motorbike",
+      CREW_CAB: "Crew Cab", PICKUP_DOUBLE_CAB: "Pickup / Double Cab", BUS: "Bus",
+      LORRY: "Lorry", THREE_WHEEL: "Three Wheeler", OTHER: "Other", TRACTOR: "Tractor",
+      HEAVY_DUTY: "Heavy-Duty", BICYCLE: "Bicycle", AUTO_SERVICE: "Auto Service",
+      RENTAL: "Rental", AUTO_PARTS: "Auto Parts", MAINTENANCE: "Maintenance", BOAT: "Boat"
     };
 
-    const typeLabel = vehicleTypeLabels[formData.type] || formData.type;
-
-    const baseInfoParts = [
-      formData.brand,
-      formData.model,
-      formData.manufacturedYear || formData.modelYear,
-      typeLabel
-    ].filter(Boolean);
-
+    const typeLabel = vehicleTypeLabels[data.type] || data.type;
+    const baseInfoParts = [data.brand, data.model, data.manufacturedYear || data.modelYear, typeLabel].filter(Boolean);
     const vehicleInfo = baseInfoParts.join(" ");
 
     let title = "Vehicle Ad";
-    if (adMode === "auto_part" || formData.type === "AUTO_PARTS") {
-      // Auto Parts title: [Part Name] for [Brand] [Model] [Vehicle Type]
+    if (adMode === "auto_part" || data.type === "AUTO_PARTS") {
       const compatibleTypeLabel: Record<string, string> = {
-        ALL: "All Vehicles",
-        CAR: "Car",
-        VAN: "Van",
-        MOTORCYCLE: "Motorcycle",
-        BICYCLE: "Bicycle",
-        THREE_WHEEL: "Three Wheeler",
-        BUS: "Bus",
-        LORRY: "Lorry",
-        HEAVY_DUTY: "Heavy Duty",
-        TRACTOR: "Tractor",
-        BOAT: "Boat",
+        ALL: "All Vehicles", CAR: "Car", VAN: "Van", MOTORCYCLE: "Motorcycle",
+        BICYCLE: "Bicycle", THREE_WHEEL: "Three Wheeler", BUS: "Bus", LORRY: "Lorry",
+        HEAVY_DUTY: "Heavy Duty", TRACTOR: "Tractor", BOAT: "Boat",
       };
-      const vehicleTypeLabel = compatibleTypeLabel[formData.compatibleVehicleType] || formData.compatibleVehicleType;
-      const forPart = [formData.brand, formData.model, vehicleTypeLabel].filter(Boolean).join(" ");
-      title = forPart ? `${formData.partName} for ${forPart}` : formData.partName || "Auto Part";
-    } else if (formData.listingType === "WANT") {
+      const vehicleTypeLabel = compatibleTypeLabel[data.compatibleVehicleType || ""] || data.compatibleVehicleType;
+      const forPart = [data.brand, data.model, vehicleTypeLabel].filter(Boolean).join(" ");
+      title = forPart ? `${data.partName} for ${forPart}` : data.partName || "Auto Part";
+    } else if (data.listingType === "WANT") {
       title = `Want ${vehicleInfo}`;
-    } else if (formData.listingType === "RENT") {
+    } else if (data.listingType === "RENT") {
       title = `${vehicleInfo} for Rent`;
-    } else if (formData.listingType === "HIRE") {
+    } else if (data.listingType === "HIRE") {
       title = `${vehicleInfo} for Hire`;
     } else {
-      // SELL format: Condition Brand Model Year Type
-      const sellParts = [
-        formData.condition,
-        ...baseInfoParts,
-        formData.trimEdition
-      ].filter(Boolean);
+      const sellParts = [data.condition, ...baseInfoParts, data.trimEdition].filter(Boolean);
       title = sellParts.join(" ");
     }
 
-    // Format numeric fields
-    const price = formData.price ? parseFloat(formData.price) : undefined;
-    const mileage = formData.mileage ? parseFloat(formData.mileage) : undefined;
-    const engineCapacity = formData.engineCapacity ? parseFloat(formData.engineCapacity) : undefined;
-
-    // Prepare ad data according to your updated schema
     const adData: CreateAdSchema = {
+      ...data,
       title,
-      description: formData.description || "No description provided",
-      type: formData.type as any,
-      listingType: formData.listingType as any,
-      price,
-
-      // Media IDs from uploaded images
       mediaIds: selectedImages.map(img => img.id),
-
-      // Common vehicle fields
-      condition: formData.condition || undefined,
-      brand: formData.brand || undefined,
-      model: formData.model || undefined,
-      grade: formData.grade || undefined,
-      trimEdition: formData.trimEdition || undefined,
-
-      // Year fields (use appropriate field based on type)
-      manufacturedYear: (formData.type === "CAR" || formData.type === "MOTORCYCLE" || formData.type === "THREE_WHEEL" || formData.type === "BUS" || formData.type === "LORRY" || formData.type === "HEAVY_DUTY" || formData.type === "TRACTOR") ? formData.manufacturedYear || undefined : undefined,
-      modelYear: (formData.type === "VAN") ? formData.modelYear || undefined : undefined,
-
-      // Performance fields
-      mileage,
-      engineCapacity,
-
-      // Type-specific enum fields - cast to proper types
-      fuelType: formData.fuelType ? formData.fuelType as "PETROL" | "DIESEL" | "HYBRID" | "ELECTRIC" | "GAS" : undefined,
-      transmission: formData.transmission ? formData.transmission as "MANUAL" | "AUTOMATIC" | "CVT" : undefined,
-      bodyType: formData.bodyType ? formData.bodyType as "SALOON" | "HATCHBACK" | "STATION_WAGON" | "SUV" : undefined,
-      bikeType: formData.bikeType ? formData.bikeType as "SCOOTER" | "E_BIKE" | "MOTORBIKES" | "QUADRICYCLES" : undefined,
-      vehicleType: formData.vehicleType ? formData.vehicleType as "BED_TRAILER" | "BOWSER" | "BULLDOZER" | "CRANE" | "DUMP_TRUCK" | "EXCAVATOR" | "LOADER" | "OTHER" : undefined,
-
-      // Service & parts fields
-      serviceType: formData.serviceType || undefined,
-      partType: formData.partType || undefined,
-      partName: formData.partName || undefined,
-      partCategoryId: formData.partCategoryId || undefined,
-      compatibleVehicleType: formData.compatibleVehicleType || undefined,
-      maintenanceType: formData.maintenanceType || undefined,
-
-      // Contact info
-      name: formData.name || undefined,
-      phoneNumber: formData.phoneNumber || undefined,
-      whatsappNumber: formData.whatsappNumber || undefined,
-
-      // Location info
-      province: formData.province || undefined,
-      district: formData.district || undefined,
-      city: formData.city || undefined,
-      location: formData.location || undefined,
-
-      // Settings
-      termsAndConditions: formData.termsAndConditions || undefined,
-      published: formData.published,
-      isDraft: formData.isDraft,
-      metadata: { isNegotiable: formData.isNegotiable },
+      published: true,
+      isDraft: false,
     };
 
     createAd(
       { values: adData },
       {
-        onSuccess: (data) => {
-          setCreatedAdId(data.id);
-          // If boost was selected, request it
+        onSuccess: (responseData) => {
+          setCreatedAdId(responseData.id);
           if (showBoostDialog && boostSelection && boostSelection.boostTypes.length > 0) {
             requestBoost({
-              adId: data.id,
+              adId: responseData.id,
               boostTypes: boostSelection.boostTypes,
               bumpDays: boostSelection.bumpDays,
               topAdDays: boostSelection.topAdDays,
@@ -409,1247 +229,24 @@ export default function QuickAdCreatePage() {
               featuredDays: boostSelection.featuredDays,
             });
           }
-          // Check if user is admin
           const isAdmin = (session?.user as any)?.role === "admin";
           const isPublished = !adData.isDraft && adData.published;
 
-          // Show success modal first if ad is published (not admin)
           if (!isAdmin && isPublished) {
             setShowSuccessModal(true);
           } else {
-            // Admin or draft - redirect normally
             if (isAdmin) {
-              router.push(`/dashboard/ads/${data.id}`);
+              router.push(`/dashboard/ads/${responseData.id}`);
             } else {
               router.push('/profile#my-ads');
             }
           }
+        },
+        onError: (error) => {
+          console.error("Failed to create ad", error);
         }
       }
     );
-  };
-
-  // Check if required fields are filled based on step and vehicle type
-  const canProceed = () => {
-    switch (currentStep) {
-      case 1:
-        // Basic vehicle info required - but relaxed for non-SELL types
-        if (formData.listingType !== "SELL") {
-          // For WANT, RENT, HIRE - only require listing type and vehicle type
-          return formData.listingType && formData.type;
-        }
-
-        // For SELL - require detailed information as before
-        if (["AUTO_SERVICE", "RENTAL", "MAINTENANCE"].includes(formData.type)) {
-          return formData.type;
-        }
-
-        if (formData.type === "BICYCLE") {
-          return formData.type && formData.brand;
-        }
-
-        if (formData.type === "AUTO_PARTS") {
-          // Auto parts mode Step 1: require compatible vehicle type, condition, and category
-          return formData.type && formData.compatibleVehicleType && formData.condition && formData.partCategoryId;
-        }
-
-        // For all vehicle types that need year
-        const basicRequired = formData.type && formData.brand && formData.model;
-        const yearRequired = (formData.type === "VAN") ? formData.modelYear : formData.manufacturedYear;
-
-        return basicRequired && yearRequired;
-
-      case 2:
-        // Vehicle details required - but relaxed for non-SELL types
-        if (formData.listingType !== "SELL") {
-          // For WANT, RENT, HIRE - only require description
-          return formData.description;
-        }
-
-        // For SELL - require detailed information as before
-        // Price is only required if NOT negotiable
-        let priceRequired = formData.isNegotiable || formData.price;
-        let detailsRequired = priceRequired && formData.condition && formData.description;
-
-        // Type-specific required fields for SELL
-        if (formData.type === "CAR") {
-          detailsRequired = detailsRequired && formData.fuelType && formData.transmission;
-        } else if (formData.type === "MOTORCYCLE") {
-          detailsRequired = detailsRequired && formData.bikeType && formData.engineCapacity;
-        } else if (formData.type === "AUTO_SERVICE" || formData.type === "RENTAL") {
-          detailsRequired = detailsRequired && formData.serviceType;
-        } else if (formData.type === "AUTO_PARTS") {
-          // Auto parts: require partName, brand, price, description
-          const partPrice = formData.isNegotiable || formData.price;
-          detailsRequired = partPrice && formData.partName && formData.brand && formData.description;
-        } else if (formData.type === "MAINTENANCE") {
-          detailsRequired = detailsRequired && formData.maintenanceType;
-        } else if (formData.type === "HEAVY_DUTY") {
-          detailsRequired = detailsRequired && formData.vehicleType;
-        } else if (["THREE_WHEEL", "BUS", "LORRY", "TRACTOR"].includes(formData.type)) {
-          detailsRequired = detailsRequired && formData.fuelType;
-        }
-
-        return detailsRequired;
-
-      case 3:
-        // Contact info required for all listing types + at least 1 image
-        return formData.name && formData.phoneNumber && formData.province && formData.district && formData.city && formData.location && formData.termsAndConditions
-          //  && selectedImages.length > 0
-          ;
-
-      default:
-        return false;
-    }
-  };
-
-  // Render dynamic vehicle fields based on type
-  const renderVehicleFields = () => {
-    // For non-SELL types, show minimal fields
-    if (formData.listingType !== "SELL") {
-      return (
-        <>
-          <div>
-            <label className="block text-sm font-medium mb-1">Brand (optional)</label>
-            <CitySearchDropdown
-              cities={vehicleMakes}
-              value={formData.brand}
-              onChange={(value) => handleInputChange("brand", value)}
-              placeholder="Select brand"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Model (optional)</label>
-            <ModelSearchDropdown
-              value={formData.model}
-              onChange={(v) => handleInputChange("model", v)}
-              brand={formData.brand}
-              placeholder="Select or type model"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Grade (optional)</label>
-            <GradeSearchDropdown
-              value={formData.grade}
-              onChange={(v) => handleInputChange("grade", v)}
-              model={formData.model}
-              brand={formData.brand}
-              placeholder="Select or type grade"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Manufacture Year (optional)</label>
-            <Select value={formData.manufacturedYear || formData.modelYear} onValueChange={(value) => handleInputChange(formData.type === "VAN" ? "modelYear" : "manufacturedYear", value)}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select year" />
-              </SelectTrigger>
-              <SelectContent className="max-h-[280px]">
-                {manufactureYears.map(y => (
-                  <SelectItem key={y.id} value={y.year}>{y.year}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </>
-      );
-    }
-
-    // For SELL type, show full form based on vehicle type
-    switch (formData.type) {
-      case "CAR":
-        return (
-          <>
-            {/* Condition */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Condition<span className="text-red-500">*</span></label>
-              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select condition" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="New">Brand New</SelectItem>
-                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
-                  <SelectItem value="Used">Used</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Brand */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
-              <CitySearchDropdown
-                cities={vehicleMakes}
-                value={formData.brand}
-                onChange={(value) => handleInputChange("brand", value)}
-                placeholder="Select brand"
-              />
-            </div>
-
-            {/* Model */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
-              <ModelSearchDropdown
-                value={formData.model}
-                onChange={(v) => handleInputChange("model", v)}
-                brand={formData.brand}
-                placeholder="Select or type model"
-              />
-            </div>
-
-            {/* Grade */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Grade</label>
-              <GradeSearchDropdown
-                value={formData.grade}
-                onChange={(v) => handleInputChange("grade", v)}
-                model={formData.model}
-                brand={formData.brand}
-                placeholder="Select or type grade"
-              />
-            </div>
-
-            {/* Trim/Edition */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Trim / Edition</label>
-              <Input
-                placeholder="e.g., Sport"
-                value={formData.trimEdition}
-                onChange={(e) => handleInputChange("trimEdition", e.target.value)}
-              />
-            </div>
-
-            {/* Year of Manufacture */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Year of Manufacture<span className="text-red-500">*</span></label>
-              <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select year" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[280px]">
-                  {manufactureYears.map(y => (
-                    <SelectItem key={y.id} value={y.year}>{y.year}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </>
-        );
-
-      case "VAN":
-        return (
-          <>
-            {/* Condition */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Condition<span className="text-red-500">*</span></label>
-              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select condition" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="New">Brand New</SelectItem>
-                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
-                  <SelectItem value="Used">Used</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Brand */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
-              <CitySearchDropdown
-                cities={vehicleMakes}
-                value={formData.brand}
-                onChange={(value) => handleInputChange("brand", value)}
-                placeholder="Select brand"
-              />
-            </div>
-
-            {/* Model */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
-              <ModelSearchDropdown
-                value={formData.model}
-                onChange={(v) => handleInputChange("model", v)}
-                brand={formData.brand}
-                placeholder="Select or type model"
-              />
-            </div>
-
-            {/* Grade */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Grade</label>
-              <GradeSearchDropdown
-                value={formData.grade}
-                onChange={(v) => handleInputChange("grade", v)}
-                model={formData.model}
-                brand={formData.brand}
-                placeholder="Select or type grade"
-              />
-            </div>
-
-            {/* Trim/Edition */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Trim / Edition</label>
-              <Input
-                placeholder="e.g., GL"
-                value={formData.trimEdition}
-                onChange={(e) => handleInputChange("trimEdition", e.target.value)}
-              />
-            </div>
-
-            {/* Model Year */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Model Year<span className="text-red-500">*</span></label>
-              <Select value={formData.modelYear} onValueChange={(value) => handleInputChange("modelYear", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select year" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[280px]">
-                  {manufactureYears.map(y => (
-                    <SelectItem key={y.id} value={y.year}>{y.year}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </>
-        );
-
-      case "MOTORCYCLE":
-        return (
-          <>
-            {/* Condition */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Condition<span className="text-red-500">*</span></label>
-              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select condition" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="New">Brand New</SelectItem>
-                  <SelectItem value="Used">Used</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Bike Type */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Bike Type<span className="text-red-500">*</span></label>
-              <Select value={formData.bikeType} onValueChange={(value) => handleInputChange("bikeType", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select bike type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="SCOOTER">Scooter</SelectItem>
-                  <SelectItem value="E_BIKE">E-Bike</SelectItem>
-                  <SelectItem value="MOTORBIKES">Motorbikes</SelectItem>
-                  <SelectItem value="QUADRICYCLES">Quadricycles</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Brand */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
-              <CitySearchDropdown
-                cities={motorbikeBrands}
-                value={formData.brand}
-                onChange={(value) => handleInputChange("brand", value)}
-                placeholder="Select brand"
-              />
-            </div>
-
-            {/* Model */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
-              <ModelSearchDropdown
-                value={formData.model}
-                onChange={(v) => handleInputChange("model", v)}
-                brand={formData.brand}
-                placeholder="Select or type model"
-              />
-            </div>
-
-            {/* Grade */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Grade</label>
-              <GradeSearchDropdown
-                value={formData.grade}
-                onChange={(v) => handleInputChange("grade", v)}
-                model={formData.model}
-                brand={formData.brand}
-                placeholder="Select or type grade"
-              />
-            </div>
-
-            {/* Year of Manufacture */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Year of Manufacture<span className="text-red-500">*</span></label>
-              <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select year" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[280px]">
-                  {manufactureYears.map(y => (
-                    <SelectItem key={y.id} value={y.year}>{y.year}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </>
-        );
-
-      case "BICYCLE":
-        return (
-          <>
-            {/* Brand */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
-              <Input
-                placeholder="e.g., Giant"
-                value={formData.brand}
-                onChange={(e) => handleInputChange("brand", e.target.value)}
-              />
-            </div>
-
-            {/* Condition */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Condition<span className="text-red-500">*</span></label>
-              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select condition" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="New">Brand New</SelectItem>
-                  <SelectItem value="Used">Used</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </>
-        );
-
-      case "THREE_WHEEL":
-        return (
-          <>
-            {/* Condition */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Condition<span className="text-red-500">*</span></label>
-              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select condition" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="New">Brand New</SelectItem>
-                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
-                  <SelectItem value="Used">Used</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Brand */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
-              <CitySearchDropdown
-                cities={vehicleMakes}
-                value={formData.brand}
-                onChange={(value) => handleInputChange("brand", value)}
-                placeholder="Select brand"
-              />
-            </div>
-
-            {/* Model */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
-              <ModelSearchDropdown
-                value={formData.model}
-                onChange={(v) => handleInputChange("model", v)}
-                brand={formData.brand}
-                placeholder="Select or type model"
-              />
-            </div>
-
-            {/* Grade */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Grade</label>
-              <GradeSearchDropdown
-                value={formData.grade}
-                onChange={(v) => handleInputChange("grade", v)}
-                model={formData.model}
-                brand={formData.brand}
-                placeholder="Select or type grade"
-              />
-            </div>
-
-            {/* Year of Manufacture */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Year of Manufacture<span className="text-red-500">*</span></label>
-              <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select year" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[280px]">
-                  {manufactureYears.map(y => (
-                    <SelectItem key={y.id} value={y.year}>{y.year}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </>
-        );
-
-      case "BUS":
-      case "LORRY":
-      case "TRACTOR":
-        return (
-          <>
-            {/* Condition */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Condition<span className="text-red-500">*</span></label>
-              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select condition" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="New">Brand New</SelectItem>
-                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
-                  <SelectItem value="Used">Used</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Brand */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
-              <CitySearchDropdown
-                cities={vehicleMakes}
-                value={formData.brand}
-                onChange={(value) => handleInputChange("brand", value)}
-                placeholder="Select brand"
-              />
-            </div>
-
-            {/* Model */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
-              <ModelSearchDropdown
-                value={formData.model}
-                onChange={(v) => handleInputChange("model", v)}
-                brand={formData.brand}
-                placeholder="Select or type model"
-              />
-            </div>
-
-            {/* Grade */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Grade</label>
-              <GradeSearchDropdown
-                value={formData.grade}
-                onChange={(v) => handleInputChange("grade", v)}
-                model={formData.model}
-                brand={formData.brand}
-                placeholder="Select or type grade"
-              />
-            </div>
-
-            {/* Year of Manufacture */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Year of Manufacture<span className="text-red-500">*</span></label>
-              <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select year" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[280px]">
-                  {manufactureYears.map(y => (
-                    <SelectItem key={y.id} value={y.year}>{y.year}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </>
-        );
-
-      case "HEAVY_DUTY":
-        return (
-          <>
-            {/* Condition */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Condition<span className="text-red-500">*</span></label>
-              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select condition" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="New">Brand New</SelectItem>
-                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
-                  <SelectItem value="Used">Used</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Vehicle Type */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Vehicle Type<span className="text-red-500">*</span></label>
-              <Select value={formData.vehicleType} onValueChange={(value) => handleInputChange("vehicleType", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select vehicle type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="BED_TRAILER">Bed Trailer</SelectItem>
-                  <SelectItem value="BOWSER">Bowser</SelectItem>
-                  <SelectItem value="BULLDOZER">Bulldozer</SelectItem>
-                  <SelectItem value="CRANE">Crane</SelectItem>
-                  <SelectItem value="DUMP_TRUCK">Dump Truck</SelectItem>
-                  <SelectItem value="EXCAVATOR">Excavator</SelectItem>
-                  <SelectItem value="LOADER">Loader</SelectItem>
-                  <SelectItem value="OTHER">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Brand */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Brand<span className="text-red-500">*</span></label>
-              <CitySearchDropdown
-                cities={vehicleMakes}
-                value={formData.brand}
-                onChange={(value) => handleInputChange("brand", value)}
-                placeholder="Select brand"
-              />
-            </div>
-
-            {/* Model */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Model<span className="text-red-500">*</span></label>
-              <ModelSearchDropdown
-                value={formData.model}
-                onChange={(v) => handleInputChange("model", v)}
-                brand={formData.brand}
-                placeholder="Select or type model"
-              />
-            </div>
-
-            {/* Year of Manufacture */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Year of Manufacture<span className="text-red-500">*</span></label>
-              <Select value={formData.manufacturedYear} onValueChange={(value) => handleInputChange("manufacturedYear", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select year" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[280px]">
-                  {manufactureYears.map(y => (
-                    <SelectItem key={y.id} value={y.year}>{y.year}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </>
-        );
-
-      case "AUTO_SERVICE":
-      case "RENTAL":
-        return (
-          <>
-            {/* Service Type */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Service Type<span className="text-red-500">*</span></label>
-              <Input
-                placeholder={formData.type === "AUTO_SERVICE" ? "e.g., Car Wash, Repair" : "e.g., Car Rental, Van Rental"}
-                value={formData.serviceType}
-                onChange={(e) => handleInputChange("serviceType", e.target.value)}
-              />
-            </div>
-          </>
-        );
-
-      case "AUTO_PARTS":
-        return (
-          <>
-            {/* Compatible Vehicle Type */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Compatible Vehicle Type<span className="text-red-500">*</span></label>
-              <Select value={formData.compatibleVehicleType} onValueChange={(value) => handleInputChange("compatibleVehicleType", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select vehicle type this part fits" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All Vehicles</SelectItem>
-                  <SelectItem value="CAR">Car</SelectItem>
-                  <SelectItem value="VAN">Van</SelectItem>
-                  <SelectItem value="MOTORCYCLE">Motorcycle</SelectItem>
-                  <SelectItem value="BICYCLE">Bicycle</SelectItem>
-                  <SelectItem value="THREE_WHEEL">Three Wheeler</SelectItem>
-                  <SelectItem value="BUS">Bus</SelectItem>
-                  <SelectItem value="LORRY">Lorry / Truck</SelectItem>
-                  <SelectItem value="HEAVY_DUTY">Heavy Duty</SelectItem>
-                  <SelectItem value="TRACTOR">Tractor</SelectItem>
-                  <SelectItem value="BOAT">Boat</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Part Condition */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Part Condition<span className="text-red-500">*</span></label>
-              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select condition" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="New">Brand New</SelectItem>
-                  <SelectItem value="Used">Used</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Part Category */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Part Category<span className="text-red-500">*</span></label>
-              <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={categoryOpen}
-                    className="w-full justify-between font-normal"
-                    disabled={autoPartCategories.length === 0}
-                  >
-                    {formData.partCategoryId
-                      ? autoPartCategories.find((cat) => cat.id === formData.partCategoryId)?.name
-                      : (autoPartCategories.length === 0 ? "No categories available" : "Select category")}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0" align="start">
-                  <Command>
-                    <CommandInput placeholder="Search category..." />
-                    <CommandEmpty>No category found.</CommandEmpty>
-                    <CommandGroup className="max-h-60 overflow-y-auto">
-                      {autoPartCategories.map((cat) => (
-                        <CommandItem
-                          key={cat.id}
-                          value={cat.name}
-                          onSelect={() => {
-                            handleInputChange("partCategoryId", cat.id);
-                            setCategoryOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              formData.partCategoryId === cat.id ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          {cat.name}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              {autoPartCategories.length === 0 && (
-                <p className="text-xs text-amber-600 mt-1">No categories found. Admin needs to add categories first.</p>
-              )}
-            </div>
-          </>
-        );
-
-      case "MAINTENANCE":
-        return (
-          <>
-            {/* Maintenance Type */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Maintenance and Repair Type<span className="text-red-500">*</span></label>
-              <Input
-                placeholder="e.g., Engine Repair, Body Work"
-                value={formData.maintenanceType}
-                onChange={(e) => handleInputChange("maintenanceType", e.target.value)}
-              />
-            </div>
-          </>
-        );
-
-      case "BOAT":
-        return (
-          <>
-            {/* Condition */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Condition<span className="text-red-500">*</span></label>
-              <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select condition" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="New">Brand New</SelectItem>
-                  <SelectItem value="Used">Used</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </>
-        );
-
-      default:
-        return null;
-    }
-  };
-
-  // Render step 2 dynamic fields based on vehicle type
-  const renderStep2Fields = () => {
-    // For non-SELL types, show minimal fields
-    if (formData.listingType !== "SELL") {
-      return (
-        <>
-          <div>
-            <label className="block text-sm font-medium mb-1">Budget/Price Range (optional)</label>
-            <Input
-              type="number"
-              placeholder="e.g., 2500000"
-              value={formData.price}
-              onChange={(e) => handleInputChange("price", e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              {formData.listingType === "WANT" ? "Your budget range" :
-                formData.listingType === "RENT" ? "Monthly rent amount" :
-                  "Expected price range"}
-            </p>
-          </div>
-
-          {(formData.listingType === "WANT" || formData.listingType === "RENT") && (
-            <div>
-              <label className="block text-sm font-medium mb-1">Preferred Condition (optional)</label>
-              <Select
-                value={formData.condition}
-                onValueChange={(value) => handleInputChange("condition", value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Any condition" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="any">Any condition</SelectItem>
-                  <SelectItem value="New">Brand New</SelectItem>
-                  <SelectItem value="Reconditioned">Reconditioned</SelectItem>
-                  <SelectItem value="Used">Used</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-        </>
-      );
-    }
-
-    // For SELL type, show full detailed form
-    switch (formData.type) {
-      case "CAR":
-        return (
-          <>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium mb-1">Transmission<span className="text-red-500">*</span></label>
-                <Select value={formData.transmission} onValueChange={(value) => handleInputChange("transmission", value)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="AUTOMATIC">Automatic</SelectItem>
-                    <SelectItem value="MANUAL">Manual</SelectItem>
-                    <SelectItem value="CVT">CVT</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Fuel Type<span className="text-red-500">*</span></label>
-                <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="PETROL">Petrol</SelectItem>
-                    <SelectItem value="DIESEL">Diesel</SelectItem>
-                    <SelectItem value="HYBRID">Hybrid</SelectItem>
-                    <SelectItem value="ELECTRIC">Electric</SelectItem>
-                    <SelectItem value="GAS">Gas</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium mb-1">Mileage (km)</label>
-                <Input
-                  type="number"
-                  placeholder="e.g., 45000"
-                  value={formData.mileage}
-                  onChange={(e) => handleInputChange("mileage", e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Engine (cc)</label>
-                <Input
-                  type="number"
-                  placeholder="e.g., 1500"
-                  value={formData.engineCapacity}
-                  onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Body Type</label>
-              <Select value={formData.bodyType} onValueChange={(value) => handleInputChange("bodyType", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select body type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="SALOON">Saloon</SelectItem>
-                  <SelectItem value="HATCHBACK">Hatchback</SelectItem>
-                  <SelectItem value="STATION_WAGON">Station Wagon</SelectItem>
-                  <SelectItem value="SUV">SUV</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </>
-        );
-
-      case "VAN":
-        return (
-          <>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium mb-1">Mileage (km)</label>
-                <Input
-                  type="number"
-                  placeholder="e.g., 50000"
-                  value={formData.mileage}
-                  onChange={(e) => handleInputChange("mileage", e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Engine (cc)</label>
-                <Input
-                  type="number"
-                  placeholder="e.g., 2000"
-                  value={formData.engineCapacity}
-                  onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
-                />
-              </div>
-            </div>
-          </>
-        );
-
-      case "MOTORCYCLE":
-        return (
-          <>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium mb-1">Mileage (km)</label>
-                <Input
-                  type="number"
-                  placeholder="e.g., 15000"
-                  value={formData.mileage}
-                  onChange={(e) => handleInputChange("mileage", e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Engine (cc)<span className="text-red-500">*</span></label>
-                <Input
-                  type="number"
-                  placeholder="e.g., 150"
-                  value={formData.engineCapacity}
-                  onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
-                />
-              </div>
-            </div>
-          </>
-        );
-
-      case "THREE_WHEEL":
-        return (
-          <>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium mb-1">Mileage (km)</label>
-                <Input
-                  type="number"
-                  placeholder="e.g., 25000"
-                  value={formData.mileage}
-                  onChange={(e) => handleInputChange("mileage", e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Engine (cc)</label>
-                <Input
-                  type="number"
-                  placeholder="e.g., 200"
-                  value={formData.engineCapacity}
-                  onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Fuel Type<span className="text-red-500">*</span></label>
-              <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select fuel type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PETROL">Petrol</SelectItem>
-                  <SelectItem value="DIESEL">Diesel</SelectItem>
-                  <SelectItem value="GAS">Gas (CNG/LPG)</SelectItem>
-                  <SelectItem value="ELECTRIC">Electric</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </>
-        );
-
-      case "BUS":
-        return (
-          <>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium mb-1">Mileage (km)</label>
-                <Input
-                  type="number"
-                  placeholder="e.g., 150000"
-                  value={formData.mileage}
-                  onChange={(e) => handleInputChange("mileage", e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Engine (cc)</label>
-                <Input
-                  type="number"
-                  placeholder="e.g., 4000"
-                  value={formData.engineCapacity}
-                  onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium mb-1">Fuel Type<span className="text-red-500">*</span></label>
-                <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="DIESEL">Diesel</SelectItem>
-                    <SelectItem value="PETROL">Petrol</SelectItem>
-                    <SelectItem value="GAS">Gas (CNG/LPG)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Transmission</label>
-                <Select value={formData.transmission} onValueChange={(value) => handleInputChange("transmission", value)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="MANUAL">Manual</SelectItem>
-                    <SelectItem value="AUTOMATIC">Automatic</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </>
-        );
-
-      case "LORRY":
-        return (
-          <>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium mb-1">Mileage (km)</label>
-                <Input
-                  type="number"
-                  placeholder="e.g., 200000"
-                  value={formData.mileage}
-                  onChange={(e) => handleInputChange("mileage", e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Engine (cc)</label>
-                <Input
-                  type="number"
-                  placeholder="e.g., 3000"
-                  value={formData.engineCapacity}
-                  onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium mb-1">Fuel Type<span className="text-red-500">*</span></label>
-                <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="DIESEL">Diesel</SelectItem>
-                    <SelectItem value="PETROL">Petrol</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Transmission</label>
-                <Select value={formData.transmission} onValueChange={(value) => handleInputChange("transmission", value)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="MANUAL">Manual</SelectItem>
-                    <SelectItem value="AUTOMATIC">Automatic</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </>
-        );
-
-      case "HEAVY_DUTY":
-        return (
-          <>
-            <div>
-              <label className="block text-sm font-medium mb-1">Operating Hours</label>
-              <Input
-                type="number"
-                placeholder="e.g., 5000"
-                value={formData.mileage}
-                onChange={(e) => handleInputChange("mileage", e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Total operating hours for the machinery
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium mb-1">Engine (cc)</label>
-                <Input
-                  type="number"
-                  placeholder="e.g., 6000"
-                  value={formData.engineCapacity}
-                  onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Fuel Type</label>
-                <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="DIESEL">Diesel</SelectItem>
-                    <SelectItem value="ELECTRIC">Electric</SelectItem>
-                    <SelectItem value="HYBRID">Hybrid</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </>
-        );
-
-      case "TRACTOR":
-        return (
-          <>
-            <div>
-              <label className="block text-sm font-medium mb-1">Operating Hours</label>
-              <Input
-                type="number"
-                placeholder="e.g., 2000"
-                value={formData.mileage}
-                onChange={(e) => handleInputChange("mileage", e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Total operating hours for the tractor
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium mb-1">Engine (cc)</label>
-                <Input
-                  type="number"
-                  placeholder="e.g., 2500"
-                  value={formData.engineCapacity}
-                  onChange={(e) => handleInputChange("engineCapacity", e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Fuel Type<span className="text-red-500">*</span></label>
-                <Select value={formData.fuelType} onValueChange={(value) => handleInputChange("fuelType", value)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="DIESEL">Diesel</SelectItem>
-                    <SelectItem value="PETROL">Petrol</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Transmission</label>
-              <Select value={formData.transmission} onValueChange={(value) => handleInputChange("transmission", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select transmission" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MANUAL">Manual</SelectItem>
-                  <SelectItem value="AUTOMATIC">Automatic</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </>
-        );
-
-      case "AUTO_PARTS":
-        return (
-          <>
-            {/* Part Name */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Part Name<span className="text-red-500">*</span></label>
-              <Input
-                placeholder="e.g., Wind Shield, Seat Cover, Brake Pad"
-                value={formData.partName}
-                onChange={(e) => handleInputChange("partName", e.target.value)}
-              />
-            </div>
-
-            {/* Compatible Vehicle Brand */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Compatible Vehicle Brand<span className="text-red-500">*</span></label>
-              <CitySearchDropdown
-                cities={["Any", ...vehicleMakes]}
-                value={formData.brand}
-                onChange={(value) => handleInputChange("brand", value)}
-                placeholder="Select vehicle brand"
-              />
-            </div>
-
-            {/* Compatible Vehicle Model */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Compatible Vehicle Model (optional)</label>
-              <ModelSearchDropdown
-                value={formData.model}
-                onChange={(v) => handleInputChange("model", v)}
-                brand={formData.brand}
-                placeholder="Select or type model"
-              />
-            </div>
-          </>
-        );
-
-      default:
-        return null;
-    }
   };
 
   return (
@@ -1663,7 +260,6 @@ export default function QuickAdCreatePage() {
             <p className="text-center text-slate-500">Quick and easy</p>
           </div>
 
-          {/* Progress steps */}
           <div className="flex mb-6 relative">
             <div className="w-1/3 text-center">
               <div className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center ${currentStep >= 1 ? 'bg-teal-700 text-white' : 'bg-slate-200 text-slate-600'}`}>1</div>
@@ -1680,419 +276,59 @@ export default function QuickAdCreatePage() {
             <div className="absolute top-4 left-[16.6%] w-[66.6%] h-[2px] bg-slate-200 -z-10"></div>
           </div>
 
-          {/* Step 1: Basic Vehicle Info */}
-          {currentStep === 1 && (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">What do you want to do?<span className="text-red-500">*</span></label>
-                <Select
-                  value={adMode === "auto_part" ? "SELL_AUTO_PART" : formData.listingType}
-                  onValueChange={(value) => {
-                    if (value === "SELL_AUTO_PART") {
-                      setAdMode("auto_part");
-                      setFormData(prev => ({
-                        ...prev,
-                        listingType: "SELL",
-                        type: "AUTO_PARTS",
-                        // Clear vehicle-specific fields when switching to auto parts
-                        brand: "",
-                        model: "",
-                        manufacturedYear: "",
-                        modelYear: "",
-                        condition: "",
-                        partName: "",
-                        partCategoryId: "",
-                        compatibleVehicleType: "",
-                      }));
-                    } else {
-                      setAdMode("vehicle");
-                      setFormData(prev => ({
-                        ...prev,
-                        listingType: value,
-                        // If was in auto_part mode, reset to CAR
-                        type: prev.type === "AUTO_PARTS" ? "CAR" : prev.type,
-                        partName: "",
-                        partCategoryId: "",
-                        compatibleVehicleType: "",
-                      }));
-                    }
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select listing type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="SELL">Sell Vehicle</SelectItem>
-                    <SelectItem value="SELL_AUTO_PART">Sell Auto Part</SelectItem>
-                    <SelectItem value="WANT">Want to Buy</SelectItem>
-                    <SelectItem value="RENT">Rent Out</SelectItem>
-                    <SelectItem value="HIRE">Hire</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Vehicle Type - only show when NOT in auto_part mode */}
-              {adMode !== "auto_part" && (
-              <div>
-                <label className="block text-sm font-medium mb-1">Vehicle Type<span className="text-red-500">*</span></label>
-                <Select
-                  value={formData.type}
-                  onValueChange={(value) => handleInputChange("type", value)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="CAR">Car</SelectItem>
-                    <SelectItem value="VAN">Van</SelectItem>
-                    <SelectItem value="MOTORCYCLE">Motor Bike</SelectItem>
-                    <SelectItem value="BICYCLE">Bicycle</SelectItem>
-                    <SelectItem value="THREE_WHEEL">Three Wheelers</SelectItem>
-                    <SelectItem value="BUS">Bus</SelectItem>
-                    <SelectItem value="LORRY">Lorries & Trucks</SelectItem>
-                    <SelectItem value="HEAVY_DUTY">Heavy Duty</SelectItem>
-                    <SelectItem value="TRACTOR">Tractor</SelectItem>
-                    <SelectItem value="AUTO_SERVICE">Auto Service</SelectItem>
-                    <SelectItem value="RENTAL">Rental</SelectItem>
-                    <SelectItem value="MAINTENANCE">Maintenance and Repair</SelectItem>
-                    <SelectItem value="BOAT">Boats & Water Transports</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-4">
+              {currentStep === 1 && (
+                <Step1VehicleInfo 
+                  onNext={() => setCurrentStep(2)} 
+                  canProceed={canProceed()} 
+                  adMode={adMode}
+                  setAdMode={setAdMode}
+                />
               )}
 
-              {/* Dynamic vehicle/auto-part fields based on type */}
-              {renderVehicleFields()}
-
-              {/* <div className="pt-2">
-                <div className="flex items-center bg-blue-50 p-2 rounded-md text-xs text-blue-700">
-                  <CheckCircle2 className="h-4 w-4 mr-2 flex-shrink-0" />
-                  <span>Title will be auto-generated from these details</span>
-                </div>
-              </div> */}
-
-              <Button
-                className="w-full bg-teal-700 hover:bg-teal-800"
-                onClick={() => setCurrentStep(2)}
-                disabled={!canProceed()}
-              >
-                Continue <ChevronRight className="ml-1 h-4 w-4" />
-              </Button>
-            </div>
-          )}
-
-          {/* Step 2: Vehicle Details */}
-          {currentStep === 2 && (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Price (Rs)</label>
-                <Input
-                  type="number"
-                  placeholder="e.g., 2500000"
-                  value={formData.price}
-                  onChange={(e) => handleInputChange("price", e.target.value)}
+              {currentStep === 2 && (
+                <Step2VehicleDetails 
+                  onBack={() => setCurrentStep(1)} 
+                  onNext={() => setCurrentStep(3)} 
+                  canProceed={canProceed()} 
                 />
-              </div>
+              )}
 
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="negotiable"
-                  checked={formData.isNegotiable}
-                  onCheckedChange={(checked) => {
-                    handleInputChange("isNegotiable", checked);
-                  }}
-                />
-                <Label htmlFor="negotiable" className="text-sm cursor-pointer font-medium">
-                  Price is Negotiable
-                </Label>
-              </div>
-
-              {/* <div>
-                <label className="block text-sm font-medium mb-1">Condition<span className="text-red-500">*</span></label>
-                <Select 
-                  value={formData.condition} 
-                  onValueChange={(value) => handleInputChange("condition", value)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select condition" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="New">Brand New</SelectItem>
-                    <SelectItem value="Reconditioned">Reconditioned</SelectItem>
-                    <SelectItem value="Used">Used</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div> */}
-
-              {/* Dynamic fields based on vehicle type */}
-              {renderStep2Fields()}
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Description<span className="text-red-500">*</span></label>
-                <Textarea
-                  placeholder="Tell potential buyers about your vehicle..."
-                  rows={3}
-                  value={formData.description}
-                  onChange={(e) => handleInputChange("description", e.target.value)}
-                />
-              </div>
-
-              <div className="flex space-x-3">
-                <Button
-                  variant="outline"
-                  className="w-1/2"
-                  onClick={() => setCurrentStep(1)}
-                >
-                  Back
-                </Button>
-                <Button
-                  className="w-1/2 bg-teal-700 hover:bg-teal-800"
-                  onClick={() => setCurrentStep(3)}
-                  disabled={!canProceed()}
-                >
-                  Continue
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Contact Details */}
-          {currentStep === 3 && (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Your Name<span className="text-red-500">*</span></label>
-                <Input
-                  placeholder="Enter your name"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange("name", e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Phone Number<span className="text-red-500">*</span></label>
-                <Input
-                  placeholder="e.g., 0777123456"
-                  value={formData.phoneNumber}
-                  onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">WhatsApp Number (optional)</label>
-                <Input
-                  placeholder="e.g., 0777123456"
-                  value={formData.whatsappNumber}
-                  onChange={(e) => handleInputChange("whatsappNumber", e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Province<span className="text-red-500">*</span></label>
-                <Select
-                  value={formData.province}
-                  onValueChange={(value) => handleInputChange("province", value)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select province" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.keys(locationData).map(province => (
-                      <SelectItem key={province} value={province}>{province}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">District<span className="text-red-500">*</span></label>
-                <Select
-                  value={formData.district}
-                  onValueChange={(value) => handleInputChange("district", value)}
-                  disabled={!formData.province}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={formData.province ? "Select district" : "Select province first"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getAvailableDistricts().map(district => (
-                      <SelectItem key={district} value={district}>{district}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">City<span className="text-red-500">*</span></label>
-                <CitySearchDropdown
-                  cities={getAvailableCities()}
-                  value={formData.city}
-                  onChange={(value) => handleInputChange("city", value)}
-                  disabled={!formData.district}
-                  placeholder="Select city"
-                  disabledPlaceholder="Select district first"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Location/Area<span className="text-red-500">*</span></label>
-                <Input
-                  placeholder="e.g., Nugegoda"
-                  value={formData.location}
-                  onChange={(e) => handleInputChange("location", e.target.value)}
-                />
-              </div>
-
-              <div className="flex items-center space-x-2 mt-2">
-                <Switch
-                  id="terms"
-                  checked={formData.termsAndConditions}
-                  onCheckedChange={(checked) => handleInputChange("termsAndConditions", checked)}
-                />
-                <Label htmlFor="terms" className="text-sm">
-                  I agree to the Terms & Conditions<span className="text-red-500">*</span>
-                </Label>
-              </div>
-
-              {/* Image Selection Section */}
-              <div className="pt-2">
-                <label className="block text-sm font-medium mb-2">Vehicle Images<span className="ms-1 text-red-500">*</span></label>
-                <p className="text-xs text-slate-500 mb-3">
-                  Select up to 6 images from your media gallery. First image will be the main photo.
-                </p>
-
-                {/* Media Gallery Button */}
-                <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center mb-3">
-                  <div className="flex flex-col items-center justify-center space-y-3">
-                    <Camera className="h-10 w-10 text-slate-400" />
-                    <div className="space-y-1 text-center">
-                      <p className="text-sm font-medium">
-                        {selectedImages.length === 0
-                          ? "No images selected yet"
-                          : selectedImages.length >= 6
-                            ? "Maximum images selected (6/6)"
-                            : `${selectedImages.length} image(s) selected, you can add ${6 - selectedImages.length
-                            } more`}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        Select images from your media gallery
-                      </p>
-                    </div>
-
-                    <MediaGallery
-                      onMediaSelect={handleMediaSelect}
-                      multiSelect={true}
-                      open={isGalleryOpen}
-                      onOpenChange={setIsGalleryOpen}
-                      title="Select Vehicle Images"
-                    >
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setIsGalleryOpen(true)}
-                        className="flex items-center gap-2"
-                        disabled={selectedImages.length >= 6}
-                      >
-                        <PlusCircle className="h-4 w-4" />
-                        {selectedImages.length === 0 ? "Select Images" : "Select More"}
-                      </Button>
-                    </MediaGallery>
-                  </div>
-                </div>
-
-                {/* Image Preview Grid */}
-                {selectedImages.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium">
-                        {selectedImages.length} of 6 images
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {selectedImages.length === 6 ? "Maximum reached" : "First image is main"}
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {selectedImages.map((image, index) => (
-                        <div key={image.id} className="relative group aspect-square">
-                          <img
-                            src={image.url}
-                            alt={`Upload ${index + 1}`}
-                            className="w-full h-full object-cover rounded-lg border-2 border-slate-200"
-                          />
-                          {index === 0 && (
-                            <div className="absolute top-1 left-1 bg-teal-700 text-white text-xs px-2 py-0.5 rounded">
-                              Main
-                            </div>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => removeMedia(image.id)}
-                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Boost Selector - shown when boost now dialog is active */}
-              {showBoostDialog && (
-                <div className="mb-4 border rounded-lg p-4 bg-slate-50">
-                  <h3 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                    <Zap className="h-4 w-4 text-teal-600" />
-                    Select Boost Options
-                  </h3>
-                  <BoostSelector
-                    onChange={setBoostSelection}
-                    showPaymentDetails={true}
+              {currentStep === 3 && (
+                <>
+                  <Step3ContactDetails 
+                    onBack={() => setCurrentStep(2)} 
+                    onSubmit={form.handleSubmit(onSubmit as any)}
+                    isPending={isPending}
+                    showBoostDialog={showBoostDialog}
+                    setShowBoostDialog={setShowBoostDialog}
+                    selectedImages={selectedImages}
+                    setSelectedImages={setSelectedImages}
+                    canProceed={canProceed()}
                   />
-                </div>
+                  {showBoostDialog && (
+                    <div className="mb-4 border rounded-lg p-4 bg-slate-50 mt-4">
+                      <h3 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                        <Zap className="h-4 w-4 text-teal-600" />
+                        Select Boost Options
+                      </h3>
+                      <BoostSelector
+                        onChange={setBoostSelection}
+                        showPaymentDetails={true}
+                      />
+                    </div>
+                  )}
+                </>
               )}
-
-              <div className="flex flex-col gap-2">
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => setCurrentStep(2)}
-                  >
-                    Back
-                  </Button>
-                  <Button
-                    className="flex-1 bg-teal-700 hover:bg-teal-800"
-                    onClick={handleSubmit}
-                    disabled={isPending || !canProceed()}
-                  >
-                    {isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Posting...
-                      </>
-                    ) : showBoostDialog ? "Post Ad" : "Post Ad"}
-                  </Button>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    className="flex-1 bg-orange-400 hover:bg-orange-400/70"
-                    onClick={() => setShowBoostDialog((v) => !v)}
-                    disabled={isPending}
-                  >
-                    <Zap className="h-4 w-4 mr-2" />
-                    {showBoostDialog ? "Hide Boost Options" : "Boost Now"}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
+            </form>
+          </Form>
         </Card>
       </div>
       <AdSubmissionSuccessModal
         open={showSuccessModal}
         onOpenChange={setShowSuccessModal}
         onClose={() => {
-          // After closing success modal, show pending modal
           setShowPendingModal(true);
         }}
       />
@@ -2102,57 +338,17 @@ export default function QuickAdCreatePage() {
           setShowPendingModal(open);
           if (!open) {
             if (pendingModalActionRef.current !== "createAnother") {
-              // Redirect to My Ads for Go Back / X / backdrop close
               router.push("/profile#my-ads");
             }
             pendingModalActionRef.current = "none";
           }
         }}
-        onGoBack={() => {
-          // onOpenChange will handle the redirect — nothing extra needed here
-        }}
+        onGoBack={() => {}}
         onCreateAnother={() => {
           pendingModalActionRef.current = "createAnother";
-          // Reset form and go to step 1
           setCurrentStep(1);
           setAdMode("vehicle");
-          setFormData({
-            listingType: "SELL",
-            type: "CAR",
-            brand: "",
-            model: "",
-            grade: "",
-            manufacturedYear: "",
-            modelYear: "",
-            price: "",
-            isNegotiable: false,
-            condition: "",
-            description: "",
-            transmission: "",
-            fuelType: "",
-            mileage: "",
-            engineCapacity: "",
-            trimEdition: "",
-            bikeType: "",
-            bodyType: "",
-            serviceType: "",
-            partType: "",
-            maintenanceType: "",
-            vehicleType: "",
-            partName: "",
-            partCategoryId: "",
-            compatibleVehicleType: "",
-            name: "",
-            phoneNumber: "",
-            whatsappNumber: "",
-            province: "",
-            district: "",
-            city: "",
-            location: "",
-            termsAndConditions: true,
-            published: true,
-            isDraft: false,
-          });
+          form.reset();
           setSelectedImages([]);
         }}
       />

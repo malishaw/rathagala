@@ -694,10 +694,10 @@ export default function AdDetailPage() {
                   >
                     <Avatar className="h-10 w-10">
                       {(ad as any).creator?.image ? (
-                        <AvatarImage src={(ad as any).creator.image} alt={(ad as any).creator?.name || "Seller"} />
+                        <AvatarImage src={(ad as any).creator.image} alt={ad.name || (ad as any).creator?.name || "Seller"} />
                       ) : (
                         <AvatarFallback className="bg-[#024950] text-white text-sm font-semibold">
-                          {((ad as any).creator?.name || "S").charAt(0).toUpperCase()}
+                          {(ad.name || (ad as any).creator?.name || "S").charAt(0).toUpperCase()}
                         </AvatarFallback>
                       )}
                     </Avatar>
@@ -711,7 +711,7 @@ export default function AdDetailPage() {
                         }}
                         className="text-sm font-semibold hover:underline text-left truncate"
                       >
-                        {(ad as any).creator?.name || "Seller"}
+                        {ad.name || (ad as any).creator?.name || "Seller"}
                       </button>
                       <Shield className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
                     </div>
