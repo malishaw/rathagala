@@ -217,8 +217,16 @@ export function Header() {
             </Link>
           </div>
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden">
+          {/* Mobile: Post Free button + Hamburger */}
+          <div className="md:hidden flex items-center gap-2">
+            <Link href={user ? "/sell/new" : "/signin?redirect=/sell/new"}>
+              <Button
+                size="sm"
+                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0 h-8 px-3 text-xs font-bold shadow-[0_2px_8px_rgba(249,115,22,0.3)] rounded-lg transition-all duration-200 active:scale-95"
+              >
+                Post Free
+              </Button>
+            </Link>
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="text-white">

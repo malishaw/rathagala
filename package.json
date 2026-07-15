@@ -2,7 +2,6 @@
   "name": "donext-boilerplate",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -11,10 +10,10 @@
     "prisma:generate": "prisma generate --schema src/server/prisma/schema.prisma",
     "prisma:studio": "prisma studio --schema src/server/prisma/schema.prisma",
     "db:push": "prisma db push --schema src/server/prisma/schema.prisma",
-    "db:seed": "tsx prisma/seed.ts",
-    "db:clean": "tsx prisma/seed.ts --clean",
-    "db:reset": "tsx prisma/seed.ts --clean && tsx prisma/seed.ts",
-    "typecheck": "tsc --noEmit"
+    "db:seed": "bun prisma/seed.ts",
+    "db:clean": "bun prisma/seed.ts --clean",
+    "db:reset": "bun prisma/seed.ts --clean && bun prisma/seed.ts",
+    "typecheck": "node --max-old-space-size=4096 node_modules/typescript/bin/tsc --noEmit"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.3.4",
@@ -122,6 +121,9 @@
     "typescript": "^5.9.3"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "bun prisma/seed.ts"
+  },
+  "patchedDependencies": {
+    "zod-prisma-types@3.3.11": "patches/zod-prisma-types@3.3.11.patch"
   }
 }

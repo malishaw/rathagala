@@ -90,7 +90,7 @@ export default function AdsManagePage() {
 
   // Separate fetch for always-accurate stat counts (ignores current filter/page)
   const { data: statsData } = useGetAds({
-    limit: 10000,
+    limit: 1000,
     page: 1,
     search: "",
     status: null,

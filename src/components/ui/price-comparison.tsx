@@ -67,16 +67,16 @@ export function PriceComparison({ adId, currentPrice }: PriceComparisonProps) {
         <CardTitle className="text-[#024950]">Market Price Comparison</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1">
             <p className="text-sm text-gray-500">Current Price</p>
-            <p className="text-xl font-bold text-[#024950]">
+            <p className="text-lg font-bold text-[#024950] break-words">
               {currentPrice ? formatPrice(currentPrice) : "N/A"}
             </p>
           </div>
           <div className="space-y-1">
             <p className="text-sm text-gray-500">Market Average</p>
-            <p className="text-xl font-bold text-gray-700">
+            <p className="text-lg font-bold text-gray-700 break-words">
               {formatPrice(marketPrice)}
             </p>
           </div>

@@ -44,7 +44,7 @@ export default function MarketTrendsPage() {
   // Fetch all vehicles for price trend analysis (independent)
   const { data: allVehiclesForTrendAnalysis, isLoading } = useGetAds({
     page: 1,
-    limit: 10000,
+    limit: 1000,
   });
 
   // Use only active (published) and non-rejected ads for analysis
@@ -333,10 +333,10 @@ export default function MarketTrendsPage() {
           {isLoading ? (
             <div className="h-9 w-full bg-gray-50 rounded animate-pulse"></div>
           ) : (
-            <div className="flex flex-col lg:flex-row lg:items-end gap-3 w-full">
-              
-              {/* Year Filter */}
-              <div className="w-full lg:w-32 flex-shrink-0 flex flex-col">
+          <div className="flex flex-col gap-3 w-full">
+
+              {/* Row 1 – Timeframe (top, centered on desktop) */}
+              <div className="w-full lg:w-48 lg:mx-auto flex flex-col">
                 <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1 ml-0.5">Timeframe</span>
                 <Select
                   value={trendFilterYear}
@@ -361,7 +361,8 @@ export default function MarketTrendsPage() {
                 </Select>
               </div>
 
-              <div className="hidden lg:block w-px h-9 bg-gray-200 mb-0.5"></div>
+              {/* Row 2 – Vehicle filters */}
+              <div className="flex flex-col lg:flex-row lg:items-end gap-3 w-full">
 
               {/* Vehicle 1 */}
               <div className="w-full lg:flex-1 flex flex-col">
@@ -550,7 +551,6 @@ export default function MarketTrendsPage() {
               </div>
 
               {/* Clear Filters Button */}
-              {/* Clear Filters Button */}
               {(trendFilterYear || trendFilterBrand1 || trendFilterBrand2) && (
                 <div className="w-full lg:w-auto flex flex-col justify-end h-full">
                   <span className="hidden lg:block text-[10px] text-transparent mb-1 select-none">Clear</span>
@@ -573,6 +573,8 @@ export default function MarketTrendsPage() {
                 </div>
               )}
             </div>
+          </div>
+
           )}
         </div>
 

@@ -136,20 +136,24 @@ export default function VehicleAnalyticsContent({ adId }: { adId: string }) {
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
         {/* Key Info */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="space-y-3">
+          {/* Price card - full width on mobile */}
           <div className="bg-white border border-gray-200 rounded p-4 text-center">
             <div className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Current Price</div>
-            <div className="text-lg font-bold text-[#024950]">
+            <div className="text-xl font-bold text-[#024950] break-words">
               {(ad as any).discountPrice ? formatPrice((ad as any).discountPrice) : formatPrice(ad.price)}
             </div>
           </div>
-          <div className="bg-white border border-gray-200 rounded p-4 text-center">
-            <div className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Vehicle Type</div>
-            <div className="text-sm font-medium text-gray-800 mt-1">{typeLabel}</div>
-          </div>
-          <div className="bg-white border border-gray-200 rounded p-4 text-center">
-            <div className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Year</div>
-            <div className="text-sm font-medium text-gray-800 mt-1">{ad.manufacturedYear || "N/A"}</div>
+          {/* Vehicle Type & Year - side by side */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white border border-gray-200 rounded p-4 text-center">
+              <div className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Vehicle Type</div>
+              <div className="text-sm font-medium text-gray-800 mt-1">{typeLabel}</div>
+            </div>
+            <div className="bg-white border border-gray-200 rounded p-4 text-center">
+              <div className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Year</div>
+              <div className="text-sm font-medium text-gray-800 mt-1">{ad.manufacturedYear || "N/A"}</div>
+            </div>
           </div>
         </div>
 

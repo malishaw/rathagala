@@ -86,7 +86,7 @@ export default function ReportPage() {
   const { data: adByEntity, isLoading: loadingEntity } = useGetAdCreationByEntity();
   const { data: advancedSummary, isLoading: loadingAdvanced, error: advancedError } = useGetAdAdvancedSummary(vehicleTypeFilter === "ALL" ? undefined : vehicleTypeFilter);
   const { data: adViews, isLoading: loadingAdViews } = useGetAdViewsReport(viewsPeriod);
-  const { data: allAdsData, isLoading: loadingAllAds } = useGetAds({ limit: 10000, page: 1 });
+  const { data: allAdsData, isLoading: loadingAllAds } = useGetAds({ limit: 1000, page: 1 });
   const { data: userSummary, isLoading: loadingUsers } = useGetUserSummary();
 
   // Compute trending ads using same logic as home page

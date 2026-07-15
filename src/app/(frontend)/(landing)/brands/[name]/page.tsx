@@ -190,7 +190,7 @@ export default function BrandPage() {
   // Fetch all ads
   const { data, isLoading, error } = useGetAds({
     page: 1,
-    limit: 10000,
+    limit: 1000,
     search: filters.query,
     listingType: filters.listingType,
   });

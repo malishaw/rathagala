@@ -3,7 +3,7 @@ import { CarIcon, Facebook, Instagram, Twitter, Youtube } from "lucide-react";
 
 const footerLinks = {
   quickLinks: [
-    { href: "/signin", label: "Login" },
+    { href: "/signin", label: "Log in" },
     { href: "/signup", label: "Register" },
     { href: "/profile", label: "My Account" },
     { href: "/sell/new", label: "Post Free Ad" },
@@ -11,17 +11,22 @@ const footerLinks = {
   features: [
     { href: "/search?listingType=SELL", label: "Buy Vehicles" },
     { href: "/search?listingType=RENT", label: "Rent Vehicles" },
-    { href: "/compare", label: "Compare Ads" },
-    { href: "/analyse", label: "Market Trends" },
+    { href: "/search?listingType=HIRE", label: "Hire Vehicle" },
     { href: "/auto-parts", label: "Auto Parts" },
+  ],
+  smartTools: [
+    { href: "/compare", label: "Compare Ads" },
+    { href: "/analyse", label: "Compare Models" },
+    { href: "/profile?tab=favorites", label: "Saved Ads" },
   ],
   support: [
     { href: "/about", label: "About Us" },
     { href: "/contact", label: "Contact Us" },
-    { href: "/terms", label: "Terms of Service" },
+    { href: "/terms", label: "Terms of Services" },
     { href: "/privacy", label: "Privacy Policy" },
   ],
 };
+
 
 const socialLinks = [
   { href: "https://www.facebook.com/rathagala", Icon: Facebook, label: "Facebook" },

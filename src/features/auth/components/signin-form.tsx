@@ -235,19 +235,21 @@ export function SigninForm({ className, redirectTo, variant = "standard" }: Prop
         </div>
       ) : (
         <>
-          <div className="flex items-center justify-between text-[11px] px-0.5 mt-0.5">
+          <div className="flex flex-col gap-2 mt-1">
             <Link 
               href={redirectTo ? `/signup?redirect=${encodeURIComponent(redirectTo)}` : "/signup"}
-              className="text-teal-700 hover:text-teal-900 hover:underline font-medium"
+              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border-2 border-teal-600 bg-teal-50 hover:bg-teal-100 text-teal-700 hover:text-teal-900 text-xs font-bold transition-all duration-150 hover:shadow-sm"
             >
-              Don't have an account? Sign Up
+              ✨ Don&apos;t have an account? <span className="underline">Create one free</span>
             </Link>
-            <Link 
-              href="/forgot-password" 
-              className="text-teal-600 hover:text-teal-800 hover:underline font-medium"
-            >
-              Forgot Password?
-            </Link>
+            <div className="flex justify-end">
+              <Link 
+                href="/forgot-password" 
+                className="text-[11px] text-teal-500 hover:text-teal-700 hover:underline font-medium"
+              >
+                Forgot Password?
+              </Link>
+            </div>
           </div>
 
           <div className="relative my-0.5">

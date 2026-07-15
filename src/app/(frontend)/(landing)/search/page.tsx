@@ -580,6 +580,84 @@ export default function SearchPage() {
 
                 <Separator className="my-3" />
 
+                {/* District & City – moved to top for quick location filtering */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
+                      District
+                    </label>
+                    <Select
+                      value={filters.district}
+                      onValueChange={(value) => {
+                        handleFilterChange('district', value);
+                        setDistrictSearch('');
+                      }}
+                    >
+                      <SelectTrigger className="h-10 text-sm border-slate-200 bg-white rounded-lg shadow-none focus:ring-teal-500 focus:border-teal-500">
+                        <SelectValue placeholder="All Districts" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[300px]">
+                        <div className="p-2 border-b sticky top-0 bg-white z-10">
+                          <Input
+                            autoFocus
+                            placeholder="Search districts..."
+                            value={districtSearch}
+                            onChange={(e) => setDistrictSearch(e.target.value)}
+                            className="h-8 text-sm"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                        <SelectItem value="all">All</SelectItem>
+                        {filteredDistricts.map((district) => (
+                          <SelectItem key={district} value={district}>{district}</SelectItem>
+                        ))}
+                        {filteredDistricts.length === 0 && (
+                          <div className="p-2 text-sm text-slate-550 text-center">No districts found</div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
+                      City
+                    </label>
+                    <Select
+                      value={filters.city}
+                      onValueChange={(value) => {
+                        handleFilterChange('city', value);
+                        setCitySearch('');
+                      }}
+                    >
+                      <SelectTrigger className="h-10 text-sm border-slate-200 bg-white rounded-lg shadow-none focus:ring-teal-500 focus:border-teal-500">
+                        <SelectValue placeholder="All Cities" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[300px]">
+                        <div className="p-2 border-b sticky top-0 bg-white z-10">
+                          <Input
+                            autoFocus
+                            placeholder="Search cities..."
+                            value={citySearch}
+                            onChange={(e) => setCitySearch(e.target.value)}
+                            className="h-8 text-sm"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                        <SelectItem value="all">All</SelectItem>
+                        {filteredCities.map((city) => (
+                          <SelectItem key={city} value={city}>{city}</SelectItem>
+                        ))}
+                        {filteredCities.length === 0 && (
+                          <div className="p-2 text-sm text-slate-550 text-center">No cities found</div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <Separator className="my-3" />
+
                 {/* Row 1: Brand & Model */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -896,84 +974,6 @@ export default function SearchPage() {
                         {maxYearOptions.map((year) => (
                           <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
                         ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <Separator className="my-3" />
-
-                {/* Row 7: Location */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
-                      District
-                    </label>
-                    <Select
-                      value={filters.district}
-                      onValueChange={(value) => {
-                        handleFilterChange('district', value);
-                        setDistrictSearch('');
-                      }}
-                    >
-                      <SelectTrigger className="h-10 text-sm border-slate-200 bg-white rounded-lg shadow-none focus:ring-teal-500 focus:border-teal-500">
-                        <SelectValue placeholder="All Districts" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-[300px]">
-                        <div className="p-2 border-b sticky top-0 bg-white z-10">
-                          <Input
-                            autoFocus
-                            placeholder="Search districts..."
-                            value={districtSearch}
-                            onChange={(e) => setDistrictSearch(e.target.value)}
-                            className="h-8 text-sm"
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onKeyDown={(e) => e.stopPropagation()}
-                          />
-                        </div>
-                        <SelectItem value="all">All</SelectItem>
-                        {filteredDistricts.map((district) => (
-                          <SelectItem key={district} value={district}>{district}</SelectItem>
-                        ))}
-                        {filteredDistricts.length === 0 && (
-                          <div className="p-2 text-sm text-slate-550 text-center">No districts found</div>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
-                      City
-                    </label>
-                    <Select
-                      value={filters.city}
-                      onValueChange={(value) => {
-                        handleFilterChange('city', value);
-                        setCitySearch('');
-                      }}
-                    >
-                      <SelectTrigger className="h-10 text-sm border-slate-200 bg-white rounded-lg shadow-none focus:ring-teal-500 focus:border-teal-500">
-                        <SelectValue placeholder="All Cities" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-[300px]">
-                        <div className="p-2 border-b sticky top-0 bg-white z-10">
-                          <Input
-                            autoFocus
-                            placeholder="Search cities..."
-                            value={citySearch}
-                            onChange={(e) => setCitySearch(e.target.value)}
-                            className="h-8 text-sm"
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onKeyDown={(e) => e.stopPropagation()}
-                          />
-                        </div>
-                        <SelectItem value="all">All</SelectItem>
-                        {filteredCities.map((city) => (
-                          <SelectItem key={city} value={city}>{city}</SelectItem>
-                        ))}
-                        {filteredCities.length === 0 && (
-                          <div className="p-2 text-sm text-slate-550 text-center">No cities found</div>
-                        )}
                       </SelectContent>
                     </Select>
                   </div>

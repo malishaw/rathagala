@@ -531,7 +531,7 @@ export default function AdComparisonPage() {
                         {/* Comparison Table */}
                         <div className="space-y-6">
                             <h2 className="text-2xl font-semibold tracking-tight text-gray-900">Key Specifications</h2>
-                            <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white">
+                            <div className="border border-gray-200 rounded-2xl overflow-x-auto bg-white">
                                 <table className="w-full text-sm md:text-base text-left">
                                     <tbody className="divide-y divide-gray-200">
                                         {comparisonFields.map((field, index) => {
@@ -541,22 +541,22 @@ export default function AdComparisonPage() {
 
                                             return (
                                                 <tr key={index} className="hover:bg-gray-50/50 transition-colors">
-                                                    <td className="py-4 px-4 md:px-6 font-medium text-gray-500 w-1/3 bg-gray-50/50 align-top md:align-middle">
+                                                    <td className="py-4 px-3 md:px-6 font-medium text-gray-500 w-[28%] bg-gray-50/50 align-top md:align-middle break-words">
                                                         {field.label}
                                                     </td>
-                                                    <td className={`py-4 px-4 md:px-6 w-1/3 border-l border-gray-100 align-top md:align-middle ${winner === 1 ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
-                                                        <div className="flex items-center gap-2">
-                                                            <span>{field.format(value1)}</span>
+                                                    <td className={`py-4 px-3 md:px-6 w-[36%] border-l border-gray-100 align-top md:align-middle break-words min-w-0 ${winner === 1 ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
+                                                        <div className="flex items-start gap-2 flex-wrap">
+                                                            <span className="break-words">{field.format(value1)}</span>
                                                             {winner === 1 && (
-                                                                <span className="inline-block w-2 h-2 rounded-full bg-green-500 shrink-0" title="Better value"></span>
+                                                                <span className="inline-block w-2 h-2 rounded-full bg-green-500 shrink-0 mt-1.5" title="Better value"></span>
                                                             )}
                                                         </div>
                                                     </td>
-                                                    <td className={`py-4 px-4 md:px-6 w-1/3 border-l border-gray-100 align-top md:align-middle ${winner === 2 ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
-                                                        <div className="flex items-center gap-2">
-                                                            <span>{field.format(value2)}</span>
+                                                    <td className={`py-4 px-3 md:px-6 w-[36%] border-l border-gray-100 align-top md:align-middle break-words min-w-0 ${winner === 2 ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
+                                                        <div className="flex items-start gap-2 flex-wrap">
+                                                            <span className="break-words">{field.format(value2)}</span>
                                                             {winner === 2 && (
-                                                                <span className="inline-block w-2 h-2 rounded-full bg-green-500 shrink-0" title="Better value"></span>
+                                                                <span className="inline-block w-2 h-2 rounded-full bg-green-500 shrink-0 mt-1.5" title="Better value"></span>
                                                             )}
                                                         </div>
                                                     </td>
