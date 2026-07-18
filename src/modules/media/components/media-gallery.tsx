@@ -43,7 +43,7 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import Image from "next/image";
+
 
 type Props = {
   // This callback function should be executed when images selected then submit the gallery
@@ -350,7 +350,7 @@ export function MediaGallery({
                           >
                             <div className="aspect-square relative overflow-hidden">
                               {media.type === "IMAGE" ? (
-                                <Image
+                                <img
                                   src={media.url}
                                   alt={media.filename as string}
                                   width={300}

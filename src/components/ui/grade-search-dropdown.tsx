@@ -45,6 +45,8 @@ export function GradeSearchDropdown({
 
   // Fetch grades from API when model or brand changes
   React.useEffect(() => {
+    const abortController = new AbortController();
+
     const fetchGrades = async () => {
       setLoading(true);
       try {
@@ -59,23 +61,31 @@ export function GradeSearchDropdown({
         params.set("includeUserGrades", "true");
         
         const url = `/api/vehicle-grade?${params.toString()}`;
-        const res = await fetch(url);
+        const res = await fetch(url, { signal: abortController.signal });
         if (res.ok) {
           const data = await res.json() as { grades: VehicleGrade[] };
           setGrades(data.grades);
         } else {
           console.warn("[GradeSearchDropdown] Failed to fetch:", res.status);
         }
-      } catch (error) {
-        console.error("[GradeSearchDropdown] Fetch error:", error);
+      } catch (error: any) {
+        if (error.name !== "AbortError") {
+          console.error("[GradeSearchDropdown] Fetch error:", error);
+        }
       } finally {
-        setLoading(false);
+        if (!abortController.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
     
     if (model || brand) {
       fetchGrades();
     }
+
+    return () => {
+      abortController.abort();
+    };
   }, [model, brand]);
 
   const filtered = React.useMemo(() => {

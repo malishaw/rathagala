@@ -42,6 +42,8 @@ export function ModelSearchDropdown({
 
   // Fetch models from API when brand changes or component mounts
   React.useEffect(() => {
+    const abortController = new AbortController();
+
     const fetchModels = async () => {
       setLoading(true);
       try {
@@ -51,9 +53,9 @@ export function ModelSearchDropdown({
           // Include user-entered models from ads for the selected brand
           params.set("includeUserModels", "true");
         }
-        const url = `/api/vehicle-model?${params}`;
+        const url = `/api/vehicle-model?${params.toString()}`;
         console.log("[ModelSearchDropdown] Fetching models from:", url, { brand });
-        const res = await fetch(url);
+        const res = await fetch(url, { signal: abortController.signal });
         if (res.ok) {
           const data = await res.json() as { models: VehicleModel[] };
           console.log("[ModelSearchDropdown] Fetched models:", data.models.length, "items", { brand, includesUser: data.models.some((m) => m.id.startsWith("user:")) });
@@ -61,14 +63,21 @@ export function ModelSearchDropdown({
         } else {
           console.warn("[ModelSearchDropdown] Failed to fetch:", res.status);
         }
-      } catch (error) {
-        console.error("[ModelSearchDropdown] Fetch error:", error);
-        // silently fail - user can still type manually
+      } catch (error: any) {
+        if (error.name !== "AbortError") {
+          console.error("[ModelSearchDropdown] Fetch error:", error);
+        }
       } finally {
-        setLoading(false);
+        if (!abortController.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
     fetchModels();
+
+    return () => {
+      abortController.abort();
+    };
   }, [brand]);
 
   const filtered = React.useMemo(() => {
