@@ -214,7 +214,7 @@ export function MediaGallery({
     }
 
     return (
-      <div className="overflow-hidden h-[450px] max-h-[450px]">
+      <div className="overflow-hidden h-[350px] max-h-[60vh]">
         <Tabs
           value={activeTab}
           onValueChange={(v) => setActiveTab(v as "gallery" | "upload")}

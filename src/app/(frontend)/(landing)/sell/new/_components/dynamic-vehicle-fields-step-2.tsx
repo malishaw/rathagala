@@ -10,56 +10,90 @@ export function DynamicVehicleFieldsStep2() {
   const form = useFormContext<CreateAdSchema>();
   const type = form.watch("type");
 
-  const renderMileage = (label = "Mileage (km)", placeholder = "e.g., 45000", description?: string) => (
-    <FormField
-      control={form.control}
-      name="mileage"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>{label}</FormLabel>
-          <FormControl>
-            <Input
-              type="number"
-              placeholder={placeholder}
-              {...field}
-              value={field.value ?? ""}
-              onChange={(e) => {
-                const val = parseFloat(e.target.value);
-                field.onChange(isNaN(val) ? undefined : val);
-              }}
-            />
-          </FormControl>
-          {description && <p className="text-xs text-muted-foreground mt-1">{description}</p>}
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  );
+  const renderMileage = (label = "Mileage (km)", placeholder = "e.g., 45000", description?: string) => {
+    const quickSelects = [0, 10000, 25000, 50000, 100000];
+    return (
+      <FormField
+        control={form.control}
+        name="mileage"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{label}</FormLabel>
+            <FormControl>
+              <Input
+                type="number"
+                placeholder={placeholder}
+                {...field}
+                value={field.value ?? ""}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value);
+                  field.onChange(isNaN(val) ? undefined : val);
+                }}
+              />
+            </FormControl>
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              {quickSelects.map(val => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => field.onChange(val)}
+                  className="text-[10px] px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded transition-colors"
+                >
+                  {val === 0 ? "0" : `${val / 1000}k`}
+                </button>
+              ))}
+            </div>
+            {description && <p className="text-xs text-muted-foreground mt-1">{description}</p>}
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    );
+  };
 
-  const renderEngine = (label = "Engine (cc)", placeholder = "e.g., 1500") => (
-    <FormField
-      control={form.control}
-      name="engineCapacity"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>{label}{type === "MOTORCYCLE" && <span className="text-red-500">*</span>}</FormLabel>
-          <FormControl>
-            <Input
-              type="number"
-              placeholder={placeholder}
-              {...field}
-              value={field.value ?? ""}
-              onChange={(e) => {
-                const val = parseFloat(e.target.value);
-                field.onChange(isNaN(val) ? undefined : val);
-              }}
-            />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  );
+  const renderEngine = (label = "Engine (cc)", placeholder = "e.g., 1500") => {
+    let quickSelects = [1000, 1300, 1500, 2000];
+    if (type === "MOTORCYCLE") quickSelects = [100, 125, 150, 250];
+    else if (type === "VAN") quickSelects = [1500, 2000, 2500, 3000];
+    else if (type === "BUS" || type === "LORRY") quickSelects = [3000, 4000, 5000, 6000];
+    
+    return (
+      <FormField
+        control={form.control}
+        name="engineCapacity"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{label}{type === "MOTORCYCLE" && <span className="text-red-500">*</span>}</FormLabel>
+            <FormControl>
+              <Input
+                type="number"
+                placeholder={placeholder}
+                {...field}
+                value={field.value ?? ""}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value);
+                  field.onChange(isNaN(val) ? undefined : val);
+                }}
+              />
+            </FormControl>
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              {quickSelects.map(val => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => field.onChange(val)}
+                  className="text-[10px] px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded transition-colors"
+                >
+                  {val}
+                </button>
+              ))}
+            </div>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    );
+  };
 
   const renderFuelType = (required = true, options = ["PETROL", "DIESEL", "HYBRID", "ELECTRIC", "GAS"]) => (
     <FormField

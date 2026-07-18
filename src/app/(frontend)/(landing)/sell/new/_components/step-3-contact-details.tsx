@@ -75,6 +75,40 @@ export function Step3ContactDetails({
 
   return (
     <div className="space-y-4">
+      <div className="pb-2">
+        <FormField
+          control={form.control}
+          name="metadata.isOnBehalfOf"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center space-x-2 space-y-0 p-3 bg-slate-50 border border-slate-100 rounded-lg">
+              <FormControl>
+                <Switch
+                  checked={field.value || false}
+                  onCheckedChange={(checked) => {
+                    field.onChange(checked);
+                    if (checked) {
+                      form.setValue("name", "");
+                      form.setValue("phoneNumber", "");
+                      form.setValue("whatsappNumber", "");
+                    }
+                  }}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel className="text-sm font-medium cursor-pointer">
+                  I am posting this ad on behalf of someone else
+                </FormLabel>
+                {field.value && (
+                  <p className="text-xs text-slate-500 mt-1">
+                    Please enter the actual seller's name and phone number below. These details will be shown to buyers.
+                  </p>
+                )}
+              </div>
+            </FormItem>
+          )}
+        />
+      </div>
+
       <FormField
         control={form.control}
         name="name"

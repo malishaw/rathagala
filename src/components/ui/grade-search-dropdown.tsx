@@ -58,7 +58,7 @@ export function GradeSearchDropdown({
         // Include user-entered grades from ads
         params.set("includeUserGrades", "true");
         
-        const url = `/api/vehicle-grade?${params}`;
+        const url = `/api/vehicle-grade?${params.toString()}`;
         const res = await fetch(url);
         if (res.ok) {
           const data = await res.json() as { grades: VehicleGrade[] };

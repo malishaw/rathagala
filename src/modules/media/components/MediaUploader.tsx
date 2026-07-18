@@ -47,33 +47,17 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
 
   const uploadFileToastId = useId();
 
-  const onDrop = useCallback(
-    async (acceptedFiles: File[]) => {
-      setAcceptedFiles(acceptedFiles);
-      setUploadResults([]);
-    },
-    [onUpload, onError, acceptedTypes, path]
-  );
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    maxSize,
-    multiple
-  });
-
-  const handleFileUpload = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-
+  const processFileUpload = async (files: File[]) => {
     try {
       setUploading(true);
-      const totalFiles = acceptedFiles.length;
+      const totalFiles = files.length;
       toast.loading(`Uploading ${totalFiles} file${totalFiles > 1 ? 's' : ''}...`, { id: uploadFileToastId });
 
       const results: MediaFile[] = [];
       let successCount = 0;
       let failCount = 0;
 
-      for (const file of acceptedFiles) {
+      for (const file of files) {
         try {
           const type = getMediaType(file.type);
 
@@ -124,6 +108,24 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
     }
   };
 
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      setAcceptedFiles(acceptedFiles);
+      setUploadResults([]);
+      if (acceptedFiles.length > 0) {
+        void processFileUpload(acceptedFiles);
+      }
+    },
+    [onUpload, onError, acceptedTypes, path]
+  );
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    maxSize,
+    multiple
+  });
+
+
   return (
     <div className="space-y-2">
       <Card
@@ -164,20 +166,19 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
             </p>
           </div>
 
-          {acceptedFiles.length > 0 ? (
+          {acceptedFiles.length > 0 && !uploading && (
             <Button
               type="button"
               size="sm"
-              onClick={handleFileUpload}
+              onClick={(e) => {
+                e.stopPropagation();
+                void processFileUpload(acceptedFiles);
+              }}
               disabled={uploading}
               onMouseDown={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
             >
-              Upload {acceptedFiles.length} File{acceptedFiles.length > 1 ? 's' : ''}
-            </Button>
-          ) : (
-            <Button type="button" size="sm" variant={"outline"}>
-              Select File{multiple ? 's' : ''}
+              Retry Upload
             </Button>
           )}
         </div>

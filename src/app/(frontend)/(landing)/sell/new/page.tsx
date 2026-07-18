@@ -39,6 +39,7 @@ export default function QuickAdCreatePage() {
 
   const pendingModalActionRef = useRef<"createAnother" | "none">("none");
   const [hasAutoFilled, setHasAutoFilled] = useState(false);
+  const [isDraftLoaded, setIsDraftLoaded] = useState(false);
 
   const form = useForm<CreateAdSchema>({
     resolver: zodResolver(createAdSchema) as any,
@@ -105,12 +106,46 @@ export default function QuickAdCreatePage() {
       }
     };
 
-    if (session?.user && !hasAutoFilled) {
+    if (session?.user && !hasAutoFilled && isDraftLoaded) {
       fetchUserProfile();
     }
-  }, [session, hasAutoFilled, form]);
+  }, [session, hasAutoFilled, form, isDraftLoaded]);
+
+  // Load from local storage
+  useEffect(() => {
+    try {
+      const savedDraft = localStorage.getItem("rathagala_draft_ad");
+      if (savedDraft) {
+        const parsed = JSON.parse(savedDraft);
+        if (parsed.formValues) form.reset(parsed.formValues);
+        if (parsed.currentStep) setCurrentStep(parsed.currentStep);
+        if (parsed.adMode) setAdMode(parsed.adMode);
+        if (parsed.selectedImages) setSelectedImages(parsed.selectedImages);
+        setHasAutoFilled(true); // Don't override with user profile if we have a draft
+      }
+    } catch (e) {
+      console.error("Failed to load draft from localStorage", e);
+    }
+    setIsDraftLoaded(true);
+  }, [form]);
 
   const watchAll = form.watch();
+
+  // Save to local storage
+  useEffect(() => {
+    if (!isDraftLoaded) return;
+    try {
+      const draft = {
+        formValues: watchAll,
+        currentStep,
+        adMode,
+        selectedImages
+      };
+      localStorage.setItem("rathagala_draft_ad", JSON.stringify(draft));
+    } catch (e) {
+      console.error("Failed to save draft to localStorage", e);
+    }
+  }, [watchAll, currentStep, adMode, selectedImages, isDraftLoaded]);
 
   const canProceed = () => {
     const { 
@@ -218,6 +253,7 @@ export default function QuickAdCreatePage() {
       { values: adData },
       {
         onSuccess: (responseData) => {
+          localStorage.removeItem("rathagala_draft_ad");
           setCreatedAdId(responseData.id);
           if (showBoostDialog && boostSelection && boostSelection.boostTypes.length > 0) {
             requestBoost({
