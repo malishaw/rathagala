@@ -1,4 +1,6 @@
-import { prisma } from "@/server/prisma/client";
+import { db } from "@/server/db";
+import { media as mediaSchema } from "@/server/db/schema";
+import { eq, and } from "drizzle-orm";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import * as HttpStatusPhrases from "stoker/http-status-phrases";
 
@@ -16,13 +18,9 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     );
   }
 
-  const media = await prisma.media.findMany({
-    where: {
-      uploaderId: user.id
-    },
-    orderBy: {
-      createdAt: "desc"
-    }
+  const media = await db.query.media.findMany({
+    where: eq(mediaSchema.uploaderId, user.id),
+    orderBy: (media, { desc }) => [desc(media.createdAt)],
   });
 
   return c.json(media, HttpStatusCodes.OK);
@@ -42,9 +40,10 @@ export const save: AppRouteHandler<SaveRoute> = async (c) => {
     );
   }
 
-  const createdMedia = await prisma.media.create({
-    data: { ...mediaDetails, uploaderId: user.id }
-  });
+  const [createdMedia] = await db.insert(mediaSchema).values({
+    ...mediaDetails,
+    uploaderId: user.id,
+  }).returning();
 
   return c.json(createdMedia, HttpStatusCodes.CREATED);
 };
@@ -61,8 +60,8 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
     );
   }
 
-  const media = await prisma.media.findUnique({
-    where: { id: mediaId, uploaderId: user.id }
+  const media = await db.query.media.findFirst({
+    where: and(eq(mediaSchema.id, mediaId), eq(mediaSchema.uploaderId, user.id)),
   });
 
   if (!media) {
@@ -87,9 +86,9 @@ export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
     );
   }
 
-  const deletedMedia = await prisma.media.delete({
-    where: { id: mediaId, uploaderId: user.id }
-  });
+  const [deletedMedia] = await db.delete(mediaSchema).where(
+    and(eq(mediaSchema.id, mediaId), eq(mediaSchema.uploaderId, user.id))
+  ).returning();
 
   return c.json(deletedMedia, HttpStatusCodes.OK);
 };

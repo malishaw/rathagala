@@ -19,6 +19,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { CalendarDays, Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 
 interface ManufactureYear {
@@ -27,7 +35,7 @@ interface ManufactureYear {
 }
 
 async function fetchYears(): Promise<{ years: ManufactureYear[] }> {
-  const res = await fetch("/api/admin/manufacture-years");
+  const res = await fetch("/api/admin/manufacture-years", { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch manufacture years");
   return res.json();
 }
@@ -45,6 +53,12 @@ export default function ManufactureYearsPage() {
   });
 
   const years = data?.years ?? [];
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 30;
+  const totalPages = Math.ceil(years.length / itemsPerPage);
+  const paginatedYears = years.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const createYear = useMutation({
     mutationFn: async (year: string) => {
@@ -139,28 +153,61 @@ export default function ManufactureYearsPage() {
               </button>.
             </p>
           ) : (
-            <div className="flex flex-wrap gap-2">
-              {years.map((y) => (
-                <div key={y.id} className="flex items-center gap-1 border rounded-md px-2 py-1 text-sm bg-muted/40">
-                  <span>{y.year}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5"
-                    onClick={() => { setYearInput(y.year); setYearDialog({ open: true, edit: y }); }}
-                  >
-                    <Pencil className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5 text-destructive"
-                    onClick={() => setDeleteDialog({ id: y.id, year: y.year })}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-wrap gap-2">
+                {paginatedYears.map((y) => (
+                  <div key={y.id} className="flex items-center gap-1 border rounded-md px-2 py-1 text-sm bg-muted/40">
+                    <span>{y.year}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5"
+                      onClick={() => { setYearInput(y.year); setYearDialog({ open: true, edit: y }); }}
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5 text-destructive"
+                      onClick={() => setDeleteDialog({ id: y.id, year: y.year })}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              {totalPages > 1 && (
+                <div className="pt-2">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} 
+                        />
+                      </PaginationItem>
+                      {Array.from({ length: totalPages }).map((_, i) => (
+                        <PaginationItem key={i}>
+                          <PaginationLink 
+                            isActive={currentPage === i + 1} 
+                            onClick={() => setCurrentPage(i + 1)} 
+                            className="cursor-pointer"
+                          >
+                            {i + 1}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} 
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
                 </div>
-              ))}
+              )}
             </div>
           )}
         </CardContent>

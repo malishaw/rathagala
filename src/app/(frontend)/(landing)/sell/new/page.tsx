@@ -260,20 +260,28 @@ export default function QuickAdCreatePage() {
             <p className="text-center text-slate-500">Quick and easy</p>
           </div>
 
-          <div className="flex mb-6 relative">
-            <div className="w-1/3 text-center">
-              <div className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center ${currentStep >= 1 ? 'bg-teal-700 text-white' : 'bg-slate-200 text-slate-600'}`}>1</div>
-              <div className="text-xs mt-1">Vehicle</div>
+          <div className="flex mb-8 relative">
+            <div className="w-1/3 text-center relative z-10">
+              <div className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center transition-colors duration-300 ${currentStep >= 1 ? 'bg-teal-700 text-white' : 'bg-slate-200 text-slate-600'}`}>1</div>
+              <div className={`text-xs mt-2 font-medium transition-colors duration-300 ${currentStep >= 1 ? 'text-teal-900' : 'text-slate-500'}`}>Vehicle</div>
             </div>
-            <div className="w-1/3 text-center">
-              <div className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center ${currentStep >= 2 ? 'bg-teal-700 text-white' : 'bg-slate-200 text-slate-600'}`}>2</div>
-              <div className="text-xs mt-1">Details</div>
+            <div className="w-1/3 text-center relative z-10">
+              <div className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center transition-colors duration-300 ${currentStep >= 2 ? 'bg-teal-700 text-white' : 'bg-slate-200 text-slate-600'}`}>2</div>
+              <div className={`text-xs mt-2 font-medium transition-colors duration-300 ${currentStep >= 2 ? 'text-teal-900' : 'text-slate-500'}`}>Details</div>
             </div>
-            <div className="w-1/3 text-center">
-              <div className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center ${currentStep >= 3 ? 'bg-teal-700 text-white' : 'bg-slate-200 text-slate-600'}`}>3</div>
-              <div className="text-xs mt-1">Contact</div>
+            <div className="w-1/3 text-center relative z-10">
+              <div className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center transition-colors duration-300 ${currentStep >= 3 ? 'bg-teal-700 text-white' : 'bg-slate-200 text-slate-600'}`}>3</div>
+              <div className={`text-xs mt-2 font-medium transition-colors duration-300 ${currentStep >= 3 ? 'text-teal-900' : 'text-slate-500'}`}>Contact</div>
             </div>
-            <div className="absolute top-4 left-[16.6%] w-[66.6%] h-[2px] bg-slate-200 -z-10"></div>
+            
+            {/* Background Line */}
+            <div className="absolute top-4 left-[16.66%] right-[16.66%] h-[2px] bg-slate-200 z-0"></div>
+            
+            {/* Active Progress Line */}
+            <div 
+              className="absolute top-4 left-[16.66%] h-[2px] bg-teal-700 z-0 transition-all duration-300 ease-in-out" 
+              style={{ width: currentStep === 1 ? '0%' : currentStep === 2 ? '33.33%' : '66.66%' }}
+            ></div>
           </div>
 
           <Form {...form}>

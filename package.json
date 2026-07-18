@@ -7,12 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "prisma:generate": "prisma generate --schema src/server/prisma/schema.prisma",
-    "prisma:studio": "prisma studio --schema src/server/prisma/schema.prisma",
-    "db:push": "prisma db push --schema src/server/prisma/schema.prisma",
-    "db:seed": "bun prisma/seed.ts",
-    "db:clean": "bun prisma/seed.ts --clean",
-    "db:reset": "bun prisma/seed.ts --clean && bun prisma/seed.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:seed": "tsx src/server/db/seed.ts",
     "typecheck": "node --max-old-space-size=4096 node_modules/typescript/bin/tsc --noEmit"
   },
   "dependencies": {
@@ -22,8 +20,8 @@
     "@better-fetch/fetch": "^1.1.21",
     "@hono/zod-openapi": "^0.19.10",
     "@hookform/resolvers": "^5.2.2",
+    "@neondatabase/serverless": "^1.1.0",
     "@plaiceholder/next": "^3.0.0",
-    "@prisma/client": "^6.19.2",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-aspect-ratio": "^1.1.8",
@@ -69,6 +67,8 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
+    "drizzle-orm": "^0.45.2",
+    "drizzle-zod": "^0.8.3",
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
     "hono": "^4.11.4",
@@ -80,7 +80,6 @@
     "jspdf-autotable": "^5.0.7",
     "jszip": "^3.10.1",
     "lucide-react": "^0.503.0",
-    "mongodb": "^6.21.0",
     "next": "^15.5.9",
     "next-themes": "^0.4.6",
     "nodemailer": "^7.0.12",
@@ -103,8 +102,7 @@
     "tw-animate-css": "^1.4.0",
     "vaul": "^1.1.2",
     "xlsx": "^0.18.5",
-    "zod": "^3.25.76",
-    "zod-prisma-types": "^3.3.10"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",
@@ -113,17 +111,11 @@
     "@types/nodemailer": "^7.0.5",
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^9.39.2",
     "eslint-config-next": "^15.5.9",
-    "prisma": "^6.19.2",
     "tailwindcss": "^4.1.18",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
-  },
-  "prisma": {
-    "seed": "bun prisma/seed.ts"
-  },
-  "patchedDependencies": {
-    "zod-prisma-types@3.3.11": "patches/zod-prisma-types@3.3.11.patch"
   }
 }

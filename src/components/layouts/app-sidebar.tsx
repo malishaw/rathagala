@@ -58,7 +58,8 @@ export async function AppSidebar({
           user={{
             email: props.session.user.email,
             avatar: props.session.user.image ?? "",
-            name: props.session.user.name
+            name: props.session.user.name,
+            role: props.session.user.role
           }}
         />
       </SidebarFooter>

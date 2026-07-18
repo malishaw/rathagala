@@ -1,4 +1,6 @@
-import { prisma } from "@/server/prisma/client";
+import { db } from "@/server/db";
+import { boostPricings, boostRequests, ads, revenueRecords, users } from "@/server/db/schema";
+import { eq, inArray, and, lt, gte, lte, count } from "drizzle-orm";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import type { AppRouteHandler } from "@/types/server";
 import type {
@@ -11,8 +13,10 @@ import type {
   GetRevenueRoute,
   AdminPromoteRoute,
 } from "./boost.routes";
-import { BoostType } from "@prisma/client";
 import { sendBoostApprovedEmail } from "@/lib/email";
+
+// Drizzle type equivalents
+type BoostType = "BUMP" | "TOP_AD" | "URGENT" | "FEATURED";
 
 const BOOST_DAYS_OPTIONS = [3, 7, 15];
 
@@ -25,7 +29,7 @@ const DEFAULT_PRICES: Record<BoostType, Record<number, number>> = {
 };
 
 async function ensurePricingExists() {
-  const existing = await prisma.boostPricing.findMany();
+  const existing = await db.query.boostPricings.findMany();
   if (existing.length > 0) return existing;
 
   // Seed defaults
@@ -39,8 +43,8 @@ async function ensurePricingExists() {
       });
     }
   }
-  await prisma.boostPricing.createMany({ data: toCreate });
-  return prisma.boostPricing.findMany();
+  await db.insert(boostPricings).values(toCreate);
+  return db.query.boostPricings.findMany();
 }
 
 export const getPricing: AppRouteHandler<GetPricingRoute> = async (c) => {
@@ -63,11 +67,13 @@ export const updatePricing: AppRouteHandler<UpdatePricingRoute> = async (c) => {
   const { prices } = await c.req.json();
 
   for (const { boostType, days, price } of prices) {
-    await prisma.boostPricing.upsert({
-      where: { boostType_days: { boostType, days } },
-      update: { price },
-      create: { boostType, days, price },
-    });
+    // Drizzle Upsert using ON CONFLICT DO UPDATE
+    await db.insert(boostPricings)
+      .values({ boostType, days, price })
+      .onConflictDoUpdate({
+        target: [boostPricings.boostType, boostPricings.days],
+        set: { price },
+      });
   }
 
   return c.json({ message: "Pricing updated" }, HttpStatusCodes.OK);
@@ -94,20 +100,20 @@ export const requestBoost: AppRouteHandler<RequestBoostRoute> = async (c) => {
     ["URGENT", urgentDays],
     ["FEATURED", featuredDays],
   ]) {
-    if (boostTypes.includes(type) && !validDays.includes(days)) {
+    if (boostTypes.includes(type) && !validDays.includes(days as number)) {
       return c.json({ message: `Invalid duration for ${type}` }, HttpStatusCodes.BAD_REQUEST);
     }
   }
 
   // Check ad ownership
-  const ad = await prisma.ad.findFirst({
-    where: { id: adId, createdBy: user.id },
+  const ad = await db.query.ads.findFirst({
+    where: and(eq(ads.id, adId), eq(ads.createdBy, user.id)),
   });
   if (!ad) return c.json({ message: "Ad not found or unauthorized" }, HttpStatusCodes.BAD_REQUEST);
 
   // Get pricing
-  const pricing = await prisma.boostPricing.findMany({
-    where: { boostType: { in: boostTypes } },
+  const pricing = await db.query.boostPricings.findMany({
+    where: inArray(boostPricings.boostType, boostTypes as BoostType[]),
   });
 
   const getPrice = (type: BoostType, days: number) => {
@@ -139,35 +145,32 @@ export const requestBoost: AppRouteHandler<RequestBoostRoute> = async (c) => {
   }
 
   // Create boost request & extend ad expiry by 1 day
-  const boostRequest = await prisma.boostRequest.create({
-    data: {
-      adId,
-      userId: user.id,
-      boostTypes,
-      bumpDays,
-      topAdDays,
-      urgentDays,
-      featuredDays,
-      totalAmount,
-      bumpAmount,
-      topAdAmount,
-      urgentAmount,
-      featuredAmount,
-      status: "PENDING",
-    },
-  });
+  const [boostRequest] = await db.insert(boostRequests).values({
+    adId,
+    userId: user.id,
+    boostTypes: boostTypes as any,
+    bumpDays,
+    topAdDays,
+    urgentDays,
+    featuredDays,
+    totalAmount,
+    bumpAmount,
+    topAdAmount,
+    urgentAmount,
+    featuredAmount,
+    status: "PENDING",
+  }).returning();
 
   // Extend expiry date by 1 day
-  await prisma.ad.update({
-    where: { id: adId },
-    data: {
+  await db.update(ads)
+    .set({
       boostStatus: "PENDING",
       boostRequestedAt: new Date(),
       expiryDate: ad.expiryDate
         ? new Date(ad.expiryDate.getTime() + 24 * 60 * 60 * 1000)
         : new Date(Date.now() + 61 * 24 * 60 * 60 * 1000),
-    },
-  });
+    })
+    .where(eq(ads.id, adId));
 
   return c.json(
     { message: "Boost requested successfully", boostRequestId: boostRequest.id, totalAmount },
@@ -185,8 +188,8 @@ export const approveBoost: AppRouteHandler<ApproveBoostRoute> = async (c) => {
   const body = await c.req.json();
   const { boostRequestId, boostTypes: overrideTypes, bumpDays, topAdDays, urgentDays, featuredDays } = body;
 
-  const boostRequest = await prisma.boostRequest.findUnique({
-    where: { id: boostRequestId },
+  const boostRequest = await db.query.boostRequests.findFirst({
+    where: eq(boostRequests.id, boostRequestId),
   });
   if (!boostRequest) return c.json({ message: "Boost request not found" }, HttpStatusCodes.NOT_FOUND);
 
@@ -210,8 +213,8 @@ export const approveBoost: AppRouteHandler<ApproveBoostRoute> = async (c) => {
   const boostEndAt = new Date(now.getTime() + maxDays * 24 * 60 * 60 * 1000);
 
   // Recalculate amounts if types/days changed
-  const pricing = await prisma.boostPricing.findMany({
-    where: { boostType: { in: finalBoostTypes as BoostType[] } },
+  const pricing = await db.query.boostPricings.findMany({
+    where: inArray(boostPricings.boostType, finalBoostTypes as BoostType[]),
   });
   const getPrice = (type: BoostType, days: number) => {
     const found = pricing.find((p) => p.boostType === type && p.days === days);
@@ -242,46 +245,51 @@ export const approveBoost: AppRouteHandler<ApproveBoostRoute> = async (c) => {
   }
 
   // Update boost request
-  await prisma.boostRequest.update({
-    where: { id: boostRequestId },
-    data: {
-      status: "ACTIVE",
-      boostTypes: finalBoostTypes,
-      bumpDays: finalBumpDays,
-      topAdDays: finalTopAdDays,
-      urgentDays: finalUrgentDays,
-      featuredDays: finalFeaturedDays,
-      totalAmount,
-      bumpAmount,
-      topAdAmount,
-      urgentAmount,
-      featuredAmount,
-      approvedBy: user!.id,
-      activatedAt: now,
-      expiresAt: boostEndAt,
-    },
-  });
+  await db.update(boostRequests).set({
+    status: "ACTIVE",
+    boostTypes: finalBoostTypes as any,
+    bumpDays: finalBumpDays,
+    topAdDays: finalTopAdDays,
+    urgentDays: finalUrgentDays,
+    featuredDays: finalFeaturedDays,
+    totalAmount,
+    bumpAmount,
+    topAdAmount,
+    urgentAmount,
+    featuredAmount,
+    approvedBy: user!.id,
+    activatedAt: now,
+    expiresAt: boostEndAt,
+  }).where(eq(boostRequests.id, boostRequestId));
 
   // Update Ad boost flags
-  await prisma.ad.update({
-    where: { id: boostRequest.adId },
-    data: {
-      boostTypes: finalBoostTypes,
-      bumpActive: finalBoostTypes.includes("BUMP"),
-      topAdActive: finalBoostTypes.includes("TOP_AD"),
-      urgentActive: finalBoostTypes.includes("URGENT"),
-      featuredActive: finalBoostTypes.includes("FEATURED"),
-      boostStatus: "ACTIVE",
-      boostStartAt: now,
-      boostEndAt,
-    },
-  });
+  await db.update(ads).set({
+    boostTypes: finalBoostTypes as any,
+    bumpActive: finalBoostTypes.includes("BUMP"),
+    topAdActive: finalBoostTypes.includes("TOP_AD"),
+    urgentActive: finalBoostTypes.includes("URGENT"),
+    featuredActive: finalBoostTypes.includes("FEATURED"),
+    boostStatus: "ACTIVE",
+    boostStartAt: now,
+    boostEndAt,
+  }).where(eq(ads.id, boostRequest.adId));
 
-  // Create revenue record
-  await prisma.revenueRecord.upsert({
-    where: { boostRequestId },
-    update: {
-      boostTypes: finalBoostTypes,
+  // Create revenue record (upsert based on boostRequestId)
+  await db.insert(revenueRecords).values({
+    boostRequestId,
+    adId: boostRequest.adId,
+    userId: boostRequest.userId,
+    boostTypes: finalBoostTypes as any,
+    totalAmount,
+    bumpAmount,
+    topAdAmount,
+    urgentAmount,
+    featuredAmount,
+    recordedAt: now,
+  }).onConflictDoUpdate({
+    target: revenueRecords.boostRequestId,
+    set: {
+      boostTypes: finalBoostTypes as any,
       totalAmount,
       bumpAmount,
       topAdAmount,
@@ -289,31 +297,21 @@ export const approveBoost: AppRouteHandler<ApproveBoostRoute> = async (c) => {
       featuredAmount,
       recordedAt: now,
     },
-    create: {
-      boostRequestId,
-      adId: boostRequest.adId,
-      userId: boostRequest.userId,
-      boostTypes: finalBoostTypes,
-      totalAmount,
-      bumpAmount,
-      topAdAmount,
-      urgentAmount,
-      featuredAmount,
-    },
   });
 
   // Send boost approval email (non-blocking)
-  prisma.ad.findUnique({
-    where: { id: boostRequest.adId },
-    select: {
-      title: true,
-      creator: { select: { name: true, email: true } },
+  db.query.ads.findFirst({
+    where: eq(ads.id, boostRequest.adId),
+    with: {
+      user: {
+        columns: { name: true, email: true },
+      },
     },
   }).then((ad) => {
-    if (ad?.creator?.email) {
+    if (ad?.user?.email) {
       sendBoostApprovedEmail({
-        email: ad.creator.email,
-        name: ad.creator.name || "User",
+        email: ad.user.email,
+        name: ad.user.name || "User",
         adTitle: ad.title,
         adId: boostRequest.adId,
         boostTypes: finalBoostTypes,
@@ -335,15 +333,15 @@ export const adminPromote: AppRouteHandler<AdminPromoteRoute> = async (c) => {
   const body = await c.req.json();
   const { adId, boostTypes, bumpDays, topAdDays, urgentDays, featuredDays } = body;
 
-  const ad = await prisma.ad.findUnique({ where: { id: adId } });
+  const ad = await db.query.ads.findFirst({ where: eq(ads.id, adId) });
   if (!ad) return c.json({ message: "Ad not found" }, HttpStatusCodes.NOT_FOUND);
 
   if (boostTypes.length > 3) {
     return c.json({ message: "Maximum 3 boost types allowed" }, HttpStatusCodes.BAD_REQUEST);
   }
 
-  const pricing = await prisma.boostPricing.findMany({
-    where: { boostType: { in: boostTypes as BoostType[] } },
+  const pricing = await db.query.boostPricings.findMany({
+    where: inArray(boostPricings.boostType, boostTypes as BoostType[]),
   });
   const getPrice = (type: BoostType, days: number) => {
     const found = pricing.find((p) => p.boostType === type && p.days === days);
@@ -372,54 +370,47 @@ export const adminPromote: AppRouteHandler<AdminPromoteRoute> = async (c) => {
   const boostEndAt = new Date(now.getTime() + maxDays * 24 * 60 * 60 * 1000);
 
   // Create boost request in ACTIVE state (admin-initiated, no payment needed)
-  const boostRequest = await prisma.boostRequest.create({
-    data: {
-      adId,
-      userId: ad.createdBy,
-      boostTypes,
-      bumpDays,
-      topAdDays,
-      urgentDays,
-      featuredDays,
-      totalAmount,
-      bumpAmount,
-      topAdAmount,
-      urgentAmount,
-      featuredAmount,
-      status: "ACTIVE",
-      approvedBy: user!.id,
-      activatedAt: now,
-      expiresAt: boostEndAt,
-    },
-  });
+  const [boostRequest] = await db.insert(boostRequests).values({
+    adId,
+    userId: ad.createdBy,
+    boostTypes: boostTypes as any,
+    bumpDays,
+    topAdDays,
+    urgentDays,
+    featuredDays,
+    totalAmount,
+    bumpAmount,
+    topAdAmount,
+    urgentAmount,
+    featuredAmount,
+    status: "ACTIVE",
+    approvedBy: user!.id,
+    activatedAt: now,
+    expiresAt: boostEndAt,
+  }).returning();
 
-  await prisma.ad.update({
-    where: { id: adId },
-    data: {
-      boostTypes,
-      bumpActive: boostTypes.includes("BUMP"),
-      topAdActive: boostTypes.includes("TOP_AD"),
-      urgentActive: boostTypes.includes("URGENT"),
-      featuredActive: boostTypes.includes("FEATURED"),
-      boostStatus: "ACTIVE",
-      boostRequestedAt: now,
-      boostStartAt: now,
-      boostEndAt,
-    },
-  });
+  await db.update(ads).set({
+    boostTypes: boostTypes as any,
+    bumpActive: boostTypes.includes("BUMP"),
+    topAdActive: boostTypes.includes("TOP_AD"),
+    urgentActive: boostTypes.includes("URGENT"),
+    featuredActive: boostTypes.includes("FEATURED"),
+    boostStatus: "ACTIVE",
+    boostRequestedAt: now,
+    boostStartAt: now,
+    boostEndAt,
+  }).where(eq(ads.id, adId));
 
-  await prisma.revenueRecord.create({
-    data: {
-      boostRequestId: boostRequest.id,
-      adId,
-      userId: ad.createdBy,
-      boostTypes,
-      totalAmount,
-      bumpAmount,
-      topAdAmount,
-      urgentAmount,
-      featuredAmount,
-    },
+  await db.insert(revenueRecords).values({
+    boostRequestId: boostRequest.id,
+    adId,
+    userId: ad.createdBy,
+    boostTypes: boostTypes as any,
+    totalAmount,
+    bumpAmount,
+    topAdAmount,
+    urgentAmount,
+    featuredAmount,
   });
 
   return c.json({ message: "Ad promoted successfully" }, HttpStatusCodes.OK);
@@ -432,46 +423,44 @@ export const getBoostRequests: AppRouteHandler<GetBoostRequestsRoute> = async (c
     return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
   }
 
-  const { status, page = "1", limit = "20" } = c.req.query();
-  const pageNum = parseInt(page);
-  const limitNum = parseInt(limit);
+  const query = c.req.query();
+  const status = query.status;
+  const pageNum = parseInt(query.page || "1");
+  const limitNum = parseInt(query.limit || "20");
   const skip = (pageNum - 1) * limitNum;
-
-  const where: any = {};
-  if (status && status !== "all") {
-    where.status = status;
-  }
 
   // Auto-expire boost requests where boostEndAt has passed
   const now = new Date();
-  await prisma.ad.updateMany({
-    where: {
-      boostStatus: "ACTIVE",
-      boostEndAt: { lt: now },
-    },
-    data: {
+  await db.update(ads)
+    .set({
       boostStatus: "EXPIRED",
       bumpActive: false,
       topAdActive: false,
       urgentActive: false,
       featuredActive: false,
       boostTypes: [],
-    },
-  });
-  await prisma.boostRequest.updateMany({
-    where: { status: "ACTIVE", expiresAt: { lt: now } },
-    data: { status: "EXPIRED" },
-  });
+    })
+    .where(and(eq(ads.boostStatus, "ACTIVE"), lt(ads.boostEndAt, now)));
 
-  const [boostRequests, total] = await Promise.all([
-    prisma.boostRequest.findMany({
-      where,
-      skip,
-      take: limitNum,
-      orderBy: { requestedAt: "desc" },
-      include: {
+  await db.update(boostRequests)
+    .set({ status: "EXPIRED" })
+    .where(and(eq(boostRequests.status, "ACTIVE"), lt(boostRequests.expiresAt, now)));
+
+  const conditions = [];
+  if (status && status !== "all") {
+    conditions.push(eq(boostRequests.status, status as any));
+  }
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const [fetchedRequests, totalRes] = await Promise.all([
+    db.query.boostRequests.findMany({
+      where: whereClause,
+      offset: skip,
+      limit: limitNum,
+      orderBy: (boostRequests, { desc }) => [desc(boostRequests.requestedAt)],
+      with: {
         ad: {
-          select: {
+          columns: {
             id: true,
             title: true,
             brand: true,
@@ -481,15 +470,17 @@ export const getBoostRequests: AppRouteHandler<GetBoostRequestsRoute> = async (c
             status: true,
           },
         },
-        user: { select: { id: true, name: true, email: true } },
+        user: { columns: { id: true, name: true, email: true } },
       },
     }),
-    prisma.boostRequest.count({ where }),
+    db.select({ value: count() }).from(boostRequests).where(whereClause),
   ]);
+
+  const total = totalRes[0].value;
 
   return c.json(
     {
-      boostRequests,
+      boostRequests: fetchedRequests as any,
       pagination: {
         total,
         page: pageNum,
@@ -507,12 +498,12 @@ export const getAdBoostRequest: AppRouteHandler<GetAdBoostRequestRoute> = async 
 
   const { adId } = c.req.param();
 
-  const boostRequest = await prisma.boostRequest.findFirst({
-    where: { adId },
-    orderBy: { requestedAt: "desc" },
+  const boostRequest = await db.query.boostRequests.findFirst({
+    where: eq(boostRequests.adId, adId),
+    orderBy: (boostRequests, { desc }) => [desc(boostRequests.requestedAt)],
   });
 
-  return c.json({ boostRequest }, HttpStatusCodes.OK);
+  return c.json({ boostRequest: boostRequest as any }, HttpStatusCodes.OK);
 };
 
 export const getRevenue: AppRouteHandler<GetRevenueRoute> = async (c) => {
@@ -522,39 +513,40 @@ export const getRevenue: AppRouteHandler<GetRevenueRoute> = async (c) => {
     return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
   }
 
-  const { filter = "all", startDate, endDate, page = "1", limit = "20" } = c.req.query() as any;
-  const pageNum = parseInt(page);
-  const limitNum = parseInt(limit);
+  const query = c.req.query() as any;
+  const filter = query.filter || "all";
+  const startDate = query.startDate;
+  const endDate = query.endDate;
+  const pageNum = parseInt(query.page || "1");
+  const limitNum = parseInt(query.limit || "20");
   const skip = (pageNum - 1) * limitNum;
 
-  const where: any = {};
+  const conditions = [];
   const now = new Date();
   
   if (filter === "today") {
-    where.recordedAt = { gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()) };
+    conditions.push(gte(revenueRecords.recordedAt, new Date(now.getFullYear(), now.getMonth(), now.getDate())));
   } else if (filter === "7days") {
-    where.recordedAt = { gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) };
+    conditions.push(gte(revenueRecords.recordedAt, new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)));
   } else if (filter === "30days") {
-    where.recordedAt = { gte: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) };
+    conditions.push(gte(revenueRecords.recordedAt, new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)));
   } else if (filter === "custom") {
-    const recordedAtFilter: any = {};
     if (startDate) {
-      recordedAtFilter.gte = new Date(startDate);
+      conditions.push(gte(revenueRecords.recordedAt, new Date(startDate)));
     }
     if (endDate) {
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
-      recordedAtFilter.lte = end;
-    }
-    if (Object.keys(recordedAtFilter).length > 0) {
-      where.recordedAt = recordedAtFilter;
+      conditions.push(lte(revenueRecords.recordedAt, end));
     }
   }
 
-  const [recordsForStats, paginatedRecords, totalRecordsCount] = await Promise.all([
-    prisma.revenueRecord.findMany({
-      where,
-      select: {
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const [recordsForStats, paginatedRecords, totalRes] = await Promise.all([
+    db.query.revenueRecords.findMany({
+      where: whereClause,
+      columns: {
         totalAmount: true,
         bumpAmount: true,
         topAdAmount: true,
@@ -563,22 +555,24 @@ export const getRevenue: AppRouteHandler<GetRevenueRoute> = async (c) => {
         boostTypes: true,
       },
     }),
-    prisma.revenueRecord.findMany({
-      where,
-      orderBy: { recordedAt: "desc" },
-      skip,
-      take: limitNum,
-      include: {
+    db.query.revenueRecords.findMany({
+      where: whereClause,
+      orderBy: (revenueRecords, { desc }) => [desc(revenueRecords.recordedAt)],
+      offset: skip,
+      limit: limitNum,
+      with: {
         boostRequest: {
-          include: {
-            ad: { select: { id: true, title: true, brand: true, model: true, status: true } },
-            user: { select: { id: true, name: true, email: true } },
+          with: {
+            ad: { columns: { id: true, title: true, brand: true, model: true, status: true } },
+            user: { columns: { id: true, name: true, email: true } },
           },
         },
       },
     }),
-    prisma.revenueRecord.count({ where }),
+    db.select({ value: count() }).from(revenueRecords).where(whereClause),
   ]);
+
+  const totalRecordsCount = totalRes[0].value;
 
   let totalRevenue = 0;
   let bumpRevenue = 0;
@@ -596,7 +590,7 @@ export const getRevenue: AppRouteHandler<GetRevenueRoute> = async (c) => {
     topAdRevenue += record.topAdAmount ?? 0;
     urgentRevenue += record.urgentAmount ?? 0;
     featuredRevenue += record.featuredAmount ?? 0;
-    const types = record.boostTypes as string[];
+    const types = (record.boostTypes || []) as string[];
     if (types.includes("BUMP")) bumpCount++;
     if (types.includes("TOP_AD")) topAdCount++;
     if (types.includes("URGENT")) urgentCount++;
@@ -606,19 +600,22 @@ export const getRevenue: AppRouteHandler<GetRevenueRoute> = async (c) => {
   const totalBoostedCount = recordsForStats.length;
 
   // Count currently active boosted ads by type
-  const [activeBumpCount, activeTopAdCount, activeUrgentCount, activeFeaturedCount] = await Promise.all([
-    prisma.ad.count({ where: { bumpActive: true, status: "ACTIVE" } }),
-    prisma.ad.count({ where: { topAdActive: true, status: "ACTIVE" } }),
-    prisma.ad.count({ where: { urgentActive: true, status: "ACTIVE" } }),
-    prisma.ad.count({ where: { featuredActive: true, status: "ACTIVE" } }),
+  const [activeBumpRes, activeTopAdRes, activeUrgentRes, activeFeaturedRes] = await Promise.all([
+    db.select({ value: count() }).from(ads).where(and(eq(ads.bumpActive, true), eq(ads.status, "ACTIVE" as any))),
+    db.select({ value: count() }).from(ads).where(and(eq(ads.topAdActive, true), eq(ads.status, "ACTIVE" as any))),
+    db.select({ value: count() }).from(ads).where(and(eq(ads.urgentActive, true), eq(ads.status, "ACTIVE" as any))),
+    db.select({ value: count() }).from(ads).where(and(eq(ads.featuredActive, true), eq(ads.status, "ACTIVE" as any))),
   ]);
 
   return c.json(
     {
       totalRevenue, bumpRevenue, topAdRevenue, urgentRevenue, featuredRevenue,
       bumpCount, topAdCount, urgentCount, featuredCount, totalBoostedCount,
-      activeBumpCount, activeTopAdCount, activeUrgentCount, activeFeaturedCount,
-      records: paginatedRecords,
+      activeBumpCount: activeBumpRes[0].value, 
+      activeTopAdCount: activeTopAdRes[0].value, 
+      activeUrgentCount: activeUrgentRes[0].value, 
+      activeFeaturedCount: activeFeaturedRes[0].value,
+      records: paginatedRecords as any,
       pagination: {
         total: totalRecordsCount,
         page: pageNum,

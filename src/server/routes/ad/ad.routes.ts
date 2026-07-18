@@ -106,6 +106,10 @@ export const getOne = createRoute({
       z.object({ message: z.string() }),
       "Invalid id error"
     ),
+    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({ message: z.string() }),
+      "Something went wrong"
+    ),
   },
 });
 
@@ -245,6 +249,10 @@ export const bulkPermanentDelete = createRoute({
       createMessageObjectSchema("Forbidden"),
       "Admin access required"
     ),
+    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({ message: z.string() }),
+      "Something went wrong"
+    ),
   },
 });
 
@@ -272,6 +280,10 @@ export const approve = createRoute({
       "Admin access required"
     ),
     [HttpStatusCodes.NOT_FOUND]: jsonContent(notFoundSchema, "Ad not found"),
+    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({ message: z.string() }),
+      "Something went wrong"
+    ),
   },
 });
 
@@ -305,6 +317,10 @@ export const reject = createRoute({
       "Admin access required"
     ),
     [HttpStatusCodes.NOT_FOUND]: jsonContent(notFoundSchema, "Ad not found"),
+    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({ message: z.string() }),
+      "Something went wrong"
+    ),
   },
 });
 
@@ -375,6 +391,10 @@ export const incrementView = createRoute({
       createErrorSchema(schemas.IdParamsSchema),
       "Invalid Id param"
     ),
+    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({ message: z.string() }),
+      "Something went wrong"
+    ),
   },
 });
 
@@ -405,6 +425,10 @@ export const renew = createRoute({
       "Forbidden"
     ),
     [HttpStatusCodes.NOT_FOUND]: jsonContent(notFoundSchema, "Ad not found"),
+    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      z.object({ message: z.string() }),
+      "Something went wrong"
+    ),
   },
 });
 

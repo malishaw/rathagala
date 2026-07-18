@@ -1,4 +1,6 @@
-import { prisma } from "@/server/prisma/client";
+import { db } from "@/server/db";
+import { newsletters, users } from "@/server/db/schema";
+import { eq, or, ilike, count } from "drizzle-orm";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import nodemailer from "nodemailer";
 
@@ -26,7 +28,7 @@ function isAdmin(user: any): boolean {
 export const list: AppRouteHandler<ListRoute> = async (c) => {
   const user = c.get("user");
   if (!user || !isAdmin(user)) {
-    return c.json({ message: "Forbidden - Admin only" }, HttpStatusCodes.FORBIDDEN);
+    return c.json({ message: "Forbidden - Admin only" }, HttpStatusCodes.FORBIDDEN) as any;
   }
 
   const query = c.req.query();
@@ -35,25 +37,23 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
   const search = query.search || "";
   const offset = (page - 1) * limit;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const where: any = {};
-  if (search) {
-    where.subject = { contains: search, mode: "insensitive" };
-  }
+  const whereClause = search ? ilike(newsletters.subject, `%${search}%`) : undefined;
 
-  const [newsletters, total] = await Promise.all([
-    prisma.newsletter.findMany({
-      where,
-      orderBy: { sentAt: "desc" },
-      skip: offset,
-      take: limit,
+  const [fetchedNewsletters, totalRes] = await Promise.all([
+    db.query.newsletters.findMany({
+      where: whereClause,
+      orderBy: (newsletters, { desc }) => [desc(newsletters.sentAt)],
+      offset,
+      limit,
     }),
-    prisma.newsletter.count({ where }),
+    db.select({ value: count() }).from(newsletters).where(whereClause),
   ]);
+
+  const total = totalRes[0].value;
 
   return c.json(
     {
-      newsletters: newsletters.map((n) => ({
+      newsletters: fetchedNewsletters.map((n) => ({
         ...n,
         id: n.id,
         sentAt: n.sentAt.toISOString(),
@@ -75,17 +75,17 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
 export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
   const user = c.get("user");
   if (!user || !isAdmin(user)) {
-    return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
+    return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED) as any;
   }
 
   const { id } = c.req.param();
 
-  const newsletter = await prisma.newsletter.findUnique({
-    where: { id },
+  const newsletter = await db.query.newsletters.findFirst({
+    where: eq(newsletters.id, id),
   });
 
   if (!newsletter) {
-    return c.json({ message: "Newsletter not found" }, HttpStatusCodes.NOT_FOUND);
+    return c.json({ message: "Newsletter not found" }, HttpStatusCodes.NOT_FOUND) as any;
   }
 
   return c.json(
@@ -103,7 +103,7 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
 export const send: AppRouteHandler<SendRoute> = async (c) => {
   const user = c.get("user");
   if (!user || !isAdmin(user)) {
-    return c.json({ message: "Forbidden - Admin only" }, HttpStatusCodes.FORBIDDEN);
+    return c.json({ message: "Forbidden - Admin only" }, HttpStatusCodes.FORBIDDEN) as any;
   }
 
   const body = c.req.valid("json");
@@ -168,7 +168,7 @@ export const send: AppRouteHandler<SendRoute> = async (c) => {
           sentCount++;
         })
         .catch((err) => {
-          console.error(`Failed to send newsletter to ${email}:`, err);
+          console.error(`Failed to send newsletter to \${email}:`, err);
         })
     );
 
@@ -176,20 +176,18 @@ export const send: AppRouteHandler<SendRoute> = async (c) => {
   }
 
   // Save the newsletter record
-  const newsletter = await prisma.newsletter.create({
-    data: {
-      subject,
-      htmlContent,
-      plainContent: plainContent || null,
-      recipientCount: sentCount,
-      recipientEmails,
-      sentBy: user.id,
-    },
-  });
+  const [newsletter] = await db.insert(newsletters).values({
+    subject,
+    htmlContent,
+    plainContent: plainContent || null,
+    recipientCount: sentCount,
+    recipientEmails,
+    sentBy: user.id,
+  }).returning();
 
   return c.json(
     {
-      message: `Newsletter sent to ${sentCount} out of ${recipientEmails.length} recipients`,
+      message: `Newsletter sent to \${sentCount} out of \${recipientEmails.length} recipients`,
       newsletter: {
         ...newsletter,
         sentAt: newsletter.sentAt.toISOString(),
@@ -211,24 +209,23 @@ export const getRecipients: AppRouteHandler<GetRecipientsRoute> = async (c) => {
   const query = c.req.query();
   const search = query.search || "";
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const where: any = {};
+  let whereClause = undefined;
   if (search) {
-    where.OR = [
-      { name: { contains: search, mode: "insensitive" } },
-      { email: { contains: search, mode: "insensitive" } },
-    ];
+    whereClause = or(
+      ilike(users.name, `%\${search}%`),
+      ilike(users.email, `%\${search}%`)
+    );
   }
 
-  const users = await prisma.user.findMany({
-    where,
-    select: {
+  const fetchedUsers = await db.query.users.findMany({
+    where: whereClause,
+    columns: {
       id: true,
       name: true,
       email: true,
     },
-    orderBy: { name: "asc" },
+    orderBy: (users, { asc }) => [asc(users.name)],
   });
 
-  return c.json({ users }, HttpStatusCodes.OK);
+  return c.json({ users: fetchedUsers }, HttpStatusCodes.OK);
 };

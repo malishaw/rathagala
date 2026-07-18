@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import app from "@/server";
 import { handle } from "hono/vercel";
 

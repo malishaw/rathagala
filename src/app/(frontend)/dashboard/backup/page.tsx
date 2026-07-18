@@ -273,7 +273,7 @@ export default function BackupPage() {
           <button
             onClick={handleDownload}
             disabled={busy}
-            className="flex items-center justify-center gap-2 rounded-lg  text-white font-semibold py-8 px-4 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-amber-500 hover:bg-amber-400 "
+            className="flex items-center justify-center gap-2 rounded-lg  text-white font-semibold py-3 px-4 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-amber-500 hover:bg-amber-400 "
           >
             {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
             Download Backup

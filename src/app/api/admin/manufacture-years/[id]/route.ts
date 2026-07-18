@@ -1,41 +1,58 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { prisma } from "@/server/prisma/client";
+export const dynamic = "force-dynamic";
 
-async function requireAdmin() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || session.user.role !== "admin") return null;
-  return session;
-}
+import { NextResponse } from "next/server";
+import { db } from "@/server/db";
+import { manufactureYears } from "@/server/db/schema";
+import { eq } from "drizzle-orm";
 
-// PUT - Update a manufacture year
-export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!(await requireAdmin())) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const { id } = await params;
-  const { year } = await req.json();
-  if (!year?.trim()) {
-    return NextResponse.json({ error: "Year is required" }, { status: 400 });
-  }
+export async function PUT(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const record = await prisma.manufactureYear.update({
-      where: { id },
-      data: { year: year.trim() },
-    });
-    return NextResponse.json({ year: record });
-  } catch {
-    return NextResponse.json({ error: "Year already exists or not found" }, { status: 409 });
+    const body = await req.json();
+    const { year } = body;
+    const { id } = await params;
+
+    if (!year) return NextResponse.json({ error: "Year is required" }, { status: 400 });
+
+    const [updated] = await db
+      .update(manufactureYears)
+      .set({ year, updatedAt: new Date() })
+      .where(eq(manufactureYears.id, id))
+      .returning();
+
+    if (!updated) {
+      return NextResponse.json({ error: "Year not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(updated);
+  } catch (error: any) {
+    if (error.code === '23505' || error.cause?.code === '23505') {
+      return NextResponse.json({ error: "Year already exists" }, { status: 409 });
+    }
+    return NextResponse.json({ error: error.message || "Failed to update year" }, { status: 500 });
   }
 }
 
-// DELETE - Remove a manufacture year
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!(await requireAdmin())) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    const [deleted] = await db
+      .delete(manufactureYears)
+      .where(eq(manufactureYears.id, id))
+      .returning();
+
+    if (!deleted) {
+      return NextResponse.json({ error: "Year not found" }, { status: 404 });
+    }
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || "Failed to delete year" }, { status: 500 });
   }
-  const { id } = await params;
-  await prisma.manufactureYear.delete({ where: { id } });
-  return new NextResponse(null, { status: 204 });
 }

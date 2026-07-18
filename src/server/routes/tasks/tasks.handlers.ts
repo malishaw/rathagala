@@ -1,4 +1,6 @@
-import { prisma } from "@/server/prisma/client";
+import { db } from "@/server/db";
+import { tasks } from "@/server/db/schema";
+import { eq } from "drizzle-orm";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import * as HttpStatusPhrases from "stoker/http-status-phrases";
 
@@ -12,17 +14,17 @@ import type {
 } from "./tasks.routes";
 
 export const list: AppRouteHandler<ListRoute> = async (c) => {
-  const tasks = await prisma.tasks.findMany({});
+  const fetchedTasks = await db.query.tasks.findMany();
 
-  return c.json(tasks, HttpStatusCodes.OK);
+  return c.json(fetchedTasks, HttpStatusCodes.OK);
 };
 
 export const create: AppRouteHandler<CreateRoute> = async (c) => {
-  const task = c.req.valid("json");
+  const taskData = c.req.valid("json");
 
-  const createdTask = await prisma.tasks.create({
-    data: task
-  });
+  const [createdTask] = await db.insert(tasks).values({
+    ...taskData,
+  }).returning();
 
   return c.json(createdTask, HttpStatusCodes.CREATED);
 };
@@ -30,10 +32,8 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
 export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
   const params = c.req.valid("param");
 
-  const task = await prisma.tasks.findFirst({
-    where: {
-      id: params.id
-    }
+  const task = await db.query.tasks.findFirst({
+    where: eq(tasks.id, params.id)
   });
 
   if (!task) {
@@ -52,10 +52,18 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
   const params = c.req.valid("param");
   const payload = c.req.valid("json");
 
-  const updatedTask = await prisma.tasks.update({
-    where: { id: params.id },
-    data: payload
-  });
+  const [updatedTask] = await db.update(tasks).set({
+    ...payload,
+  })
+    .where(eq(tasks.id, params.id))
+    .returning();
+
+  if (!updatedTask) {
+    return c.json(
+      { message: HttpStatusPhrases.NOT_FOUND },
+      HttpStatusCodes.NOT_FOUND
+    ) as any;
+  }
 
   return c.json(updatedTask, HttpStatusCodes.OK);
 };
@@ -63,7 +71,7 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
 export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
   const params = c.req.valid("param");
 
-  await prisma.tasks.delete({ where: { id: params.id } });
+  await db.delete(tasks).where(eq(tasks.id, params.id));
 
   return c.body(null, HttpStatusCodes.NO_CONTENT);
 };

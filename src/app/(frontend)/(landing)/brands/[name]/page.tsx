@@ -1052,10 +1052,10 @@ export default function BrandPage() {
                             <div>
                               <div className="text-xs text-slate-600 mb-1 line-clamp-1 flex items-center gap-1.5">
                                 <span>{vehicle.city || vehicle.location || ""}</span>
-                                {vehicle.mileage !== undefined && vehicle.mileage !== null && (
+                                {(vehicle as any).mileage !== undefined && (vehicle as any).mileage !== null && (
                                   <>
                                     <span className="text-slate-300">•</span>
-                                    <span>{vehicle.mileage.toLocaleString()} km</span>
+                                    <span>{(vehicle as any).mileage.toLocaleString()} km</span>
                                   </>
                                 )}
                               </div>

@@ -77,16 +77,13 @@ export class MediaService {
   }
 
   private extractKeyFromUrl(url: string): string {
-    // Extract the key from the S3 URL
-    const bucket = process.env.NEXT_PUBLIC_AWS_S3_BUCKET;
-    const region = process.env.NEXT_PUBLIC_AWS_REGION;
-    const baseUrl = `https://${bucket}.s3.${region}.amazonaws.com`;
-    const baseUrlWithoutProtocol = baseUrl.replace(/^https?:\/\//, "");
-    const remainder = url.replace(/^https?:\/\//, "").replace(baseUrlWithoutProtocol + "/", "");
     try {
-      return decodeURIComponent(remainder);
+      const parsedUrl = new URL(url);
+      return decodeURIComponent(parsedUrl.pathname.substring(1));
     } catch {
-      return remainder;
+      // Fallback if not a valid URL
+      const parts = url.split('/');
+      return decodeURIComponent(parts[parts.length - 1]);
     }
   }
 

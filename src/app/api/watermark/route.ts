@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
 import { readFile } from "fs/promises";

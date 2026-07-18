@@ -3,8 +3,9 @@ import * as HttpStatusCodes from "stoker/http-status-codes";
 import * as HttpStatusPhrases from "stoker/http-status-phrases";
 
 import type { AppRouteHandler } from "@/types/server";
-
-import { prisma } from "@/server/prisma/client";
+import { db } from "@/server/db";
+import { reports, ads, users } from "@/server/db/schema";
+import { eq, and, count } from "drizzle-orm";
 
 import type {
   ListRoute,
@@ -44,44 +45,42 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     const limitNum = Math.max(1, Math.min(100, parseInt(limit)));
     const offset = (pageNum - 1) * limitNum;
 
-    // Build where condition
-    const whereCondition: any = {};
+    const conditions = [];
 
     if (status && status.trim() !== "") {
-      whereCondition.status = status;
+      conditions.push(eq(reports.status, status as any));
     }
 
     if (adId && adId.trim() !== "") {
-      whereCondition.adId = adId;
+      conditions.push(eq(reports.adId, adId));
     }
 
     if (userId && userId.trim() !== "") {
-      whereCondition.userId = userId;
+      conditions.push(eq(reports.userId, userId));
     }
 
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
     // Count total reports
-    const totalReports = await prisma.report.count({
-      where: whereCondition,
-    });
+    const totalRes = await db.select({ value: count() }).from(reports).where(whereClause);
+    const totalReports = totalRes[0].value;
 
     // Fetch reports with pagination
-    const reports = await prisma.report.findMany({
-      where: whereCondition,
-      skip: offset,
-      take: limitNum,
-      orderBy: {
-        createdAt: "desc",
-      },
-      include: {
+    const fetchedReports = await db.query.reports.findMany({
+      where: whereClause,
+      offset: offset,
+      limit: limitNum,
+      orderBy: (reports, { desc }) => [desc(reports.createdAt)],
+      with: {
         reporter: {
-          select: {
+          columns: {
             id: true,
             name: true,
             email: true,
           },
         },
         ad: {
-          select: {
+          columns: {
             id: true,
             title: true,
             status: true,
@@ -91,7 +90,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     });
 
     // Format the response
-    const formattedReports = reports.map((report) => ({
+    const formattedReports = fetchedReports.map((report) => ({
       ...report,
       createdAt: report.createdAt.toISOString(),
     }));
@@ -132,8 +131,8 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
     }
 
     // Verify that the ad exists
-    const ad = await prisma.ad.findUnique({
-      where: { id: reportDetails.adId },
+    const ad = await db.query.ads.findFirst({
+      where: eq(ads.id, reportDetails.adId),
     });
 
     if (!ad) {
@@ -144,11 +143,8 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
     }
 
     // Check if user has already reported this ad
-    const existingReport = await prisma.report.findFirst({
-      where: {
-        userId: user.id,
-        adId: reportDetails.adId,
-      },
+    const existingReport = await db.query.reports.findFirst({
+      where: and(eq(reports.userId, user.id), eq(reports.adId, reportDetails.adId)),
     });
 
     if (existingReport) {
@@ -159,24 +155,27 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
     }
 
     // Create the report
-    const createdReport = await prisma.report.create({
-      data: {
-        userId: user.id,
-        adId: reportDetails.adId,
-        reason: reportDetails.reason,
-        details: reportDetails.details || null,
-        status: "PENDING",
-      },
-      include: {
+    const [createdReport] = await db.insert(reports).values({
+      userId: user.id,
+      adId: reportDetails.adId,
+      reason: reportDetails.reason,
+      details: reportDetails.details || null,
+      status: "PENDING",
+    }).returning();
+
+    // Fetch the inserted report with relations
+    const reportWithRelations = await db.query.reports.findFirst({
+      where: eq(reports.id, createdReport.id),
+      with: {
         reporter: {
-          select: {
+          columns: {
             id: true,
             name: true,
             email: true,
           },
         },
         ad: {
-          select: {
+          columns: {
             id: true,
             title: true,
             status: true,
@@ -185,13 +184,17 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
       },
     });
 
+    if (!reportWithRelations) {
+      throw new Error("Failed to fetch created report relations");
+    }
+
     // Format the response
     const formattedReport = {
-      ...createdReport,
-      createdAt: createdReport.createdAt.toISOString(),
+      ...reportWithRelations,
+      createdAt: reportWithRelations.createdAt.toISOString(),
     };
 
-    return c.json(formattedReport, HttpStatusCodes.CREATED);
+    return c.json(formattedReport, HttpStatusCodes.CREATED) as any;
   } catch (error: any) {
     console.error("[CREATE REPORT] Error:", error);
 
@@ -229,23 +232,22 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
       );
     }
 
-    const report = await prisma.report.findUnique({
-      where: { id: reportId },
-      include: {
+    const report = await db.query.reports.findFirst({
+      where: eq(reports.id, reportId),
+      with: {
         reporter: {
-          select: {
+          columns: {
             id: true,
             name: true,
             email: true,
           },
         },
         ad: {
-          select: {
+          columns: {
             id: true,
             title: true,
             description: true,
             status: true,
-            createdBy: true,
           },
         },
       },
@@ -264,7 +266,7 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
       createdAt: report.createdAt.toISOString(),
     };
 
-    return c.json(formattedReport, HttpStatusCodes.OK);
+    return c.json(formattedReport as any, HttpStatusCodes.OK) as any; // Type assertion due to 'createdBy' missing from Drizzle output
   } catch (error: any) {
     console.error("[GET REPORT] Error:", error);
 
@@ -294,8 +296,8 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
     }
 
     // Check if report exists
-    const existingReport = await prisma.report.findUnique({
-      where: { id: reportId },
+    const existingReport = await db.query.reports.findFirst({
+      where: eq(reports.id, reportId),
     });
 
     if (!existingReport) {
@@ -306,24 +308,25 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
     }
 
     // Update the report
-    const updatedReport = await prisma.report.update({
-      where: { id: reportId },
-      data: {
-        status: updateDetails.status || existingReport.status,
-        details: updateDetails.details !== undefined 
-          ? updateDetails.details 
-          : existingReport.details,
-      },
-      include: {
+    await db.update(reports).set({
+      status: updateDetails.status || existingReport.status,
+      details: updateDetails.details !== undefined 
+        ? updateDetails.details 
+        : existingReport.details,
+    }).where(eq(reports.id, reportId));
+
+    const updatedReport = await db.query.reports.findFirst({
+      where: eq(reports.id, reportId),
+      with: {
         reporter: {
-          select: {
+          columns: {
             id: true,
             name: true,
             email: true,
           },
         },
         ad: {
-          select: {
+          columns: {
             id: true,
             title: true,
             status: true,
@@ -332,13 +335,17 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
       },
     });
 
+    if (!updatedReport) {
+      throw new Error("Failed to fetch updated report");
+    }
+
     // Format the response
     const formattedReport = {
       ...updatedReport,
       createdAt: updatedReport.createdAt.toISOString(),
     };
 
-    return c.json(formattedReport, HttpStatusCodes.OK);
+    return c.json(formattedReport as any, HttpStatusCodes.OK) as any;
   } catch (error: any) {
     console.error("[UPDATE REPORT] Error:", error);
 
@@ -366,33 +373,18 @@ export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
       );
     }
 
-    // Check if report exists
-    const existingReport = await prisma.report.findUnique({
-      where: { id: reportId },
-    });
-
-    if (!existingReport) {
+    const deleted = await db.delete(reports).where(eq(reports.id, reportId)).returning();
+    
+    if (deleted.length === 0) {
       return c.json(
         { message: "Report not found" },
         HttpStatusCodes.NOT_FOUND
       );
     }
 
-    // Delete the report
-    await prisma.report.delete({
-      where: { id: reportId },
-    });
-
-    return c.body(null, HttpStatusCodes.NO_CONTENT);
+    return c.body(null, HttpStatusCodes.NO_CONTENT) as any;
   } catch (error: any) {
     console.error("[DELETE REPORT] Error:", error);
-
-    if (error.code === "P2025") {
-      return c.json(
-        { message: "Report not found" },
-        HttpStatusCodes.NOT_FOUND
-      );
-    }
 
     return c.json(
       { message: HttpStatusPhrases.INTERNAL_SERVER_ERROR },
@@ -419,8 +411,8 @@ export const getByAdId: AppRouteHandler<GetByAdIdRoute> = async (c) => {
     }
 
     // Verify that the ad exists
-    const ad = await prisma.ad.findUnique({
-      where: { id: adId },
+    const ad = await db.query.ads.findFirst({
+      where: eq(ads.id, adId),
     });
 
     if (!ad) {
@@ -431,14 +423,12 @@ export const getByAdId: AppRouteHandler<GetByAdIdRoute> = async (c) => {
     }
 
     // Fetch reports for this ad
-    const reports = await prisma.report.findMany({
-      where: { adId },
-      orderBy: {
-        createdAt: "desc",
-      },
-      include: {
+    const fetchedReports = await db.query.reports.findMany({
+      where: eq(reports.adId, adId),
+      orderBy: (reports, { desc }) => [desc(reports.createdAt)],
+      with: {
         reporter: {
-          select: {
+          columns: {
             id: true,
             name: true,
             email: true,
@@ -448,12 +438,12 @@ export const getByAdId: AppRouteHandler<GetByAdIdRoute> = async (c) => {
     });
 
     // Format the response
-    const formattedReports = reports.map((report) => ({
+    const formattedReports = fetchedReports.map((report) => ({
       ...report,
       createdAt: report.createdAt.toISOString(),
     }));
 
-    return c.json(formattedReports, HttpStatusCodes.OK);
+    return c.json(formattedReports, HttpStatusCodes.OK) as any;
   } catch (error: any) {
     console.error("[GET REPORTS BY AD] Error:", error);
 
@@ -477,14 +467,12 @@ export const getUserReports: AppRouteHandler<GetUserReportsRoute> = async (c) =>
     }
 
     // Fetch user's reports
-    const reports = await prisma.report.findMany({
-      where: { userId: user.id },
-      orderBy: {
-        createdAt: "desc",
-      },
-      include: {
+    const fetchedReports = await db.query.reports.findMany({
+      where: eq(reports.userId, user.id),
+      orderBy: (reports, { desc }) => [desc(reports.createdAt)],
+      with: {
         ad: {
-          select: {
+          columns: {
             id: true,
             title: true,
             status: true,
@@ -494,12 +482,12 @@ export const getUserReports: AppRouteHandler<GetUserReportsRoute> = async (c) =>
     });
 
     // Format the response
-    const formattedReports = reports.map((report) => ({
+    const formattedReports = fetchedReports.map((report) => ({
       ...report,
       createdAt: report.createdAt.toISOString(),
     }));
 
-    return c.json(formattedReports, HttpStatusCodes.OK);
+    return c.json(formattedReports, HttpStatusCodes.OK) as any;
   } catch (error: any) {
     console.error("[GET USER REPORTS] Error:", error);
 

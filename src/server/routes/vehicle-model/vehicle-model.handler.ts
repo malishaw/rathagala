@@ -1,4 +1,6 @@
-import { prisma } from "@/server/prisma/client";
+import { db } from "@/server/db";
+import { vehicleModels, ads } from "@/server/db/schema";
+import { eq, and, or, ilike, count, isNotNull, isNull } from "drizzle-orm";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 
 import type { AppRouteHandler } from "@/types/server";
@@ -35,46 +37,41 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
   const isActive = query.isActive;
   const offset = (page - 1) * limit;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const where: any = {};
-  if (search) {
-    where.name = { contains: search, mode: "insensitive" };
-  }
-  if (brand) {
-    where.OR = [
-      { brand: brand },
-      { brand: null },
-    ];
-  }
-  if (isActive !== undefined) {
-    where.isActive = isActive === "true";
-  }
+  const conditions = [];
+  if (search) conditions.push(ilike(vehicleModels.name, `%${search}%`));
+  if (brand) conditions.push(or(eq(vehicleModels.brand, brand), isNull(vehicleModels.brand)));
+  if (isActive !== undefined) conditions.push(eq(vehicleModels.isActive, isActive === "true"));
 
-  const [models, total] = await Promise.all([
-    prisma.vehicleModel.findMany({
-      where,
-      orderBy: { name: "asc" },
-      skip: offset,
-      take: limit,
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const [models, totalRes] = await Promise.all([
+    db.query.vehicleModels.findMany({
+      where: whereClause,
+      orderBy: (vehicleModels, { asc }) => [asc(vehicleModels.name)],
+      offset: offset,
+      limit: limit,
     }),
-    prisma.vehicleModel.count({ where }),
+    db.select({ value: count() }).from(vehicleModels).where(whereClause),
   ]);
 
-  // Optionally include user-entered models (free-text models stored on Ads)
+  const total = totalRes[0].value;
+
   const includeUserModels = query.includeUserModels === "true";
   let userModels: string[] = [];
   const userModelTimestamps = new Map<string, { createdAt: Date; updatedAt: Date }>();
   if (includeUserModels) {
-    const adWhere: any = { model: { not: null } };
-    if (brand) adWhere.brand = brand;
-    const ads = await prisma.ad.findMany({
-      where: adWhere,
-      select: { model: true, createdAt: true, updatedAt: true },
-      take: 10000,
+    const adConditions = [isNotNull(ads.model)];
+    if (brand) adConditions.push(eq(ads.brand, brand));
+    
+    const dbAds = await db.query.ads.findMany({
+      where: and(...adConditions),
+      columns: { model: true, createdAt: true, updatedAt: true },
+      limit: 10000,
     });
+    
     const set = new Set<string>();
-    for (const a of ads) {
-      if (a.model && typeof a.model === "string") {
+    for (const a of dbAds) {
+      if (a.model) {
         set.add(a.model);
         const key = a.model;
         const existing = userModelTimestamps.get(key);
@@ -86,7 +83,6 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
         }
       }
     }
-    // Exclude names already present in DB models (case-insensitive) to prevent duplicates
     const dbModelNames = new Set(models.map((m) => m.name.toLowerCase()));
     userModels = Array.from(set)
       .filter((name) => !dbModelNames.has(name.toLowerCase()))
@@ -96,9 +92,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
   return c.json(
     {
       models: [
-        // Canonical models from vehicleModel collection
         ...models.map(formatModel),
-        // Append user models as objects (no id mapped to vehicleModel)
         ...userModels.map((name) => {
           const timestamps = userModelTimestamps.get(name);
           const createdAt = timestamps?.createdAt || new Date();
@@ -127,7 +121,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
 // ---------- Get One ----------
 export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
   const { id } = c.req.param();
-  const model = await prisma.vehicleModel.findUnique({ where: { id } });
+  const model = await db.query.vehicleModels.findFirst({ where: eq(vehicleModels.id, id) });
   if (!model) {
     return c.json({ message: "Vehicle model not found" }, HttpStatusCodes.NOT_FOUND);
   }
@@ -144,43 +138,34 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
   const body = await c.req.json();
   const { previousModelName, isUserAdded } = body as any;
 
-  // Check for existing model with the new name
-  const existing = await prisma.vehicleModel.findFirst({
-    where: {
-      name: { equals: body.name, mode: "insensitive" },
-      brand: body.brand || null,
-    },
+  const findConditions = [ilike(vehicleModels.name, body.name)];
+  if (body.brand) findConditions.push(eq(vehicleModels.brand, body.brand));
+
+  const existing = await db.query.vehicleModels.findFirst({
+    where: and(...findConditions),
   });
   
   let finalModel = existing;
   
   if (!existing) {
-    // Create new model
-    finalModel = await prisma.vehicleModel.create({
-      data: {
-        name: body.name,
-        brand: body.brand || null,
-        isActive: body.isActive ?? true,
-      },
-    });
+    const [newModel] = await db.insert(vehicleModels).values({
+      name: body.name,
+      brand: body.brand || null,
+      isActive: body.isActive ?? true,
+    }).returning();
+    finalModel = newModel;
   } else if (existing && !isUserAdded) {
-    // If it already exists and we're not converting from user-added, just return it
-    return c.json(formatModel(existing), HttpStatusCodes.OK);
+    return c.json({ message: "Vehicle model already exists" }, HttpStatusCodes.CONFLICT as any);
   } else if (existing && existing.isActive !== body.isActive) {
-    // Update existing model's status if needed
-    finalModel = await prisma.vehicleModel.update({
-      where: { id: existing.id },
-      data: { isActive: body.isActive },
-    });
+    const [updatedModel] = await db.update(vehicleModels)
+      .set({ isActive: body.isActive })
+      .where(eq(vehicleModels.id, existing.id))
+      .returning();
+    finalModel = updatedModel;
   }
 
-  // If converting from a user-added model, update all ads that used the old name
-  // This prevents the user-added model from appearing alongside the new database model
   if (isUserAdded && previousModelName) {
-    await prisma.ad.updateMany({
-      where: { model: previousModelName },
-      data: { model: null },
-    });
+    await db.update(ads).set({ model: null }).where(eq(ads.model, previousModelName));
   }
 
   return c.json(finalModel ? formatModel(finalModel) : formatModel(existing!), HttpStatusCodes.CREATED);
@@ -196,25 +181,20 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
   const { id } = c.req.param();
   const body = await c.req.json();
 
-  // User-added models should already be handled on the client side by creating a new record
-  // If somehow a user-added ID reaches here, reject it
   if (id.startsWith("user:")) {
-    return c.json({ message: "Invalid model ID" }, HttpStatusCodes.BAD_REQUEST);
+    return c.json({ message: "Vehicle model not found" }, HttpStatusCodes.NOT_FOUND);
   }
 
-  const existing = await prisma.vehicleModel.findUnique({ where: { id } });
+  const existing = await db.query.vehicleModels.findFirst({ where: eq(vehicleModels.id, id) });
   if (!existing) {
     return c.json({ message: "Vehicle model not found" }, HttpStatusCodes.NOT_FOUND);
   }
 
-  const updated = await prisma.vehicleModel.update({
-    where: { id },
-    data: {
-      ...(body.name !== undefined && { name: body.name }),
-      ...(body.brand !== undefined && { brand: body.brand }),
-      ...(body.isActive !== undefined && { isActive: body.isActive }),
-    },
-  });
+  const [updated] = await db.update(vehicleModels).set({
+    ...(body.name !== undefined && { name: body.name }),
+    ...(body.brand !== undefined && { brand: body.brand }),
+    ...(body.isActive !== undefined && { isActive: body.isActive }),
+  }).where(eq(vehicleModels.id, id)).returning();
 
   return c.json(formatModel(updated), HttpStatusCodes.OK);
 };
@@ -228,17 +208,14 @@ export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
 
   const { id } = c.req.param();
 
-  // User-added models are not in the database, just return success
   if (id.startsWith("user:")) {
     return c.body(null, HttpStatusCodes.NO_CONTENT);
   }
 
-  const existing = await prisma.vehicleModel.findUnique({ where: { id } });
-  if (!existing) {
+  const deleted = await db.delete(vehicleModels).where(eq(vehicleModels.id, id)).returning();
+  if (deleted.length === 0) {
     return c.json({ message: "Vehicle model not found" }, HttpStatusCodes.NOT_FOUND);
   }
-
-  await prisma.vehicleModel.delete({ where: { id } });
 
   return c.body(null, HttpStatusCodes.NO_CONTENT);
 };
@@ -253,11 +230,7 @@ export const clearUserModel: AppRouteHandler<ClearUserModelRoute> = async (c) =>
   const body = await c.req.json();
   const { modelName } = body as { modelName: string };
 
-  // Clear the model from all ads
-  await prisma.ad.updateMany({
-    where: { model: modelName },
-    data: { model: null },
-  });
+  await db.update(ads).set({ model: null }).where(eq(ads.model, modelName));
 
   return c.json({ message: "User-added model cleared from all ads" }, HttpStatusCodes.OK);
 };

@@ -1,16 +1,15 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/server/prisma/client";
+export const dynamic = "force-dynamic";
 
-// GET - Public endpoint to fetch all manufacture years
+import { NextResponse } from "next/server";
+import { db } from "@/server/db";
+import { manufactureYears } from "@/server/db/schema";
+import { desc } from "drizzle-orm";
+
 export async function GET() {
   try {
-    const years = await prisma.manufactureYear.findMany({
-      orderBy: { year: "desc" },
-      select: { id: true, year: true },
-    });
+    const years = await db.select().from(manufactureYears).orderBy(desc(manufactureYears.year));
     return NextResponse.json({ years });
-  } catch (error) {
-    console.error("Manufacture years fetch error:", error);
-    return NextResponse.json({ error: "Failed to fetch manufacture years" }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || "Failed to fetch manufacture years" }, { status: 500 });
   }
 }

@@ -9,6 +9,14 @@ const nextConfig = {
         hostname: process.env.AWS_S3_BUCKET + ".s3." + process.env.AWS_REGION + ".amazonaws.com",
       },
       {
+        protocol: "https",
+        hostname: "*.r2.dev",
+      },
+      {
+        protocol: "https",
+        hostname: "*.cloudflarestorage.com",
+      },
+      {
         protocol: 'https',
         hostname: 'donext-org.s3.eu-west-2.amazonaws.com',
         pathname: '/**',

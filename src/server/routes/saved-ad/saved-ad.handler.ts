@@ -1,4 +1,6 @@
-import { prisma } from "@/server/prisma/client";
+import { db } from "@/server/db";
+import { favorites, ads, organizations } from "@/server/db/schema";
+import { eq, and, desc } from "drizzle-orm";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 
 // List all favorites for the current user
@@ -16,40 +18,35 @@ export const list: any = async (c: any) => {
 
   try {
     // Fetch favorites with ad details
-    const favorites = await prisma.favorite.findMany({
-      where: {
-        userId: user.id,
-      },
-      include: {
+    const userFavorites = await db.query.favorites.findMany({
+      where: eq(favorites.userId, user.id),
+      with: {
         ad: {
-          include: {
+          with: {
             media: {
-              include: {
+              with: {
                 media: true, // Include the actual Media object
               },
-              orderBy: {
-                order: "asc",
-              },
+              orderBy: (adMedia, { asc }) => [asc(adMedia.order)],
             },
           },
         },
       },
-      orderBy: {
-        createdAt: "desc", // Most recent first
-      },
+      orderBy: (favorites, { desc }) => [desc(favorites.createdAt)],
     });
 
-    console.log("Found favorites:", favorites.length);
-    if (favorites.length > 0) {
-      console.log("First favorite ad media:", favorites[0]?.ad?.media);
+    console.log("Found favorites:", userFavorites.length);
+    if (userFavorites.length > 0) {
+      console.log("First favorite ad media:", userFavorites[0]?.ad?.media);
     }
     
     // Manually fetch org for each ad to handle nullable relations
+    // (In Drizzle, we can just use `with: { org: true }` but since we didn't include it in the query above, we'll fetch manually to preserve original logic/types)
     const favoritesWithOrg = await Promise.all(
-      favorites.map(async (favorite) => {
-        if (favorite.ad.orgId) {
-          const org = await prisma.organization.findUnique({
-            where: { id: favorite.ad.orgId },
+      userFavorites.map(async (favorite) => {
+        if (favorite.ad && favorite.ad.orgId) {
+          const org = await db.query.organizations.findFirst({
+            where: eq(organizations.id, favorite.ad.orgId),
           });
           return {
             ...favorite,
@@ -103,8 +100,8 @@ export const create: any = async (c: any) => {
 
   try {
     // Check if ad exists
-    const ad = await prisma.ad.findUnique({
-      where: { id: adId },
+    const ad = await db.query.ads.findFirst({
+      where: eq(ads.id, adId),
     });
 
     if (!ad) {
@@ -116,11 +113,8 @@ export const create: any = async (c: any) => {
     }
 
     // Check if already favorited
-    const existing = await prisma.favorite.findFirst({
-      where: {
-        userId: user.id,
-        adId: adId,
-      },
+    const existing = await db.query.favorites.findFirst({
+      where: and(eq(favorites.userId, user.id), eq(favorites.adId, adId)),
     });
 
     if (existing) {
@@ -132,12 +126,10 @@ export const create: any = async (c: any) => {
     }
 
     // Create favorite
-    const favorite = await prisma.favorite.create({
-      data: {
-        userId: user.id,
-        adId: adId,
-      },
-    });
+    const [favorite] = await db.insert(favorites).values({
+      userId: user.id,
+      adId: adId,
+    }).returning();
 
     console.log("Favorite created successfully:", favorite.id);
     return c.json({ success: true, id: favorite.id }, HttpStatusCodes.CREATED);
@@ -170,11 +162,8 @@ export const remove: any = async (c: any) => {
 
   try {
     // Find favorite
-    const favorite = await prisma.favorite.findFirst({
-      where: {
-        userId: user.id,
-        adId: adId,
-      },
+    const favorite = await db.query.favorites.findFirst({
+      where: and(eq(favorites.userId, user.id), eq(favorites.adId, adId)),
     });
 
     if (!favorite) {
@@ -185,11 +174,7 @@ export const remove: any = async (c: any) => {
     }
 
     // Delete favorite
-    await prisma.favorite.delete({
-      where: {
-        id: favorite.id,
-      },
-    });
+    await db.delete(favorites).where(eq(favorites.id, favorite.id));
 
     return c.json(
       { message: "Ad removed from favorites" },
@@ -217,11 +202,8 @@ export const check: any = async (c: any) => {
   }
 
   try {
-    const favorite = await prisma.favorite.findFirst({
-      where: {
-        userId: user.id,
-        adId: adId,
-      },
+    const favorite = await db.query.favorites.findFirst({
+      where: and(eq(favorites.userId, user.id), eq(favorites.adId, adId)),
     });
 
     const isFavorited = !!favorite;

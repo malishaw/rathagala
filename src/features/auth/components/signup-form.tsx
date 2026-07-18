@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "sonner";
 import { User, Mail, Lock } from "lucide-react";
 
@@ -51,7 +51,7 @@ export function SignupForm({ className, redirectTo, variant = "standard" }: Prop
     }
   });
 
-  async function handleFormSubmit(formData: SignupSchemaT) {
+  const handleFormSubmit: SubmitHandler<SignupSchemaT> = async (formData) => {
     setIsPending(true);
 
     await authClient.signUp.email(
@@ -135,7 +135,7 @@ export function SignupForm({ className, redirectTo, variant = "standard" }: Prop
     <div className={cn("grid gap-2.5 w-full animate-in fade-in slide-in-from-bottom-2 duration-200", className)}>
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(handleFormSubmit)}
+          onSubmit={form.handleSubmit((data) => handleFormSubmit(data as SignupSchemaT))}
           className="space-y-2 w-full"
         >
           <FormField

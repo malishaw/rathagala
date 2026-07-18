@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { prismaAdapter } from "better-auth/adapters/prisma";
-import { PrismaClient } from "@prisma/client";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { db } from "@/server/db";
 import { betterAuth } from "better-auth";
 import {
   organization,
@@ -11,8 +11,6 @@ import {
 } from "better-auth/plugins";
 import { ac, admin, member, owner } from "./permissions";
 import nodemailer from "nodemailer";
-
-const prisma = new PrismaClient();
 
 // Create email transporter
 const transporter = nodemailer.createTransport({
@@ -25,9 +23,21 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+import { users, sessions, accounts, verifications, twoFactors, organizations, members, invitations } from "@/server/db/schema";
+
 export const auth = betterAuth({
-  database: prismaAdapter(prisma, {
-    provider: "mongodb"
+  database: drizzleAdapter(db, {
+    provider: "pg", // PostgreSQL via Drizzle
+    schema: { 
+      user: users, 
+      session: sessions, 
+      account: accounts, 
+      verification: verifications, 
+      twoFactor: twoFactors, 
+      organization: organizations, 
+      member: members, 
+      invitation: invitations 
+    }
   }),
   emailAndPassword: {
     enabled: true,

@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as HttpStatusCodes from "stoker/http-status-codes";
 
-import { prisma } from "@/server/prisma/client";
+import { db } from "@/server/db";
+import { users, organizations } from "@/server/db/schema";
+import { eq, or, and, ilike, count, ne } from "drizzle-orm";
 import type { ListRoute, UpdateOrganizationIdRoute, GetCurrentUserRoute, UpdateProfileRoute, BulkCreateRoute } from "./users.routes";
 import { AppRouteHandler } from "@/types/server";
 import crypto from "crypto";
@@ -16,13 +18,13 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       HttpStatusCodes.UNAUTHORIZED
     );
 
-  const isAdmin = user?.role === "admin";
+  const isAdmin = (user as any)?.role === "admin";
 
   // Only admins can view users
   if (!isAdmin) {
     return c.json(
       { message: "Unauthorized: Admin access required" },
-      HttpStatusCodes.FORBIDDEN
+      HttpStatusCodes.UNAUTHORIZED as any
     );
   }
 
@@ -34,70 +36,64 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
   const offset = (pageNum - 1) * limitNum;
 
   // Build the where condition
-  let whereCondition: any = {};
+  let whereClause = undefined;
 
   // Add search condition if provided
   if (search && search.trim() !== "") {
-    whereCondition = {
-      OR: [
-        {
-          name: {
-            contains: search,
-            mode: "insensitive",
-          },
-        },
-        {
-          email: {
-            contains: search,
-            mode: "insensitive",
-          },
-        },
-      ],
-    };
+    whereClause = or(
+      ilike(users.name, `%${search}%`),
+      ilike(users.email, `%${search}%`)
+    );
   }
 
-  // First, get the total count
-  const totalUsers = await prisma.user.count({
-    where: whereCondition,
-  });
-
-  // Then get the paginated items
-  const users = await prisma.user.findMany({
-    where: whereCondition,
-    skip: offset,
-    take: limitNum,
-    orderBy: {
-      createdAt: "desc",
-    },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      image: true,
-      role: true,
-      createdAt: true,
-      emailVerified: true,
-      banned: true,
-      organizationId: true,
-      phone: true,
-      phoneVerified: true,
-      whatsappNumber: true,
-      province: true,
-      district: true,
-      city: true,
-      location: true,
-      organization: {
-        select: {
-          id: true,
-          name: true,
-        },
+  const [totalUsersRes, fetchedUsers] = await Promise.all([
+    db.select({ value: count() }).from(users).where(whereClause),
+    db.query.users.findMany({
+      where: whereClause,
+      offset,
+      limit: limitNum,
+      orderBy: (users, { desc }) => [desc(users.createdAt)],
+      columns: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        role: true,
+        createdAt: true,
+        emailVerified: true,
+        banned: true,
+        organizationId: true,
+        phone: true,
+        phoneVerified: true,
+        whatsappNumber: true,
+        province: true,
+        district: true,
+        city: true,
+        location: true,
       },
-    },
-  });
+    }),
+  ]);
+
+  const totalUsers = totalUsersRes[0].value;
+  
+  const orgIds = Array.from(new Set(fetchedUsers.map(u => u.organizationId).filter(Boolean)));
+  let orgsMap: Record<string, any> = {};
+  if (orgIds.length > 0) {
+    const fetchedOrgs = await db.query.organizations.findMany({
+      where: (orgs, { inArray }) => inArray(orgs.id, orgIds as string[]),
+      columns: { id: true, name: true }
+    });
+    orgsMap = Object.fromEntries(fetchedOrgs.map(o => [o.id, o]));
+  }
+  
+  const formattedUsers = fetchedUsers.map(u => ({
+    ...u,
+    organization: u.organizationId ? orgsMap[u.organizationId] : null
+  }));
 
   return c.json(
     {
-      users,
+      users: formattedUsers as any,
       pagination: {
         total: totalUsers,
         page: pageNum,
@@ -123,8 +119,8 @@ export const updateOrganizationId: AppRouteHandler<UpdateOrganizationIdRoute> = 
   const { organizationId } = c.req.valid("json");
 
   // Verify the organization exists
-  const organization = await prisma.organization.findUnique({
-    where: { id: organizationId },
+  const organization = await db.query.organizations.findFirst({
+    where: eq(organizations.id, organizationId),
   });
 
   if (!organization) {
@@ -136,14 +132,14 @@ export const updateOrganizationId: AppRouteHandler<UpdateOrganizationIdRoute> = 
 
   // Update user's organizationId
   try {
-    const updatedUser = await prisma.user.update({
-      where: { id: user.id },
-      data: { organizationId },
-      select: {
-        id: true,
-        organizationId: true,
-      },
-    });
+    const [updatedUser] = await db.update(users).set({
+      organizationId,
+    })
+      .where(eq(users.id, user.id))
+      .returning({
+        id: users.id,
+        organizationId: users.organizationId,
+      });
 
     console.log(`User ${user.id} organizationId updated to: ${organizationId}`);
 
@@ -162,7 +158,7 @@ export const updateOrganizationId: AppRouteHandler<UpdateOrganizationIdRoute> = 
         error: error instanceof Error ? error.message : "Unknown error"
       },
       HttpStatusCodes.INTERNAL_SERVER_ERROR
-    );
+    ) as any;
   }
 };
 
@@ -178,9 +174,9 @@ export const getCurrentUser: AppRouteHandler<GetCurrentUserRoute> = async (c) =>
   }
 
   try {
-    const userWithOrg = await prisma.user.findUnique({
-      where: { id: user.id },
-      select: {
+    const userWithOrg = await db.query.users.findFirst({
+      where: eq(users.id, user.id),
+      columns: {
         id: true,
         name: true,
         email: true,
@@ -193,39 +189,19 @@ export const getCurrentUser: AppRouteHandler<GetCurrentUserRoute> = async (c) =>
         city: true,
         location: true,
         organizationId: true,
-        organization: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-          },
-        },
       },
     });
-
-    if (!userWithOrg) {
-      return c.json(
-        { message: "User not found" },
-        HttpStatusCodes.NOT_FOUND
-      );
+    
+    if (userWithOrg && userWithOrg.organizationId) {
+      const org = await db.query.organizations.findFirst({
+        where: eq(organizations.id, userWithOrg.organizationId),
+        columns: { id: true, name: true, slug: true }
+      });
+      (userWithOrg as any).organization = org;
     }
 
     return c.json(
-      {
-        id: userWithOrg.id,
-        name: userWithOrg.name,
-        email: userWithOrg.email,
-        image: userWithOrg.image,
-        phone: userWithOrg.phone,
-        phoneVerified: userWithOrg.phoneVerified,
-        whatsappNumber: userWithOrg.whatsappNumber,
-        province: userWithOrg.province,
-        district: userWithOrg.district,
-        city: userWithOrg.city,
-        location: userWithOrg.location,
-        organizationId: userWithOrg.organizationId,
-        organization: userWithOrg.organization,
-      },
+      userWithOrg as any,
       HttpStatusCodes.OK
     );
   } catch (error) {
@@ -236,7 +212,7 @@ export const getCurrentUser: AppRouteHandler<GetCurrentUserRoute> = async (c) =>
         error: error instanceof Error ? error.message : "Unknown error"
       },
       HttpStatusCodes.INTERNAL_SERVER_ERROR
-    );
+    ) as any;
   }
 };
 
@@ -256,16 +232,11 @@ export const updateProfile: AppRouteHandler<UpdateProfileRoute> = async (c) => {
   try {
     // Check if phone number exists in any other user's phone OR whatsappNumber field
     if (phone) {
-      const existingUserWithPhone = await prisma.user.findFirst({
-        where: {
-          OR: [
-            { phone: phone },
-            { whatsappNumber: phone }
-          ],
-          NOT: {
-            id: user.id, // Exclude current user
-          },
-        },
+      const existingUserWithPhone = await db.query.users.findFirst({
+        where: and(
+          or(eq(users.phone, phone), eq(users.whatsappNumber, phone)),
+          ne(users.id, user.id)
+        ),
       });
 
       if (existingUserWithPhone) {
@@ -278,16 +249,11 @@ export const updateProfile: AppRouteHandler<UpdateProfileRoute> = async (c) => {
 
     // Check if WhatsApp number exists in any other user's phone OR whatsappNumber field
     if (whatsappNumber) {
-      const existingUserWithWhatsApp = await prisma.user.findFirst({
-        where: {
-          OR: [
-            { phone: whatsappNumber },
-            { whatsappNumber: whatsappNumber }
-          ],
-          NOT: {
-            id: user.id, // Exclude current user
-          },
-        },
+      const existingUserWithWhatsApp = await db.query.users.findFirst({
+        where: and(
+          or(eq(users.phone, whatsappNumber), eq(users.whatsappNumber, whatsappNumber)),
+          ne(users.id, user.id)
+        ),
       });
 
       if (existingUserWithWhatsApp) {
@@ -298,31 +264,29 @@ export const updateProfile: AppRouteHandler<UpdateProfileRoute> = async (c) => {
       }
     }
 
-    const updatedUser = await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        name,
-        phone,
-        whatsappNumber,
-        province,
-        district,
-        city,
-        location,
-        image
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        image: true,
-        phone: true,
-        whatsappNumber: true,
-        province: true,
-        district: true,
-        city: true,
-        location: true,
-      },
-    });
+    const [updatedUser] = await db.update(users).set({
+      name,
+      phone,
+      whatsappNumber,
+      province,
+      district,
+      city,
+      location,
+      image
+    })
+      .where(eq(users.id, user.id))
+      .returning({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        image: users.image,
+        phone: users.phone,
+        whatsappNumber: users.whatsappNumber,
+        province: users.province,
+        district: users.district,
+        city: users.city,
+        location: users.location,
+      });
 
     // Send profile updated notification (non-blocking)
     sendProfileUpdatedEmail({ email: updatedUser.email, name: updatedUser.name || "User" }).catch((err) => {
@@ -344,7 +308,7 @@ export const updateProfile: AppRouteHandler<UpdateProfileRoute> = async (c) => {
         error: error instanceof Error ? error.message : "Unknown error"
       },
       HttpStatusCodes.INTERNAL_SERVER_ERROR
-    );
+    ) as any;
   }
 };
 
@@ -361,7 +325,7 @@ export const assignOrganizationToUser: AppRouteHandler<AssignOrganizationToUserR
     );
   }
 
-  const isAdmin = user?.role === "admin";
+  const isAdmin = (user as any)?.role === "admin";
 
   if (!isAdmin) {
     return c.json(
@@ -374,8 +338,8 @@ export const assignOrganizationToUser: AppRouteHandler<AssignOrganizationToUserR
 
   try {
     // Check if user exists
-    const targetUser = await prisma.user.findUnique({
-      where: { id: userId },
+    const targetUser = await db.query.users.findFirst({
+      where: eq(users.id, userId),
     });
 
     if (!targetUser) {
@@ -386,8 +350,8 @@ export const assignOrganizationToUser: AppRouteHandler<AssignOrganizationToUserR
     }
 
     // Verify the organization exists
-    const organization = await prisma.organization.findUnique({
-      where: { id: organizationId },
+    const organization = await db.query.organizations.findFirst({
+      where: eq(organizations.id, organizationId),
     });
 
     if (!organization) {
@@ -398,29 +362,31 @@ export const assignOrganizationToUser: AppRouteHandler<AssignOrganizationToUserR
     }
 
     // Update user's organizationId
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: { organizationId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        organizationId: true,
-        organization: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
+    const [updatedUser] = await db.update(users).set({
+      organizationId,
+    })
+      .where(eq(users.id, userId))
+      .returning({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        organizationId: users.organizationId,
+      });
+      
+    const finalUser = {
+      ...updatedUser,
+      organization: {
+        id: organization.id,
+        name: organization.name
+      }
+    };
 
     console.log(`User ${userId} organizationId updated to: ${organizationId} by admin ${user.id}`);
 
     return c.json(
       {
         message: "Organization assigned successfully",
-        user: updatedUser,
+        user: finalUser as any,
       },
       HttpStatusCodes.OK
     );
@@ -432,7 +398,7 @@ export const assignOrganizationToUser: AppRouteHandler<AssignOrganizationToUserR
         error: error instanceof Error ? error.message : "Unknown error"
       },
       HttpStatusCodes.INTERNAL_SERVER_ERROR
-    );
+    ) as any;
   }
 };
 
@@ -447,7 +413,7 @@ export const updateUserByAdmin: AppRouteHandler<UpdateUserByAdminRoute> = async 
     );
   }
 
-  const isAdmin = user?.role === "admin";
+  const isAdmin = (user as any)?.role === "admin";
 
   if (!isAdmin) {
     return c.json(
@@ -461,8 +427,8 @@ export const updateUserByAdmin: AppRouteHandler<UpdateUserByAdminRoute> = async 
 
   try {
     // Check if user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { id: userId },
+    const existingUser = await db.query.users.findFirst({
+      where: eq(users.id, userId),
     });
 
     if (!existingUser) {
@@ -474,8 +440,8 @@ export const updateUserByAdmin: AppRouteHandler<UpdateUserByAdminRoute> = async 
 
     // If email is being changed, check if it's already in use
     if (email && email !== existingUser.email) {
-      const emailExists = await prisma.user.findUnique({
-        where: { email },
+      const emailExists = await db.query.users.findFirst({
+        where: eq(users.email, email),
       });
 
       if (emailExists) {
@@ -500,38 +466,45 @@ export const updateUserByAdmin: AppRouteHandler<UpdateUserByAdminRoute> = async 
     if (city !== undefined) updateData.city = city;
     if (location !== undefined) updateData.location = location;
 
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: updateData,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        organizationId: true,
-        organization: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        phone: true,
-        phoneVerified: true,
-        whatsappNumber: true,
-        province: true,
-        district: true,
-        city: true,
-        location: true,
-        emailVerified: true,
-        banned: true,
-        createdAt: true,
-      },
-    });
+    const [updatedUserRaw] = await db.update(users)
+      .set(updateData)
+      .where(eq(users.id, userId))
+      .returning({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+        organizationId: users.organizationId,
+        phone: users.phone,
+        phoneVerified: users.phoneVerified,
+        whatsappNumber: users.whatsappNumber,
+        province: users.province,
+        district: users.district,
+        city: users.city,
+        location: users.location,
+        emailVerified: users.emailVerified,
+        banned: users.banned,
+        createdAt: users.createdAt,
+      });
+
+    let organizationObj = null;
+    if (updatedUserRaw.organizationId) {
+      const org = await db.query.organizations.findFirst({
+        where: eq(organizations.id, updatedUserRaw.organizationId),
+        columns: { id: true, name: true }
+      });
+      organizationObj = org;
+    }
+    
+    const finalUser = {
+      ...updatedUserRaw,
+      organization: organizationObj,
+    };
 
     return c.json(
       {
         message: "User updated successfully",
-        user: updatedUser,
+        user: finalUser as any,
       },
       HttpStatusCodes.OK
     );
@@ -543,7 +516,7 @@ export const updateUserByAdmin: AppRouteHandler<UpdateUserByAdminRoute> = async 
         error: error instanceof Error ? error.message : "Unknown error"
       },
       HttpStatusCodes.INTERNAL_SERVER_ERROR
-    );
+    ) as any;
   }
 };
 
@@ -558,7 +531,7 @@ export const bulkCreate: AppRouteHandler<BulkCreateRoute> = async (c) => {
     );
   }
 
-  const isAdmin = user?.role === "admin";
+  const isAdmin = (user as any)?.role === "admin";
 
   if (!isAdmin) {
     return c.json(
@@ -567,14 +540,14 @@ export const bulkCreate: AppRouteHandler<BulkCreateRoute> = async (c) => {
     );
   }
 
-  const { users } = c.req.valid("json");
+  const { users: newUsers } = c.req.valid("json");
   let createdCount = 0;
 
   try {
-    for (const userData of users) {
+    for (const userData of newUsers) {
       // Check if user exists by email
-      const existingUser = await prisma.user.findUnique({
-        where: { email: userData.email },
+      const existingUser = await db.query.users.findFirst({
+        where: eq(users.email, userData.email),
       });
 
       if (existingUser) {
@@ -584,31 +557,29 @@ export const bulkCreate: AppRouteHandler<BulkCreateRoute> = async (c) => {
       // Resolve organization if provided
       let organizationId = null;
       if (userData.organization) {
-        const org = await prisma.organization.findFirst({
-          where: { name: userData.organization },
+        const org = await db.query.organizations.findFirst({
+          where: eq(organizations.name, userData.organization),
         });
         if (org) {
           organizationId = org.id;
         }
       }
 
-      await prisma.user.create({
-        data: {
-          id: crypto.randomUUID(),
-          name: userData.name,
-          email: userData.email,
-          role: userData.role || "user",
-          phone: userData.phone,
-          whatsappNumber: userData.whatsappNumber,
-          province: userData.province,
-          district: userData.district,
-          city: userData.city,
-          location: userData.location,
-          organizationId: organizationId,
-          emailVerified: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
+      await db.insert(users).values({
+        id: crypto.randomUUID(),
+        name: userData.name,
+        email: userData.email,
+        role: (userData.role || "user") as any,
+        phone: userData.phone,
+        whatsappNumber: userData.whatsappNumber,
+        province: userData.province,
+        district: userData.district,
+        city: userData.city,
+        location: userData.location,
+        organizationId: organizationId,
+        emailVerified: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
       createdCount++;
     }
@@ -631,5 +602,3 @@ export const bulkCreate: AppRouteHandler<BulkCreateRoute> = async (c) => {
     );
   }
 };
-
-

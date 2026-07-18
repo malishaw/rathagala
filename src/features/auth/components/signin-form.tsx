@@ -240,7 +240,7 @@ export function SigninForm({ className, redirectTo, variant = "standard" }: Prop
               href={redirectTo ? `/signup?redirect=${encodeURIComponent(redirectTo)}` : "/signup"}
               className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border-2 border-teal-600 bg-teal-50 hover:bg-teal-100 text-teal-700 hover:text-teal-900 text-xs font-bold transition-all duration-150 hover:shadow-sm"
             >
-              ✨ Don&apos;t have an account? <span className="underline">Create one free</span>
+             Don&apos;t have an account? <span className="underline">Create one free</span>
             </Link>
             <div className="flex justify-end">
               <Link 

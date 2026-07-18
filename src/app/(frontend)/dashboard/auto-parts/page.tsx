@@ -19,6 +19,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -77,6 +85,10 @@ export default function AutoPartsAdminPage() {
   // Form state
   const [form, setForm] = useState({ name: "", description: "", isActive: true });
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   // ─────────────────────────────────────────────
   // Queries
   // ─────────────────────────────────────────────
@@ -84,7 +96,7 @@ export default function AutoPartsAdminPage() {
   const { data: categories, isLoading, refetch } = useQuery({
     queryKey: QUERY_KEY,
     queryFn: async () => {
-      const res = await fetch("/api/auto-part-category?limit=200");
+      const res = await fetch("/api/auto-part-category?limit=200", { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to fetch categories");
       const json = await res.json() as { categories: AutoPartCategory[] };
       return json.categories;
@@ -159,6 +171,9 @@ export default function AutoPartsAdminPage() {
   // ─────────────────────────────────────────────
   // Handlers
   // ─────────────────────────────────────────────
+
+  const totalPages = categories ? Math.ceil(categories.length / itemsPerPage) : 0;
+  const paginatedCategories = categories ? categories.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage) : [];
 
   const openAdd = () => {
     setForm({ name: "", description: "", isActive: true });
@@ -291,13 +306,13 @@ export default function AutoPartsAdminPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {categories.map((cat) => (
+                {paginatedCategories.map((cat) => (
                   <TableRow key={cat.id}>
-                    <TableCell className="font-medium">{cat.name}</TableCell>
-                    <TableCell className="hidden md:table-cell text-sm text-muted-foreground max-w-50 truncate">
+                    <TableCell className="font-medium py-2">{cat.name}</TableCell>
+                    <TableCell className="hidden md:table-cell text-sm text-muted-foreground max-w-50 truncate py-2">
                       {cat.description || "—"}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-2">
                       <button onClick={() => toggleActive(cat)} className="flex items-center gap-1.5 group">
                         <Badge
                           variant={cat.isActive ? "default" : "secondary"}
@@ -311,18 +326,18 @@ export default function AutoPartsAdminPage() {
                         </Badge>
                       </button>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center gap-6 justify-end">
+                    <TableCell className="text-right py-2">
+                      <div className="flex items-center gap-4 justify-end">
                         <Button
                           size="icon"
-                          className="h-8 w-8  bg-teal-100 text-teal-700 hover:bg-teal-700 hover:text-white"
+                          className="h-7 w-7 bg-teal-100 text-teal-700 hover:bg-teal-700 hover:text-white"
                           onClick={() => openEdit(cat)}
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
                         <Button
                           size="icon"
-                          className="h-8 w-8 text-red-500 hover:text-white bg-red-200 hover:bg-red-500 "
+                          className="h-7 w-7 text-red-500 hover:text-white bg-red-200 hover:bg-red-500 "
                           onClick={() => setDeleteId(cat.id)}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -335,6 +350,37 @@ export default function AutoPartsAdminPage() {
             </Table>
           )}
         </CardContent>
+        {!isLoading && totalPages > 1 && (
+          <div className="py-4 border-t">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} 
+                  />
+                </PaginationItem>
+                {Array.from({ length: totalPages }).map((_, i) => (
+                  <PaginationItem key={i}>
+                    <PaginationLink 
+                      isActive={currentPage === i + 1} 
+                      onClick={() => setCurrentPage(i + 1)} 
+                      className="cursor-pointer"
+                    >
+                      {i + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} 
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </Card>
 
       {/* ─── Add Modal ─── */}

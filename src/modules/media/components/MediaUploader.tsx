@@ -199,7 +199,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
           </div>
           <div className="grid grid-cols-4 gap-2">
             {acceptedFiles.map((file, index) => (
-              <div key={index} className="relative">
+              <div key={index} className="relative group">
                 <Image
                   src={URL.createObjectURL(file)}
                   alt={file.name}
@@ -207,6 +207,16 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                   height={80}
                   className="rounded-md w-full h-20 object-cover"
                 />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setAcceptedFiles(prev => prev.filter((_, i) => i !== index));
+                  }}
+                  className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
                 <p className="text-xs truncate mt-1">{file.name}</p>
               </div>
             ))}

@@ -33,6 +33,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
   MapPin,
   Plus,
   Pencil,
@@ -66,19 +74,19 @@ interface Province {
 // ─── API helpers ──────────────────────────────────────────────────────────────
 
 async function fetchProvinces(): Promise<{ provinces: Province[] }> {
-  const res = await fetch("/api/admin/locations/provinces");
+  const res = await fetch("/api/admin/locations/provinces", { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch provinces");
   return res.json();
 }
 
 async function fetchDistricts(provinceId: string): Promise<{ districts: District[] }> {
-  const res = await fetch(`/api/admin/locations/districts?provinceId=${provinceId}`);
+  const res = await fetch(`/api/admin/locations/districts?provinceId=${provinceId}`, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch districts");
   return res.json();
 }
 
 async function fetchCities(districtId: string): Promise<{ cities: City[] }> {
-  const res = await fetch(`/api/admin/locations/cities?districtId=${districtId}`);
+  const res = await fetch(`/api/admin/locations/cities?districtId=${districtId}`, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch cities");
   return res.json();
 }
@@ -107,6 +115,11 @@ export default function AddressManagementPage() {
 
   // Total counts
   const { allDistricts, allCities } = useLocations();
+
+  // Pagination
+  const [provincePage, setProvincePage] = useState(1);
+  const [districtPage, setDistrictPage] = useState(1);
+  const itemsPerPage = 10;
 
   // ─── Queries ─────────────────────────────────────────────────────────────
 
@@ -290,6 +303,12 @@ export default function AddressManagementPage() {
   const districts = districtsData?.districts ?? [];
   const cities = citiesData?.cities ?? [];
 
+  const totalProvincePages = Math.ceil(provinces.length / itemsPerPage);
+  const paginatedProvinces = provinces.slice((provincePage - 1) * itemsPerPage, provincePage * itemsPerPage);
+
+  const totalDistrictPages = Math.ceil(districts.length / itemsPerPage);
+  const paginatedDistricts = districts.slice((districtPage - 1) * itemsPerPage, districtPage * itemsPerPage);
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -336,12 +355,12 @@ export default function AddressManagementPage() {
                 <button onClick={handleSeedFromEnv} className="text-primary underline">import from ENV</button>.
               </p>
             ) : (
-              <ul className="divide-y">
-                {provinces.map((p) => (
+              <ul className="divide-y text-sm">
+                {paginatedProvinces.map((p) => (
                   <li
                     key={p.id}
-                    className={`flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-muted/50 transition-colors ${selectedProvince?.id === p.id ? "bg-muted" : ""}`}
-                    onClick={() => { setSelectedProvince(p); setSelectedDistrict(null); setCitiesText(""); }}
+                    className={`flex items-center justify-between px-3 py-1.5 cursor-pointer hover:bg-muted/50 transition-colors ${selectedProvince?.id === p.id ? "bg-muted" : ""}`}
+                    onClick={() => { setSelectedProvince(p); setSelectedDistrict(null); setCitiesText(""); setDistrictPage(1); }}
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       {selectedProvince?.id === p.id
@@ -362,6 +381,31 @@ export default function AddressManagementPage() {
               </ul>
             )}
           </CardContent>
+          {!loadingProvinces && totalProvincePages > 1 && (
+            <div className="py-2 border-t">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => setProvincePage(p => Math.max(1, p - 1))} 
+                      className={`h-7 px-2 ${provincePage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}`} 
+                    />
+                  </PaginationItem>
+                  <PaginationItem>
+                    <span className="text-xs text-muted-foreground">
+                      {provincePage} / {totalProvincePages}
+                    </span>
+                  </PaginationItem>
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => setProvincePage(p => Math.min(totalProvincePages, p + 1))} 
+                      className={`h-7 px-2 ${provincePage === totalProvincePages ? "pointer-events-none opacity-50" : "cursor-pointer"}`} 
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </Card>
 
         {/* Districts Column */}
@@ -394,11 +438,11 @@ export default function AddressManagementPage() {
                 <button onClick={() => { setDistrictName(""); setDistrictDialog({ open: true }); }} className="text-primary underline">Add one</button>.
               </p>
             ) : (
-              <ul className="divide-y">
-                {districts.map((d) => (
+              <ul className="divide-y text-sm">
+                {paginatedDistricts.map((d) => (
                   <li
                     key={d.id}
-                    className={`flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-muted/50 transition-colors ${selectedDistrict?.id === d.id ? "bg-muted" : ""}`}
+                    className={`flex items-center justify-between px-3 py-1.5 cursor-pointer hover:bg-muted/50 transition-colors ${selectedDistrict?.id === d.id ? "bg-muted" : ""}`}
                     onClick={() => { setSelectedDistrict(d); setCitiesText(""); }}
                   >
                     <div className="flex items-center gap-2 min-w-0">
@@ -420,6 +464,31 @@ export default function AddressManagementPage() {
               </ul>
             )}
           </CardContent>
+          {!loadingDistricts && totalDistrictPages > 1 && (
+            <div className="py-2 border-t">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => setDistrictPage(p => Math.max(1, p - 1))} 
+                      className={`h-7 px-2 ${districtPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}`} 
+                    />
+                  </PaginationItem>
+                  <PaginationItem>
+                    <span className="text-xs text-muted-foreground">
+                      {districtPage} / {totalDistrictPages}
+                    </span>
+                  </PaginationItem>
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => setDistrictPage(p => Math.min(totalDistrictPages, p + 1))} 
+                      className={`h-7 px-2 ${districtPage === totalDistrictPages ? "pointer-events-none opacity-50" : "cursor-pointer"}`} 
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </Card>
 
         {/* Cities Column */}

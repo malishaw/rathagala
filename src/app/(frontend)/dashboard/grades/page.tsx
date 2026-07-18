@@ -19,6 +19,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -88,6 +96,10 @@ export default function VehicleGradesAdminPage() {
 
   const [form, setForm] = useState({ name: "", brand: "", model: "", isActive: true });
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   // ─── Queries ───────────────────────────────────────────────────────────────
 
   const { data: grades, isLoading, refetch } = useQuery({
@@ -96,7 +108,7 @@ export default function VehicleGradesAdminPage() {
       const params = new URLSearchParams({ limit: "500" });
       if (brandFilter) params.set("brand", brandFilter);
       params.set("includeUserGrades", "true");
-      const res = await fetch(`/api/vehicle-grade?${params}`);
+      const res = await fetch(`/api/vehicle-grade?${params}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to fetch vehicle grades");
       const json = await res.json() as { grades: VehicleGrade[] };
       return json.grades;
@@ -108,7 +120,7 @@ export default function VehicleGradesAdminPage() {
     queryFn: async () => {
       if (!searchBrand) return [];
       const params = new URLSearchParams({ limit: "500", brand: searchBrand, includeUserModels: "true" });
-      const res = await fetch(`/api/vehicle-model?${params}`);
+      const res = await fetch(`/api/vehicle-model?${params}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to fetch models");
       const json = await res.json() as { models: VehicleModel[] };
       return json.models;
@@ -221,6 +233,9 @@ export default function VehicleGradesAdminPage() {
     (g.brand || "").toLowerCase().includes(search.toLowerCase())
   );
 
+  const totalPages = Math.ceil(filteredGrades.length / itemsPerPage);
+  const paginatedGrades = filteredGrades.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   const openEdit = (g: VehicleGrade) => {
     setEditGrade(g);
     setForm({ name: g.name, brand: g.brand || "", model: g.model || "", isActive: g.isActive });
@@ -275,14 +290,14 @@ export default function VehicleGradesAdminPage() {
             <Input
               placeholder="Search grades..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
               className="max-w-xs"
             />
             <div className="flex items-center gap-2">
               <CitySearchDropdown
                 cities={allBrands}
                 value={brandFilter}
-                onChange={(v) => setBrandFilter(v)}
+                onChange={(v) => { setBrandFilter(v); setCurrentPage(1); }}
                 placeholder="All brands"
                 triggerClassName="w-48"
               />
@@ -333,12 +348,12 @@ export default function VehicleGradesAdminPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredGrades.map((g) => (
+                {paginatedGrades.map((g) => (
                   <TableRow key={g.id}>
-                    <TableCell className="font-medium">{g.name}</TableCell>
-                    <TableCell>{g.brand || <span className="text-muted-foreground text-xs">Any</span>}</TableCell>
-                    <TableCell>{g.model || <span className="text-muted-foreground text-xs">Any</span>}</TableCell>
-                    <TableCell className="space-y-1">
+                    <TableCell className="font-medium py-2">{g.name}</TableCell>
+                    <TableCell className="py-2">{g.brand || <span className="text-muted-foreground text-xs">Any</span>}</TableCell>
+                    <TableCell className="py-2">{g.model || <span className="text-muted-foreground text-xs">Any</span>}</TableCell>
+                    <TableCell className="space-y-1 py-2">
                       <div className="flex gap-2">
                         <Badge variant={g.isActive ? "default" : "secondary"}>
                           {g.isActive ? "Active" : "Inactive"}
@@ -350,14 +365,15 @@ export default function VehicleGradesAdminPage() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    <TableCell className="text-sm text-muted-foreground py-2">
                       {getRelativeTime(g.createdAt)}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right py-2">
                       <div className="flex justify-end gap-2">
                         <Button 
                           variant="ghost" 
                           size="icon" 
+                          className="h-7 w-7"
                           onClick={() => openEdit(g)}
                         >
                           <Pencil className="h-4 w-4" />
@@ -365,7 +381,7 @@ export default function VehicleGradesAdminPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="text-destructive "
+                          className="text-destructive h-7 w-7"
                           onClick={() => setDeleteId({ id: g.id, name: g.name })}
                         >
                           <Trash2 className="h-4 w-4 hover:text-white" />
@@ -378,6 +394,37 @@ export default function VehicleGradesAdminPage() {
             </Table>
           )}
         </CardContent>
+        {!isLoading && totalPages > 1 && (
+          <div className="py-4 border-t">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} 
+                  />
+                </PaginationItem>
+                {Array.from({ length: totalPages }).map((_, i) => (
+                  <PaginationItem key={i}>
+                    <PaginationLink 
+                      isActive={currentPage === i + 1} 
+                      onClick={() => setCurrentPage(i + 1)} 
+                      className="cursor-pointer"
+                    >
+                      {i + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} 
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </Card>
 
       {/* Add Dialog */}

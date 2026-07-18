@@ -214,8 +214,8 @@ export default function ReportPage() {
   };
 
   // Derived data for split charts
-  const userAdsData = adByEntity?.data.filter(item => item.type === "user").slice(0, 10) || [];
-  const orgAdsData = adByEntity?.data.filter(item => item.type === "organization").slice(0, 10) || [];
+  const userAdsData = (adByEntity?.data as any[])?.filter(item => item.type === "user").slice(0, 10) || [];
+  const orgAdsData = (adByEntity?.data as any[])?.filter(item => item.type === "organization").slice(0, 10) || [];
 
   // Wrap long Y-axis labels into two-word lines for better readability.
   const renderTwoWordYAxisTick = (props: any) => {
@@ -709,7 +709,7 @@ export default function ReportPage() {
                 <Card className="border border-slate-200/80 shadow-sm bg-white">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-slate-900">Vehicle Types</CardTitle>
-                    <CardDescription>Total: {advancedSummary.adTypes.total.reduce((a, b) => a + b.count, 0)}</CardDescription>
+                    <CardDescription>Total: {advancedSummary.adTypes.total.reduce((a: number, b: any) => a + b.count, 0)}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
@@ -723,7 +723,7 @@ export default function ReportPage() {
                           outerRadius={80}
                           label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                         >
-                          {advancedSummary.adTypes.top10.map((entry, index) => (
+                          {advancedSummary.adTypes.top10.map((entry: any, index: number) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
@@ -736,7 +736,7 @@ export default function ReportPage() {
                 <Card className="border border-slate-200/80 shadow-sm bg-white">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-slate-900">Ad Types</CardTitle>
-                    <CardDescription>Total: {advancedSummary.listingTypes.total.reduce((a, b) => a + b.count, 0)}</CardDescription>
+                    <CardDescription>Total: {advancedSummary.listingTypes.total.reduce((a: number, b: any) => a + b.count, 0)}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
@@ -746,7 +746,7 @@ export default function ReportPage() {
                         <YAxis />
                         <Tooltip />
                         <Bar dataKey="count" name="Count">
-                          {advancedSummary.listingTypes.top10.map((entry, index) => (
+                          {advancedSummary.listingTypes.top10.map((entry: any, index: number) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Bar>
@@ -823,7 +823,7 @@ export default function ReportPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {advancedSummary.conditions.top10.map((item, idx) => (
+                      {advancedSummary.conditions.top10.map((item: any, idx: number) => (
                         <div key={idx} className="flex justify-between items-center text-sm">
                           <span>{item.value}</span>
                           <Badge variant="outline">{item.count}</Badge>
@@ -838,7 +838,7 @@ export default function ReportPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {advancedSummary.fuelTypes.top10.map((item, idx) => (
+                      {advancedSummary.fuelTypes.top10.map((item: any, idx: number) => (
                         <div key={idx} className="flex justify-between items-center text-sm">
                           <span>{item.value}</span>
                           <Badge variant="outline">{item.count}</Badge>
@@ -853,7 +853,7 @@ export default function ReportPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {advancedSummary.transmissions.top10.map((item, idx) => (
+                      {advancedSummary.transmissions.top10.map((item: any, idx: number) => (
                         <div key={idx} className="flex justify-between items-center text-sm">
                           <span>{item.value}</span>
                           <Badge variant="outline">{item.count}</Badge>
@@ -872,7 +872,7 @@ export default function ReportPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {advancedSummary.provinces.top10.map((item, idx) => (
+                      {advancedSummary.provinces.top10.map((item: any, idx: number) => (
                         <div key={idx} className="flex justify-between items-center text-sm">
                           <span>{item.value}</span>
                           <Badge variant="secondary">{item.count}</Badge>
@@ -887,7 +887,7 @@ export default function ReportPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {advancedSummary.districts.top10.map((item, idx) => (
+                      {advancedSummary.districts.top10.map((item: any, idx: number) => (
                         <div key={idx} className="flex justify-between items-center text-sm">
                           <span>{item.value}</span>
                           <Badge variant="secondary">{item.count}</Badge>
@@ -902,7 +902,7 @@ export default function ReportPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {advancedSummary.cities.top10.map((item, idx) => (
+                      {advancedSummary.cities.top10.map((item: any, idx: number) => (
                         <div key={idx} className="flex justify-between items-center text-sm">
                           <span>{item.value}</span>
                           <Badge variant="secondary">{item.count}</Badge>
@@ -1157,7 +1157,7 @@ export default function ReportPage() {
                     <div className="h-[200px] flex items-center justify-center">
                       <p className="text-muted-foreground">Loading ads...</p>
                     </div>
-                  ) : !entityHistory?.ads || entityHistory.ads.length === 0 ? (
+                  ) : !(entityHistory as any)?.ads || (entityHistory as any).ads.length === 0 ? (
                     <div className="h-[100px] flex items-center justify-center">
                       <p className="text-muted-foreground">No ads found</p>
                     </div>
@@ -1174,7 +1174,7 @@ export default function ReportPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {entityHistory.ads.map((ad: any) => {
+                        {(entityHistory as any).ads.map((ad: any) => {
                           const imageUrl = ad.media?.[0]?.url ?? ad.media?.[0]?.media?.url ?? null;
                           const title = ad.title || [ad.brand, ad.model].filter(Boolean).join(" ") || "Untitled Ad";
                           const vehicleType = ad.type || "N/A";

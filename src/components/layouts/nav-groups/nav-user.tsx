@@ -33,6 +33,7 @@ export function NavUser({
     name: string;
     email: string;
     avatar: string;
+    role?: string | null;
   };
 }) {
   const { isMobile } = useSidebar();
@@ -55,6 +56,11 @@ export function NavUser({
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">{user.name}</span>
                 <span className="truncate text-xs">{user.email}</span>
+                {user.role && (
+                  <span className="truncate text-[10px] uppercase font-medium text-muted-foreground mt-0.5 tracking-wider">
+                    {user.role}
+                  </span>
+                )}
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -74,6 +80,11 @@ export function NavUser({
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">{user.name}</span>
                   <span className="truncate text-xs">{user.email}</span>
+                  {user.role && (
+                    <span className="truncate text-[10px] uppercase font-medium text-muted-foreground mt-0.5 tracking-wider">
+                      {user.role}
+                    </span>
+                  )}
                 </div>
               </div>
             </DropdownMenuLabel>

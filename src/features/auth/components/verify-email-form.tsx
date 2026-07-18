@@ -62,6 +62,7 @@ export function VerifyEmailForm({ className, email, name }: Props) {
         toast.success("Verification code resent!", {
           description: "Please check your email",
         });
+        form.setValue("code", "");
       } else {
         toast.error("Failed to resend code");
       }

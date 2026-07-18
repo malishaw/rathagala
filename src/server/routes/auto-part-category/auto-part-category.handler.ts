@@ -1,4 +1,6 @@
-import { prisma } from "@/server/prisma/client";
+import { db } from "@/server/db";
+import { autoPartCategories } from "@/server/db/schema";
+import { and, ilike, eq, count } from "drizzle-orm";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 
 import type { AppRouteHandler } from "@/types/server";
@@ -44,24 +46,27 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
   const isActive = query.isActive;
   const offset = (page - 1) * limit;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const where: any = {};
+  const conditions = [];
   if (search) {
-    where.name = { contains: search, mode: "insensitive" };
+    conditions.push(ilike(autoPartCategories.name, `%${search}%`));
   }
   if (isActive !== undefined) {
-    where.isActive = isActive === "true";
+    conditions.push(eq(autoPartCategories.isActive, isActive === "true"));
   }
 
-  const [categories, total] = await Promise.all([
-    prisma.autoPartCategory.findMany({
-      where,
-      orderBy: { name: "asc" },
-      skip: offset,
-      take: limit,
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const [categories, totalRes] = await Promise.all([
+    db.query.autoPartCategories.findMany({
+      where: whereClause,
+      orderBy: (autoPartCategories, { asc }) => [asc(autoPartCategories.name)],
+      offset: offset,
+      limit: limit,
     }),
-    prisma.autoPartCategory.count({ where }),
+    db.select({ value: count() }).from(autoPartCategories).where(whereClause),
   ]);
+
+  const total = totalRes[0].value;
 
   return c.json(
     {
@@ -80,7 +85,8 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
 // ---------- Get One ----------
 export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
   const { id } = c.req.param();
-  const category = await prisma.autoPartCategory.findUnique({ where: { id } });
+  const category = await db.query.autoPartCategories.findFirst({ where: eq(autoPartCategories.id, id) });
+  
   if (!category) {
     return c.json({ message: "Category not found" }, HttpStatusCodes.NOT_FOUND);
   }
@@ -98,19 +104,19 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
   const slug = toSlug(body.name);
 
   // Check unique slug
-  const existing = await prisma.autoPartCategory.findUnique({ where: { slug } });
+  const existing = await db.query.autoPartCategories.findFirst({ where: eq(autoPartCategories.slug, slug) });
   if (existing) {
     return c.json({ message: "A category with this name already exists" }, HttpStatusCodes.CONFLICT);
   }
 
-  const category = await prisma.autoPartCategory.create({
-    data: {
+  const [category] = await db.insert(autoPartCategories)
+    .values({
       name: body.name,
       slug,
       description: body.description ?? null,
       isActive: body.isActive ?? true,
-    },
-  });
+    })
+    .returning();
 
   return c.json(formatCategory(category), HttpStatusCodes.CREATED);
 };
@@ -123,12 +129,13 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
   }
 
   const { id } = c.req.param();
-  const existing = await prisma.autoPartCategory.findUnique({ where: { id } });
+  const existing = await db.query.autoPartCategories.findFirst({ where: eq(autoPartCategories.id, id) });
   if (!existing) {
     return c.json({ message: "Category not found" }, HttpStatusCodes.NOT_FOUND);
   }
 
   const body = await c.req.json();
+  
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updateData: any = {};
   if (body.name !== undefined) {
@@ -138,10 +145,10 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
   if (body.description !== undefined) updateData.description = body.description;
   if (body.isActive !== undefined) updateData.isActive = body.isActive;
 
-  const updated = await prisma.autoPartCategory.update({
-    where: { id },
-    data: updateData,
-  });
+  const [updated] = await db.update(autoPartCategories)
+    .set(updateData)
+    .where(eq(autoPartCategories.id, id))
+    .returning();
 
   return c.json(formatCategory(updated), HttpStatusCodes.OK);
 };
@@ -154,11 +161,11 @@ export const remove: AppRouteHandler<RemoveRoute> = async (c) => {
   }
 
   const { id } = c.req.param();
-  const existing = await prisma.autoPartCategory.findUnique({ where: { id } });
-  if (!existing) {
+  const deleted = await db.delete(autoPartCategories).where(eq(autoPartCategories.id, id)).returning();
+  
+  if (deleted.length === 0) {
     return c.json({ message: "Category not found" }, HttpStatusCodes.NOT_FOUND);
   }
 
-  await prisma.autoPartCategory.delete({ where: { id } });
   return c.json({ message: "Category deleted successfully" }, HttpStatusCodes.OK);
 };

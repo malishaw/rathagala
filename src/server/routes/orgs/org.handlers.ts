@@ -1,8 +1,9 @@
 /* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as HttpStatusCodes from "stoker/http-status-codes";
-
-import { prisma } from "@/server/prisma/client";
+import { db } from "@/server/db";
+import { organizations, members } from "@/server/db/schema";
+import { eq, and, ilike, inArray, count } from "drizzle-orm";
 import type { ListRoute, GetByIdRoute } from "./org.routes";
 import { AppRouteHandler } from "@/types/server";
 
@@ -15,7 +16,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       HttpStatusCodes.UNAUTHORIZED
     );
 
-  const isAdmin = user?.role === "admin";
+  const isAdmin = (user as any)?.role === "admin";
 
   const { page = "1", limit = "10", search = "" } = c.req.valid("query");
 
@@ -29,9 +30,9 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
 
   if (!isAdmin && user) {
     // Get the organizations where the user is a member
-    const userMemberships = await prisma.member.findMany({
-      select: { organizationId: true },
-      where: { userId: user.id },
+    const userMemberships = await db.query.members.findMany({
+      where: eq(members.userId, user.id),
+      columns: { organizationId: true },
     });
 
     userOrganizationIds = userMemberships.map((m) => m.organizationId);
@@ -53,41 +54,35 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
   }
 
   // Build the where condition based on user role and search parameter
-  let whereCondition: any = {};
+  const conditions = [];
 
   // If not admin, add organization filter
   if (!isAdmin && userOrganizationIds.length > 0) {
-    whereCondition.id = {
-      in: userOrganizationIds,
-    };
+    conditions.push(inArray(organizations.id, userOrganizationIds));
   }
 
   // Add search condition if provided
   if (search && search.trim() !== "") {
-    whereCondition.name = {
-      contains: search,
-      mode: "insensitive", // Case insensitive search
-    };
+    conditions.push(ilike(organizations.name, `%${search}%`));
   }
 
-  // First, get the total count
-  const totalOrganizations = await prisma.organization.count({
-    where: whereCondition,
-  });
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-  // Then get the paginated items
-  const organizations = await prisma.organization.findMany({
-    where: whereCondition,
-    skip: offset,
-    take: limitNum,
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+  const [totalOrganizationsRes, fetchedOrganizations] = await Promise.all([
+    db.select({ value: count() }).from(organizations).where(whereClause),
+    db.query.organizations.findMany({
+      where: whereClause,
+      offset,
+      limit: limitNum,
+      orderBy: (organizations, { desc }) => [desc(organizations.createdAt)],
+    }),
+  ]);
+
+  const totalOrganizations = totalOrganizationsRes[0].value;
 
   return c.json(
     {
-      organizations,
+      organizations: fetchedOrganizations,
       pagination: {
         total: totalOrganizations,
         page: pageNum,
@@ -103,8 +98,8 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
 export const getById: AppRouteHandler<GetByIdRoute> = async (c) => {
   const { id } = c.req.valid("param");
 
-  const organization = await prisma.organization.findUnique({
-    where: { id },
+  const organization = await db.query.organizations.findFirst({
+    where: eq(organizations.id, id),
   });
 
   if (!organization) {

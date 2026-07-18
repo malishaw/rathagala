@@ -1,7 +1,10 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { prisma } from "@/server/prisma/client";
+import { db } from "@/server/db";
+import { sql } from "drizzle-orm";
 
 async function requireAdmin() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -14,11 +17,13 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
-    const stats = await prisma.$runCommandRaw({ dbStats: 1 }) as Record<string, number>;
+    const sizeRes = await db.execute(sql`SELECT pg_database_size(current_database()) as size`);
+    const size = sizeRes[0]?.size || 0;
+    
     return NextResponse.json({
-      dataSize: stats.dataSize ?? 0,
-      storageSize: stats.storageSize ?? 0,
-      collections: stats.collections ?? 0,
+      dataSize: Number(size),
+      storageSize: Number(size),
+      collections: 0,
     });
   } catch {
     return NextResponse.json({ error: "Failed to retrieve database stats" }, { status: 500 });

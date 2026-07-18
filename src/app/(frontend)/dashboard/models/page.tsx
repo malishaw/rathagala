@@ -19,6 +19,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -77,6 +85,10 @@ export default function VehicleModelsAdminPage() {
 
   const [form, setForm] = useState({ name: "", brand: "", isActive: true });
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   // ─── Queries ───────────────────────────────────────────────────────────────
 
   const { data: models, isLoading, refetch } = useQuery({
@@ -85,7 +97,7 @@ export default function VehicleModelsAdminPage() {
       const params = new URLSearchParams({ limit: "500" });
       if (brandFilter) params.set("brand", brandFilter);
       params.set("includeUserModels", "true");
-      const res = await fetch(`/api/vehicle-model?${params}`);
+      const res = await fetch(`/api/vehicle-model?${params}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to fetch vehicle models");
       const json = await res.json() as { models: VehicleModel[] };
       return json.models;
@@ -193,6 +205,9 @@ export default function VehicleModelsAdminPage() {
     (m.brand || "").toLowerCase().includes(search.toLowerCase())
   );
 
+  const totalPages = Math.ceil(filteredModels.length / itemsPerPage);
+  const paginatedModels = filteredModels.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   const openEdit = (m: VehicleModel) => {
     setEditModel(m);
     setForm({ name: m.name, brand: m.brand || "", isActive: m.isActive });
@@ -238,14 +253,14 @@ export default function VehicleModelsAdminPage() {
             <Input
               placeholder="Search models..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
               className="max-w-xs"
             />
             <div className="flex items-center gap-2">
               <CitySearchDropdown
                 cities={allBrands}
                 value={brandFilter}
-                onChange={(v) => setBrandFilter(v)}
+                onChange={(v) => { setBrandFilter(v); setCurrentPage(1); }}
                 placeholder="All brands"
                 triggerClassName="w-48"
               />
@@ -289,11 +304,11 @@ export default function VehicleModelsAdminPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredModels.map((m) => (
+                {paginatedModels.map((m) => (
                   <TableRow key={m.id}>
-                    <TableCell className="font-medium">{m.name}</TableCell>
-                    <TableCell>{m.brand || <span className="text-muted-foreground text-xs">Any</span>}</TableCell>
-                    <TableCell className="space-y-1">
+                    <TableCell className="font-medium py-2">{m.name}</TableCell>
+                    <TableCell className="py-2">{m.brand || <span className="text-muted-foreground text-xs">Any</span>}</TableCell>
+                    <TableCell className="space-y-1 py-2">
                       <div className="flex gap-2">
                         <Badge variant={m.isActive ? "default" : "secondary"}>
                           {m.isActive ? "Active" : "Inactive"}
@@ -305,14 +320,15 @@ export default function VehicleModelsAdminPage() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    <TableCell className="text-sm text-muted-foreground py-2">
                       {getRelativeTime(m.createdAt)}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right py-2">
                       <div className="flex justify-end gap-2">
                         <Button 
                           variant="ghost" 
                           size="icon" 
+                          className="h-7 w-7"
                           onClick={() => openEdit(m)}
                         >
                           <Pencil className="h-4 w-4" />
@@ -320,7 +336,7 @@ export default function VehicleModelsAdminPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="text-destructive "
+                          className="text-destructive h-7 w-7"
                           onClick={() => setDeleteId({ id: m.id, name: m.name })}
                         >
                           <Trash2 className="h-4 w-4 hover:text-white" />
@@ -333,6 +349,37 @@ export default function VehicleModelsAdminPage() {
             </Table>
           )}
         </CardContent>
+        {!isLoading && totalPages > 1 && (
+          <div className="py-4 border-t">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} 
+                  />
+                </PaginationItem>
+                {Array.from({ length: totalPages }).map((_, i) => (
+                  <PaginationItem key={i}>
+                    <PaginationLink 
+                      isActive={currentPage === i + 1} 
+                      onClick={() => setCurrentPage(i + 1)} 
+                      className="cursor-pointer"
+                    >
+                      {i + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} 
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </Card>
 
       {/* Add Dialog */}
