@@ -147,6 +147,38 @@ export function DynamicVehicleFieldsStep2() {
     />
   );
 
+  const renderColor = () => {
+    const commonColors = [
+      "Black", "White", "Silver", "Grey", "Red", "Blue", 
+      "Brown", "Beige", "Green", "Yellow", "Orange", "Gold", 
+      "Bronze", "Purple", "Maroon", "Other"
+    ];
+    return (
+      <FormField
+        control={form.control}
+        name="color"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Color</FormLabel>
+            <Select value={field.value || ""} onValueChange={field.onChange}>
+              <FormControl>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select color" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent className="max-h-[220px]">
+                {commonColors.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    );
+  };
+
   switch (type) {
     case "CAR":
       return (
@@ -159,44 +191,57 @@ export function DynamicVehicleFieldsStep2() {
             {renderMileage()}
             {renderEngine()}
           </div>
-          <FormField
-            control={form.control}
-            name="bodyType"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Body Type</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select body type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="SALOON">Saloon</SelectItem>
-                    <SelectItem value="HATCHBACK">Hatchback</SelectItem>
-                    <SelectItem value="STATION_WAGON">Station Wagon</SelectItem>
-                    <SelectItem value="SUV">SUV</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-2 gap-3">
+            <FormField
+              control={form.control}
+              name="bodyType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Body Type</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select body type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="SALOON">Saloon</SelectItem>
+                      <SelectItem value="HATCHBACK">Hatchback</SelectItem>
+                      <SelectItem value="STATION_WAGON">Station Wagon</SelectItem>
+                      <SelectItem value="SUV">SUV</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {renderColor()}
+          </div>
         </>
       );
     case "VAN":
       return (
-        <div className="grid grid-cols-2 gap-3">
-          {renderMileage("Mileage (km)", "e.g., 50000")}
-          {renderEngine("Engine (cc)", "e.g., 2000")}
-        </div>
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            {renderMileage("Mileage (km)", "e.g., 50000")}
+            {renderEngine("Engine (cc)", "e.g., 2000")}
+          </div>
+          <div className="mt-3">
+            {renderColor()}
+          </div>
+        </>
       );
     case "MOTORCYCLE":
       return (
-        <div className="grid grid-cols-2 gap-3">
-          {renderMileage("Mileage (km)", "e.g., 15000")}
-          {renderEngine("Engine (cc)", "e.g., 150")}
-        </div>
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            {renderMileage("Mileage (km)", "e.g., 15000")}
+            {renderEngine("Engine (cc)", "e.g., 150")}
+          </div>
+          <div className="mt-3">
+            {renderColor()}
+          </div>
+        </>
       );
     case "THREE_WHEEL":
       return (
@@ -205,7 +250,10 @@ export function DynamicVehicleFieldsStep2() {
             {renderMileage("Mileage (km)", "e.g., 25000")}
             {renderEngine("Engine (cc)", "e.g., 200")}
           </div>
-          {renderFuelType(true, ["PETROL", "DIESEL", "GAS", "ELECTRIC"])}
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            {renderFuelType(true, ["PETROL", "DIESEL", "GAS", "ELECTRIC"])}
+            {renderColor()}
+          </div>
         </>
       );
     case "BUS":
@@ -220,6 +268,9 @@ export function DynamicVehicleFieldsStep2() {
             {renderFuelType(true, type === "BUS" ? ["DIESEL", "PETROL", "GAS"] : ["DIESEL", "PETROL"])}
             {renderTransmission(false)}
           </div>
+          <div className="mt-3">
+            {renderColor()}
+          </div>
         </>
       );
     case "HEAVY_DUTY":
@@ -231,6 +282,9 @@ export function DynamicVehicleFieldsStep2() {
           <div className="grid grid-cols-2 gap-3">
             {renderEngine("Engine (cc)", "e.g., 6000")}
             {renderFuelType(false, ["DIESEL", "ELECTRIC", "HYBRID"])}
+          </div>
+          <div className="mt-3">
+            {renderColor()}
           </div>
         </>
       );
@@ -244,8 +298,9 @@ export function DynamicVehicleFieldsStep2() {
             {renderEngine("Engine (cc)", "e.g., 2500")}
             {renderFuelType(true, ["DIESEL", "PETROL"])}
           </div>
-          <div className="mt-3">
+          <div className="grid grid-cols-2 gap-3 mt-3">
             {renderTransmission(false)}
+            {renderColor()}
           </div>
         </>
       );

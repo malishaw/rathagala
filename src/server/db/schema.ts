@@ -259,6 +259,7 @@ export const ads = pgTable("ad", {
   model: text("model"),
   grade: text("grade"),
   trimEdition: text("trim_edition"),
+  color: text("color"),
 
   manufacturedYear: text("manufactured_year"),
   modelYear: text("model_year"),

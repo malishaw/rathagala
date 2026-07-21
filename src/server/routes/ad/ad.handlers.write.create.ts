@@ -76,6 +76,7 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
       model: adDetails.model || null,
       grade: adDetails.grade || null,
       trimEdition: adDetails.trimEdition || null,
+      color: adDetails.color || null,
 
       manufacturedYear: adDetails.manufacturedYear || null,
       modelYear: adDetails.modelYear || null,

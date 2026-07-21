@@ -408,6 +408,7 @@ export const AdSchema = z.object({
   model: z.string().nullable(),
   grade: z.string().nullable(),
   trimEdition: z.string().nullable(),
+  color: z.string().nullable().optional(),
   manufacturedYear: z.string().nullable(),
   modelYear: z.string().nullable(),
   mileage: z.number().nullable(),

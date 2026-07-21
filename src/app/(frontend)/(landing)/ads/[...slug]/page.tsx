@@ -313,6 +313,7 @@ export default function AdDetailPage() {
         ad.transmission && { label: "Transmission", value: ad.transmission },
         ad.engineCapacity && { label: "Engine", value: `${ad.engineCapacity} cc` },
         ad.bodyType && { label: "Body", value: ad.bodyType },
+        (ad.color || (ad as any).metadata?.color) && { label: "Color", value: ad.color || (ad as any).metadata?.color },
         ad.condition && { label: "Condition", value: ad.condition },
       ].filter(Boolean);
 

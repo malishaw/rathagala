@@ -81,6 +81,8 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
     if (adUpdates.grade !== undefined) updateData.grade = adUpdates.grade;
     if (adUpdates.trimEdition !== undefined)
       updateData.trimEdition = adUpdates.trimEdition;
+    if (adUpdates.color !== undefined)
+      updateData.color = adUpdates.color;
 
     if (adUpdates.manufacturedYear !== undefined)
       updateData.manufacturedYear = adUpdates.manufacturedYear;

@@ -43,9 +43,9 @@ export function Footer() {
 
       <div className="container mx-auto px-4 pt-10 pb-6">
         {/* Main grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-10">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-6">
           {/* Brand column */}
-          <div className="col-span-2 md:col-span-1">
+          <div className="col-span-2 lg:col-span-1">
             <Link href="/" className="inline-flex items-center gap-2 mb-4 group">
               <div className="bg-teal-500/20 p-1.5 rounded-md group-hover:bg-teal-500/30 transition-colors">
                 <img src="/Rathagala-Favicon.png" alt="Rathagala.lk Logo" className="h-5 w-5 object-contain" />
@@ -100,6 +100,25 @@ export function Footer() {
             </h4>
             <ul className="space-y-2.5">
               {footerLinks.features.map(({ href, label }) => (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    className="text-sm text-slate-400 hover:text-white transition-colors duration-150"
+                  >
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Compare & Tools */}
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-teal-400 mb-4">
+              Compare &amp; Tools
+            </h4>
+            <ul className="space-y-2.5">
+              {footerLinks.smartTools.map(({ href, label }) => (
                 <li key={href}>
                   <Link
                     href={href}

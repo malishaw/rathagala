@@ -1141,6 +1141,12 @@ export default function VehicleMarketplace() {
                                       <span>{vehicle.mileage.toLocaleString()} km</span>
                                     </>
                                   )}
+                                  {(vehicle.color || vehicle.metadata?.color) && (
+                                    <>
+                                      <span className="text-slate-300">•</span>
+                                      <span>{vehicle.color || vehicle.metadata?.color}</span>
+                                    </>
+                                  )}
                                 </div>
                               </div>
 

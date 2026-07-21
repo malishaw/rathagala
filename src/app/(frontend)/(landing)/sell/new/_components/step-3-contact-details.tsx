@@ -15,6 +15,7 @@ import type { MediaFile } from "@/modules/media/types";
 import { Camera, PlusCircle, X, Loader2, Zap } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface Step3Props {
   onBack: () => void;
@@ -80,30 +81,41 @@ export function Step3ContactDetails({
           control={form.control}
           name="metadata.isOnBehalfOf"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center space-x-2 space-y-0 p-3 bg-slate-50 border border-slate-100 rounded-lg">
+            <FormItem className="space-y-2 p-3 bg-slate-50 border border-slate-100 rounded-lg">
+              <FormLabel className="text-sm font-medium text-slate-700">Posting on behalf of</FormLabel>
               <FormControl>
-                <Switch
-                  checked={field.value || false}
-                  onCheckedChange={(checked) => {
-                    field.onChange(checked);
-                    if (checked) {
+                <RadioGroup
+                  value={field.value ? "someone_else" : "myself"}
+                  onValueChange={(val) => {
+                    const isBehalf = val === "someone_else";
+                    field.onChange(isBehalf);
+                    if (isBehalf) {
                       form.setValue("name", "");
                       form.setValue("phoneNumber", "");
                       form.setValue("whatsappNumber", "");
                     }
                   }}
-                />
+                  className="flex flex-row space-x-6 pt-1"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="myself" id="myself" />
+                    <Label htmlFor="myself" className="cursor-pointer text-sm font-medium">
+                      Myself
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="someone_else" id="someone_else" />
+                    <Label htmlFor="someone_else" className="cursor-pointer text-sm font-medium">
+                      Someone Else
+                    </Label>
+                  </div>
+                </RadioGroup>
               </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel className="text-sm font-medium cursor-pointer">
-                  I am posting this ad on behalf of someone else
-                </FormLabel>
-                {field.value && (
-                  <p className="text-xs text-slate-500 mt-1">
-                    Please enter the actual seller's name and phone number below. These details will be shown to buyers.
-                  </p>
-                )}
-              </div>
+              {field.value && (
+                <p className="text-xs text-slate-500 mt-1">
+                  Please enter the actual seller's name and phone number below. These details will be shown to buyers.
+                </p>
+              )}
             </FormItem>
           )}
         />

@@ -116,6 +116,7 @@ export const createAdBaseSchema = z
     model: z.string().optional(),
     grade: z.string().optional(),
     trimEdition: z.string().optional(),
+    color: z.string().optional(),
 
     // Year fields (different names for different types)
     manufacturedYear: z.string().optional(), // Used by: Car, Motor Bike
