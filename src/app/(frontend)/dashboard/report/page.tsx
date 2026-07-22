@@ -13,9 +13,6 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CalendarIcon, TrendingUp, Users, Building2, FileText, BarChart3, Search, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import { toPng } from "html-to-image";
 import { toast } from "sonner";
 import {
   BarChart,
@@ -111,6 +108,10 @@ export default function ReportPage() {
   const handleDownloadReport = async () => {
     try {
       toast.info("Generating PDF report...", { description: "Capturing charts and data..." });
+
+      const { default: jsPDF } = await import("jspdf");
+      const { default: autoTable } = await import("jspdf-autotable");
+      const { toPng } = await import("html-to-image");
 
       const doc = new jsPDF("p", "mm", "a4");
       const pageWidth = doc.internal.pageSize.getWidth();

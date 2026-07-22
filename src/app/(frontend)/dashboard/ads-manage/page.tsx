@@ -26,8 +26,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,7 +36,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import * as XLSX from "xlsx";
 import { client } from "@/lib/rpc";
 import { DELETE_AD_REASONS, type DeleteAdReason } from "@/constants/delete-reasons";
 import { Label } from "@/components/ui/label";
@@ -152,6 +149,7 @@ export default function AdsManagePage() {
       }));
 
       // Create workbook and worksheet
+      const XLSX = await import("xlsx");
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(excelData);
 

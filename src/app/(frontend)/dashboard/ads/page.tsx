@@ -3,7 +3,6 @@
 import React from "react";
 import { useRef } from "react";
 import { useRouter } from "next/navigation"; // Import router for navigation
-import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { FileSpreadsheet, Upload } from "lucide-react";
 import { client } from "@/lib/rpc";
@@ -143,6 +142,7 @@ export default function AdsPage() {
         "Seller": ad.creator?.email || "N/A"
       }));
 
+      const XLSX = await import("xlsx");
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(excelData);
       XLSX.utils.book_append_sheet(wb, ws, "Ads");

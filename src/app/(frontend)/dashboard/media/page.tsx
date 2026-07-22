@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import JSZip from "jszip";
 import { format, subMonths, startOfMonth, endOfMonth, startOfDay, endOfDay, isBefore, startOfYear, endOfYear } from "date-fns";
 import { getRelativeTime } from "@/lib/utils";
 import Image from "next/image";
@@ -439,6 +438,7 @@ export default function AdminGalleryPage() {
     setDownloadAllLoading(true);
     setZipProgress({ open: true, stage: "fetching", current: 0, total: filteredMedia.length, filename: "" });
     try {
+      const JSZip = (await import("jszip")).default;
       const zip = new JSZip();
       const folder = zip.folder("media-gallery") as JSZip;
       const usedNames = new Map<string, number>();
