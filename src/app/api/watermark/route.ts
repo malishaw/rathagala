@@ -1,9 +1,9 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
-import sharp from "sharp";
 import { readFile } from "fs/promises";
 import { join } from "path";
+
 
 let fontCache: string | null = null;
 async function getSinhalaFont() {
@@ -41,6 +41,8 @@ export async function GET(request: NextRequest) {
     }
 
     const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+
+    const { default: sharp } = await import("sharp");
 
     // Get image metadata to calculate watermark dimensions
     const imageMetadata = await sharp(imageBuffer).metadata();

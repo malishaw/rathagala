@@ -1,7 +1,4 @@
-import { Scalar } from "@scalar/hono-api-reference";
-
 import { AppOpenAPI } from "@/types/server";
-
 import packageJSON from "$/package.json";
 
 export function configureOpenAPI(app: AppOpenAPI) {
@@ -13,5 +10,21 @@ export function configureOpenAPI(app: AppOpenAPI) {
     }
   });
 
-  app.get("/reference", Scalar({ url: "/api/doc", theme: "kepler" }));
+  app.get("/reference", (c) => {
+    return c.html(`
+      <!doctype html>
+      <html>
+        <head>
+          <title>DONEXT API Reference</title>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+        </head>
+        <body>
+          <script id="api-reference" data-url="/api/doc"></script>
+          <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+        </body>
+      </html>
+    `);
+  });
 }
+

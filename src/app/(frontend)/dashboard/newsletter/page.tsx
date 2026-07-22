@@ -49,7 +49,10 @@ import {
   CheckCheck,
   X,
 } from "lucide-react";
-import TipTapEditor from "@/components/ui/tiptap-editor";
+import dynamic from "next/dynamic";
+const TipTapEditor = dynamic(() => import("@/components/ui/tiptap-editor"), { ssr: false });
+
+
 
 interface User {
   id: string;
