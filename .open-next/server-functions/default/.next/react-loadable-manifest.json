@@ -1,0 +1,87 @@
+{
+  "../node_modules/@aws-sdk/core/dist-es/submodules/client/util-user-agent-browser/createUserAgentStringParsingProvider.js -> bowser": {
+    "id": null,
+    "files": []
+  },
+  "../node_modules/@smithy/core/dist-es/submodules/protocols/HttpProtocol.js -> @smithy/core/event-streams": {
+    "id": 38802,
+    "files": [
+      "static/chunks/8802.724e4fafc0cde93e.js"
+    ]
+  },
+  "../node_modules/jspdf/dist/jspdf.es.min.js -> canvg": {
+    "id": 11482,
+    "files": [
+      "static/chunks/bc98253f.d6fc8a0138855acd.js",
+      "static/chunks/4199.d828830879136ad0.js"
+    ]
+  },
+  "../node_modules/jspdf/dist/jspdf.es.min.js -> dompurify": {
+    "id": 82931,
+    "files": [
+      "static/chunks/2931.1aa8e20937063685.js"
+    ]
+  },
+  "../node_modules/jspdf/dist/jspdf.es.min.js -> html2canvas": {
+    "id": 54264,
+    "files": [
+      "static/chunks/ad2866b8.e13a3cf75ccf0eb8.js"
+    ]
+  },
+  "app/(frontend)/(landing)/ads/[...slug]/page.tsx -> ./vehicle-analytics": {
+    "id": 80491,
+    "files": [
+      "static/chunks/428-c83f22b224a57b0a.js",
+      "static/chunks/2773-8af734105d2e0ad5.js",
+      "static/chunks/491.6a5797a7c90717db.js"
+    ]
+  },
+  "app/(frontend)/dashboard/ads-manage/page.tsx -> xlsx": {
+    "id": 4246,
+    "files": [
+      "static/chunks/2170a4aa.f8d3849cdb97c01f.js",
+      "static/chunks/8436.cab94b59cca0a8ff.js"
+    ]
+  },
+  "app/(frontend)/dashboard/ads/page.tsx -> xlsx": {
+    "id": 4246,
+    "files": [
+      "static/chunks/2170a4aa.f8d3849cdb97c01f.js",
+      "static/chunks/8436.cab94b59cca0a8ff.js"
+    ]
+  },
+  "app/(frontend)/dashboard/backup/page.tsx -> xlsx": {
+    "id": 4246,
+    "files": [
+      "static/chunks/2170a4aa.f8d3849cdb97c01f.js",
+      "static/chunks/8436.cab94b59cca0a8ff.js"
+    ]
+  },
+  "app/(frontend)/dashboard/media/page.tsx -> jszip": {
+    "id": 7496,
+    "files": [
+      "static/chunks/2995-31f37b973ccdccdc.js",
+      "static/chunks/7496.022cc899833805ae.js"
+    ]
+  },
+  "app/(frontend)/dashboard/report/page.tsx -> html-to-image": {
+    "id": 23311,
+    "files": [
+      "static/chunks/3311.596975f78a3f7363.js"
+    ]
+  },
+  "app/(frontend)/dashboard/report/page.tsx -> jspdf": {
+    "id": 55172,
+    "files": [
+      "static/chunks/280273a7.7e2fba95c2931159.js",
+      "static/chunks/164f4fb6.e6dae615981bb58c.js",
+      "static/chunks/6241.a2ddeebf95ce2e26.js"
+    ]
+  },
+  "app/(frontend)/dashboard/report/page.tsx -> jspdf-autotable": {
+    "id": 36941,
+    "files": [
+      "static/chunks/6941.b3ef63705039e30d.js"
+    ]
+  }
+}
