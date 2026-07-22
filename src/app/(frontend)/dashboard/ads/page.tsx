@@ -38,6 +38,7 @@ export default function AdsPage() {
 
     try {
       const data = await file.arrayBuffer();
+      const XLSX = await import("xlsx");
       const workbook = XLSX.read(data);
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];

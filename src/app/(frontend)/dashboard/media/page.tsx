@@ -440,7 +440,7 @@ export default function AdminGalleryPage() {
     try {
       const JSZip = (await import("jszip")).default;
       const zip = new JSZip();
-      const folder = zip.folder("media-gallery") as JSZip;
+      const folder = zip.folder("media-gallery") || zip;
       const usedNames = new Map<string, number>();
 
       // Stage 1: fetch all files

@@ -1,7 +1,8 @@
-import type { OpenNextConfig } from "@opennextjs/aws/types/open-next.js";
+import type { OpenNextConfig } from "@opennextjs/aws/types/open-next";
 
 const config: OpenNextConfig = {
   default: {
+    minify: true,
     override: {
       wrapper: "cloudflare-node",
       converter: "edge",
@@ -18,10 +19,9 @@ const config: OpenNextConfig = {
       proxyExternalRequest: "fetch",
     },
   },
-  dangerously: {
+  dangerous: {
     disableIncrementalCache: true,
   },
-  minify: true,
 };
 
 export default config;
