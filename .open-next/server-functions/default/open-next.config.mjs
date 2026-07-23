@@ -1,5 +1,3 @@
-import { createRequire as topLevelCreateRequire } from 'module';const require = topLevelCreateRequire(import.meta.url);import bannerUrl from 'url';const __dirname = bannerUrl.fileURLToPath(new URL('.', import.meta.url));
-
 // node_modules/@opennextjs/cloudflare/dist/api/cloudflare-context.js
 var cloudflareContextSymbol = Symbol.for("__cloudflare-context__");
 function getCloudflareContext(options = { async: false }) {
@@ -212,11 +210,6 @@ function resolveCdnInvalidation(value = "dummy") {
 
 // open-next.config.ts
 var config = defineCloudflareConfig();
-config.default.minify = true;
-config.default.override = {
-  wrapper: "cloudflare-node",
-  converter: "edge"
-};
 var open_next_config_default = config;
 export {
   open_next_config_default as default

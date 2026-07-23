@@ -210,11 +210,6 @@ function resolveCdnInvalidation(value = "dummy") {
 
 // open-next.config.ts
 var config = defineCloudflareConfig();
-config.default.minify = true;
-config.default.override = {
-  wrapper: "cloudflare-node",
-  converter: "edge"
-};
 var open_next_config_default = config;
 export {
   open_next_config_default as default
