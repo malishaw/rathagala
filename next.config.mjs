@@ -51,13 +51,18 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  serverExternalPackages: ["sharp", "pino-pretty"],
+  serverExternalPackages: ["sharp", "pino-pretty", "jspdf", "html-to-image"],
   experimental: {
     optimizePackageImports: [
       "lucide-react",
       "date-fns",
       "recharts",
       "@radix-ui/react-icons",
+      "@radix-ui/react-select",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-popover",
+      "@radix-ui/react-tabs",
+      "@radix-ui/react-dropdown-menu",
       "@tiptap/react",
       "nuqs",
       "better-auth"
