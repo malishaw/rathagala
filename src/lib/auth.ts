@@ -26,6 +26,8 @@ const transporter = nodemailer.createTransport({
 import { users, sessions, accounts, verifications, twoFactors, organizations, members, invitations } from "@/server/db/schema";
 
 export const auth = betterAuth({
+  secret: process.env.BETTER_AUTH_SECRET || "fallback_secret_for_build_only",
+  baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   database: drizzleAdapter(db, {
     provider: "pg", // PostgreSQL via Drizzle
     schema: { 
@@ -42,7 +44,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
-    sendVerificationEmail: async ({ user, url }) => {
+    sendVerificationEmail: async ({ user, url }: { user: any; url: string }) => {
       // We handle verification via our custom code system
       // This function is required by Better Auth but we don't use the link-based verification
       console.log("Email verification required for:", user.email);
