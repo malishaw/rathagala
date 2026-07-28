@@ -148,8 +148,8 @@ function isUserWorkerFirst(runWorkerFirst, pathname) {
 var asset_resolver_default = resolver;
 
 // node_modules/@opennextjs/cloudflare/dist/api/config.js
-function defineCloudflareConfig(config2 = {}) {
-  const { incrementalCache, tagCache, queue, cachePurge, enableCacheInterception = false, routePreloadingBehavior = "none" } = config2;
+function defineCloudflareConfig(config = {}) {
+  const { incrementalCache, tagCache, queue, cachePurge, enableCacheInterception = false, routePreloadingBehavior = "none" } = config;
   return {
     default: {
       override: {
@@ -211,8 +211,26 @@ function resolveCdnInvalidation(value = "dummy") {
 }
 
 // open-next.config.ts
-var config = defineCloudflareConfig();
-var open_next_config_default = config;
+var open_next_config_default = defineCloudflareConfig({
+  functions: {
+    dashboard: {
+      routes: [
+        "app/dashboard/report/page",
+        "app/dashboard/backup/page",
+        "app/dashboard/ads-manage/page",
+        "app/dashboard/ads/page",
+        "app/dashboard/organizations/page",
+        "app/sell/new/page",
+        "app/edit-ad/[id]/page"
+      ],
+      patterns: [
+        "/dashboard/*",
+        "/sell/*",
+        "/edit-ad/*"
+      ]
+    }
+  }
+});
 export {
   open_next_config_default as default
 };

@@ -248,6 +248,11 @@
         "date-fns",
         "recharts",
         "@radix-ui/react-icons",
+        "@radix-ui/react-select",
+        "@radix-ui/react-dialog",
+        "@radix-ui/react-popover",
+        "@radix-ui/react-tabs",
+        "@radix-ui/react-dropdown-menu",
         "@tiptap/react",
         "nuqs",
         "better-auth",
@@ -332,7 +337,9 @@
     "configFileName": "next.config.mjs",
     "serverExternalPackages": [
       "sharp",
-      "pino-pretty"
+      "pino-pretty",
+      "jspdf",
+      "html-to-image"
     ],
     "turbopack": {
       "root": "/Users/ud/Malisha/donext/rathagala"
