@@ -51,7 +51,16 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  serverExternalPackages: ["sharp", "pino-pretty", "jspdf", "html-to-image"],
+  serverExternalPackages: [
+    "sharp",
+    "pino-pretty",
+    "jspdf",
+    "jspdf-autotable",
+    "html-to-image",
+    "html2canvas",
+    "xlsx",
+    "canvg"
+  ],
   experimental: {
     optimizePackageImports: [
       "lucide-react",
