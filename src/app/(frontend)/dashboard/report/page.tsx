@@ -80,6 +80,7 @@ export default function ReportPage() {
     endDate: endDate ? format(endDate, "yyyy-MM-dd") : undefined,
     period,
   });
+  
   const { data: adByEntity, isLoading: loadingEntity } = useGetAdCreationByEntity();
   const { data: advancedSummary, isLoading: loadingAdvanced, error: advancedError } = useGetAdAdvancedSummary(vehicleTypeFilter === "ALL" ? undefined : vehicleTypeFilter);
   const { data: adViews, isLoading: loadingAdViews } = useGetAdViewsReport(viewsPeriod);
