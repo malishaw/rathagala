@@ -94,30 +94,12 @@ export default function BackupPage() {
   const handleDownloadExcel = async () => {
     setIsDownloadingExcel(true);
     try {
-      // Reuse the JSON backup endpoint, then convert to Excel client-side
       const res = await fetch("/api/admin/backup/export");
       if (!res.ok) throw new Error("Export failed");
       const backup = await res.json();
 
-      const XLSX = await import("xlsx");
-      const workbook = XLSX.utils.book_new();
-
-      for (const [name, records] of Object.entries(backup.collections as Record<string, unknown[]>)) {
-        const flat = records.map((row) =>
-          Object.fromEntries(
-            Object.entries(row as Record<string, unknown>).map(([k, v]) => {
-              let cell: unknown = typeof v === "object" && v !== null ? JSON.stringify(v) : v;
-              if (typeof cell === "string" && cell.length > 32000) cell = cell.slice(0, 32000) + "…";
-              return [k, cell];
-            })
-          )
-        );
-        const worksheet = XLSX.utils.json_to_sheet(flat.length ? flat : [{}]);
-        XLSX.utils.book_append_sheet(workbook, worksheet, name.slice(0, 31));
-      }
-
-      XLSX.writeFile(workbook, `database-${new Date().toISOString().slice(0, 10)}.xlsx`);
-      toast.success("Excel file downloaded successfully");
+      const { exportBackupToExcel } = await import("@/lib/excel-export");
+      await exportBackupToExcel(backup);
     } catch (e) {
       console.error("Excel export error:", e);
       toast.error(e instanceof Error ? e.message : "Failed to download Excel file");

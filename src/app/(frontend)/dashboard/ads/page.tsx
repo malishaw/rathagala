@@ -37,12 +37,8 @@ export default function AdsPage() {
     const loadingToast = toast.loading("Processing Excel file...");
 
     try {
-      const data = await file.arrayBuffer();
-      const XLSX = await import("xlsx");
-      const workbook = XLSX.read(data);
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      const { parseAdsExcelFile } = await import("@/lib/excel-export");
+      const jsonData = await parseAdsExcelFile(file) as any[];
 
       if (jsonData.length === 0) {
         toast.error("Excel file is empty", { id: loadingToast });

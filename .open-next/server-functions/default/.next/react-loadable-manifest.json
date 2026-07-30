@@ -36,11 +36,16 @@
       "static/chunks/491.6a5797a7c90717db.js"
     ]
   },
-  "app/(frontend)/dashboard/ads-manage/page.tsx -> xlsx": {
-    "id": 4246,
+  "app/(frontend)/dashboard/ads-manage/page.tsx -> @/lib/excel-export": {
+    "id": 60496,
     "files": [
-      "static/chunks/2170a4aa.f8d3849cdb97c01f.js",
-      "static/chunks/8436.cab94b59cca0a8ff.js"
+      "static/chunks/496.a218047d905defe7.js"
+    ]
+  },
+  "app/(frontend)/dashboard/ads/page.tsx -> @/lib/excel-export": {
+    "id": 60496,
+    "files": [
+      "static/chunks/496.a218047d905defe7.js"
     ]
   },
   "app/(frontend)/dashboard/ads/page.tsx -> xlsx": {
@@ -50,11 +55,10 @@
       "static/chunks/8436.cab94b59cca0a8ff.js"
     ]
   },
-  "app/(frontend)/dashboard/backup/page.tsx -> xlsx": {
-    "id": 4246,
+  "app/(frontend)/dashboard/backup/page.tsx -> @/lib/excel-export": {
+    "id": 60496,
     "files": [
-      "static/chunks/2170a4aa.f8d3849cdb97c01f.js",
-      "static/chunks/8436.cab94b59cca0a8ff.js"
+      "static/chunks/496.a218047d905defe7.js"
     ]
   },
   "app/(frontend)/dashboard/media/page.tsx -> jszip": {
@@ -71,28 +75,41 @@
       "static/chunks/54a60aa6.ece594d0e32b930f.js",
       "static/chunks/6093-0ccee740cb67a16f.js",
       "static/chunks/428-c83f22b224a57b0a.js",
-      "static/chunks/2995.c707dbdd69c4032e.js",
+      "static/chunks/2995.5e5d3c9f6014fc3a.js",
       "static/chunks/6242.7c53079882520c3a.js"
     ]
   },
-  "app/(frontend)/dashboard/report/page.tsx -> html-to-image": {
-    "id": 23311,
+  "app/(frontend)/dashboard/report/page.tsx -> @/lib/pdf-export": {
+    "id": 78911,
     "files": [
-      "static/chunks/3311.596975f78a3f7363.js"
+      "static/chunks/8911.a149e982f9d97136.js"
     ]
   },
-  "app/(frontend)/dashboard/report/page.tsx -> jspdf": {
+  "lib/excel-export.ts -> xlsx": {
+    "id": 4246,
+    "files": [
+      "static/chunks/2170a4aa.f8d3849cdb97c01f.js",
+      "static/chunks/8436.cab94b59cca0a8ff.js"
+    ]
+  },
+  "lib/pdf-export.ts -> html-to-image": {
+    "id": 23311,
+    "files": [
+      "static/chunks/3311.610be0c886a5a1b9.js"
+    ]
+  },
+  "lib/pdf-export.ts -> jspdf": {
     "id": 55172,
     "files": [
       "static/chunks/280273a7.7e2fba95c2931159.js",
-      "static/chunks/164f4fb6.e6dae615981bb58c.js",
+      "static/chunks/164f4fb6.540588a7465e92b9.js",
       "static/chunks/6241.a2ddeebf95ce2e26.js"
     ]
   },
-  "app/(frontend)/dashboard/report/page.tsx -> jspdf-autotable": {
+  "lib/pdf-export.ts -> jspdf-autotable": {
     "id": 36941,
     "files": [
-      "static/chunks/6941.b3ef63705039e30d.js"
+      "static/chunks/6941.b6f399bdb1bce84a.js"
     ]
   }
 }

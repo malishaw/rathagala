@@ -118,7 +118,7 @@ export default function AdsManagePage() {
       const response = await client.api.ad.$get({
         query: {
           page: "1",
-          limit: "10000", // Fetch large number to get all
+          limit: "10000",
           search: searchQuery || "",
         }
       });
@@ -134,47 +134,8 @@ export default function AdsManagePage() {
         return;
       }
 
-      // Format data for Excel
-      const excelData = (reportData.ads as any[]).map((ad: AdType) => ({
-        "Title": ad.title,
-        "Type": vehicleTypeLabels[ad.type] || ad.type,
-        "Brand": ad.brand,
-        "Model": ad.model,
-        "Year": ad.manufacturedYear,
-        "Price": ad.price,
-        "Status": ad.status,
-        "Seller": ad.user?.name || "Unknown",
-        "Phone": ad.phoneNumber || ad.user?.phone || "-",
-        "Created At": new Date(ad.createdAt).toLocaleDateString(),
-      }));
-
-      // Create workbook and worksheet
-      const XLSX = await import("xlsx");
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(excelData);
-
-      // Auto-size columns (rough approximation)
-      const colWidths = [
-        { wch: 30 }, // Title
-        { wch: 15 }, // Type
-        { wch: 15 }, // Brand
-        { wch: 15 }, // Model
-        { wch: 10 }, // Year
-        { wch: 15 }, // Price
-        { wch: 15 }, // Status
-        { wch: 20 }, // Seller
-        { wch: 15 }, // Phone
-        { wch: 15 }, // Created
-      ];
-      ws["!cols"] = colWidths;
-
-      XLSX.utils.book_append_sheet(wb, ws, "Ads");
-
-      // Save file
-      const fileName = `ads-report-${new Date().toISOString().split('T')[0]}.xlsx`;
-      XLSX.writeFile(wb, fileName);
-
-      toast.success("Report generated successfully");
+      const { exportAdsToExcel } = await import("@/lib/excel-export");
+      await exportAdsToExcel(reportData, vehicleTypeLabels);
     } catch (error: any) {
       console.error("Export error:", error);
       toast.error("Failed to generate report", { description: error.message });
