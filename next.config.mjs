@@ -55,13 +55,10 @@ const nextConfig = {
     "sharp",
     "pino-pretty",
     "jspdf",
-    "jspdf-autotable",
     "html-to-image",
     "html2canvas",
     "xlsx",
-    "canvg",
-    "fflate",
-    "pdfmake"
+    "canvg"
   ],
   experimental: {
     optimizePackageImports: [
