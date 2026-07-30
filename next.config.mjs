@@ -59,7 +59,9 @@ const nextConfig = {
     "html-to-image",
     "html2canvas",
     "xlsx",
-    "canvg"
+    "canvg",
+    "fflate",
+    "pdfmake"
   ],
   experimental: {
     optimizePackageImports: [

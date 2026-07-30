@@ -209,31 +209,7 @@ function resolveCdnInvalidation(value = "dummy") {
 }
 
 // open-next.config.ts
-var open_next_config_default = defineCloudflareConfig({
-  functions: {
-    dashboard: {
-      routes: [
-        "app/(frontend)/dashboard/report/page",
-        "app/(frontend)/dashboard/backup/page",
-        "app/(frontend)/dashboard/ads-manage/page",
-        "app/(frontend)/dashboard/ads/page",
-        "app/(frontend)/dashboard/organizations/page",
-        "app/(frontend)/(landing)/sell/new/page",
-        "app/(frontend)/edit-ad/[id]/page"
-      ],
-      patterns: [
-        "/dashboard/*",
-        "/sell/*",
-        "/edit-ad/*"
-      ],
-      override: {
-        wrapper: "cloudflare-node",
-        converter: "edge",
-        proxyExternalRequest: "fetch"
-      }
-    }
-  }
-});
+var open_next_config_default = defineCloudflareConfig();
 export {
   open_next_config_default as default
 };
