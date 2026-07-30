@@ -1,22 +1,9 @@
 import { db } from "@/server/db";
 import { newsletters, users } from "@/server/db/schema";
 import { eq, or, ilike, count } from "drizzle-orm";
-import * as HttpStatusCodes from "stoker/http-status-codes";
-import nodemailer from "nodemailer";
+import { getTransporter } from "@/lib/transporter";
 
-import type { AppRouteHandler } from "@/types/server";
-import type { ListRoute, GetOneRoute, SendRoute, GetRecipientsRoute } from "./newsletter.routes";
-
-// Create email transporter
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "smtp.titan.email",
-  port: parseInt(process.env.SMTP_PORT || "587"),
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+const transporter = getTransporter();
 
 // Helper to check admin role
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

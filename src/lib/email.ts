@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import { getTransporter } from "@/lib/transporter";
 
 // Debug: Log SMTP configuration (hide password for security)
 console.log("SMTP Configuration:", {
@@ -10,16 +10,7 @@ console.log("SMTP Configuration:", {
   passLastChar: process.env.SMTP_PASS?.[process.env.SMTP_PASS.length - 1],
 });
 
-// Create email transporter
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "smtp.titan.email",
-  port: parseInt(process.env.SMTP_PORT || "587"),
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+const transporter = getTransporter();
 
 interface SendVerificationCodeParams {
   email: string;

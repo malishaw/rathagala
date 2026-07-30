@@ -10,18 +10,9 @@ import {
   bearer
 } from "better-auth/plugins";
 import { ac, admin, member, owner } from "./permissions";
-import nodemailer from "nodemailer";
+import { getTransporter } from "@/lib/transporter";
 
-// Create email transporter
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "smtp.titan.email",
-  port: parseInt(process.env.SMTP_PORT || "587"),
-  secure: false, // true for 465, false for other ports
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+const transporter = getTransporter();
 
 import { users, sessions, accounts, verifications, twoFactors, organizations, members, invitations } from "@/server/db/schema";
 
