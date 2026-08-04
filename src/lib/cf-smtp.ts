@@ -117,10 +117,8 @@ export async function sendEmailViaCFSMTP(
   config: CFSMTPConfig,
   data: CFEmailOptions
 ): Promise<void> {
-  // Dynamic import so this module can be imported in Node.js without crashing.
-  // In Node.js, this will throw MODULE_NOT_FOUND which callers handle.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { connect } = await (Function('return import("cloudflare:sockets")')() as Promise<any>);
+  const { connect } = await (import(/* webpackIgnore: true */ "cloudflare:sockets") as Promise<any>);
 
   const toAddrs = Array.isArray(data.to) ? data.to : [data.to];
   const fromMatch = data.from.match(/<([^>]+)>/);

@@ -1,8 +1,5 @@
-import { betterFetch } from "@better-fetch/fetch";
-import type { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 import { NextResponse, type NextRequest } from "next/server";
-
-type Session = typeof auth.$Infer.Session;
 
 const authRoutes = [
   "/signin",
@@ -23,16 +20,14 @@ export default async function authMiddleware(request: NextRequest) {
     protectedRoutes.some((route) => pathname.startsWith(route)) ||
     authRoutes.includes(pathname)
   ) {
-    // Fetch session
-    const { data: session } = await betterFetch<Session>(
-      "/api/auth/get-session",
-      {
-        baseURL: request.nextUrl.origin,
-        headers: {
-          cookie: request.headers.get("cookie") || "",
-        },
-      }
-    );
+    let session = null;
+    try {
+      session = await auth.api.getSession({
+        headers: request.headers,
+      });
+    } catch (error) {
+      console.error("[AUTH MIDDLEWARE] Failed to get session:", error);
+    }
 
     // If Auth route and Already authenticated,
     // Redirect back to homepage
