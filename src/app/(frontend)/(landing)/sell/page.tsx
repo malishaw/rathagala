@@ -121,7 +121,7 @@ export default function SellPage() {
                   FREE
                 </div>
                 <span className="flex items-center justify-center">
-                  Post Free Ad
+                  Post Free Ads
                   <CarIcon className="ml-2 h-5 w-5" />
                 </span>
               </Button>
@@ -271,7 +271,7 @@ export default function SellPage() {
             FREE
           </div>
           <span className="flex items-center justify-center">
-            Post Free Ad
+            Post Free Ads
             <CarIcon className="ml-2 h-5 w-5" />
           </span>
         </Button>

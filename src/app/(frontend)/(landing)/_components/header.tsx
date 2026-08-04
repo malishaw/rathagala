@@ -212,7 +212,7 @@ export function Header() {
               <Button
                 className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0 h-9 px-4 text-sm font-bold shadow-[0_4px_12px_rgba(249,115,22,0.25)] hover:shadow-[0_4px_16px_rgba(249,115,22,0.35)] transition-all duration-300 rounded-lg hover:scale-[1.03] active:scale-[0.97] cursor-pointer"
               >
-                Post Free Ad
+                Post Free Ads
               </Button>
             </Link>
           </div>
