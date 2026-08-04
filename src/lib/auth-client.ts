@@ -4,10 +4,15 @@ import { adminClient, organizationClient } from "better-auth/client/plugins";
 
 import { ac, admin, member, owner } from "./permissions";
 
-import { env } from "@/lib/env";
+// BETTER_AUTH_URL is server-only (no NEXT_PUBLIC_ prefix), so it's undefined in
+// the browser. Use NEXT_PUBLIC_APP_URL (exposed to the client) instead, falling
+// back to the current origin at runtime to avoid requests hitting localhost:3000.
+const authBaseURL =
+  process.env.NEXT_PUBLIC_APP_URL ||
+  (typeof window !== "undefined" ? window.location.origin : undefined);
 
 export const authClient = createAuthClient({
-  baseURL: env.BETTER_AUTH_URL,
+  baseURL: authBaseURL,
   plugins: [
     adminClient(),
     organizationClient({

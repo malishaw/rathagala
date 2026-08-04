@@ -5,20 +5,22 @@ import * as HttpStatusPhrases from "stoker/http-status-phrases";
 import { auth } from "@/lib/auth";
 
 export const serverAuthMiddleware = createMiddleware(async (c, next) => {
-  const session = await auth.api.getSession({ headers: c.req.raw.headers });
+  let session = null;
+
+  try {
+    session = await auth.api.getSession({ headers: c.req.raw.headers });
+  } catch (error) {
+    // If the auth session lookup itself throws (e.g. DB connection error in edge
+    // runtime), log it and fall through as an unauthenticated request rather
+    // than surfacing an unhandled 500 to the client.
+    console.error("[serverAuthMiddleware] Failed to retrieve session:", error);
+  }
 
   if (!session) {
-    // return c.json(
-    //   { message: HttpStatusPhrases.UNAUTHORIZED },
-    //   HttpStatusCodes.UNAUTHORIZED
-    // );
     c.set("user", null);
     c.set("session", null);
-    // Continue the middleware chain as an unauthenticated request.
-    // Previously this returned undefined which caused Hono to report
-    // "Context is not finalized". Always return next() (or a Response).
     return next();
-  }           
+  }
 
   c.set("user", session.user);
   c.set("session", session.session);
