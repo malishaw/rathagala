@@ -43,7 +43,7 @@ export function ForgotPasswordForm({ className }: Props) {
 
   function handleFormSubmit(formData: ForgotPasswordSchemaT) {
     startAction(async () => {
-      await authClient.forgetPassword(
+      await authClient.requestPasswordReset(
         {
           email: formData.email,
           redirectTo: "/reset-password"

@@ -18,7 +18,8 @@ export async function GET() {
   }
   try {
     const sizeRes = await db.execute(sql`SELECT pg_database_size(current_database()) as size`);
-    const size = sizeRes[0]?.size || 0;
+    const rows = sizeRes as unknown as Record<string, unknown>[];
+    const size = rows[0]?.size || 0;
     
     return NextResponse.json({
       dataSize: Number(size),
