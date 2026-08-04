@@ -52,6 +52,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   serverExternalPackages: [
+    "cloudflare:sockets",
     "sharp",
     "pino-pretty",
     "jspdf",

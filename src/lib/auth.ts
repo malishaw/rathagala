@@ -10,9 +10,6 @@ import {
   bearer
 } from "better-auth/plugins";
 import { ac, admin, member, owner } from "./permissions";
-import { getTransporter } from "@/lib/transporter";
-
-const transporter = getTransporter();
 
 import { users, sessions, accounts, verifications, twoFactors, organizations, members, invitations } from "@/server/db/schema";
 
@@ -43,7 +40,8 @@ export const auth = betterAuth({
     },
     async sendResetPassword({ user, url }) {
       try {
-        await transporter.sendMail({
+        const { getTransporter } = await eval('import("@/lib/transporter")');
+        await getTransporter().sendMail({
           from: `"Rathagala Support" <${process.env.EMAIL_FROM || "support@rathagala.lk"}>`,
           to: user.email,
           subject: "Reset Your Password - Rathagala",
@@ -134,7 +132,8 @@ If you have any questions, contact us at support@rathagala.lk
         const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL}/accept-invitation/${data.id}`;
 
         try {
-          await transporter.sendMail({
+          const { getTransporter } = await eval('import("@/lib/transporter")');
+          await getTransporter().sendMail({
             from: `"Rathagala Support" <${process.env.EMAIL_FROM || "support@rathagala.lk"}>`,
             to: data.email,
             subject: "Organization Invitation - Rathagala",
