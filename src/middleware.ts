@@ -1,4 +1,3 @@
-import { auth } from "@/lib/auth";
 import { NextResponse, type NextRequest } from "next/server";
 
 const authRoutes = [
@@ -9,10 +8,10 @@ const authRoutes = [
   "/email-verified",
 ];
 
-// Add profile to protected routes
+// Add profile and dashboard to protected routes
 const protectedRoutes = ["/dashboard", "/profile"];
 
-export default async function authMiddleware(request: NextRequest) {
+export default function authMiddleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // Check if route needs auth handling
@@ -20,18 +19,16 @@ export default async function authMiddleware(request: NextRequest) {
     protectedRoutes.some((route) => pathname.startsWith(route)) ||
     authRoutes.includes(pathname)
   ) {
-    let session = null;
-    try {
-      session = await auth.api.getSession({
-        headers: request.headers,
-      });
-    } catch (error) {
-      console.error("[AUTH MIDDLEWARE] Failed to get session:", error);
-    }
+    // Detect better-auth session cookie in request
+    const hasSessionToken =
+      request.cookies.has("better-auth.session_token") ||
+      request.cookies.has("__Secure-better-auth.session_token") ||
+      request.cookies.has("__Host-better-auth.session_token") ||
+      request.cookies.getAll().some((c) => c.name.includes("session_token"));
 
     // If Auth route and Already authenticated,
     // Redirect back to homepage
-    if (authRoutes.includes(pathname) && session) {
+    if (authRoutes.includes(pathname) && hasSessionToken) {
       return NextResponse.redirect(new URL("/", request.url));
     }
 
@@ -39,7 +36,7 @@ export default async function authMiddleware(request: NextRequest) {
     // Redirect to signin with callback URL
     if (
       protectedRoutes.some((route) => pathname.startsWith(route)) &&
-      !session
+      !hasSessionToken
     ) {
       return NextResponse.redirect(
         new URL(

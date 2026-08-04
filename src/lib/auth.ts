@@ -40,7 +40,7 @@ export const auth = betterAuth({
     },
     async sendResetPassword({ user, url }) {
       try {
-        const { getTransporter } = await eval('import("@/lib/transporter")');
+        const { getTransporter } = await import("@/lib/transporter");
         await getTransporter().sendMail({
           from: `"Rathagala Support" <${process.env.EMAIL_FROM || "support@rathagala.lk"}>`,
           to: user.email,
@@ -132,7 +132,7 @@ If you have any questions, contact us at support@rathagala.lk
         const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL}/accept-invitation/${data.id}`;
 
         try {
-          const { getTransporter } = await eval('import("@/lib/transporter")');
+          const { getTransporter } = await import("@/lib/transporter");
           await getTransporter().sendMail({
             from: `"Rathagala Support" <${process.env.EMAIL_FROM || "support@rathagala.lk"}>`,
             to: data.email,
