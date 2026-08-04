@@ -18,7 +18,7 @@ import { users, sessions, accounts, verifications, twoFactors, organizations, me
 
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET || "fallback_secret_for_build_only",
-  baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+  baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "https://rathagala.lk",
   database: drizzleAdapter(db, {
     provider: "pg", // PostgreSQL via Drizzle
     schema: { 

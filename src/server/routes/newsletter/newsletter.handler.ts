@@ -1,7 +1,15 @@
 import { db } from "@/server/db";
 import { newsletters, users } from "@/server/db/schema";
 import { eq, or, ilike, count } from "drizzle-orm";
+import * as HttpStatusCodes from "stoker/http-status-codes";
 import { getTransporter } from "@/lib/transporter";
+import type { AppRouteHandler } from "@/types/server";
+import type {
+  ListRoute,
+  GetOneRoute,
+  SendRoute,
+  GetRecipientsRoute,
+} from "./newsletter.routes";
 
 const transporter = getTransporter();
 

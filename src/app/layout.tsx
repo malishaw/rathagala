@@ -8,7 +8,7 @@ import Providers from "@/components/providers";
 import { env } from "@/lib/env";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(env.NEXT_PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || "http://localhost:3000"),
+  metadataBase: new URL(env.NEXT_PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || "https://rathagala.lk"),
   title: "Rathagala - Sri Lanka's Trusted Classifieds Platform",
   description:
     "Rathagala is Sri Lanka's premier online marketplace for buying and selling everything you need. Find vehicles, electronics, jobs, real estate, and more. Post free ads, connect with local buyers and sellers, and discover great deals in your community. Your trusted platform for classifieds in Sri Lanka.",
