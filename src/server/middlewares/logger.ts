@@ -1,12 +1,8 @@
-import pino from "pino";
-import { pinoLogger } from "hono-pino";
+import { logger as honoLogger } from "hono/logger";
 
-import { env } from "@/lib/env";
-
+// Using Hono's built-in logger instead of pino/hono-pino.
+// Pino depends on `thread-stream` which uses `WeakRef` — not available
+// in Cloudflare Workers runtime, causing ReferenceError on every request.
 export function logger() {
-  return pinoLogger({
-    pino: pino({ level: env.LOG_LEVEL || "info" })
-  });
+  return honoLogger();
 }
-
-// https://youtu.be/sNh9PoM9sUE?list=PLTxa3yJw3ixt9b8oT3Yy-uZYtiGIhcIsA&t=1749
