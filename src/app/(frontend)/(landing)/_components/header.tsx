@@ -99,7 +99,7 @@ export function Header() {
       <div className="bg-amber-500/10 border-b border-amber-500/20 py-1.5 px-4 text-center">
         <p className="text-xs md:text-sm font-medium text-amber-100 flex items-center justify-center gap-2">
           <span className="hidden sm:inline">🚀</span> 
-          <span><strong className="text-amber-400">Free Advertising:</strong> Publish your ad completely free on this site to sell your vehicle!</span>
+          <span><strong className="text-amber-400">Free Advertising:</strong> Publish your ad completely free on this site to sell your vehicleffff!</span>
         </p>
       </div>
 
