@@ -2,10 +2,12 @@ import { Inter, Bricolage_Grotesque } from "next/font/google";
 
 export const fontSans = Inter({
   subsets: ["latin"],
-  variable: "--font-sans"
+  variable: "--font-sans",
+  display: "swap",
 });
 
 export const fontHeading = Bricolage_Grotesque({
   subsets: ["latin"],
-  variable: "--font-heading"
+  variable: "--font-heading",
+  display: "swap",
 });

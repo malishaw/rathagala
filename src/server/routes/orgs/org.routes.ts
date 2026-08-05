@@ -14,7 +14,6 @@ export const list = createRoute({
   tags,
   path: "/",
   method: "get",
-  middleware: [serverAuthMiddleware],
   request: {
     query: querySchema,
   },
