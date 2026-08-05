@@ -117,8 +117,13 @@ export async function sendEmailViaCFSMTP(
   config: CFSMTPConfig,
   data: CFEmailOptions
 ): Promise<void> {
+  // Store module name in a variable so Webpack does not attempt to resolve "cloudflare:" scheme
+  const modName = "cloudflare:sockets";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { connect } = await (import(/* webpackIgnore: true */ "cloudflare:sockets") as Promise<any>);
+  const { connect } = await import(/* webpackIgnore: true */ modName).catch(() => ({} as any));
+  if (!connect) {
+    throw new Error("cloudflare:sockets module is not available in this environment");
+  }
 
   const toAddrs = Array.isArray(data.to) ? data.to : [data.to];
   const fromMatch = data.from.match(/<([^>]+)>/);
