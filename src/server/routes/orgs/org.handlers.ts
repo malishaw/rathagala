@@ -9,13 +9,6 @@ import { AppRouteHandler } from "@/types/server";
 
 export const list: AppRouteHandler<ListRoute> = async (c) => {
   const user = c.get("user");
-
-  if (!user)
-    return c.json(
-      { message: "Unauthenticated user" },
-      HttpStatusCodes.UNAUTHORIZED
-    );
-
   const isAdmin = (user as any)?.role === "admin";
 
   const { page = "1", limit = "10", search = "" } = c.req.valid("query");
@@ -25,10 +18,10 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
   const limitNum = Math.max(1, Math.min(100, parseInt(limit)));
   const offset = (pageNum - 1) * limitNum;
 
-  // For non-admin users, get the organizations they're enrolled in
+  // Build the where condition based on user role and search parameter
   let userOrganizationIds: string[] = [];
 
-  if (!isAdmin && user) {
+  if (user && !isAdmin) {
     // Get the organizations where the user is a member
     const userMemberships = await db.query.members.findMany({
       where: eq(members.userId, user.id),
@@ -36,21 +29,6 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     });
 
     userOrganizationIds = userMemberships.map((m) => m.organizationId);
-
-    if (userOrganizationIds.length === 0) {
-      return c.json(
-        {
-          organizations: [],
-          pagination: {
-            total: 0,
-            page: pageNum,
-            limit: limitNum,
-            totalPages: 0,
-          },
-        },
-        HttpStatusCodes.OK
-      );
-    }
   }
 
   // Build the where condition based on user role and search parameter

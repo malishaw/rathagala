@@ -129,9 +129,17 @@ export async function sendEmailViaCFSMTP(
   const fromMatch = data.from.match(/<([^>]+)>/);
   const fromAddr = fromMatch ? fromMatch[1] : data.from;
 
-  // Step 1: Open plain TCP connection (for STARTTLS upgrade)
+  const isDirectTLS = config.port === 465;
+
+  // Cloudflare Workers connect() requires secureTransport option for TLS/STARTTLS:
+  // - "on" for immediate TLS (port 465)
+  // - "starttls" for sockets upgraded via startTls() (port 587)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let socket: any = connect({ hostname: config.host, port: config.port });
+  let socket: any = connect(
+    { hostname: config.host, port: config.port },
+    { secureTransport: isDirectTLS ? "on" : "starttls" }
+  );
+
   let smtpReader = new SMTPStreamReader(socket.readable);
   let writer = socket.writable.getWriter();
 
@@ -140,23 +148,30 @@ export async function sendEmailViaCFSMTP(
   };
 
   try {
-    await smtpReader.readResponse(); // 220 greeting
+    if (isDirectTLS) {
+      // Direct SSL/TLS (port 465)
+      await smtpReader.readResponse(); // 220 greeting over TLS
+      await send(`EHLO rathagala.lk`);
+      await smtpReader.readResponse(); // 250 capabilities over TLS
+    } else {
+      // STARTTLS (port 587)
+      await smtpReader.readResponse(); // 220 greeting
+      await send(`EHLO rathagala.lk`);
+      await smtpReader.readResponse(); // 250 capabilities
 
-    await send(`EHLO rathagala.lk`);
-    await smtpReader.readResponse(); // 250 capabilities
+      await send("STARTTLS");
+      await smtpReader.readResponse(); // 220 Go ahead
 
-    await send("STARTTLS");
-    await smtpReader.readResponse(); // 220 Go ahead
+      // Upgrade socket to TLS
+      smtpReader.release();
+      try { writer.releaseLock(); } catch { /* ignore */ }
+      socket = socket.startTls({ expectedServerHostname: config.host });
+      smtpReader = new SMTPStreamReader(socket.readable);
+      writer = socket.writable.getWriter();
 
-    // Step 2: Upgrade socket to TLS
-    smtpReader.release();
-    writer.releaseLock();
-    socket = socket.startTls({ expectedServerHostname: config.host });
-    smtpReader = new SMTPStreamReader(socket.readable);
-    writer = socket.writable.getWriter();
-
-    await send(`EHLO rathagala.lk`);
-    await smtpReader.readResponse(); // 250 capabilities over TLS
+      await send(`EHLO rathagala.lk`);
+      await smtpReader.readResponse(); // 250 capabilities over TLS
+    }
 
     // Step 3: AUTH LOGIN
     await send("AUTH LOGIN");
