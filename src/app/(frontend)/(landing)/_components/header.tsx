@@ -4,7 +4,7 @@ import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/com
 import { betterFetch } from "@better-fetch/fetch";
 import { ArrowRight, Calendar, CarIcon, Check, LayoutDashboard, LogOut, Menu, Search, TrendingUp, UserIcon, Wrench, XIcon } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -23,6 +23,11 @@ export function Header() {
   const { data: session, isPending: isLoading } = authClient.useSession();
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
 
   // Fetch user data
   useEffect(() => {
@@ -254,7 +259,15 @@ export function Header() {
                     </Button>
                   </SheetClose>
                 </div>
-                <nav className="flex flex-col gap-0.5">
+                <nav 
+                  className="flex flex-col gap-0.5"
+                  onClick={(e) => {
+                    const target = e.target as HTMLElement | null;
+                    if (target?.closest("a")) {
+                      setIsOpen(false);
+                    }
+                  }}
+                >
                   <Link
                     href="/"
                     className="text-base font-semibold flex items-center gap-3 py-2 border-b border-white/5 hover:text-teal-200 transition-colors"
