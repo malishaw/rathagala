@@ -17,9 +17,10 @@ export function generateUniqueFileName(originalName: string): string {
 }
 
 export function getMediaType(fileType: string): MediaType {
+  if (!fileType) return "IMAGE";
   if (fileType.startsWith("image/")) return "IMAGE";
   if (fileType.startsWith("video/")) return "VIDEO";
-  if (fileType.startsWith("pdf/")) return "PDF";
+  if (fileType.includes("pdf")) return "PDF";
   return "OTHER";
 }
 

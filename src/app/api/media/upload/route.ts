@@ -31,19 +31,34 @@ export async function POST(req: Request) {
     const originalName = file.name;
     const uniqueFileName = generateUniqueFileName(originalName);
     const key = path ? `${path}/${uniqueFileName}` : uniqueFileName;
-    const contentType = file.type;
+    const contentType = file.type || "image/jpeg";
 
-    // Upload to Cloudflare R2
-    await s3Client.send(
-      new PutObjectCommand({
-        Bucket: s3Config.bucket,
-        Key: key,
-        Body: buffer,
-        ContentType: contentType,
-      })
-    );
+    let url = "";
+    try {
+      if (!s3Config.bucket || !s3Config.accountId) {
+        throw new Error("Cloudflare R2 storage credentials not fully configured");
+      }
+      // Upload to Cloudflare R2
+      await s3Client.send(
+        new PutObjectCommand({
+          Bucket: s3Config.bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: contentType,
+        })
+      );
+      url = `${s3Config.baseUrl}/${key}`;
+    } catch (r2Error) {
+      console.warn("Cloudflare R2 upload fallback triggered:", r2Error);
+      const fs = await import("fs/promises");
+      const pathModule = await import("path");
+      const uploadDir = pathModule.join(process.cwd(), "public", "uploads");
+      await fs.mkdir(uploadDir, { recursive: true });
+      const localFilePath = pathModule.join(uploadDir, uniqueFileName);
+      await fs.writeFile(localFilePath, buffer);
+      url = `/uploads/${uniqueFileName}`;
+    }
 
-    const url = `${s3Config.baseUrl}/${key}`;
     const mediaType = getMediaType(contentType);
 
     // Save to Database

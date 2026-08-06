@@ -37,3 +37,7 @@ export const vehicleMakes = [
   "Skoda", "Subaru", "Suzuki", "Tata", "Tesla", "Acura", "TVS", "Volkswagen",
   "Volvo", "Yamaha"
 ];
+
+export const vehicleColors = [
+  "Black", "White", "Silver", "Grey", "Red", "Blue", "Brown", "Beige", "Yellow", "Green", "Orange", "Gold", "Purple", "Maroon", "Other"
+];

@@ -126,7 +126,7 @@ export function Step3ContactDetails({
         name="name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Your Name<span className="text-red-500">*</span></FormLabel>
+            <FormLabel>Name<span className="text-red-500">*</span></FormLabel>
             <FormControl>
               <Input placeholder="Enter your name" {...field} value={field.value || ""} />
             </FormControl>

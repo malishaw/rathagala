@@ -130,7 +130,11 @@ export function MediaGallery({
     // Invalidate query to refresh list
     queryClient.invalidateQueries({ queryKey: ["media"] });
     toast.success("Media uploaded successfully!");
-    setActiveTab("gallery");
+    if (multiSelect) {
+      setSelectedMedia((prev) => (prev.some((m) => m.id === file.id) ? prev : [...prev, file]));
+    } else {
+      setSelectedMedia([file]);
+    }
   };
 
   // Handle file upload error

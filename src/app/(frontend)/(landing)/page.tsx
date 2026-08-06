@@ -54,10 +54,9 @@ import { FeaturedDealers } from "@/features/organizations/components/featured-de
 import { authClient } from "@/lib/auth-client";
 
 import { useLocations } from "@/hooks/use-locations";
-import { vehicleTypeLabels, vehicleMakes } from "@/lib/vehicle-constants";
+import { vehicleTypeLabels, vehicleMakes, vehicleColors } from "@/lib/vehicle-constants";
 import { formatAdTitle, shuffleArray, getRotatingSlice, getAdSortTime, interleaveFeaturedAds } from "@/lib/ad-helpers";
 
-// Define filter state interface with updated fields
 interface FilterState {
   make: string | null;
   model: string | null;
@@ -65,6 +64,8 @@ interface FilterState {
   city: string | null;
   district: string | null;
   condition: string | null;
+  grade: string | null;
+  color: string | null;
 
   // Advanced filters
   minYear: string | null;
@@ -94,6 +95,8 @@ export default function VehicleMarketplace() {
     city: null,
     district: null,
     condition: null,
+    grade: null,
+    color: null,
     minYear: null,
     maxYear: null,
     minPrice: null,
@@ -110,6 +113,8 @@ export default function VehicleMarketplace() {
     city: null,
     district: null,
     condition: null,
+    grade: null,
+    color: null,
     minYear: null,
     maxYear: null,
     minPrice: null,
@@ -357,6 +362,8 @@ export default function VehicleMarketplace() {
       city: null,
       district: null,
       condition: null,
+      grade: null,
+      color: null,
       minYear: null,
       maxYear: null,
       minPrice: null,
@@ -480,7 +487,7 @@ export default function VehicleMarketplace() {
                 <SheetContent
                   side="top"
                   className="h-auto max-h-[95vh] rounded-[0.5rem] p-0 sm:max-h-[98vh] sm:rounded-[1rem] sm:mt-4 left-1/2 -translate-x-1/2"
-                  style={{ width: '900px', maxWidth: '95vw' }}
+                  style={{ width: '580px', maxWidth: '95vw' }}
                 >
                   <div className="px-4 pt-4 pb-0">
                     <SheetHeader className="pb-0" style={{ marginBottom: 0 }}>
@@ -724,7 +731,40 @@ export default function VehicleMarketplace() {
                       </div>
                     </div>
 
-                    {/* Row 5: Condition & Fuel Type */}
+                    {/* Row 5: Grade & Color */}
+                    <div className="grid grid-cols-2 gap-3 w-full">
+                      <div>
+                        <label className="text-xs font-medium text-slate-600 mb-1 block">Grade</label>
+                        <Input
+                          placeholder="e.g. G-Grade, EX"
+                          value={filters.grade || ""}
+                          onChange={(e) => handleFilterChange("grade", e.target.value || null)}
+                          className="w-full h-9 bg-white text-xs px-3 rounded-xl"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-medium text-slate-600 mb-1 block">Color</label>
+                        <Select
+                          value={filters.color || "any"}
+                          onValueChange={(value) => handleFilterChange("color", value)}
+                        >
+                          <SelectTrigger className="w-full h-9 bg-white text-xs px-3 rounded-xl">
+                            <SelectValue placeholder="Any" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="any">Any</SelectItem>
+                            {vehicleColors.map((col) => (
+                              <SelectItem key={col} value={col.toLowerCase()}>
+                                {col}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* Row 6: Condition & Fuel Type */}
                     <div className="grid grid-cols-2 gap-3 w-full">
                       <div>
                         <label className="text-xs font-medium text-slate-600 mb-1 block">Condition</label>

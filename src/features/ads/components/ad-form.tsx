@@ -2107,7 +2107,7 @@ export function AdForm({
                     <div className="flex-1">
                       <Input
                         id="name"
-                        placeholder="Your name"
+                        placeholder="Name"
                         value={formData.name}
                         onChange={(e) => handleInputChange("name", e.target.value)}
                         className="border border-gray-300 bg-white h-10 rounded-md shadow-none"

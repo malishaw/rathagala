@@ -20,7 +20,7 @@ import { authClient } from "@/lib/auth-client";
 import { buildAdUrl } from "@/lib/ad-url";
 import { useLocations } from "@/hooks/use-locations";
 
-import { vehicleTypeLabels, listingTypeLabels, vehicleMakes } from "@/lib/vehicle-constants";
+import { vehicleTypeLabels, listingTypeLabels, vehicleMakes, vehicleColors } from "@/lib/vehicle-constants";
 import { formatAdTitle, shuffleArray, getRotatingSlice, getAdSortTime, interleaveFeaturedAds } from "@/lib/ad-helpers";
 
 
@@ -33,6 +33,7 @@ interface SearchFilters {
   brand: string;
   model: string;
   grade: string;
+  color: string;
   condition: string;
   minPrice: string;
   maxPrice: string;
@@ -62,6 +63,7 @@ export default function SearchPage() {
     brand: searchParams.get('brand') || 'all',
     model: searchParams.get('model') || '',
     grade: searchParams.get('grade') || 'all',
+    color: searchParams.get('color') || 'all',
     condition: searchParams.get('condition') || 'all',
     minPrice: searchParams.get('minPrice') || '',
     maxPrice: searchParams.get('maxPrice') || '',
@@ -322,7 +324,7 @@ export default function SearchPage() {
   // Reset pagination accumulator when search query or major filters change
   useEffect(() => {
     setFilters(prev => ({ ...prev, page: 1 }));
-  }, [filters.query, filters.globalSearch, filters.listingType, filters.brand, filters.model, filters.condition, filters.grade, filters.minPrice, filters.maxPrice, filters.minYear, filters.maxYear, filters.fuelType, filters.transmission, filters.district, filters.city, filters.seller, filters.urgentOnly]);
+  }, [filters.query, filters.globalSearch, filters.listingType, filters.brand, filters.model, filters.condition, filters.grade, filters.color, filters.minPrice, filters.maxPrice, filters.minYear, filters.maxYear, filters.fuelType, filters.transmission, filters.district, filters.city, filters.seller, filters.urgentOnly]);
 
   const filteredAds = useMemo(() => {
     return allAds;
@@ -382,6 +384,7 @@ export default function SearchPage() {
       brand: 'all',
       model: '',
       grade: 'all',
+      color: 'all',
       condition: 'all',
       minPrice: '',
       maxPrice: '',
@@ -802,8 +805,8 @@ export default function SearchPage() {
 
                 <Separator className="my-3" />
 
-                {/* Row 3: Grade & Condition */}
-                <div className="grid grid-cols-2 gap-3">
+                {/* Row 3: Grade, Color & Condition */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
                       Grade
@@ -845,6 +848,27 @@ export default function SearchPage() {
                     {(!filters.brand || filters.brand === 'all') && (
                       <p className="text-xs text-muted-foreground mt-1">Select a brand first</p>
                     )}
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
+                      Color
+                    </label>
+                    <Select
+                      value={filters.color}
+                      onValueChange={(value) => handleFilterChange('color', value)}
+                    >
+                      <SelectTrigger className="h-10 text-sm border-slate-200 bg-white rounded-lg shadow-none focus:ring-teal-500 focus:border-teal-500">
+                        <SelectValue placeholder="All" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        {vehicleColors.map((col) => (
+                          <SelectItem key={col} value={col.toLowerCase()}>
+                            {col}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
@@ -1041,6 +1065,12 @@ export default function SearchPage() {
                   <Badge variant="secondary" className="bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-100 py-1 pl-2.5 pr-1.5 rounded-full flex items-center gap-1 shadow-none">
                     Grade: {filters.grade}
                     <button onClick={() => handleFilterChange('grade', 'all')} className="text-teal-400 hover:text-teal-700 w-4 h-4 rounded-full flex items-center justify-center hover:bg-teal-300/40 transition-colors font-medium">✕</button>
+                  </Badge>
+                )}
+                {filters.color && filters.color !== 'all' && (
+                  <Badge variant="secondary" className="bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-100 py-1 pl-2.5 pr-1.5 rounded-full flex items-center gap-1 shadow-none capitalize">
+                    Color: {filters.color}
+                    <button onClick={() => handleFilterChange('color', 'all')} className="text-teal-400 hover:text-teal-700 w-4 h-4 rounded-full flex items-center justify-center hover:bg-teal-300/40 transition-colors font-medium">✕</button>
                   </Badge>
                 )}
                 {filters.condition && filters.condition !== 'all' && (
