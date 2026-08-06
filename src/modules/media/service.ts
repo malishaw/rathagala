@@ -31,8 +31,8 @@ export class MediaService {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Upload failed: ${response.statusText}`);
+      const errorData = (await response.json().catch(() => ({}))) as any;
+      throw new Error(errorData?.error || `Upload failed: ${response.statusText}`);
     }
 
     const data = await response.json();
@@ -50,23 +50,50 @@ export class MediaService {
   async deleteFile(id: string): Promise<void> {
     try {
       // Step 1: Get media details to know the S3 key
-      const media = await client.api.media[":id"].$get({
+      const mediaRes = await client.api.media[":id"].$get({
         param: { id }
       });
+
+      if (!mediaRes.ok) {
+        const errorData = (await mediaRes.json().catch(() => ({}))) as any;
+        throw new Error(
+          errorData?.message || (typeof errorData?.error === "string" ? errorData.error : errorData?.error?.message) || `Server error: ${mediaRes.status} ${mediaRes.statusText}`
+        );
+      }
+
+      const media = await mediaRes.json();
+
+      if (!media || !media.url) {
+        throw new Error("Media item URL not found");
+      }
 
       // Step 2: Ask server to delete S3 object
       const key = this.extractKeyFromUrl(media.url);
-      await fetch('/api/media/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key }),
-        credentials: 'include'
-      });
+      if (key && key !== "undefined") {
+        const deleteRes = await fetch('/api/media/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key }),
+          credentials: 'include'
+        });
+
+        if (!deleteRes.ok) {
+          const errorData = (await deleteRes.json().catch(() => ({}))) as any;
+          console.warn("Storage delete warning:", errorData);
+        }
+      }
 
       // Step 3: Delete from database
-      await client.api.media[":id"].$delete({
+      const dbDeleteRes = await client.api.media[":id"].$delete({
         param: { id }
       });
+
+      if (!dbDeleteRes.ok) {
+        const errorData = (await dbDeleteRes.json().catch(() => ({}))) as any;
+        throw new Error(
+          errorData?.message || (typeof errorData?.error === "string" ? errorData.error : errorData?.error?.message) || `Database delete failed (${dbDeleteRes.status})`
+        );
+      }
     } catch (error) {
       throw new Error(
         `Failed to delete media: ${
@@ -77,6 +104,7 @@ export class MediaService {
   }
 
   private extractKeyFromUrl(url: string): string {
+    if (!url) return "";
     try {
       const parsedUrl = new URL(url);
       return decodeURIComponent(parsedUrl.pathname.substring(1));
@@ -89,9 +117,16 @@ export class MediaService {
 
   async getAllMedia() {
     try {
-      const mediaList = await client.api.media.$get();
+      const response = await client.api.media.$get();
 
-      return mediaList;
+      if (!response.ok) {
+        const errorData = (await response.json().catch(() => ({}))) as any;
+        throw new Error(
+          errorData?.message || (typeof errorData?.error === "string" ? errorData.error : errorData?.error?.message) || `Server error: ${response.status} ${response.statusText}`
+        );
+      }
+
+      return await response.json();
     } catch (error) {
       throw new Error(
         `Failed to fetch media: ${
@@ -103,10 +138,18 @@ export class MediaService {
 
   async getMediaById(id: string) {
     try {
-      const media = await client.api.media[":id"].$get({
+      const response = await client.api.media[":id"].$get({
         param: { id }
       });
-      return media;
+
+      if (!response.ok) {
+        const errorData = (await response.json().catch(() => ({}))) as any;
+        throw new Error(
+          errorData?.message || (typeof errorData?.error === "string" ? errorData.error : errorData?.error?.message) || `Server error: ${response.status} ${response.statusText}`
+        );
+      }
+
+      return await response.json();
     } catch (error) {
       throw new Error(
         `Failed to fetch media with id ${id}: ${

@@ -9,7 +9,8 @@ export const useListMedia = (userId?: string) => {
       const response = await client.api.media.$get();
 
       if (!response.ok) {
-        const { message } = await response.json();
+        const errorData = (await response.json().catch(() => ({}))) as any;
+        const message = errorData?.message || (typeof errorData?.error === "string" ? errorData.error : errorData?.error?.message) || `Server error (${response.status} ${response.statusText})`;
 
         throw new Error(message);
       }
