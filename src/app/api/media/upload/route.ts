@@ -35,8 +35,11 @@ export async function POST(req: Request) {
 
     let url = "";
     try {
-      if (!s3Config.bucket || !s3Config.accountId) {
-        throw new Error("Cloudflare R2 storage credentials not fully configured");
+      const accessKeyId = process.env.R2_ACCESS_KEY_ID || process.env.NEXT_PUBLIC_R2_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
+      const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY || process.env.NEXT_PUBLIC_R2_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
+
+      if (!s3Config.bucket || !s3Config.accountId || !accessKeyId || !secretAccessKey) {
+        throw new Error("Cloudflare R2 storage credentials (R2_BUCKET_NAME, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY) are missing or not configured in environment variables.");
       }
       // Upload to Cloudflare R2
       await s3Client.send(
@@ -50,13 +53,19 @@ export async function POST(req: Request) {
       url = `${s3Config.baseUrl}/${key}`;
     } catch (r2Error) {
       console.warn("Cloudflare R2 upload fallback triggered:", r2Error);
-      const fs = await import("fs/promises");
-      const pathModule = await import("path");
-      const uploadDir = pathModule.join(process.cwd(), "public", "uploads");
-      await fs.mkdir(uploadDir, { recursive: true });
-      const localFilePath = pathModule.join(uploadDir, uniqueFileName);
-      await fs.writeFile(localFilePath, buffer);
-      url = `/uploads/${uniqueFileName}`;
+      try {
+        const fs = await import("fs/promises");
+        const pathModule = await import("path");
+        const uploadDir = pathModule.join(process.cwd(), "public", "uploads");
+        await fs.mkdir(uploadDir, { recursive: true });
+        const localFilePath = pathModule.join(uploadDir, uniqueFileName);
+        await fs.writeFile(localFilePath, buffer);
+        url = `/uploads/${uniqueFileName}`;
+      } catch (fsError) {
+        console.error("Local storage fallback failed:", fsError);
+        const r2Message = r2Error instanceof Error ? r2Error.message : String(r2Error);
+        throw new Error(`Media upload failed. Storage error: ${r2Message}`);
+      }
     }
 
     const mediaType = getMediaType(contentType);
