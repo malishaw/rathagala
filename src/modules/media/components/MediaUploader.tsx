@@ -151,16 +151,16 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
             </div>
           </div>
 
-          <div className="space-y-1 flex flex-col items-center">
+          <div className="space-y-1 flex flex-col items-center px-4 text-center">
             {uploading ? (
-              <p className="text-sm animate-pulse">Uploading Media...</p>
+              <p className="text-xs sm:text-sm animate-pulse">Uploading Media...</p>
             ) : isDragActive ? (
-              <p className="text-sm animate-pulse">Drop the file here</p>
+              <p className="text-xs sm:text-sm animate-pulse">Drop the file here</p>
             ) : (
-              <p className="text-sm">Drag & drop {multiple ? 'files' : 'a file'}, or click to select</p>
+              <p className="text-xs sm:text-sm">Drag & drop {multiple ? 'files' : 'a file'}, or click to select</p>
             )}
 
-            <p className="text-xs text-foreground/60">
+            <p className="text-[10px] sm:text-xs text-foreground/60">
               {acceptedTypes.join(", ")} files only, Max size:{" "}
               {maxSize / (1024 * 1024)}MB
             </p>

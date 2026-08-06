@@ -218,40 +218,40 @@ export function MediaGallery({
     }
 
     return (
-      <div className="overflow-hidden h-[350px] max-h-[60vh]">
+      <div className="overflow-hidden min-h-[350px] max-h-[70vh] flex flex-col">
         <Tabs
           value={activeTab}
           onValueChange={(v) => setActiveTab(v as "gallery" | "upload")}
-          className="h-full"
+          className="h-full flex flex-col"
         >
-          <div className="flex h-full">
+          <div className="flex flex-col sm:flex-row h-full overflow-y-auto sm:overflow-hidden">
             {/* Sidebar */}
-            <div className="w-64 border-r h-full p-4 bg-muted/20">
-              <h3 className="font-medium mb-4">Media Library</h3>
-              <TabsList className="w-full grid grid-cols-2 mb-4">
-                <TabsTrigger value="gallery">
-                  <GridIcon className="h-4 w-4 mr-2" />
+            <div className="w-full sm:w-64 border-b sm:border-b-0 sm:border-r h-auto sm:h-full p-3 sm:p-4 bg-muted/20 flex-shrink-0">
+              <h3 className="font-medium mb-3 sm:mb-4 text-sm sm:text-base">Media Library</h3>
+              <TabsList className="w-full grid grid-cols-2 mb-3 sm:mb-4">
+                <TabsTrigger value="gallery" className="text-xs sm:text-sm">
+                  <GridIcon className="h-4 w-4 mr-1 sm:mr-2" />
                   Gallery
                 </TabsTrigger>
-                <TabsTrigger value="upload">
-                  <UploadIcon className="h-4 w-4 mr-2" />
+                <TabsTrigger value="upload" className="text-xs sm:text-sm">
+                  <UploadIcon className="h-4 w-4 mr-1 sm:mr-2" />
                   Upload
                 </TabsTrigger>
               </TabsList>
 
               {activeTab === "gallery" && (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   <div className="relative">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder="Search files..."
-                      className="pl-8"
+                      className="pl-8 text-xs sm:text-sm"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2 hidden sm:block">
                     <h4 className="text-sm font-medium">Statistics</h4>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="bg-primary/10 rounded-md p-2">
@@ -270,7 +270,7 @@ export function MediaGallery({
                   </div>
 
                   {selectedMedia.length > 0 && (
-                    <Button className="w-full" onClick={handleSubmit}>
+                    <Button className="w-full sm:hidden mb-2" size="sm" onClick={handleSubmit}>
                       Use Selected ({selectedMedia.length})
                     </Button>
                   )}
@@ -278,7 +278,7 @@ export function MediaGallery({
               )}
 
               {activeTab === "upload" && (
-                <div className="prose prose-sm">
+                <div className="prose prose-sm hidden sm:block">
                   <h4 className="text-sm font-medium mb-2">
                     Upload Instructions
                   </h4>
@@ -292,7 +292,7 @@ export function MediaGallery({
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 h-full">
+            <div className="flex-1 h-full min-h-[300px]">
               <TabsContent value="gallery" className="h-full m-0">
                 {isLoading ? (
                   <div className="p-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -453,18 +453,19 @@ export function MediaGallery({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>{children}</DialogTrigger>
 
-        <DialogContent className="min-w-6xl p-0">
-          <DialogHeader className="px-6 pt-6 pb-2">
-            <DialogTitle>{title}</DialogTitle>
+        <DialogContent className="w-[95vw] sm:w-[90vw] md:max-w-4xl lg:max-w-6xl max-h-[90vh] p-0 flex flex-col overflow-hidden">
+          <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-2 border-b">
+            <DialogTitle className="text-base sm:text-lg">{title}</DialogTitle>
           </DialogHeader>
 
-          {renderGalleryContent()}
+          <div className="flex-1 overflow-y-auto">
+            {renderGalleryContent()}
+          </div>
 
-          <DialogFooter className="px-6 py-4">
+          <DialogFooter className="px-4 sm:px-6 py-3 sm:py-4 border-t flex flex-row items-center justify-end gap-2">
             <Button
               variant="outline"
               onClick={() => setOpen(false)}
-              className="mr-2"
             >
               Cancel
             </Button>

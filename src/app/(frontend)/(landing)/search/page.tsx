@@ -805,8 +805,8 @@ export default function SearchPage() {
 
                 <Separator className="my-3" />
 
-                {/* Row 3: Grade, Color & Condition */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Row 3: Grade & Color */}
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
                       Grade
@@ -870,6 +870,12 @@ export default function SearchPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+
+                <Separator className="my-3" />
+
+                {/* Row 4: Condition & Fuel Type */}
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
                       Condition
@@ -889,12 +895,6 @@ export default function SearchPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-
-                <Separator className="my-3" />
-
-                {/* Row 4: Fuel Type & Transmission */}
-                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
                       Fuel Type
@@ -916,6 +916,12 @@ export default function SearchPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+
+                <Separator className="my-3" />
+
+                {/* Row 5: Transmission */}
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase">
                       Transmission
