@@ -436,7 +436,7 @@ export function MediaGallery({
                   <MediaUploader
                     onUpload={handleUploadSuccess}
                     onError={handleUploadError}
-                    path={`${session.user.id}`}
+                    path={`${session?.user?.id || "guest"}`}
                     className="h-full"
                   />
                 </div>

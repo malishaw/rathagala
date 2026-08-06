@@ -56,6 +56,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
       const results: MediaFile[] = [];
       let successCount = 0;
       let failCount = 0;
+      let lastErrorMessage = "";
 
       for (const file of files) {
         try {
@@ -76,6 +77,8 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
           onUpload(result);
         } catch (fileError) {
           failCount++;
+          const errorMsg = fileError instanceof Error ? fileError.message : String(fileError);
+          lastErrorMessage = errorMsg;
           console.error(`Failed to upload ${file.name}:`, fileError);
         }
       }
@@ -83,12 +86,15 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
       if (successCount > 0) {
         toast.success(`${successCount} file${successCount > 1 ? 's' : ''} uploaded successfully!`, {
           id: uploadFileToastId,
-          description: failCount > 0 ? `${failCount} file${failCount > 1 ? 's' : ''} failed` : undefined
+          description: failCount > 0 ? `${failCount} file${failCount > 1 ? 's' : ''} failed: ${lastErrorMessage}` : undefined
         });
       } else {
-        toast.error("Failed to upload files", {
-          id: uploadFileToastId
+        const errorDescription = lastErrorMessage || "Failed to upload files. Please try again.";
+        toast.error("Upload failed", {
+          id: uploadFileToastId,
+          description: errorDescription
         });
+        onError(new Error(errorDescription));
       }
 
       setUploadResults(results);
