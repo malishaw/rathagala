@@ -1,12 +1,12 @@
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/server/db";
 import { media as mediaSchema } from "@/server/db/schema";
-import { s3Client, s3Config } from "@/modules/media/config";
+import { getS3Config } from "@/modules/media/config";
+import { putObjectR2 } from "@/modules/media/r2-fetch";
 import { generateUniqueFileName, getMediaType } from "@/modules/media/utils";
 
 export async function POST(req: Request) {
@@ -21,63 +21,51 @@ export async function POST(req: Request) {
 
     const formData = await req.formData();
     const file = formData.get("file") as File;
-    const path = formData.get("path") as string || "";
+    const path = (formData.get("path") as string) || "";
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = new Uint8Array(arrayBuffer);
     const originalName = file.name;
     const uniqueFileName = generateUniqueFileName(originalName);
     const key = path ? `${path}/${uniqueFileName}` : uniqueFileName;
     const contentType = file.type || "image/jpeg";
 
-    let url = "";
-    try {
-      const accessKeyId = process.env.R2_ACCESS_KEY_ID || process.env.NEXT_PUBLIC_R2_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
-      const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY || process.env.NEXT_PUBLIC_R2_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
-
-      if (!s3Config.bucket || !s3Config.accountId || !accessKeyId || !secretAccessKey) {
-        throw new Error("Cloudflare R2 storage credentials (R2_BUCKET_NAME, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY) are missing or not configured in environment variables.");
-      }
-      // Upload to Cloudflare R2
-      await s3Client.send(
-        new PutObjectCommand({
-          Bucket: s3Config.bucket,
-          Key: key,
-          Body: buffer,
-          ContentType: contentType,
-        })
+    const config = getS3Config();
+    if (!config.bucket || !config.accountId || !config.accessKeyId || !config.secretAccessKey) {
+      throw new Error(
+        `Cloudflare R2 storage credentials missing or unconfigured: bucket=${!!config.bucket}, accountId=${!!config.accountId}, accessKeyId=${!!config.accessKeyId}, secretAccessKey=${!!config.secretAccessKey}`
       );
-      url = `${s3Config.baseUrl}/${key}`;
-    } catch (r2Error) {
-      console.warn("Cloudflare R2 upload fallback triggered:", r2Error);
-      try {
-        const fs = await import("fs/promises");
-        const pathModule = await import("path");
-        const uploadDir = pathModule.join(process.cwd(), "public", "uploads");
-        await fs.mkdir(uploadDir, { recursive: true });
-        const localFilePath = pathModule.join(uploadDir, uniqueFileName);
-        await fs.writeFile(localFilePath, buffer);
-        url = `/uploads/${uniqueFileName}`;
-      } catch (fsError) {
-        console.error("Local storage fallback failed:", fsError);
-        const r2Message = r2Error instanceof Error ? r2Error.message : String(r2Error);
-        throw new Error(`Media upload failed. Storage error: ${r2Message}`);
-      }
     }
 
+    // Upload directly to Cloudflare R2 using fetch & SigV4 (zero Node fs/@aws-sdk dependencies)
+    await putObjectR2({
+      accountId: config.accountId,
+      bucket: config.bucket,
+      accessKeyId: config.accessKeyId,
+      secretAccessKey: config.secretAccessKey,
+      key,
+      body: buffer,
+      contentType,
+    });
+
+    const url = `${config.baseUrl}/${key}`;
     const mediaType = getMediaType(contentType);
 
     // Save to Database
-    const [createdMedia] = await db.insert(mediaSchema).values({
-      url,
-      filename: originalName,
-      type: mediaType,
-      size: file.size,
-      uploaderId: session.user.id,
-    }).returning();
+    const [createdMedia] = await db
+      .insert(mediaSchema)
+      .values({
+        url,
+        filename: originalName,
+        type: mediaType,
+        size: file.size,
+        uploaderId: session.user.id,
+      })
+      .returning();
 
     return NextResponse.json(createdMedia, { status: 201 });
   } catch (error) {

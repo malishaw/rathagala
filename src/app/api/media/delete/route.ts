@@ -1,10 +1,10 @@
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from 'next/server';
-import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
-import { s3Client, s3Config } from '@/modules/media/config';
+import { getS3Config } from '@/modules/media/config';
+import { deleteObjectR2 } from '@/modules/media/r2-fetch';
 
 export async function POST(req: Request) {
   try {
@@ -29,13 +29,19 @@ export async function POST(req: Request) {
       );
     }
 
-    // Delete from S3
-    await s3Client.send(
-      new DeleteObjectCommand({
-        Bucket: s3Config.bucket,
-        Key: key
-      })
-    );
+    const config = getS3Config();
+    if (!config.bucket || !config.accountId || !config.accessKeyId || !config.secretAccessKey) {
+      throw new Error("Cloudflare R2 credentials missing or unconfigured.");
+    }
+
+    // Delete from R2 using pure fetch SigV4
+    await deleteObjectR2({
+      accountId: config.accountId,
+      bucket: config.bucket,
+      accessKeyId: config.accessKeyId,
+      secretAccessKey: config.secretAccessKey,
+      key
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

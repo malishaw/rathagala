@@ -1,22 +1,9 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
-import { readFile } from "fs/promises";
-import { join } from "path";
 
-
-let fontCache: string | null = null;
 async function getSinhalaFont() {
-  if (fontCache) return fontCache;
-  try {
-    const fontPath = join(process.cwd(), "src/assets/fonts/NotoSansSinhala-Bold.ttf");
-    const fontBuffer = await readFile(fontPath);
-    fontCache = fontBuffer.toString('base64');
-    return fontCache;
-  } catch (e) {
-    console.error("Could not load font", e);
-    return null;
-  }
+  return null;
 }
 
 export async function GET(request: NextRequest) {
