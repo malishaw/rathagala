@@ -152,7 +152,7 @@ export const tags = pgTable("tag", {
 
 export const media = pgTable("media", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  uploaderId: text("uploader_id").notNull().references(() => users.id),
+  uploaderId: text("uploader_id").references(() => users.id),
   url: text("url").notNull(),
   type: mediaTypeEnum("type").notNull(),
   filename: text("filename"),

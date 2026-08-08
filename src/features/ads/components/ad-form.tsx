@@ -342,13 +342,15 @@ export function AdForm({
 
   // Handle media selection from gallery
   const handleMediaSelect = (media: MediaFile[]) => {
-    // Check if we exceed the maximum allowed (6 images)
-    if (media.length > 6) {
-      // Take only the first 6
-      setSelectedMedia(media.slice(0, 6));
-    } else {
-      setSelectedMedia(media);
-    }
+    setSelectedMedia((prev) => {
+      const combined = [...prev];
+      for (const item of media) {
+        if (!combined.some((m) => m.id === item.id)) {
+          combined.push(item);
+        }
+      }
+      return combined.slice(0, 6);
+    });
   };
 
   // Handle removing a media item

@@ -11,7 +11,8 @@ import {
   Trash2Icon,
   UploadIcon,
   ExternalLink,
-  CheckCircle2
+  CheckCircle2,
+  LogIn
 } from "lucide-react";
 import { useListMedia } from "@/modules/media/api/use-list-media";
 import { MediaService } from "@/modules/media/service";
@@ -105,14 +106,17 @@ export function MediaGallery({
 
   const handleUploadSuccess = (file: MediaFile) => {
     queryClient.invalidateQueries({ queryKey: ["media"] });
-    toast.success("Image uploaded successfully!");
+    toast.success(`${file.filename || "Image"} uploaded & selected!`);
     if (multiSelect) {
-      setSelectedMedia((prev) => (prev.some((m) => m.id === file.id) ? prev : [...prev, file]));
+      setSelectedMedia((prev) => {
+        const next = prev.some((m) => m.id === file.id) ? prev : [...prev, file];
+        onMediaSelect?.(next);
+        return next;
+      });
     } else {
       setSelectedMedia([file]);
+      onMediaSelect?.([file]);
     }
-    // Switch to gallery tab to view uploaded file
-    setActiveTab("gallery");
   };
 
   const handleUploadError = (error: Error) => {
@@ -222,25 +226,60 @@ export function MediaGallery({
 
           {/* Main Body */}
           <div className="flex-1 overflow-hidden relative">
-            {sessionPending ? (
+            {activeTab === "upload" ? (
+              <ScrollArea className="h-full">
+                <div className="p-6 max-w-3xl mx-auto space-y-4">
+                  <MediaUploader
+                    onUpload={handleUploadSuccess}
+                    onError={handleUploadError}
+                    path={`${session?.user?.id || "guest"}`}
+                  />
+                </div>
+              </ScrollArea>
+            ) : sessionPending ? (
               <div className="h-full flex items-center justify-center">
                 <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
                 <span className="text-xs text-muted-foreground">Loading...</span>
               </div>
             ) : !session || sessionErr ? (
               <div className="h-full flex items-center justify-center p-6">
-                <div className="text-center space-y-2">
-                  <p className="text-sm text-destructive font-medium">Please sign in to access your media gallery.</p>
+                <div className="text-center space-y-4 max-w-sm mx-auto">
+                  <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto shadow-xs">
+                    <LogIn className="w-7 h-7" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <h3 className="text-base font-semibold text-foreground">Sign In Required for Gallery</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Please sign in or create an account to view and select from your saved media library.
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-center gap-3 pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="rounded-xl text-xs h-9 px-4"
+                      onClick={() => {
+                        const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
+                        window.location.href = `/signup?redirect=${encodeURIComponent(currentPath)}`;
+                      }}
+                    >
+                      Create Account
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="rounded-xl text-xs h-9 px-5 font-semibold gap-1.5"
+                      onClick={() => {
+                        const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
+                        window.location.href = `/signin?redirect=${encodeURIComponent(currentPath)}`;
+                      }}
+                    >
+                      <LogIn className="w-3.5 h-3.5" />
+                      Sign In
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : activeTab === "upload" ? (
-              <div className="h-full p-6 flex flex-col justify-center max-w-2xl mx-auto">
-                <MediaUploader
-                  onUpload={handleUploadSuccess}
-                  onError={handleUploadError}
-                  path={`${session?.user?.id || "guest"}`}
-                  className="h-64 border-2 border-dashed border-primary/20 hover:border-primary/50 bg-primary/[0.02] hover:bg-primary/[0.04] transition-all rounded-2xl"
-                />
               </div>
             ) : isLoading ? (
               <ScrollArea className="h-full">

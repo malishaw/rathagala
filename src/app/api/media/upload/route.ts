@@ -13,11 +13,8 @@ export async function POST(req: Request) {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
-    });
-
-    if (!session || !session.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    }).catch(() => null);
+    const uploaderId = session?.user?.id || null;
 
     const formData = await req.formData();
     const file = formData.get("file") as File;
@@ -63,7 +60,7 @@ export async function POST(req: Request) {
         filename: originalName,
         type: mediaType,
         size: file.size,
-        uploaderId: session.user.id,
+        uploaderId,
       })
       .returning();
 
