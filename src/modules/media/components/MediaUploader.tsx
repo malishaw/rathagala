@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useCallback, useId, useState } from "react";
-import Image from "next/image";
 import { toast } from "sonner";
-import { CloudUpload, ImagesIcon, Loader2, X, CheckCircle2 } from "lucide-react";
+import { CloudUpload, Loader2, X, CheckCircle2, Check } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 
 import { MediaService } from "@/modules/media/service";
@@ -34,6 +33,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
 }) => {
   const mediaService = MediaService.getInstance();
   const [acceptedFiles, setAcceptedFiles] = useState<File[]>([]);
+  const [uploadResults, setUploadResults] = useState<MediaFile[]>([]);
   const [uploading, setUploading] = useState<boolean>(false);
 
   const uploadFileToastId = useId();
@@ -42,7 +42,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
     try {
       setUploading(true);
       const totalFiles = files.length;
-      toast.loading(`Uploading ${totalFiles} file${totalFiles > 1 ? "s" : ""}...`, {
+      toast.loading(`Uploading ${totalFiles} photo${totalFiles > 1 ? "s" : ""}...`, {
         id: uploadFileToastId,
       });
 
@@ -67,6 +67,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
 
           results.push(result);
           successCount++;
+          setUploadResults((prev) => [...prev, result]);
           onUpload(result);
         } catch (fileError) {
           failCount++;
@@ -79,7 +80,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
 
       if (successCount > 0) {
         toast.success(
-          `${successCount} image${successCount > 1 ? "s" : ""} uploaded successfully!`,
+          `${successCount} photo${successCount > 1 ? "s" : ""} uploaded & auto-selected!`,
           {
             id: uploadFileToastId,
             description:
@@ -133,7 +134,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
   });
 
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full space-y-5">
       {/* Compact Dropzone Box */}
       <Card
         {...getRootProps()}
@@ -162,7 +163,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                   ? "Uploading photos..."
                   : isDragActive
                   ? "Drop the files here"
-                  : "Drag & drop photos or click to select"}
+                  : "Click to upload or drag & drop"}
               </p>
               <p className="text-[11px] text-muted-foreground">
                 PNG, JPG, WEBP up to {maxSize / (1024 * 1024)}MB
@@ -187,51 +188,57 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
         </div>
       </Card>
 
-      {/* Selected Previews Grid */}
-      {acceptedFiles.length > 0 && !uploading && (
-        <div className="space-y-2">
+      {/* Uploaded Images Preview Grid */}
+      {uploadResults.length > 0 && (
+        <div className="space-y-3 pt-1">
           <div className="flex items-center justify-between px-1">
             <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-primary" />
-              {acceptedFiles.length} file{acceptedFiles.length > 1 ? "s" : ""} selected for upload
+              {uploadResults.length} photo{uploadResults.length > 1 ? "s" : ""} uploaded & auto-selected
             </p>
             <Button
               type="button"
               variant="ghost"
               size="sm"
               className="text-xs text-muted-foreground hover:text-foreground h-7 px-2"
-              onClick={() => setAcceptedFiles([])}
+              onClick={() => setUploadResults([])}
             >
-              Clear All
+              Clear Previews
             </Button>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            {acceptedFiles.map((file, index) => (
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5">
+            {uploadResults.map((item, index) => (
               <div
-                key={index}
-                className="relative group aspect-square rounded-xl overflow-hidden border border-border/60 bg-muted shadow-xs"
+                key={item.id || index}
+                className="relative group aspect-square rounded-2xl overflow-hidden border-2 border-primary bg-muted shadow-xs select-none"
               >
-                <Image
-                  src={URL.createObjectURL(file)}
-                  alt={file.name}
-                  fill
-                  className="object-cover"
+                <img
+                  src={item.url}
+                  alt={item.filename || `Photo ${index + 1}`}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
+
+                {/* Selected Badge */}
+                <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1 shadow-md">
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                </div>
+
+                {/* Remove Button */}
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setAcceptedFiles((prev) =>
-                      prev.filter((_, i) => i !== index)
-                    );
+                    setUploadResults((prev) => prev.filter((_, i) => i !== index));
                   }}
-                  className="absolute top-1.5 right-1.5 bg-black/70 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-2 left-2 bg-black/70 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
-                <div className="absolute bottom-0 inset-x-0 bg-black/60 p-1">
-                  <p className="text-[10px] text-white truncate text-center font-medium">
-                    {file.name}
+
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-1.5 pt-3">
+                  <p className="text-[10px] text-white truncate text-center font-medium drop-shadow-xs">
+                    {item.filename}
                   </p>
                 </div>
               </div>
