@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useCallback, useId, useState } from "react";
-import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
-import { ImagesIcon, Loader, UploadIcon } from "lucide-react";
+import { CloudUpload, ImagesIcon, Loader2, X } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 
 import { MediaService } from "@/modules/media/service";
@@ -12,13 +11,6 @@ import type { MediaFile, MediaType } from "@/modules/media/types";
 import { getMediaType } from "../utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 interface MediaUploaderProps {
@@ -42,8 +34,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
 }) => {
   const mediaService = MediaService.getInstance();
   const [acceptedFiles, setAcceptedFiles] = useState<File[]>([]);
-  const [uploading, setUploading] = useState<boolean>();
-  const [uploadResults, setUploadResults] = useState<MediaFile[]>([]);
+  const [uploading, setUploading] = useState<boolean>(false);
 
   const uploadFileToastId = useId();
 
@@ -51,7 +42,9 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
     try {
       setUploading(true);
       const totalFiles = files.length;
-      toast.loading(`Uploading ${totalFiles} file${totalFiles > 1 ? 's' : ''}...`, { id: uploadFileToastId });
+      toast.loading(`Uploading ${totalFiles} file${totalFiles > 1 ? "s" : ""}...`, {
+        id: uploadFileToastId,
+      });
 
       const results: MediaFile[] = [];
       let successCount = 0;
@@ -69,7 +62,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
           const result = await mediaService.uploadFile({
             file,
             type,
-            path
+            path,
           });
 
           results.push(result);
@@ -77,27 +70,33 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
           onUpload(result);
         } catch (fileError) {
           failCount++;
-          const errorMsg = fileError instanceof Error ? fileError.message : String(fileError);
+          const errorMsg =
+            fileError instanceof Error ? fileError.message : String(fileError);
           lastErrorMessage = errorMsg;
           console.error(`Failed to upload ${file.name}:`, fileError);
         }
       }
 
       if (successCount > 0) {
-        toast.success(`${successCount} file${successCount > 1 ? 's' : ''} uploaded successfully!`, {
-          id: uploadFileToastId,
-          description: failCount > 0 ? `${failCount} file${failCount > 1 ? 's' : ''} failed: ${lastErrorMessage}` : undefined
-        });
+        toast.success(
+          `${successCount} image${successCount > 1 ? "s" : ""} uploaded successfully!`,
+          {
+            id: uploadFileToastId,
+            description:
+              failCount > 0
+                ? `${failCount} file(s) failed: ${lastErrorMessage}`
+                : undefined,
+          }
+        );
       } else {
-        const errorDescription = lastErrorMessage || "Failed to upload files. Please try again.";
+        const errorDescription =
+          lastErrorMessage || "Failed to upload files. Please try again.";
         toast.error("Upload failed", {
           id: uploadFileToastId,
-          description: errorDescription
+          description: errorDescription,
         });
         onError(new Error(errorDescription));
       }
-
-      setUploadResults(results);
 
       if (results.length > 0) {
         setAcceptedFiles([]);
@@ -106,7 +105,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
       const err = error as Error;
       toast.error("Failed to upload media", {
         id: uploadFileToastId,
-        description: err.message
+        description: err.message,
       });
       onError(err);
     } finally {
@@ -115,11 +114,10 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
   };
 
   const onDrop = useCallback(
-    async (acceptedFiles: File[]) => {
-      setAcceptedFiles(acceptedFiles);
-      setUploadResults([]);
-      if (acceptedFiles.length > 0) {
-        void processFileUpload(acceptedFiles);
+    async (accepted: File[]) => {
+      setAcceptedFiles(accepted);
+      if (accepted.length > 0) {
+        void processFileUpload(accepted);
       }
     },
     [onUpload, onError, acceptedTypes, path]
@@ -128,128 +126,105 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     maxSize,
-    multiple
+    multiple,
+    accept: {
+      "image/*": [".png", ".jpg", ".jpeg", ".webp"],
+    },
   });
 
-
   return (
-    <div className="space-y-2">
+    <div className="w-full space-y-4">
       <Card
         {...getRootProps()}
         className={cn(
-          `p-0 w-full min-h-40 py-8 flex items-center justify-center border border-dashed rounded-lg ${isDragActive ? "border-foreground/60" : ""
-          } transition-all ease-in-out duration-100 hover:bg-foreground/5`,
+          "relative border-2 border-dashed border-border/60 hover:border-primary/60 rounded-2xl p-8 transition-all duration-200 cursor-pointer bg-muted/10 hover:bg-primary/[0.02] flex flex-col items-center justify-center text-center group min-h-[220px]",
+          isDragActive && "border-primary bg-primary/5 ring-4 ring-primary/10",
+          uploading && "opacity-70 pointer-events-none",
           className
         )}
       >
         <input {...getInputProps()} />
 
-        <div className="flex flex-col items-center gap-4">
-          {/* Icon component */}
-          <div className="relative group">
-            <ImagesIcon className={`size-8 opacity-90`} />
-            <div className="absolute -bottom-2 -right-2 size-6 rounded-full bg-background flex items-center justify-center border">
-              {!uploading ? (
-                <UploadIcon className="size-4" strokeWidth={2} />
-              ) : (
-                <Loader className="size-4 animate-spin" strokeWidth={2} />
-              )}
-            </div>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center transition-transform group-hover:scale-110 duration-200">
+            {uploading ? (
+              <Loader2 className="w-7 h-7 animate-spin" />
+            ) : (
+              <CloudUpload className="w-7 h-7" />
+            )}
           </div>
 
-          <div className="space-y-1 flex flex-col items-center px-4 text-center">
-            {uploading ? (
-              <p className="text-xs sm:text-sm animate-pulse">Uploading Media...</p>
-            ) : isDragActive ? (
-              <p className="text-xs sm:text-sm animate-pulse">Drop the file here</p>
-            ) : (
-              <p className="text-xs sm:text-sm">Drag & drop {multiple ? 'files' : 'a file'}, or click to select</p>
-            )}
-
-            <p className="text-[10px] sm:text-xs text-foreground/60">
-              {acceptedTypes.join(", ")} files only, Max size:{" "}
-              {maxSize / (1024 * 1024)}MB
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-foreground">
+              {uploading
+                ? "Uploading your images..."
+                : isDragActive
+                ? "Drop the files here"
+                : "Click to upload or drag & drop"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              PNG, JPG, WEBP up to {maxSize / (1024 * 1024)}MB
             </p>
           </div>
 
-          {acceptedFiles.length > 0 && !uploading && (
+          {!uploading && (
             <Button
               type="button"
+              variant="outline"
               size="sm"
+              className="mt-1 rounded-xl text-xs h-8 px-4 border-border/80"
               onClick={(e) => {
                 e.stopPropagation();
-                void processFileUpload(acceptedFiles);
               }}
-              disabled={uploading}
-              onMouseDown={(e) => e.stopPropagation()}
-              onTouchStart={(e) => e.stopPropagation()}
             >
-              Retry Upload
+              Browse Files
             </Button>
           )}
         </div>
       </Card>
 
-      {acceptedFiles.length > 0 && uploadResults.length === 0 && (
+      {acceptedFiles.length > 0 && !uploading && (
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium">{acceptedFiles.length} file{acceptedFiles.length > 1 ? 's' : ''} selected</p>
+          <div className="flex items-center justify-between px-1">
+            <p className="text-xs font-semibold text-foreground">
+              {acceptedFiles.length} file{acceptedFiles.length > 1 ? "s" : ""}{" "}
+              selected
+            </p>
             <Button
               type="button"
-              variant={"ghost"}
+              variant="ghost"
               size="sm"
-              className="underline"
+              className="text-xs text-muted-foreground hover:text-foreground h-7 px-2"
               onClick={() => setAcceptedFiles([])}
             >
               Clear All
             </Button>
           </div>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
             {acceptedFiles.map((file, index) => (
-              <div key={index} className="relative group">
+              <div
+                key={index}
+                className="relative group aspect-square rounded-xl overflow-hidden border border-border/60 bg-muted"
+              >
                 <Image
                   src={URL.createObjectURL(file)}
                   alt={file.name}
-                  width={80}
-                  height={80}
-                  className="rounded-md w-full h-20 object-cover"
+                  fill
+                  className="object-cover"
                 />
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setAcceptedFiles(prev => prev.filter((_, i) => i !== index));
+                    setAcceptedFiles((prev) =>
+                      prev.filter((_, i) => i !== index)
+                    );
                   }}
-                  className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                  <X className="w-3 h-3" />
                 </button>
-                <p className="text-xs truncate mt-1">{file.name}</p>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {uploadResults.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-sm font-medium">{uploadResults.length} file{uploadResults.length > 1 ? 's' : ''} uploaded successfully</p>
-          <div className="flex flex-wrap gap-2">
-            {uploadResults.map((result, index) => (
-              <TooltipProvider key={index}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Badge variant={"secondary"} className="cursor-pointer">
-                      <Link href={result.url} passHref target="_blank">
-                        Preview {index + 1}
-                      </Link>
-                    </Badge>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{result.filename}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
             ))}
           </div>
         </div>

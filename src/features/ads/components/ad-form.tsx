@@ -55,6 +55,7 @@ import {
 } from "@/components/ui/select";
 
 import { MediaGallery } from "@/modules/media/components/media-gallery";
+import { MediaUploader } from "@/modules/media/components/MediaUploader";
 import type { MediaFile } from "@/modules/media/types";
 import { CreateAdSchema } from "@/server/routes/ad/ad.schemas";
 import { authClient } from "@/lib/auth-client";
@@ -1815,172 +1816,180 @@ export function AdForm({
 
           {/* Images Section */}
           <TabsContent value="images">
-            <Card>
-              <CardHeader>
-                <CardTitle>Vehicle Images</CardTitle>
-                <CardDescription>
-                  Upload up to 6 images of your vehicle (First image will be the
-                  main image). Images will be automatically optimized to 1000×1000px and compressed to ~500KB for faster loading.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Media Gallery Button */}
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <div className="flex flex-col items-center justify-center space-y-4">
-                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-                      <ImageIcon className="w-8 h-8 text-muted-foreground" />
-                    </div>
-
-                    <div className="space-y-1 text-center">
-                      <p className="text-sm font-medium">
-                        {selectedMedia.length === 0
-                          ? "No images selected yet"
-                          : selectedMedia.length >= 6
-                            ? "Maximum number of images selected (6/6)"
-                            : `${selectedMedia.length
-                            } image(s) selected, you can add ${6 - selectedMedia.length
-                            } more`}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Select up to 6 images from your media gallery
-                      </p>
-                    </div>
-
-                    <MediaGallery
-                      onMediaSelect={handleMediaSelect}
-                      multiSelect={true}
-                      open={isGalleryOpen}
-                      onOpenChange={setIsGalleryOpen}
-                      title="Select Vehicle Images"
-                    >
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setIsGalleryOpen(true)}
-                        className="flex items-center gap-2"
-                        disabled={selectedMedia.length >= 6}
-                      >
-                        <PlusCircle className="w-4 h-4" />
-                        {selectedMedia.length === 0
-                          ? "Select Images"
-                          : "Select More Images"}
-                      </Button>
-                    </MediaGallery>
+            <Card className="rounded-2xl border-border/60 shadow-xs">
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-lg font-semibold tracking-tight">Vehicle Photos</CardTitle>
+                    <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                      Upload up to 6 photos. Photo #1 is your main cover photo shown on search results.
+                    </CardDescription>
                   </div>
+                  <span className="text-xs font-semibold px-3 py-1 rounded-full bg-muted text-foreground">
+                    {selectedMedia.length} / 6 Photos
+                  </span>
                 </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Direct Inline Drag & Drop Zone */}
+                {selectedMedia.length < 6 && (
+                  <div className="space-y-2">
+                    <MediaUploader
+                      onUpload={(file) => {
+                        setSelectedMedia((prev) => {
+                          if (prev.some((m) => m.id === file.id)) return prev;
+                          if (prev.length >= 6) return prev;
+                          return [...prev, file];
+                        });
+                      }}
+                      onError={(err) => {
+                        console.error(err);
+                      }}
+                      path={session?.user?.id || "ads"}
+                      multiple={true}
+                      maxSize={10 * 1024 * 1024}
+                    />
 
-                {/* Selected Media Preview */}
-                {selectedMedia.length > 0 && (
-                  <>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label>
-                          Selected Images ({selectedMedia.length}/6)
-                        </Label>
-                        <span className="text-sm text-muted-foreground">
-                          Drag images to reorder • First image is main
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        {selectedMedia.map((media, index) => (
+                    <div className="flex items-center justify-between text-xs text-muted-foreground px-1 pt-1">
+                      <span>Click box or drag files from computer</span>
+                      <MediaGallery
+                        onMediaSelect={handleMediaSelect}
+                        multiSelect={true}
+                        open={isGalleryOpen}
+                        onOpenChange={setIsGalleryOpen}
+                        title="Select from Media Library"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setIsGalleryOpen(true)}
+                          className="text-primary hover:underline font-medium flex items-center gap-1.5"
+                        >
+                          <ImageIcon className="w-3.5 h-3.5" />
+                          Choose from previous uploads
+                        </button>
+                      </MediaGallery>
+                    </div>
+                  </div>
+                )}
+
+                {/* 6 Photo Slots Grid */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-semibold text-foreground">
+                      Photo Slots ({selectedMedia.length}/6)
+                    </Label>
+                    <span className="text-xs text-muted-foreground">
+                      Hover photo to set main cover or remove
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-3.5">
+                    {Array.from({ length: 6 }).map((_, index) => {
+                      const media = selectedMedia[index];
+
+                      if (media) {
+                        return (
                           <div
                             key={media.id}
-                            className={`
-                              relative group aspect-video border rounded-md overflow-hidden cursor-move
-                              ${index === 0
-                                ? "border-[#024950] border-2"
-                                : "border-gray-200"
-                              }
-                              ${draggedIndex === index
-                                ? "opacity-50"
-                                : "opacity-100"
-                              }
-                            `}
-                            // draggable
-                            // onDragStart={() => handleDragStart(index)}
-                            // onDragOver={(e) => handleDragOver(e, index)}
-                            onDrop={(e) => handleDrop(e, index)}
-                            onDragEnd={handleDragEnd}
+                            className={cn(
+                              "relative group aspect-video rounded-2xl border overflow-hidden bg-muted transition-all duration-200 select-none shadow-xs",
+                              index === 0
+                                ? "ring-2 ring-primary border-primary shadow-sm"
+                                : "border-border/60 hover:border-foreground/30"
+                            )}
                           >
-                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center space-y-2 z-10">
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="sm"
-                                className="w-3/4"
-                                onClick={() => removeMedia(media.id)}
-                              >
-                                <XCircle className="w-4 h-4 mr-1" />
-                                Remove
-                              </Button>
+                            <Image
+                              src={media.url}
+                              alt={`Vehicle photo ${index + 1}`}
+                              fill
+                              className="object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
 
+                            {/* Hover Actions Overlay */}
+                            <div className="absolute inset-0 bg-black/55 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center gap-2 p-3 z-30">
                               {index !== 0 && (
                                 <Button
                                   type="button"
                                   variant="secondary"
                                   size="sm"
-                                  className="w-3/4"
-                                  onClick={() => openImageEditor(index)}
+                                  className="w-full text-xs h-8 rounded-xl font-medium shadow-xs"
+                                  onClick={() => reorderMedia(index, 0)}
                                 >
-                                  Edit Details
+                                  Make Main Cover
                                 </Button>
                               )}
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                className="w-full text-xs h-8 rounded-xl font-medium shadow-xs"
+                                onClick={() => removeMedia(media.id)}
+                              >
+                                <XCircle className="w-3.5 h-3.5 mr-1" />
+                                Remove Photo
+                              </Button>
                             </div>
 
-                            {/* Badge for main image */}
-                            {index === 0 && (
-                              <div className="absolute top-2 left-2 bg-[#024950] text-white text-xs px-2 py-1 rounded z-20">
-                                Main Image
+                            {/* Main Cover Badge */}
+                            {index === 0 ? (
+                              <div className="absolute top-2.5 left-2.5 bg-primary text-primary-foreground text-[10px] font-bold px-2.5 py-1 rounded-full shadow-md z-20 flex items-center gap-1">
+                                <Check className="w-3 h-3 stroke-[3]" />
+                                Main Cover Photo
+                              </div>
+                            ) : (
+                              <div className="absolute top-2.5 left-2.5 bg-black/60 backdrop-blur-xs text-white text-[10px] font-medium px-2.5 py-0.5 rounded-full z-20">
+                                Photo #{index + 1}
                               </div>
                             )}
-
-                            {/* Image order badge */}
-                            <div className="absolute top-2 right-2 bg-black/70 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full z-20">
-                              {index + 1}
-                            </div>
-
-                            {/* SEO info badge - if title or alt text is set */}
-                            {/* {(media.title || media.alt) && (
-                              <div className="absolute bottom-2 right-2 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-sm z-20">
-                                SEO
-                              </div>
-                            )} */}
-
-                            <Image
-                              src={media.url}
-                              alt={`Vehicle image ${index + 1}`}
-                              width={300}
-                              height={200}
-                              className="object-cover w-full h-full"
-                            />
                           </div>
-                        ))}
-                      </div>
-                    </div>
+                        );
+                      }
 
-                    <div className="text-sm text-muted-foreground">
-                      <p>
-                        <span className="font-medium">Tip:</span> High-quality
-                        images from multiple angles will increase interest in
-                        your vehicle
-                      </p>
-                    </div>
-                  </>
-                )}
+                      // Empty Slot Card
+                      return (
+                        <div
+                          key={`empty-slot-${index}`}
+                          onClick={() => {
+                            if (selectedMedia.length < 6) {
+                              const fileInput = document.querySelector<HTMLInputElement>("input[type='file']");
+                              fileInput?.click();
+                            }
+                          }}
+                          className={cn(
+                            "aspect-video rounded-2xl border-2 border-dashed border-border/50 hover:border-primary/50 bg-muted/20 hover:bg-primary/[0.02] transition-all flex flex-col items-center justify-center text-center p-3 cursor-pointer group select-none",
+                            index === 0 && "border-primary/40 bg-primary/[0.03]"
+                          )}
+                        >
+                          <div className="w-8 h-8 rounded-xl bg-muted group-hover:bg-primary/10 text-muted-foreground group-hover:text-primary flex items-center justify-center transition-colors mb-1">
+                            <PlusCircle className="w-4 h-4" />
+                          </div>
+                          <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground">
+                            {index === 0 ? "Add Cover Photo" : `Add Photo #${index + 1}`}
+                          </span>
+                          {index === 0 && (
+                            <span className="text-[10px] text-primary font-semibold mt-0.5">
+                              Main Search Cover
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
 
-                <div className="flex justify-between mt-4">
+                <div className="flex justify-between mt-6 pt-2 border-t border-border/40">
                   <Button
                     type="button"
                     onClick={goToPrevTab}
                     variant="outline"
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 rounded-xl text-xs h-9 px-4"
                   >
                     <ArrowLeft className="w-4 h-4" /> Previous
                   </Button>
                   <Button
                     type="button"
                     onClick={goToNextTab}
-                    className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+                    className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 rounded-xl text-xs h-9 px-5 font-semibold"
                   >
                     Next <ArrowRight className="w-4 h-4" />
                   </Button>

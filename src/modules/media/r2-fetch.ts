@@ -97,7 +97,7 @@ export async function putObjectR2({
       "x-amz-content-sha256": payloadHash,
       "Authorization": authorizationHeader,
     },
-    body: body,
+    body: body as any,
   });
 
   if (!response.ok) {
