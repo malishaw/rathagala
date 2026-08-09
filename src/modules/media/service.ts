@@ -6,7 +6,7 @@ import { getMediaType } from "@/modules/media/utils";
 export class MediaService {
   private static instance: MediaService;
 
-  private constructor() {}
+  private constructor() { }
 
   static getInstance(): MediaService {
     if (!MediaService.instance) {
@@ -96,8 +96,7 @@ export class MediaService {
       }
     } catch (error) {
       throw new Error(
-        `Failed to delete media: ${
-          error instanceof Error ? error.message : String(error)
+        `Failed to delete media: ${error instanceof Error ? error.message : String(error)
         }`
       );
     }
@@ -129,8 +128,7 @@ export class MediaService {
       return await response.json();
     } catch (error) {
       throw new Error(
-        `Failed to fetch media: ${
-          error instanceof Error ? error.message : String(error)
+        `Failed to fetch media: ${error instanceof Error ? error.message : String(error)
         }`
       );
     }
@@ -152,8 +150,7 @@ export class MediaService {
       return await response.json();
     } catch (error) {
       throw new Error(
-        `Failed to fetch media with id ${id}: ${
-          error instanceof Error ? error.message : String(error)
+        `Failed to fetch media with id ${id}: ${error instanceof Error ? error.message : String(error)
         }`
       );
     }

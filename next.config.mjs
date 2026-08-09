@@ -44,6 +44,15 @@ const nextConfig = {
     ]
   },
 
+  async rewrites() {
+    return [
+      {
+        source: "/:path((?!_next|api|public|favicon\\.ico).+\\.(?:png|jpe?g|webp|gif|svg|pdf|mp4|webm))",
+        destination: "/api/media/file/:path",
+      },
+    ];
+  },
+
   typescript: {
     ignoreBuildErrors: true,
   },

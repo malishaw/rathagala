@@ -26,10 +26,25 @@ export function getS3Config() {
     process.env.R2_PUBLIC_URL ||
     process.env.NEXT_PUBLIC_R2_PUBLIC_URL ||
     "";
+  const appUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.BETTER_AUTH_URL ||
+    "https://rathagala.lk";
 
-  const baseUrl = customDomain
-    ? `https://${customDomain}`
-    : publicUrl;
+  let baseUrl = "";
+  if (publicUrl) {
+    baseUrl = publicUrl.replace(/\/$/, "");
+  } else if (customDomain) {
+    const domainHost = customDomain.replace(/^https?:\/\//, "").replace(/\/$/, "");
+    const appHost = appUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
+    if (domainHost === appHost) {
+      baseUrl = `${appUrl.replace(/\/$/, "")}/api/media/file`;
+    } else {
+      baseUrl = `https://${domainHost}`;
+    }
+  } else {
+    baseUrl = `${appUrl.replace(/\/$/, "")}/api/media/file`;
+  }
 
   return {
     region: "auto",

@@ -225,7 +225,7 @@ export type Ad = z.infer<typeof AdSchema>;
 export const MediaSchema = z.object({
   type: MediaTypeSchema,
   id: z.string(),
-  uploaderId: z.string(),
+  uploaderId: z.string().nullable(),
   url: z.string(),
   filename: z.string().nullable(),
   size: z.number().int().nullable(),
