@@ -105,8 +105,12 @@ export class MediaService {
   private extractKeyFromUrl(url: string): string {
     if (!url) return "";
     try {
-      const parsedUrl = new URL(url);
-      return decodeURIComponent(parsedUrl.pathname.substring(1));
+      const parsedUrl = new URL(url, "http://dummy.local");
+      const pathname = parsedUrl.pathname;
+      if (pathname.includes("/api/media/file/")) {
+        return decodeURIComponent(pathname.split("/api/media/file/")[1]);
+      }
+      return decodeURIComponent(pathname.substring(1));
     } catch {
       // Fallback if not a valid URL
       const parts = url.split('/');

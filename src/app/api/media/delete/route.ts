@@ -2,7 +2,6 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
 import { getS3Config } from '@/modules/media/config';
 import { deleteObjectR2 } from '@/modules/media/r2-fetch';
 
@@ -10,7 +9,7 @@ export async function POST(req: Request) {
   try {
     // Check authentication
     const session = await auth.api.getSession({
-      headers: await headers(),
+      headers: req.headers,
     });
 
     if (!session || !session.user) {

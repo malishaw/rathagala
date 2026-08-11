@@ -38,12 +38,12 @@ export function getS3Config() {
     const domainHost = customDomain.replace(/^https?:\/\//, "").replace(/\/$/, "");
     const appHost = appUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
     if (domainHost === appHost) {
-      baseUrl = `${appUrl.replace(/\/$/, "")}/api/media/file`;
+      baseUrl = "/api/media/file";
     } else {
       baseUrl = `https://${domainHost}`;
     }
   } else {
-    baseUrl = `${appUrl.replace(/\/$/, "")}/api/media/file`;
+    baseUrl = "/api/media/file";
   }
 
   return {

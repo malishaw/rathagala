@@ -2,7 +2,6 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import { db } from "@/server/db";
 import { media as mediaSchema } from "@/server/db/schema";
 import { getS3Config } from "@/modules/media/config";
@@ -12,7 +11,7 @@ import { generateUniqueFileName, getMediaType } from "@/modules/media/utils";
 export async function POST(req: Request) {
   try {
     const session = await auth.api.getSession({
-      headers: await headers(),
+      headers: req.headers,
     }).catch(() => null);
     const uploaderId = session?.user?.id || null;
 

@@ -126,10 +126,18 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
+    onDropRejected: (rejections) => {
+      const firstError = rejections[0]?.errors[0];
+      const desc = firstError?.code === "file-too-large"
+        ? `File size exceeds ${maxSize / (1024 * 1024)}MB limit.`
+        : firstError?.message || "Invalid file format selected.";
+      toast.error("Upload rejected", { description: desc });
+      onError(new Error(desc));
+    },
     maxSize,
     multiple,
     accept: {
-      "image/*": [".png", ".jpg", ".jpeg", ".webp"],
+      "image/*": [],
     },
   });
 

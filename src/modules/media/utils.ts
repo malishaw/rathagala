@@ -8,12 +8,17 @@ import { MediaType } from "@/modules/media/types";
 // Utility functions
 export function generateUniqueFileName(originalName: string): string {
   const timestamp = Date.now();
-
   const hash = crypto.randomBytes(8).toString("hex");
-  const name = originalName.split(".")[0];
-  const extension = originalName.split(".").pop();
 
-  return `${name}-${timestamp}-${hash}.${extension}`;
+  const parts = originalName.split(".");
+  const extension = parts.length > 1 ? parts.pop()?.toLowerCase() : "jpg";
+  const rawBaseName = parts.join(".");
+  const sanitizedBaseName = rawBaseName
+    .replace(/[^a-zA-Z0-9_-]/g, "_")
+    .replace(/_+/g, "_")
+    .substring(0, 50) || "file";
+
+  return `${sanitizedBaseName}-${timestamp}-${hash}.${extension}`;
 }
 
 export function getMediaType(fileType: string): MediaType {
