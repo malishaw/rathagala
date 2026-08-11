@@ -1,4 +1,4 @@
-import crypto from "crypto";
+import * as crypto from "crypto";
 
 interface R2UploadParams {
   accountId: string;
@@ -35,6 +35,18 @@ function sha256Hex(data: Uint8Array | string): string {
 }
 
 /**
+ * Encodes URI path components strictly according to RFC 3986 for AWS SigV4.
+ * Standard JS encodeURIComponent leaves characters !, ', (, ), * unencoded.
+ */
+function encodeUriRfc3986(str: string): string {
+  return encodeURIComponent(str).replace(
+    /[!'()*]/g,
+    (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`
+  );
+}
+
+
+/**
  * Uploads a file buffer to Cloudflare R2 via S3 API using pure web fetch and AWS SigV4.
  * This completely avoids @aws-sdk Node dependencies that invoke fs.readFile on Cloudflare Workers.
  */
@@ -48,7 +60,7 @@ export async function putObjectR2({
   contentType,
 }: R2UploadParams): Promise<void> {
   const host = `${accountId}.r2.cloudflarestorage.com`;
-  const encodedKeyPath = key.split("/").map((part) => encodeURIComponent(part)).join("/");
+  const encodedKeyPath = key.split("/").map((part) => encodeUriRfc3986(part)).join("/");
   const requestPath = `/${bucket}/${encodedKeyPath}`;
   const url = `https://${host}${requestPath}`;
 
@@ -125,7 +137,7 @@ export async function getObjectR2({
   key,
 }: R2GetParams): Promise<{ body: ReadableStream<Uint8Array> | ArrayBuffer; contentType: string; contentLength?: number }> {
   const host = `${accountId}.r2.cloudflarestorage.com`;
-  const encodedKeyPath = key.split("/").map((part) => encodeURIComponent(part)).join("/");
+  const encodedKeyPath = key.split("/").map((part) => encodeUriRfc3986(part)).join("/");
   const requestPath = `/${bucket}/${encodedKeyPath}`;
   const url = `https://${host}${requestPath}`;
 
@@ -208,7 +220,7 @@ export async function deleteObjectR2({
   key,
 }: R2DeleteParams): Promise<void> {
   const host = `${accountId}.r2.cloudflarestorage.com`;
-  const encodedKeyPath = key.split("/").map((part) => encodeURIComponent(part)).join("/");
+  const encodedKeyPath = key.split("/").map((part) => encodeUriRfc3986(part)).join("/");
   const requestPath = `/${bucket}/${encodedKeyPath}`;
   const url = `https://${host}${requestPath}`;
 
