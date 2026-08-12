@@ -16,6 +16,7 @@ import { Camera, PlusCircle, X, Loader2, Zap } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { client } from "@/lib/rpc";
 
 interface Step3Props {
   onBack: () => void;
@@ -93,6 +94,15 @@ export function Step3ContactDetails({
                       form.setValue("name", "");
                       form.setValue("phoneNumber", "");
                       form.setValue("whatsappNumber", "");
+                    } else {
+                      client.api.users.me.$get().then(async (res) => {
+                        if (res.ok) {
+                          const userData = await res.json();
+                          if (userData.name) form.setValue("name", userData.name);
+                          if (userData.phone) form.setValue("phoneNumber", userData.phone);
+                          if (userData.whatsappNumber) form.setValue("whatsappNumber", userData.whatsappNumber);
+                        }
+                      }).catch(() => {});
                     }
                   }}
                   className="flex flex-row space-x-6 pt-1"

@@ -208,7 +208,7 @@ export default function QuickAdCreatePage() {
         return !!detailsRequired;
 
       case 3:
-        return !!(name && phoneNumber && province && district && city && location && termsAndConditions);
+        return !!(name && phoneNumber && province && district && city && location && termsAndConditions && selectedImages.length > 0);
 
       default:
         return false;
@@ -403,6 +403,7 @@ export default function QuickAdCreatePage() {
         }}
         onGoBack={() => {}}
         onCreateAnother={() => {
+          localStorage.removeItem("rathagala_draft_ad");
           pendingModalActionRef.current = "createAnother";
           setCurrentStep(1);
           setAdMode("vehicle");
