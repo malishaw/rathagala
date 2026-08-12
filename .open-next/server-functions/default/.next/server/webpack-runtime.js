@@ -49,7 +49,6 @@
        case 7214: b(require("./chunks/7214.js")); break;
        case 7562: b(require("./chunks/7562.js")); break;
        case 7678: b(require("./chunks/7678.js")); break;
-       case 7806: b(require("./chunks/7806.js")); break;
        case 8201: b(require("./chunks/8201.js")); break;
        case 8386: b(require("./chunks/8386.js")); break;
        case 8662: b(require("./chunks/8662.js")); break;

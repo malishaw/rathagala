@@ -82,7 +82,8 @@
   "app/(frontend)/dashboard/report/page.tsx -> @/lib/pdf-export": {
     "id": 78911,
     "files": [
-      "static/chunks/8911.a149e982f9d97136.js"
+      "static/chunks/8720-d3227125c9296de6.js",
+      "static/chunks/8911.2954b2d686f6afc3.js"
     ]
   },
   "lib/excel-export.ts -> xlsx": {

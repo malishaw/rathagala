@@ -15,7 +15,13 @@
   "headers": [],
   "rewrites": {
     "beforeFiles": [],
-    "afterFiles": [],
+    "afterFiles": [
+      {
+        "source": "/:path((?!_next|api|public|favicon\\.ico).+\\.(?:png|jpe?g|webp|gif|svg|pdf|mp4|webm))",
+        "destination": "/api/media/file/:path",
+        "regex": "^(?:/((?!_next|api|public|favicon\\.ico).+\\.(?:png|jpe?g|webp|gif|svg|pdf|mp4|webm)))(?:/)?$"
+      }
+    ],
     "fallback": []
   },
   "dynamicRoutes": [
@@ -66,6 +72,14 @@
         "nxtPall": "nxtPall"
       },
       "namedRegex": "^/api/auth/(?<nxtPall>.+?)(?:/)?$"
+    },
+    {
+      "page": "/api/media/file/[...key]",
+      "regex": "^/api/media/file/(.+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPkey": "nxtPkey"
+      },
+      "namedRegex": "^/api/media/file/(?<nxtPkey>.+?)(?:/)?$"
     },
     {
       "page": "/api/[...route]",

@@ -347,6 +347,16 @@
     ],
     "turbopack": {
       "root": "/Users/ud/Malisha/donext/rathagala"
+    },
+    "_originalRewrites": {
+      "beforeFiles": [],
+      "afterFiles": [
+        {
+          "source": "/:path((?!_next|api|public|favicon\\.ico).+\\.(?:png|jpe?g|webp|gif|svg|pdf|mp4|webm))",
+          "destination": "/api/media/file/:path"
+        }
+      ],
+      "fallback": []
     }
   },
   "appDir": "/Users/ud/Malisha/donext/rathagala",
