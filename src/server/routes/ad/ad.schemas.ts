@@ -77,7 +77,7 @@ export type SelectAdSchema = z.infer<typeof selectAdSchema>;
 // Basic required fields
 export const createAdBaseSchema = z
   .object({
-    title: z.string().min(1, "Title is required"),
+    title: z.string().optional().or(z.literal("")),
     description: z.string().min(1, "Description is required"),
     type: z.enum(
       [

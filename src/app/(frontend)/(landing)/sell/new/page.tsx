@@ -17,6 +17,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
 import { Zap } from "lucide-react";
+import { toast } from "sonner";
 
 import { Step1VehicleInfo } from "./_components/step-1-vehicle-info";
 import { Step2VehicleDetails } from "./_components/step-2-vehicle-details";
@@ -160,16 +161,25 @@ export default function QuickAdCreatePage() {
         if (listingType !== "SELL") {
           return !!(listingType && type);
         }
-        if (["AUTO_SERVICE", "RENTAL", "MAINTENANCE"].includes(type)) {
-          return !!type;
+        if (["AUTO_SERVICE", "RENTAL"].includes(type)) {
+          return !!(type && serviceType);
+        }
+        if (type === "MAINTENANCE") {
+          return !!(type && maintenanceType);
         }
         if (type === "BICYCLE") {
-          return !!(type && brand);
+          return !!(type && brand && condition);
         }
         if (type === "AUTO_PARTS") {
-          return !!(type && compatibleVehicleType && condition && partCategoryId);
+          return !!(type && compatibleVehicleType && condition && partCategoryId && partName && brand);
         }
-        const basicRequired = type && brand && model;
+        if (type === "HEAVY_DUTY") {
+          return !!(type && vehicleType && condition && brand && model && manufacturedYear);
+        }
+        if (type === "MOTORCYCLE") {
+          return !!(type && bikeType && condition && brand && model && manufacturedYear);
+        }
+        const basicRequired = type && brand && model && condition;
         const yearRequired = (type === "VAN") ? modelYear : manufacturedYear;
         return !!(basicRequired && yearRequired);
 
@@ -177,18 +187,17 @@ export default function QuickAdCreatePage() {
         if (listingType !== "SELL") {
           return !!description;
         }
-        let priceRequired = metadata?.isNegotiable || price;
-        let detailsRequired = priceRequired && condition && description;
+        let priceRequired = metadata?.isNegotiable || (price !== undefined && price !== null && price > 0);
+        let detailsRequired = priceRequired && description;
 
         if (type === "CAR") {
           detailsRequired = detailsRequired && fuelType && transmission;
         } else if (type === "MOTORCYCLE") {
-          detailsRequired = detailsRequired && bikeType && watchAll.engineCapacity;
+          detailsRequired = detailsRequired && watchAll.engineCapacity;
         } else if (type === "AUTO_SERVICE" || type === "RENTAL") {
           detailsRequired = detailsRequired && serviceType;
         } else if (type === "AUTO_PARTS") {
-          const partPrice = metadata?.isNegotiable || price;
-          detailsRequired = partPrice && partName && brand && description;
+          detailsRequired = priceRequired && description;
         } else if (type === "MAINTENANCE") {
           detailsRequired = detailsRequired && maintenanceType;
         } else if (type === "HEAVY_DUTY") {
@@ -343,7 +352,12 @@ export default function QuickAdCreatePage() {
                 <>
                   <Step3ContactDetails 
                     onBack={() => setCurrentStep(2)} 
-                    onSubmit={form.handleSubmit(onSubmit as any)}
+                    onSubmit={form.handleSubmit(onSubmit as any, (errors) => {
+                      console.error("Form validation errors:", errors);
+                      const firstKey = Object.keys(errors)[0];
+                      const errorMsg = (errors as any)[firstKey]?.message || "Please fill in all required fields properly.";
+                      toast.error(errorMsg);
+                    })}
                     isPending={isPending}
                     showBoostDialog={showBoostDialog}
                     setShowBoostDialog={setShowBoostDialog}
