@@ -17,6 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { client } from "@/lib/rpc";
+import { toast } from "sonner";
 
 interface Step3Props {
   onBack: () => void;
@@ -73,6 +74,32 @@ export function Step3ContactDetails({
   // Handle removing a media item
   const removeMedia = (idToRemove: string) => {
     setSelectedImages(prev => prev.filter((media) => media.id !== idToRemove));
+  };
+
+  const handlePostAdClick = () => {
+    if (isPending) return;
+
+    const values = form.getValues();
+    const missing: string[] = [];
+
+    if (!selectedImages || selectedImages.length === 0) missing.push("At least 1 vehicle image");
+    if (!values.name) missing.push("Name");
+    if (!values.phoneNumber) missing.push("Phone Number");
+    if (!values.province) missing.push("Province");
+    if (!values.district) missing.push("District");
+    if (!values.city) missing.push("City");
+    if (!values.location) missing.push("Location");
+    if (!values.termsAndConditions) missing.push("Terms & Conditions");
+
+    if (missing.length > 0) {
+      toast.error("Please complete Step 3 contact details", {
+        description: `Missing: ${missing.join(", ")}`,
+        duration: 5000,
+      });
+      return;
+    }
+
+    onSubmit();
   };
 
   return (
@@ -385,16 +412,16 @@ export function Step3ContactDetails({
           </Button>
           <Button
             type="button"
-            className="flex-1 bg-teal-700 hover:bg-teal-800"
-            onClick={onSubmit}
-            disabled={isPending || !canProceed}
+            className="flex-1 bg-teal-700 hover:bg-teal-800 font-medium cursor-pointer active:scale-[0.98] transition-all disabled:opacity-75 disabled:pointer-events-none"
+            onClick={handlePostAdClick}
+            disabled={isPending}
           >
             {isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Posting...
-              </>
-            ) : showBoostDialog ? "Post Ad" : "Post Ad"}
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin text-white" />
+                Publishing Your Ad...
+              </span>
+            ) : "Post Ad"}
           </Button>
         </div>
         <div className="flex gap-2">

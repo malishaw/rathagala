@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DynamicVehicleFieldsStep2 } from "@/app/(frontend)/(landing)/sell/new/_components/dynamic-vehicle-fields-step-2";
 import { Sparkles, PlusCircle } from "lucide-react";
 
+import { toast } from "sonner";
+
 interface Step2Props {
   onBack: () => void;
   onNext: () => void;
@@ -21,6 +23,37 @@ export function Step2VehicleDetails({ onBack, onNext, canProceed }: Step2Props) 
   const form = useFormContext<CreateAdSchema>();
   const listingType = form.watch("listingType");
 
+  const handleNextClick = () => {
+    if (!canProceed) {
+      const values = form.getValues();
+      const missing: string[] = [];
+      
+      if (values.listingType === "SELL") {
+        const hasPrice = values.metadata?.isNegotiable || (values.price !== undefined && values.price !== null && values.price > 0);
+        if (!hasPrice) missing.push("Price or Negotiable");
+        if (!values.description) missing.push("Description");
+
+        if (values.type === "CAR") {
+          if (!values.fuelType) missing.push("Fuel Type");
+          if (!values.transmission) missing.push("Transmission");
+        } else if (values.type === "MOTORCYCLE") {
+          if (!values.engineCapacity) missing.push("Engine Capacity");
+        } else if (["THREE_WHEEL", "BUS", "LORRY", "TRACTOR"].includes(values.type)) {
+          if (!values.fuelType) missing.push("Fuel Type");
+        }
+      } else {
+        if (!values.description) missing.push("Description");
+      }
+
+      toast.error("Please complete Step 2 details", {
+        description: `Missing: ${missing.join(", ") || "Required details"}`,
+        duration: 4000
+      });
+      return;
+    }
+    onNext();
+  };
+
   const formatPrice = (value: number | undefined) => {
     if (!value) return "";
     return new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR', maximumFractionDigits: 0 }).format(value);
@@ -30,21 +63,6 @@ export function Step2VehicleDetails({ onBack, onNext, canProceed }: Step2Props) 
     const v = form.getValues();
     if (v.listingType !== "SELL") return;
     
-    let desc = `For sale: ${v.condition || "Used"} ${v.brand || ""} ${v.model || ""} ${v.manufacturedYear || v.modelYear || ""}`;
-    if (["CAR", "VAN", "SUV", "MOTORCYCLE"].includes(v.type)) {
-      desc += `.\n\nExcellent condition, carefully used.`;
-      if (v.mileage) desc += `\nMileage: ${v.mileage} km.`;
-      if (v.engineCapacity) desc += `\nEngine: ${v.engineCapacity} cc.`;
-      if (v.transmission) desc += `\nTransmission: ${v.transmission}.`;
-      if (v.fuelType) desc += `\nFuel Type: ${v.fuelType}.`;
-    } else {
-      desc += `.\n\nExcellent condition.`;
-    }
-    desc += `\n\nLooking for a quick sale. Please contact for more details and to arrange a viewing.`;
-    
-    form.setValue("description", desc.replace(/\s+/g, ' ').replace(/\. \./g, '.').replace(/ \./g, '.').replace(/For sale: Used \./g, 'For sale: Used.').trim() + "\n\nExcellent condition.\nLooking for a quick sale. Please contact for more details.", { shouldValidate: true });
-    
-    // Better auto description formatting
     let newDesc = `For sale: ${v.condition || "Used"} ${v.brand || ""} ${v.model || ""} ${v.manufacturedYear || v.modelYear || ""}`.trim();
     if (newDesc.endsWith("Used") || newDesc.endsWith("sale:")) newDesc = "Vehicle for sale";
     
@@ -56,6 +74,7 @@ export function Step2VehicleDetails({ onBack, onNext, canProceed }: Step2Props) 
     
     newDesc += `\n\nLooking for a quick sale. Please contact for more details.`;
     form.setValue("description", newDesc, { shouldValidate: true });
+    toast.success("Description auto-generated!");
   };
 
   const featureChips = ["A/C", "Power Steering", "Power Windows", "ABS", "Reverse Camera", "Alloy Wheels", "Sunroof", "First Owner"];
@@ -250,9 +269,8 @@ export function Step2VehicleDetails({ onBack, onNext, canProceed }: Step2Props) 
         </Button>
         <Button
           type="button"
-          className="w-1/2 bg-teal-700 hover:bg-teal-800"
-          onClick={onNext}
-          disabled={!canProceed}
+          className="w-1/2 bg-teal-700 hover:bg-teal-800 cursor-pointer active:scale-[0.98] transition-all"
+          onClick={handleNextClick}
         >
           Continue
         </Button>

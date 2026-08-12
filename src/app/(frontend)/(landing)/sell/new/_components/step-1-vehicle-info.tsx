@@ -14,6 +14,8 @@ import { ChevronRight } from "lucide-react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { DynamicVehicleFieldsStep1 } from "@/app/(frontend)/(landing)/sell/new/_components/dynamic-vehicle-fields-step-1";
 
+import { toast } from "sonner";
+
 interface Step1Props {
   onNext: () => void;
   canProceed: boolean;
@@ -23,6 +25,55 @@ interface Step1Props {
 
 export function Step1VehicleInfo({ onNext, canProceed, adMode, setAdMode }: Step1Props) {
   const form = useFormContext<CreateAdSchema>();
+
+  const handleNextClick = () => {
+    if (!canProceed) {
+      const values = form.getValues();
+      const missing: string[] = [];
+      if (!values.listingType) missing.push("Listing Type");
+      if (adMode !== "auto_part" && !values.type) missing.push("Vehicle Type");
+      
+      if (adMode === "auto_part" || values.type === "AUTO_PARTS") {
+        if (!values.partName) missing.push("Part Name");
+        if (!values.compatibleVehicleType) missing.push("Compatible Vehicle Type");
+        if (!values.condition) missing.push("Condition");
+        if (!values.brand) missing.push("Compatible Brand");
+        if (!values.partCategoryId) missing.push("Part Category");
+      } else if (values.type === "BICYCLE") {
+        if (!values.brand) missing.push("Brand");
+        if (!values.condition) missing.push("Condition");
+      } else if (values.type === "AUTO_SERVICE" || values.type === "RENTAL") {
+        if (!values.serviceType) missing.push("Service Type");
+      } else if (values.type === "MAINTENANCE") {
+        if (!values.maintenanceType) missing.push("Maintenance Type");
+      } else if (values.type === "HEAVY_DUTY") {
+        if (!values.condition) missing.push("Condition");
+        if (!values.vehicleType) missing.push("Vehicle Type");
+        if (!values.brand) missing.push("Brand");
+        if (!values.model) missing.push("Model");
+        if (!values.manufacturedYear) missing.push("Manufacture Year");
+      } else if (values.type === "MOTORCYCLE") {
+        if (!values.condition) missing.push("Condition");
+        if (!values.bikeType) missing.push("Bike Type");
+        if (!values.brand) missing.push("Brand");
+        if (!values.model) missing.push("Model");
+        if (!values.manufacturedYear) missing.push("Manufacture Year");
+      } else {
+        if (!values.condition) missing.push("Condition");
+        if (!values.brand) missing.push("Brand");
+        if (!values.model) missing.push("Model");
+        const yr = values.type === "VAN" ? values.modelYear : values.manufacturedYear;
+        if (!yr) missing.push(values.type === "VAN" ? "Model Year" : "Year of Manufacture");
+      }
+
+      toast.error("Please complete Step 1 details", {
+        description: `Missing: ${missing.join(", ") || "Required fields"}`,
+        duration: 4000
+      });
+      return;
+    }
+    onNext();
+  };
 
   return (
     <div className="space-y-4">
@@ -126,9 +177,8 @@ export function Step1VehicleInfo({ onNext, canProceed, adMode, setAdMode }: Step
 
       <Button
         type="button"
-        className="w-full bg-teal-700 hover:bg-teal-800"
-        onClick={onNext}
-        disabled={!canProceed}
+        className="w-full bg-teal-700 hover:bg-teal-800 cursor-pointer active:scale-[0.98] transition-all"
+        onClick={handleNextClick}
       >
         Continue <ChevronRight className="ml-1 h-4 w-4" />
       </Button>
