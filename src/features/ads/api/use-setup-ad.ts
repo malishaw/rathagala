@@ -20,9 +20,18 @@ export function useSetupAd() {
       });
 
       if (!res.ok) {
-        const error = await res.json();
-
-        throw new Error(error.message || "Failed to create ad");
+        const errorData = (await res.json().catch(() => ({}))) as {
+          message?: string;
+          details?: Array<{ message?: string; path?: string[] }>;
+        };
+        let errorMsg = errorData.message || "Failed to create ad";
+        if (Array.isArray(errorData.details) && errorData.details.length > 0) {
+          const detailedMsgs = errorData.details
+            .map((issue) => issue.message || `${issue.path?.join(".")}: invalid`)
+            .join("; ");
+          errorMsg = detailedMsgs || errorMsg;
+        }
+        throw new Error(errorMsg);
       }
 
       const data = await res.json();

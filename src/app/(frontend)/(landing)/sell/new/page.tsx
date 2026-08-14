@@ -41,6 +41,7 @@ export default function QuickAdCreatePage() {
   const pendingModalActionRef = useRef<"createAnother" | "none">("none");
   const [hasAutoFilled, setHasAutoFilled] = useState(false);
   const [isDraftLoaded, setIsDraftLoaded] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<CreateAdSchema>({
     resolver: zodResolver(createAdSchema) as any,
@@ -215,7 +216,24 @@ export default function QuickAdCreatePage() {
     }
   };
 
+  const formatFormErrors = (errors: any): string[] => {
+    const messages: string[] = [];
+    const extract = (obj: any) => {
+      if (!obj || typeof obj !== "object") return;
+      if (obj.message && typeof obj.message === "string") {
+        messages.push(obj.message);
+        return;
+      }
+      for (const k of Object.keys(obj)) {
+        extract(obj[k]);
+      }
+    };
+    extract(errors);
+    return Array.from(new Set(messages));
+  };
+
   const onSubmit = (data: CreateAdSchema) => {
+    setIsSubmitting(true);
     // Generate Title
     const vehicleTypeLabels: Record<string, string> = {
       CAR: "Car", VAN: "Van", SUV_JEEP: "SUV / Jeep", MOTORCYCLE: "Motorbike",
@@ -262,6 +280,7 @@ export default function QuickAdCreatePage() {
       { values: adData },
       {
         onSuccess: (responseData) => {
+          setIsSubmitting(false);
           localStorage.removeItem("rathagala_draft_ad");
           setCreatedAdId(responseData.id);
           if (showBoostDialog && boostSelection && boostSelection.boostTypes.length > 0) {
@@ -288,10 +307,57 @@ export default function QuickAdCreatePage() {
           }
         },
         onError: (error) => {
+          setIsSubmitting(false);
           console.error("Failed to create ad", error);
         }
       }
     );
+  };
+
+  const handleStep3Submit = () => {
+    setIsSubmitting(true);
+    form.handleSubmit(
+      (data) => {
+        onSubmit(data as CreateAdSchema);
+      },
+      (errors) => {
+        setIsSubmitting(false);
+        console.error("Form validation errors:", errors);
+        const errList = formatFormErrors(errors);
+        const description = errList.length > 0
+          ? errList.join("; ")
+          : "Please check all required fields and complete the form.";
+
+        toast.error("Form Validation Error", {
+          description,
+          duration: 6000,
+        });
+
+        // Auto-navigate to the step with the error
+        const step1Fields = ["listingType", "type", "brand", "model", "grade", "manufacturedYear", "modelYear", "condition", "partCategoryId", "compatibleVehicleType", "vehicleType", "bikeType", "maintenanceType", "serviceType", "partName"];
+        const step2Fields = ["price", "description", "transmission", "fuelType", "mileage", "engineCapacity", "trimEdition", "bodyType", "color"];
+        
+        let targetStep = 3;
+        for (const field of step1Fields) {
+          if (errors[field as keyof typeof errors]) {
+            targetStep = 1;
+            break;
+          }
+        }
+        if (targetStep === 3) {
+          for (const field of step2Fields) {
+            if (errors[field as keyof typeof errors]) {
+              targetStep = 2;
+              break;
+            }
+          }
+        }
+        
+        if (targetStep !== 3) {
+          setCurrentStep(targetStep);
+        }
+      }
+    )();
   };
 
   return (
@@ -352,13 +418,8 @@ export default function QuickAdCreatePage() {
                 <>
                   <Step3ContactDetails 
                     onBack={() => setCurrentStep(2)} 
-                    onSubmit={form.handleSubmit(onSubmit as any, (errors) => {
-                      console.error("Form validation errors:", errors);
-                      const firstKey = Object.keys(errors)[0];
-                      const errorMsg = (errors as any)[firstKey]?.message || "Please fill in all required fields properly.";
-                      toast.error(errorMsg);
-                    })}
-                    isPending={isPending}
+                    onSubmit={handleStep3Submit}
+                    isPending={isPending || isSubmitting}
                     showBoostDialog={showBoostDialog}
                     setShowBoostDialog={setShowBoostDialog}
                     selectedImages={selectedImages}
