@@ -41,8 +41,9 @@ export default function SetupOrganizationPage() {
     mutate(values, {
       onSuccess(data) {
         form.reset();
-        if (data?.organization?.id) {
-          router.push(`/dashboard/organizations/${data.organization.id}`);
+        const orgId = (data as any)?.organization?.id || (data as any)?.id;
+        if (orgId) {
+          router.push(`/dashboard/organizations/${orgId}`);
         } else {
           router.push("/dashboard");
         }

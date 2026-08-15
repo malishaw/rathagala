@@ -8,7 +8,10 @@ interface FilterParams {
   search?: string | null;
 }
 
-export const useGetUsers = (params: FilterParams) => {
+export const useGetUsers = (
+  params: FilterParams,
+  options?: { enabled?: boolean; staleTime?: number; gcTime?: number }
+) => {
   const { page = 1, limit = 10, search = "" } = params;
 
   const query = useQuery({
@@ -31,7 +34,10 @@ export const useGetUsers = (params: FilterParams) => {
       const data = await response.json();
 
       return data;
-    }
+    },
+    enabled: options?.enabled ?? true,
+    staleTime: options?.staleTime,
+    gcTime: options?.gcTime,
   });
 
   return query;

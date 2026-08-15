@@ -216,6 +216,12 @@ export const getRevenue = createRoute({
         activeUrgentCount: z.number(),
         activeFeaturedCount: z.number(),
         records: z.array(z.any()),
+        pagination: z.object({
+          total: z.number(),
+          page: z.number(),
+          limit: z.number(),
+          totalPages: z.number(),
+        }),
       }),
       "Revenue stats"
     ),

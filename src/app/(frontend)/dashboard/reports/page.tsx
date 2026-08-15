@@ -66,15 +66,15 @@ interface Report {
   status: string;
   createdAt: string;
   reporter?: {
-    id: string;
-    name: string;
-    email: string;
-  };
+    id?: string;
+    name?: string | null;
+    email?: string | null;
+  } | null;
   ad?: {
-    id: string;
-    title: string;
-    status: string;
-  };
+    id?: string;
+    title?: string | null;
+    status?: string | null;
+  } | null;
 }
 
 export default function ReportsManagementPage() {
@@ -155,7 +155,7 @@ export default function ReportsManagementPage() {
     if (!selectedReport?.adId) return;
 
     deleteAd(
-      { id: selectedReport.adId, reason: deleteReason, adTitle: selectedReport.ad?.title },
+      { id: selectedReport.adId, reason: deleteReason, adTitle: selectedReport.ad?.title || undefined },
       {
         onSuccess: () => {
           setIsDeleteDialogOpen(false);

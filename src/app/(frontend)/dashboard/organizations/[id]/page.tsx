@@ -80,7 +80,7 @@ export default function OrganizationDashboardPage() {
     totalAds: adsData?.pagination?.total ?? 0,
     activeAds: ads.filter(ad => ad.status === "ACTIVE").length,
     draftAds: ads.filter(ad => ad.isDraft).length,
-    pendingAds: ads.filter(ad => ad.status === "PENDING").length
+    pendingAds: ads.filter(ad => ad.status === "PENDING_REVIEW").length
   };
 
   const isLoading = isOrgLoading || isAdsLoading;

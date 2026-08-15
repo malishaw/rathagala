@@ -41,6 +41,7 @@ import { formatAdTitle, shuffleArray, getRotatingSlice, getAdSortTime, interleav
 interface AdData {
   id: string;
   title: string;
+  description?: string | null;
   status: string;
   published: boolean;
   brand: string | null;

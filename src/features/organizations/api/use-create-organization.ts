@@ -27,7 +27,7 @@ export const useCreateOrganization = () => {
       // After organization is created, update user's organizationId
       // Check both possible response structures from better-auth
       // better-auth returns: { organization: { id: "...", name: "...", ... } }
-      const orgId = data?.organization?.id || data?.id;
+      const orgId = (data as any)?.organization?.id || (data as any)?.id;
       
       console.log("Organization creation response:", JSON.stringify(data, null, 2));
       console.log("Extracted organizationId:", orgId);

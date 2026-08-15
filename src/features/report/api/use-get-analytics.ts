@@ -1,11 +1,13 @@
 import { client } from "@/lib/rpc";
 import { useQuery } from "@tanstack/react-query";
 
+const analyticsApi = client.api.analytics as any;
+
 export const useGetAdViewsReport = (period: "daily" | "monthly" | "yearly" = "daily") => {
   return useQuery({
     queryKey: ["analytics", "ad-views", period],
     queryFn: async () => {
-      const response = await client.api.analytics["ad-views"].$get({
+      const response = await analyticsApi["ad-views"].$get({
         query: { period },
       });
       if (!response.ok) {
@@ -20,7 +22,7 @@ export const useGetAdSummary = () => {
   return useQuery({
     queryKey: ["analytics", "ad-summary"],
     queryFn: async () => {
-      const response = await client.api.analytics.summary.$get({});
+      const response = await analyticsApi.summary.$get({});
       if (!response.ok) {
         throw new Error("Failed to fetch ad summary");
       }
@@ -37,13 +39,8 @@ export const useGetAdCreationReport = (params?: {
   return useQuery({
     queryKey: ["analytics", "ad-creation", params],
     queryFn: async () => {
-      const queryParams = new URLSearchParams();
-      if (params?.startDate) queryParams.append("startDate", params.startDate);
-      if (params?.endDate) queryParams.append("endDate", params.endDate);
-      if (params?.period) queryParams.append("period", params.period);
-
-      const response = await client.api.analytics["ad-creation"].$get({
-        query: params as any,
+      const response = await analyticsApi["ad-creation"].$get({
+        query: params || {},
       });
       if (!response.ok) {
         throw new Error("Failed to fetch ad creation report");
@@ -61,8 +58,8 @@ export const useGetAdDeletionReport = (params?: {
   return useQuery({
     queryKey: ["analytics", "ad-deletion", params],
     queryFn: async () => {
-      const response = await client.api.analytics["ad-deletion"].$get({
-        query: params as any,
+      const response = await analyticsApi["ad-deletion"].$get({
+        query: params || {},
       });
       if (!response.ok) {
         throw new Error("Failed to fetch ad deletion report");
@@ -76,7 +73,7 @@ export const useGetAdCreationByEntity = () => {
   return useQuery({
     queryKey: ["analytics", "ad-creation-by-entity"],
     queryFn: async () => {
-      const response = await client.api.analytics["ad-creation-by-entity"].$get({});
+      const response = await analyticsApi["ad-creation-by-entity"].$get({});
       if (!response.ok) {
         throw new Error("Failed to fetch ad creation by entity");
       }
@@ -105,7 +102,7 @@ export const useGetUserSummary = () => {
   return useQuery({
     queryKey: ["analytics", "user-summary"],
     queryFn: async () => {
-      const response = await client.api.analytics["user-summary"].$get({});
+      const response = await analyticsApi["user-summary"].$get({});
       if (!response.ok) {
         throw new Error("Failed to fetch user summary");
       }
@@ -119,7 +116,7 @@ export const useSearchAnalyticsUsers = (query: string) => {
     queryKey: ["analytics", "search-users", query],
     enabled: query.length >= 2,
     queryFn: async () => {
-      const response = await client.api.analytics["search-users"].$get({
+      const response = await analyticsApi["search-users"].$get({
         query: { q: query },
       });
       if (!response.ok) {
@@ -143,8 +140,8 @@ export const useGetEntityHistory = (params: {
     queryFn: async () => {
       if (!params.id || !params.type) return null;
 
-      const response = await client.api.analytics["entity-history"].$get({
-        query: params as any,
+      const response = await analyticsApi["entity-history"].$get({
+        query: params,
       });
       if (!response.ok) {
         throw new Error("Failed to fetch entity history");

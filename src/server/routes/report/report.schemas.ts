@@ -17,6 +17,16 @@ export type QueryParams = z.infer<typeof querySchema>;
 // Format the Report schema to match API response format
 const formattedReportSchema = ReportSchema.extend({
   createdAt: z.string(),
+  reporter: z.object({
+    id: z.string(),
+    name: z.string().nullable().optional(),
+    email: z.string().nullable().optional(),
+  }).nullable().optional(),
+  ad: z.object({
+    id: z.string(),
+    title: z.string().nullable().optional(),
+    status: z.string().nullable().optional(),
+  }).nullable().optional(),
 });
 
 export const withPaginationSchema = z.object({

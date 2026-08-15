@@ -28,6 +28,8 @@ interface FilterParams {
   bumpActive?: string | boolean | null;
   urgentActive?: string | boolean | null;
   seller?: string | null;
+  filterByUser?: boolean;
+  orgId?: string | null;
 }
 
 interface QueryOptions {
@@ -123,6 +125,8 @@ export const useGetAds = (params: FilterParams, options?: QueryOptions) => {
         ...(bumpActive && { bumpActive: bumpActive.toString() }),
         ...(urgentActive && { urgentActive: urgentActive.toString() }),
         ...(seller && { seller }),
+        ...(params.filterByUser !== undefined && { filterByUser: params.filterByUser.toString() }),
+        ...(params.orgId && { orgId: params.orgId }),
       };
 
       const response = await client.api.ad.$get({

@@ -956,7 +956,7 @@ export default function ReportPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        {userSummary?.top10Users?.map((user, index) => (
+                        {userSummary?.top10Users?.map((user: any, index: number) => (
                           <div key={user.id} className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                               <Badge variant="outline" className="w-8 h-8 flex items-center justify-center">{index + 1}</Badge>
@@ -984,7 +984,7 @@ export default function ReportPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        {userSummary?.top10Organizations?.map((org, index) => (
+                        {userSummary?.top10Organizations?.map((org: any, index: number) => (
                           <div key={org.id} className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                               <Badge variant="outline" className="w-8 h-8 flex items-center justify-center">{index + 1}</Badge>

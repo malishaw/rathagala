@@ -71,6 +71,7 @@ export type DeletedAdType = {
   fuelType?: string;
   transmission?: string;
   grade?: string;
+  bodyType?: string;
   city?: string;
   location?: string;
   media?: Array<{

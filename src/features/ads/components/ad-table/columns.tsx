@@ -7,11 +7,7 @@ import { CellAction } from "./cell-action";
 import { Badge } from "@/components/ui/badge";
 import { getRelativeTime } from "@/lib/utils";
 
-// This type is used to define the shape of our data.
-// You can use a Zod schema here if you want.
-export type AdType = Omit<Ad, "createdAt"> & {
-  createdAt: string;
-};
+export type AdType = Record<string, any>;
 
 // Vehicle type labels mapping
 const vehicleTypeLabels: Record<string, string> = {

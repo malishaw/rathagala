@@ -57,8 +57,9 @@ export function AddNewOrganization({ redirectToDashboard = false }: AddNewOrgani
         setOpen(false);
         
         // Optionally redirect to the organization dashboard
-        if (redirectToDashboard && data?.organization?.id) {
-          router.push(`/dashboard/organizations/${data.organization.id}`);
+        const orgId = (data as any)?.organization?.id || (data as any)?.id;
+        if (redirectToDashboard && orgId) {
+          router.push(`/dashboard/organizations/${orgId}`);
         }
       }
     });

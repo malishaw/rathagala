@@ -240,7 +240,10 @@ export default function CarouselAdminPage() {
           const ctx = canvas.getContext("2d");
           ctx?.drawImage(img, 0, 0, width, height);
           
-          canvas.toBlob(resolve, "image/png", 0.8);
+          canvas.toBlob((blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error("Canvas toBlob failed"));
+          }, "image/png", 0.8);
         };
         img.onerror = reject;
         img.src = event.target?.result as string;
