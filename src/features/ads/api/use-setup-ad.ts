@@ -20,6 +20,10 @@ export function useSetupAd() {
       });
 
       if (!res.ok) {
+        if (res.status >= 500) {
+          throw new Error("Service temporarily unavailable. Please try again in a few moments.");
+        }
+
         const errorData = (await res.json().catch(() => ({}))) as {
           message?: string;
           details?: Array<{ message?: string; path?: string[] }>;

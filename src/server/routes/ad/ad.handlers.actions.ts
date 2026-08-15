@@ -53,17 +53,19 @@ export const approve: AppRouteHandler<ApproveRoute> = async (c) => {
       isDraft: false,
     }).where(eq(ads.id, adId)).returning();
 
-    try {
-      if (existingAd.user?.email && existingAd.user?.name) {
-        await sendAdApprovalEmail({
-          email: existingAd.user.email,
-          name: existingAd.user.name,
-          adTitle: existingAd.title || "",
-          adId: adId,
-        });
+    if (existingAd.user?.email && existingAd.user?.name) {
+      const emailPromise = sendAdApprovalEmail({
+        email: existingAd.user.email,
+        name: existingAd.user.name,
+        adTitle: existingAd.title || "",
+        adId: adId,
+      }).catch((emailError) => {
+        console.error("[APPROVE AD] Failed to send approval email:", emailError);
+      });
+
+      if (c.executionCtx && typeof c.executionCtx.waitUntil === "function") {
+        c.executionCtx.waitUntil(emailPromise);
       }
-    } catch (emailError) {
-      console.error("[APPROVE AD] Failed to send approval email:", emailError);
     }
 
     const formattedAd = {
@@ -125,18 +127,21 @@ export const reject: AppRouteHandler<RejectRoute> = async (c) => {
       rejectionDescription: body?.rejectionDescription || null,
     }).where(eq(ads.id, adId)).returning();
 
-    try {
-      const { sendAdRejectionEmail } = await import("@/lib/email");
-      if (existingAd.user?.email) {
-        await sendAdRejectionEmail({
-          email: existingAd.user.email,
-          name: existingAd.user.name || "User",
+    if (existingAd.user?.email) {
+      const emailPromise = import("@/lib/email").then(({ sendAdRejectionEmail }) => {
+        return sendAdRejectionEmail({
+          email: existingAd.user!.email,
+          name: existingAd.user!.name || "User",
           adTitle: existingAd.title || "",
           rejectionReason: body?.rejectionDescription,
         });
+      }).catch((emailError) => {
+        console.error("[REJECT AD] Failed to send rejection email:", emailError);
+      });
+
+      if (c.executionCtx && typeof c.executionCtx.waitUntil === "function") {
+        c.executionCtx.waitUntil(emailPromise);
       }
-    } catch (emailError) {
-      console.error("[REJECT AD] Failed to send rejection email:", emailError);
     }
 
     const formattedAd = {
@@ -258,13 +263,17 @@ export const renew: AppRouteHandler<RenewRoute> = async (c) => {
     }).where(eq(ads.id, adId)).returning();
 
     if (existingAd.user?.email) {
-      sendListingRenewalConfirmationEmail({
+      const emailPromise = sendListingRenewalConfirmationEmail({
         email: existingAd.user.email,
         name: existingAd.user.name || "User",
         adTitle: existingAd.title || "",
         adId: adId,
         newExpiryDate,
       }).catch((err) => console.error("[RENEW AD] Failed to send renewal email:", err));
+
+      if (c.executionCtx && typeof c.executionCtx.waitUntil === "function") {
+        c.executionCtx.waitUntil(emailPromise);
+      }
     }
 
     return c.json(

@@ -69,6 +69,7 @@ export function OrgSwitcher() {
           toast.success("Switched to organization successfully!", {
             id: toastId
           });
+          window.location.reload();
         },
         onError({ error }) {
           toast.error(error.message || "Failed to switch organization", {

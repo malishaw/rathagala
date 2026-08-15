@@ -101,7 +101,7 @@ export function DynamicVehicleFieldsStep1() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Manufacture Year (optional)</FormLabel>
-              <Select value={field.value} onValueChange={field.onChange}>
+              <Select value={field.value ?? ""} onValueChange={field.onChange}>
                 <FormControl>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select year" />
@@ -129,7 +129,7 @@ export function DynamicVehicleFieldsStep1() {
       render={({ field }) => (
         <FormItem>
           <FormLabel>Condition<span className="text-red-500">*</span></FormLabel>
-          <Select value={field.value} onValueChange={field.onChange}>
+          <Select value={field.value ?? ""} onValueChange={field.onChange}>
             <FormControl>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select condition" />
@@ -221,7 +221,7 @@ export function DynamicVehicleFieldsStep1() {
       render={({ field }) => (
         <FormItem>
           <FormLabel>{fieldName === "modelYear" ? "Model Year" : "Year of Manufacture"}<span className="text-red-500">*</span></FormLabel>
-          <Select value={field.value} onValueChange={field.onChange}>
+          <Select value={field.value ?? ""} onValueChange={field.onChange}>
             <FormControl>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select year" />
@@ -296,7 +296,7 @@ export function DynamicVehicleFieldsStep1() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Bike Type<span className="text-red-500">*</span></FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select value={field.value ?? ""} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select bike type" />
@@ -348,7 +348,7 @@ export function DynamicVehicleFieldsStep1() {
           {renderBrand()}
           {renderModel()}
           {renderGrade()}
-          {renderManufacturedYear("manufacturedYear")}
+          {renderManufacturedYear("modelYear")}
         </>
       );
     case "HEAVY_DUTY":
@@ -361,7 +361,7 @@ export function DynamicVehicleFieldsStep1() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Vehicle Type<span className="text-red-500">*</span></FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select value={field.value ?? ""} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select vehicle type" />
@@ -384,7 +384,7 @@ export function DynamicVehicleFieldsStep1() {
           />
           {renderBrand()}
           {renderModel()}
-          {renderManufacturedYear("manufacturedYear")}
+          {renderManufacturedYear("modelYear")}
         </>
       );
     case "AUTO_SERVICE":
@@ -448,7 +448,7 @@ export function DynamicVehicleFieldsStep1() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Compatible Vehicle Type<span className="text-red-500">*</span></FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select value={field.value ?? ""} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select vehicle type this part fits" />

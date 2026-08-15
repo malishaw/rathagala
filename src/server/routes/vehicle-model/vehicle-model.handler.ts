@@ -58,32 +58,26 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
 
   const includeUserModels = query.includeUserModels === "true";
   let userModels: string[] = [];
-  const userModelTimestamps = new Map<string, { createdAt: Date; updatedAt: Date }>();
   if (includeUserModels) {
     const adConditions = [isNotNull(ads.model)];
     if (brand) adConditions.push(eq(ads.brand, brand));
     
-    const dbAds = await db.query.ads.findMany({
-      where: and(...adConditions),
-      columns: { model: true, createdAt: true, updatedAt: true },
-      limit: 10000,
-    });
+    // Use groupBy to get distinct models directly from the database to save memory and CPU
+    const dbAds = await db.select({ model: ads.model })
+      .from(ads)
+      .where(and(...adConditions))
+      .groupBy(ads.model)
+      .limit(200);
+    
+    const dbModelNames = new Set(models.map((m) => m.name.toLowerCase()));
     
     const set = new Set<string>();
     for (const a of dbAds) {
       if (a.model) {
         set.add(a.model);
-        const key = a.model;
-        const existing = userModelTimestamps.get(key);
-        if (!existing) {
-          userModelTimestamps.set(key, { createdAt: a.createdAt, updatedAt: a.updatedAt });
-        } else {
-          if (a.createdAt < existing.createdAt) existing.createdAt = a.createdAt;
-          if (a.updatedAt > existing.updatedAt) existing.updatedAt = a.updatedAt;
-        }
       }
     }
-    const dbModelNames = new Set(models.map((m) => m.name.toLowerCase()));
+    
     userModels = Array.from(set)
       .filter((name) => !dbModelNames.has(name.toLowerCase()))
       .sort((a, b) => a.localeCompare(b));
@@ -94,9 +88,8 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       models: [
         ...models.map(formatModel),
         ...userModels.map((name) => {
-          const timestamps = userModelTimestamps.get(name);
-          const createdAt = timestamps?.createdAt || new Date();
-          const updatedAt = timestamps?.updatedAt || createdAt;
+          const createdAt = new Date();
+          const updatedAt = createdAt;
           return {
             id: `user:${name}`,
             name,

@@ -54,11 +54,11 @@ export function ModelSearchDropdown({
           params.set("includeUserModels", "true");
         }
         const url = `/api/vehicle-model?${params.toString()}`;
-        console.log("[ModelSearchDropdown] Fetching models from:", url, { brand });
+
         const res = await fetch(url, { signal: abortController.signal });
         if (res.ok) {
           const data = await res.json() as { models: VehicleModel[] };
-          console.log("[ModelSearchDropdown] Fetched models:", data.models.length, "items", { brand, includesUser: data.models.some((m) => m.id.startsWith("user:")) });
+
           setModels(data.models);
         } else {
           console.warn("[ModelSearchDropdown] Failed to fetch:", res.status);

@@ -102,7 +102,7 @@ export function DynamicVehicleFieldsStep2() {
       render={({ field }) => (
         <FormItem>
           <FormLabel>Fuel Type{required && <span className="text-red-500">*</span>}</FormLabel>
-          <Select value={field.value} onValueChange={field.onChange}>
+          <Select value={field.value ?? ""} onValueChange={field.onChange}>
             <FormControl>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select" />
@@ -129,7 +129,7 @@ export function DynamicVehicleFieldsStep2() {
       render={({ field }) => (
         <FormItem>
           <FormLabel>Transmission{required && <span className="text-red-500">*</span>}</FormLabel>
-          <Select value={field.value} onValueChange={field.onChange}>
+          <Select value={field.value ?? ""} onValueChange={field.onChange}>
             <FormControl>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select" />
@@ -198,7 +198,7 @@ export function DynamicVehicleFieldsStep2() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Body Type</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select value={field.value ?? ""} onValueChange={field.onChange}>
                     <FormControl>
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select body type" />

@@ -51,7 +51,7 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
     const adStatus = (!isDraft && isPublished) ? "PENDING_REVIEW" : "DRAFT";
 
     const [createdAd] = await db.insert(ads).values({
-      orgId: session?.activeOrganizationId || "",
+      orgId: session?.activeOrganizationId || null,
       createdBy: user.id,
       title: adDetails.title || "",
       description: adDetails.description || "",
@@ -142,14 +142,16 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
     };
 
     if (adStatus === "PENDING_REVIEW" && user.email) {
-      try {
-        await sendAdPostedEmail({
-          email: user.email,
-          name: user.name || "User",
-          adTitle: createdAd.title || ""
-        });
-      } catch (emailError) {
+      const emailPromise = sendAdPostedEmail({
+        email: user.email,
+        name: user.name || "User",
+        adTitle: createdAd.title || ""
+      }).catch((emailError) => {
         console.error("Failed to send ad posted email:", emailError);
+      });
+
+      if (c.executionCtx && typeof c.executionCtx.waitUntil === "function") {
+        c.executionCtx.waitUntil(emailPromise);
       }
     }
 

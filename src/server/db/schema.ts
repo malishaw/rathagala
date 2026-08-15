@@ -229,7 +229,7 @@ export const vehicleModels = pgTable("vehicle_model", {
 // ==========================================
 export const ads = pgTable("ad", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  orgId: text("org_id").notNull().references(() => organizations.id),
+  orgId: text("org_id").references(() => organizations.id),
   createdBy: text("created_by").notNull().references(() => users.id),
 
   title: text("title").notNull(),

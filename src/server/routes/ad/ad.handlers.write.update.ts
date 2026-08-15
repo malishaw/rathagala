@@ -20,8 +20,14 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
       );
     }
 
-    const isObjectId = /^[a-f0-9]{24}$/i.test(adId);
-    const whereCondition = isObjectId ? eq(ads.id, adId) : eq(ads.seoSlug, adId);
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(adId);
+    
+    let whereCondition;
+    if (isUuid) {
+      whereCondition = eq(ads.id, adId);
+    } else {
+      whereCondition = eq(ads.seoSlug, adId);
+    }
 
     const existingAd = await db.query.ads.findFirst({
       where: whereCondition,
@@ -170,12 +176,16 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
     };
 
     if (user.email && updatedAd.status === "ACTIVE") {
-      sendListingUpdatedEmail({
+      const emailPromise = sendListingUpdatedEmail({
         email: user.email,
         name: user.name || "User",
         adTitle: updatedAd.title || "",
         adId: existingAd.id,
       }).catch((err) => console.error("[UPDATE AD] Failed to send update email:", err));
+
+      if (c.executionCtx && typeof c.executionCtx.waitUntil === "function") {
+        c.executionCtx.waitUntil(emailPromise);
+      }
     }
 
     return c.json(formattedAd as any, HttpStatusCodes.OK);

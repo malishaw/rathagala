@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import {
   AudioWaveform,
   Clock,
@@ -34,7 +34,6 @@ import { NavAccordion } from "@/components/layouts/nav-groups/nav-accordion";
 import { NavOrgManagement } from "./nav-groups/nav-org-management";
 import { NavContent } from "./nav-groups/nav-content";
 import { authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
 
 type Props = {
   activeMember: any;
@@ -43,11 +42,6 @@ type Props = {
 
 export default function AppSidebarContent({ activeMember, session }: Props) {
   const activeOrganization = authClient.useActiveOrganization();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (activeOrganization) router.refresh();
-  }, [activeOrganization]);
 
   // Check if user is admin
   const isAdmin = (session?.user as any)?.role === "admin";

@@ -181,7 +181,7 @@ export default function QuickAdCreatePage() {
           return !!(type && bikeType && condition && brand && model && manufacturedYear);
         }
         const basicRequired = type && brand && model && condition;
-        const yearRequired = (type === "VAN") ? modelYear : manufacturedYear;
+        const yearRequired = ["VAN", "THREE_WHEEL", "BUS", "LORRY", "HEAVY_DUTY", "TRACTOR"].includes(type) ? modelYear : manufacturedYear;
         return !!(basicRequired && yearRequired);
 
       case 2:
@@ -300,7 +300,7 @@ export default function QuickAdCreatePage() {
             setShowSuccessModal(true);
           } else {
             if (isAdmin) {
-              router.push(`/dashboard/ads/${responseData.id}`);
+              router.push(`/dashboard/ads/${responseData.seoSlug || responseData.id}`);
             } else {
               router.push('/profile#my-ads');
             }

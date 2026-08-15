@@ -62,8 +62,9 @@ export function Step1VehicleInfo({ onNext, canProceed, adMode, setAdMode }: Step
         if (!values.condition) missing.push("Condition");
         if (!values.brand) missing.push("Brand");
         if (!values.model) missing.push("Model");
-        const yr = values.type === "VAN" ? values.modelYear : values.manufacturedYear;
-        if (!yr) missing.push(values.type === "VAN" ? "Model Year" : "Year of Manufacture");
+        const isModelYearType = values.type && ["VAN", "THREE_WHEEL", "BUS", "LORRY", "HEAVY_DUTY", "TRACTOR"].includes(values.type);
+        const yr = isModelYearType ? values.modelYear : values.manufacturedYear;
+        if (!yr) missing.push(isModelYearType ? "Model Year" : "Year of Manufacture");
       }
 
       toast.error("Please complete Step 1 details", {

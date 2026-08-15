@@ -30,18 +30,33 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     const offset = (pageNum - 1) * limitNum;
 
     const now = new Date();
-    await db.update(ads).set({
-      boostStatus: "EXPIRED" as any,
-      bumpActive: false,
-      topAdActive: false,
-      urgentActive: false,
-      featuredActive: false,
-      boostTypes: [] as any,
-    }).where(and(eq(ads.boostStatus, "ACTIVE" as any), lt(ads.boostEndAt, now)));
+    
+    // Run boost expiration updates asynchronously in the background if possible
+    const expireBoosts = async () => {
+      try {
+        await db.update(ads).set({
+          boostStatus: "EXPIRED" as any,
+          bumpActive: false,
+          topAdActive: false,
+          urgentActive: false,
+          featuredActive: false,
+          boostTypes: [] as any,
+        }).where(and(eq(ads.boostStatus, "ACTIVE" as any), lt(ads.boostEndAt, now)));
 
-    await db.update(boostRequests).set({
-      status: "EXPIRED" as any,
-    }).where(and(eq(boostRequests.status, "ACTIVE" as any), lt(boostRequests.expiresAt, now)));
+        await db.update(boostRequests).set({
+          status: "EXPIRED" as any,
+        }).where(and(eq(boostRequests.status, "ACTIVE" as any), lt(boostRequests.expiresAt, now)));
+      } catch (err) {
+        console.error("Failed to expire boosts", err);
+      }
+    };
+
+    if (c.executionCtx && typeof c.executionCtx.waitUntil === 'function') {
+      c.executionCtx.waitUntil(expireBoosts());
+    } else {
+      // Fallback for environments without executionCtx (like Node dev server)
+      expireBoosts();
+    }
 
     const conditions = [];
 
@@ -60,7 +75,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     }
 
     if (search && search.trim() !== "") {
-      const isIdSearch = /^[0-9a-f]{24}$/i.test(search.trim());
+      const isIdSearch = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(search.trim());
       if (isIdSearch) {
         conditions.push(eq(ads.id, search.trim()));
       } else {
@@ -274,10 +289,10 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
 export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
   try {
     const adId = c.req.valid("param").id;
-    const isObjectId = /^[a-f0-9]{24}$/i.test(adId);
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(adId);
     
     let whereCondition;
-    if (isObjectId) {
+    if (isUuid) {
       whereCondition = eq(ads.id, adId);
     } else {
       whereCondition = eq(ads.seoSlug, adId);
@@ -291,9 +306,6 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
         user: { columns: { id: true, name: true, email: true, image: true } },
         analytics: true,
         org: { columns: { id: true, name: true, slug: true, logo: true } },
-        favorites: { columns: { userId: true } },
-        reports: { columns: { id: true, reason: true, status: true } },
-        shareEvents: { columns: { platform: true, sharedAt: true } },
       }
     });
 
