@@ -2,6 +2,7 @@ import { db } from "@/server/db";
 import { boostPricings, boostRequests, ads, revenueRecords, users } from "@/server/db/schema";
 import { eq, inArray, and, lt, gte, lte, count } from "drizzle-orm";
 import * as HttpStatusCodes from "stoker/http-status-codes";
+import { formatIsoDate } from "@/server/helpers/date-utils";
 import type { AppRouteHandler } from "@/types/server";
 import type {
   GetPricingRoute,
@@ -51,8 +52,8 @@ export const getPricing: AppRouteHandler<GetPricingRoute> = async (c) => {
   const pricing = await ensurePricingExists();
   const formatted = pricing.map((p) => ({
     ...p,
-    createdAt: p.createdAt.toISOString(),
-    updatedAt: p.updatedAt.toISOString(),
+    createdAt: formatIsoDate(p.createdAt) ?? new Date().toISOString(),
+    updatedAt: formatIsoDate(p.updatedAt) ?? new Date().toISOString(),
   }));
   return c.json(formatted, HttpStatusCodes.OK);
 };

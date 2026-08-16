@@ -3,6 +3,7 @@ import { ads, adMedia } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import * as HttpStatusPhrases from "stoker/http-status-phrases";
+import { formatIsoDate } from "@/server/helpers/date-utils";
 import type { AppRouteHandler } from "@/types/server";
 import type { UpdateRoute } from "./ad.routes";
 import { sendListingUpdatedEmail } from "@/lib/email";
@@ -166,11 +167,11 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
 
     const formattedAd = {
       ...updatedAd,
-      createdAt: updatedAd.createdAt.toISOString(),
-      updatedAt: updatedAd.updatedAt.toISOString(),
-      boostExpiry: updatedAd.boostExpiry?.toISOString() ?? null,
-      featureExpiry: updatedAd.featureExpiry?.toISOString() ?? null,
-      expiryDate: updatedAd.expiryDate?.toISOString() ?? null,
+      createdAt: formatIsoDate(updatedAd.createdAt) ?? new Date().toISOString(),
+      updatedAt: formatIsoDate(updatedAd.updatedAt) ?? new Date().toISOString(),
+      boostExpiry: formatIsoDate(updatedAd.boostExpiry),
+      featureExpiry: formatIsoDate(updatedAd.featureExpiry),
+      expiryDate: formatIsoDate(updatedAd.expiryDate),
       metadata:
         typeof updatedAd.metadata === "object" ? updatedAd.metadata : null,
     };

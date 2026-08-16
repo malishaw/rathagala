@@ -2,6 +2,7 @@ import { db } from "@/server/db";
 import { autoPartCategories } from "@/server/db/schema";
 import { and, ilike, eq, count } from "drizzle-orm";
 import * as HttpStatusCodes from "stoker/http-status-codes";
+import { formatIsoDate } from "@/server/helpers/date-utils";
 
 import type { AppRouteHandler } from "@/types/server";
 import type { ListRoute, GetOneRoute, CreateRoute, UpdateRoute, RemoveRoute } from "./auto-part-category.routes";
@@ -26,14 +27,14 @@ function formatCategory(c: {
   slug: string;
   description: string | null;
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: any;
+  updatedAt: any;
 }) {
   return {
     ...c,
     description: c.description ?? null,
-    createdAt: c.createdAt.toISOString(),
-    updatedAt: c.updatedAt.toISOString(),
+    createdAt: formatIsoDate(c.createdAt) ?? new Date().toISOString(),
+    updatedAt: formatIsoDate(c.updatedAt) ?? new Date().toISOString(),
   };
 }
 

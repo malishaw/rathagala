@@ -6,6 +6,7 @@ import type { AppRouteHandler } from "@/types/server";
 import { db } from "@/server/db";
 import { reports, ads, users } from "@/server/db/schema";
 import { eq, and, count } from "drizzle-orm";
+import { formatIsoDate } from "@/server/helpers/date-utils";
 
 import type {
   ListRoute,
@@ -92,7 +93,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
     // Format the response
     const formattedReports = fetchedReports.map((report) => ({
       ...report,
-      createdAt: report.createdAt.toISOString(),
+      createdAt: formatIsoDate(report.createdAt) ?? new Date().toISOString(),
     }));
 
     return c.json(
@@ -191,7 +192,7 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
     // Format the response
     const formattedReport = {
       ...reportWithRelations,
-      createdAt: reportWithRelations.createdAt.toISOString(),
+      createdAt: formatIsoDate(reportWithRelations.createdAt) ?? new Date().toISOString(),
     };
 
     return c.json(formattedReport, HttpStatusCodes.CREATED) as any;
@@ -263,7 +264,7 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
     // Format the response
     const formattedReport = {
       ...report,
-      createdAt: report.createdAt.toISOString(),
+      createdAt: formatIsoDate(report.createdAt) ?? new Date().toISOString(),
     };
 
     return c.json(formattedReport as any, HttpStatusCodes.OK) as any; // Type assertion due to 'createdBy' missing from Drizzle output
@@ -342,7 +343,7 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
     // Format the response
     const formattedReport = {
       ...updatedReport,
-      createdAt: updatedReport.createdAt.toISOString(),
+      createdAt: formatIsoDate(updatedReport.createdAt) ?? new Date().toISOString(),
     };
 
     return c.json(formattedReport as any, HttpStatusCodes.OK) as any;
@@ -440,7 +441,7 @@ export const getByAdId: AppRouteHandler<GetByAdIdRoute> = async (c) => {
     // Format the response
     const formattedReports = fetchedReports.map((report) => ({
       ...report,
-      createdAt: report.createdAt.toISOString(),
+      createdAt: formatIsoDate(report.createdAt) ?? new Date().toISOString(),
     }));
 
     return c.json(formattedReports, HttpStatusCodes.OK) as any;
@@ -484,7 +485,7 @@ export const getUserReports: AppRouteHandler<GetUserReportsRoute> = async (c) =>
     // Format the response
     const formattedReports = fetchedReports.map((report) => ({
       ...report,
-      createdAt: report.createdAt.toISOString(),
+      createdAt: formatIsoDate(report.createdAt) ?? new Date().toISOString(),
     }));
 
     return c.json(formattedReports, HttpStatusCodes.OK) as any;

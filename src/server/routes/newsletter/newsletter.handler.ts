@@ -2,6 +2,7 @@ import { db } from "@/server/db";
 import { newsletters, users } from "@/server/db/schema";
 import { eq, or, ilike, count } from "drizzle-orm";
 import * as HttpStatusCodes from "stoker/http-status-codes";
+import { formatIsoDate } from "@/server/helpers/date-utils";
 import { getTransporter } from "@/lib/transporter";
 import type { AppRouteHandler } from "@/types/server";
 import type {
@@ -51,8 +52,8 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       newsletters: fetchedNewsletters.map((n) => ({
         ...n,
         id: n.id,
-        sentAt: n.sentAt.toISOString(),
-        createdAt: n.createdAt.toISOString(),
+        sentAt: formatIsoDate(n.sentAt) ?? new Date().toISOString(),
+        createdAt: formatIsoDate(n.createdAt) ?? new Date().toISOString(),
         plainContent: n.plainContent ?? null,
       })),
       pagination: {
@@ -86,8 +87,8 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
   return c.json(
     {
       ...newsletter,
-      sentAt: newsletter.sentAt.toISOString(),
-      createdAt: newsletter.createdAt.toISOString(),
+      sentAt: formatIsoDate(newsletter.sentAt) ?? new Date().toISOString(),
+      createdAt: formatIsoDate(newsletter.createdAt) ?? new Date().toISOString(),
       plainContent: newsletter.plainContent ?? null,
     },
     HttpStatusCodes.OK
@@ -185,8 +186,8 @@ export const send: AppRouteHandler<SendRoute> = async (c) => {
       message: `Newsletter sent to \${sentCount} out of \${recipientEmails.length} recipients`,
       newsletter: {
         ...newsletter,
-        sentAt: newsletter.sentAt.toISOString(),
-        createdAt: newsletter.createdAt.toISOString(),
+        sentAt: formatIsoDate(newsletter.sentAt) ?? new Date().toISOString(),
+        createdAt: formatIsoDate(newsletter.createdAt) ?? new Date().toISOString(),
         plainContent: newsletter.plainContent ?? null,
       },
     },

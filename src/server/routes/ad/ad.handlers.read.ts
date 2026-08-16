@@ -3,6 +3,7 @@ import { ads, boostRequests, users, media, adMedia } from "@/server/db/schema";
 import { eq, or, and, gte, lte, lt, count, desc, asc, ilike } from "drizzle-orm";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import * as HttpStatusPhrases from "stoker/http-status-phrases";
+import { formatIsoDate } from "@/server/helpers/date-utils";
 import type { AppRouteHandler } from "@/types/server";
 import type { ListRoute, GetOneRoute, TrendingRoute } from "./ad.routes";
 
@@ -186,7 +187,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       }),
     ]);
 
-    totalAdsCount = totalAdsRes[0].value;
+    totalAdsCount = totalAdsRes?.[0]?.value ?? 0;
     let mappedAds = fetchedAds.map(ad => ({ ...ad, creator: ad.user }));
 
     if (query.filterByUser === true) {
@@ -211,7 +212,8 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       price: ad.price ?? null,
       location: ad.location ?? null,
       metadata: typeof ad.metadata === "object" ? ad.metadata : null,
-      tags: ad.tags ?? [],
+      tags: Array.isArray(ad.tags) ? ad.tags : [],
+      boostTypes: Array.isArray(ad.boostTypes) ? ad.boostTypes : [],
       type: ad.type,
       listingType: ad.listingType ?? "SELL",
       status: ad.status,
@@ -252,13 +254,13 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       isDraft: ad.isDraft ?? true,
       boosted: ad.boosted ?? false,
       featured: ad.featured ?? false,
-      createdAt: ad.createdAt.toISOString(),
-      updatedAt: ad.updatedAt.toISOString(),
-      boostExpiry: ad.boostExpiry?.toISOString() ?? null,
-      featureExpiry: ad.featureExpiry?.toISOString() ?? null,
-      expiryDate: ad.expiryDate?.toISOString() ?? null,
-      boostStartAt: ad.boostStartAt?.toISOString() ?? null,
-      boostEndAt: ad.boostEndAt?.toISOString() ?? null,
+      createdAt: formatIsoDate(ad.createdAt) ?? new Date().toISOString(),
+      updatedAt: formatIsoDate(ad.updatedAt) ?? new Date().toISOString(),
+      boostExpiry: formatIsoDate(ad.boostExpiry),
+      featureExpiry: formatIsoDate(ad.featureExpiry),
+      expiryDate: formatIsoDate(ad.expiryDate),
+      boostStartAt: formatIsoDate(ad.boostStartAt),
+      boostEndAt: formatIsoDate(ad.boostEndAt),
       boostTotalAmount:
         ad.boostRequests?.[0]?.totalAmount ??
         (ad.metadata as any)?.boostTotalAmount ??
@@ -320,7 +322,8 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
       price: fetchedAd.price ?? null,
       location: fetchedAd.location ?? null,
       metadata: typeof fetchedAd.metadata === "object" ? fetchedAd.metadata : null,
-      tags: fetchedAd.tags ?? [],
+      tags: Array.isArray(fetchedAd.tags) ? fetchedAd.tags : [],
+      boostTypes: Array.isArray(fetchedAd.boostTypes) ? fetchedAd.boostTypes : [],
       type: fetchedAd.type,
       listingType: fetchedAd.listingType ?? "SELL",
       status: fetchedAd.status,
@@ -361,13 +364,13 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
       isDraft: fetchedAd.isDraft ?? true,
       boosted: fetchedAd.boosted ?? false,
       featured: fetchedAd.featured ?? false,
-      createdAt: fetchedAd.createdAt.toISOString(),
-      updatedAt: fetchedAd.updatedAt.toISOString(),
-      boostExpiry: fetchedAd.boostExpiry?.toISOString() ?? null,
-      featureExpiry: fetchedAd.featureExpiry?.toISOString() ?? null,
-      expiryDate: fetchedAd.expiryDate?.toISOString() ?? null,
-      boostStartAt: fetchedAd.boostStartAt?.toISOString() ?? null,
-      boostEndAt: fetchedAd.boostEndAt?.toISOString() ?? null,
+      createdAt: formatIsoDate(fetchedAd.createdAt) ?? new Date().toISOString(),
+      updatedAt: formatIsoDate(fetchedAd.updatedAt) ?? new Date().toISOString(),
+      boostExpiry: formatIsoDate(fetchedAd.boostExpiry),
+      featureExpiry: formatIsoDate(fetchedAd.featureExpiry),
+      expiryDate: formatIsoDate(fetchedAd.expiryDate),
+      boostStartAt: formatIsoDate(fetchedAd.boostStartAt),
+      boostEndAt: formatIsoDate(fetchedAd.boostEndAt),
     };
 
     return c.json(formattedAd as any, HttpStatusCodes.OK);
@@ -407,12 +410,13 @@ export const trending: AppRouteHandler<TrendingRoute> = async (c) => {
       price: ad.price ?? null,
       location: ad.location ?? null,
       metadata: typeof ad.metadata === "object" ? ad.metadata : null,
-      tags: ad.tags ?? [],
+      tags: Array.isArray(ad.tags) ? ad.tags : [],
+      boostTypes: Array.isArray(ad.boostTypes) ? ad.boostTypes : [],
       type: ad.type,
       listingType: ad.listingType ?? "SELL",
       status: ad.status,
-      createdAt: ad.createdAt.toISOString(),
-      updatedAt: ad.updatedAt.toISOString(),
+      createdAt: formatIsoDate(ad.createdAt) ?? new Date().toISOString(),
+      updatedAt: formatIsoDate(ad.updatedAt) ?? new Date().toISOString(),
     }));
 
     return c.json(formattedAds as any, HttpStatusCodes.OK);

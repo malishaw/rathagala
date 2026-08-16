@@ -3,6 +3,7 @@ import { ads, users, adAnalytics } from "@/server/db/schema";
 import { eq, and, gte, lte, not } from "drizzle-orm";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import * as HttpStatusPhrases from "stoker/http-status-phrases";
+import { formatIsoDate } from "@/server/helpers/date-utils";
 import type { AppRouteHandler } from "@/types/server";
 import type { ApproveRoute, RejectRoute, IncrementViewRoute, RenewRoute, SendExpiryRemindersRoute } from "./ad.routes";
 import { sendAdApprovalEmail, sendListingRenewalConfirmationEmail, sendListingExpiryReminderEmail } from "@/lib/email";
@@ -19,10 +20,10 @@ export const approve: AppRouteHandler<ApproveRoute> = async (c) => {
       );
     }
 
-    const userRole = (user as any)?.role;
-    if (userRole !== "admin") {
+    const isAdmin = (user as any)?.role === "admin";
+    if (!isAdmin) {
       return c.json(
-        { message: "Admin access required" },
+        { message: HttpStatusPhrases.FORBIDDEN },
         HttpStatusCodes.FORBIDDEN
       );
     }
@@ -31,32 +32,37 @@ export const approve: AppRouteHandler<ApproveRoute> = async (c) => {
       where: eq(ads.id, adId),
       with: {
         user: {
-          columns: {
-            id: true,
-            name: true,
-            email: true,
-          }
-        }
-      }
+          columns: { id: true, name: true, email: true },
+        },
+      },
     });
 
     if (!existingAd) {
       return c.json(
-        { message: HttpStatusPhrases.NOT_FOUND },
+        { message: "Ad not found" },
         HttpStatusCodes.NOT_FOUND
       );
     }
 
-    const [updatedAd] = await db.update(ads).set({
-      status: "ACTIVE" as any,
-      published: true,
-      isDraft: false,
-    }).where(eq(ads.id, adId)).returning();
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + 60);
 
-    if (existingAd.user?.email && existingAd.user?.name) {
+    const [updatedAd] = await db.update(ads)
+      .set({
+        status: "ACTIVE" as any,
+        published: true,
+        isDraft: false,
+        rejectionDescription: null,
+        expiryDate,
+        updatedAt: new Date(),
+      })
+      .where(eq(ads.id, adId))
+      .returning();
+
+    if (existingAd.user?.email) {
       const emailPromise = sendAdApprovalEmail({
         email: existingAd.user.email,
-        name: existingAd.user.name,
+        name: existingAd.user.name || "User",
         adTitle: existingAd.title || "",
         adId: adId,
       }).catch((emailError) => {
@@ -70,11 +76,11 @@ export const approve: AppRouteHandler<ApproveRoute> = async (c) => {
 
     const formattedAd = {
       ...updatedAd,
-      createdAt: updatedAd.createdAt.toISOString(),
-      updatedAt: updatedAd.updatedAt.toISOString(),
-      boostExpiry: updatedAd.boostExpiry?.toISOString() ?? null,
-      featureExpiry: updatedAd.featureExpiry?.toISOString() ?? null,
-      expiryDate: updatedAd.expiryDate?.toISOString() ?? null,
+      createdAt: formatIsoDate(updatedAd.createdAt) ?? new Date().toISOString(),
+      updatedAt: formatIsoDate(updatedAd.updatedAt) ?? new Date().toISOString(),
+      boostExpiry: formatIsoDate(updatedAd.boostExpiry),
+      featureExpiry: formatIsoDate(updatedAd.featureExpiry),
+      expiryDate: formatIsoDate(updatedAd.expiryDate),
     };
 
     return c.json(formattedAd as any, HttpStatusCodes.OK);
@@ -99,58 +105,34 @@ export const reject: AppRouteHandler<RejectRoute> = async (c) => {
       );
     }
 
-    const userRole = (user as any)?.role;
-    if (userRole !== "admin") {
+    const isAdmin = (user as any)?.role === "admin";
+    if (!isAdmin) {
       return c.json(
-        { message: "Admin access required" },
+        { message: HttpStatusPhrases.FORBIDDEN },
         HttpStatusCodes.FORBIDDEN
       );
     }
 
-    const existingAd = await db.query.ads.findFirst({
-      where: eq(ads.id, adId),
-      with: { user: true },
-    });
+    const body = await c.req.json();
+    const rejectionReason = body.rejectionReason;
 
-    if (!existingAd) {
-      return c.json(
-        { message: HttpStatusPhrases.NOT_FOUND },
-        HttpStatusCodes.NOT_FOUND
-      );
-    }
-
-    const body = c.req.valid("json");
-
-    const [updatedAd] = await db.update(ads).set({
-      status: "REJECTED" as any,
-      published: false,
-      rejectionDescription: body?.rejectionDescription || null,
-    }).where(eq(ads.id, adId)).returning();
-
-    if (existingAd.user?.email) {
-      const emailPromise = import("@/lib/email").then(({ sendAdRejectionEmail }) => {
-        return sendAdRejectionEmail({
-          email: existingAd.user!.email,
-          name: existingAd.user!.name || "User",
-          adTitle: existingAd.title || "",
-          rejectionReason: body?.rejectionDescription,
-        });
-      }).catch((emailError) => {
-        console.error("[REJECT AD] Failed to send rejection email:", emailError);
-      });
-
-      if (c.executionCtx && typeof c.executionCtx.waitUntil === "function") {
-        c.executionCtx.waitUntil(emailPromise);
-      }
-    }
+    const [updatedAd] = await db.update(ads)
+      .set({
+        status: "REJECTED" as any,
+        published: false,
+        rejectionDescription: rejectionReason || null,
+        updatedAt: new Date(),
+      })
+      .where(eq(ads.id, adId))
+      .returning();
 
     const formattedAd = {
       ...updatedAd,
-      createdAt: updatedAd.createdAt.toISOString(),
-      updatedAt: updatedAd.updatedAt.toISOString(),
-      boostExpiry: updatedAd.boostExpiry?.toISOString() ?? null,
-      featureExpiry: updatedAd.featureExpiry?.toISOString() ?? null,
-      expiryDate: updatedAd.expiryDate?.toISOString() ?? null,
+      createdAt: formatIsoDate(updatedAd.createdAt) ?? new Date().toISOString(),
+      updatedAt: formatIsoDate(updatedAd.updatedAt) ?? new Date().toISOString(),
+      boostExpiry: formatIsoDate(updatedAd.boostExpiry),
+      featureExpiry: formatIsoDate(updatedAd.featureExpiry),
+      expiryDate: formatIsoDate(updatedAd.expiryDate),
     };
 
     return c.json(formattedAd as any, HttpStatusCodes.OK);
@@ -279,7 +261,7 @@ export const renew: AppRouteHandler<RenewRoute> = async (c) => {
     return c.json(
       {
         message: "Ad renewed successfully",
-        expiryDate: renewedAd.expiryDate?.toISOString() ?? newExpiryDate.toISOString(),
+        expiryDate: formatIsoDate(renewedAd.expiryDate) ?? newExpiryDate.toISOString(),
       },
       HttpStatusCodes.OK
     );

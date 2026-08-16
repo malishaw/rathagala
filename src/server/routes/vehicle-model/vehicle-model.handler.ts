@@ -2,6 +2,7 @@ import { db } from "@/server/db";
 import { vehicleModels, ads } from "@/server/db/schema";
 import { eq, and, or, ilike, count, isNotNull, isNull } from "drizzle-orm";
 import * as HttpStatusCodes from "stoker/http-status-codes";
+import { formatIsoDate } from "@/server/helpers/date-utils";
 
 import type { AppRouteHandler } from "@/types/server";
 import type { ListRoute, GetOneRoute, CreateRoute, UpdateRoute, RemoveRoute, ClearUserModelRoute } from "./vehicle-model.routes";
@@ -16,14 +17,14 @@ function formatModel(m: {
   name: string;
   brand: string | null;
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: any;
+  updatedAt: any;
 }) {
   return {
     ...m,
     brand: m.brand ?? null,
-    createdAt: m.createdAt.toISOString(),
-    updatedAt: m.updatedAt.toISOString(),
+    createdAt: formatIsoDate(m.createdAt) ?? new Date().toISOString(),
+    updatedAt: formatIsoDate(m.updatedAt) ?? new Date().toISOString(),
   };
 }
 

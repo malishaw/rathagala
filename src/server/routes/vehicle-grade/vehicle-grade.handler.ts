@@ -2,6 +2,7 @@ import { db } from "@/server/db";
 import { vehicleGrades, ads } from "@/server/db/schema";
 import { eq, and, ilike, count, isNotNull } from "drizzle-orm";
 import * as HttpStatusCodes from "stoker/http-status-codes";
+import { formatIsoDate } from "@/server/helpers/date-utils";
 
 import type { AppRouteHandler } from "@/types/server";
 import type { ListRoute, GetOneRoute, CreateRoute, UpdateRoute, RemoveRoute, ClearUserGradeRoute } from "./vehicle-grade.routes";
@@ -17,15 +18,15 @@ function formatGrade(m: {
   model: string | null;
   brand: string | null;
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: any;
+  updatedAt: any;
 }) {
   return {
     ...m,
     model: m.model ?? null,
     brand: m.brand ?? null,
-    createdAt: m.createdAt.toISOString(),
-    updatedAt: m.updatedAt.toISOString(),
+    createdAt: formatIsoDate(m.createdAt) ?? new Date().toISOString(),
+    updatedAt: formatIsoDate(m.updatedAt) ?? new Date().toISOString(),
   };
 }
 
