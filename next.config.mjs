@@ -3,6 +3,7 @@ import { hostname } from "os";
 
 const nextConfig = {
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
