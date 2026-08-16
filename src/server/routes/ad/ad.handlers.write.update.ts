@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import * as HttpStatusPhrases from "stoker/http-status-phrases";
 import { formatIsoDate } from "@/server/helpers/date-utils";
+import { safeWaitUntil } from "@/server/helpers/execution-context";
 import type { AppRouteHandler } from "@/types/server";
 import type { UpdateRoute } from "./ad.routes";
 import { sendListingUpdatedEmail } from "@/lib/email";
@@ -184,9 +185,7 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
         adId: existingAd.id,
       }).catch((err) => console.error("[UPDATE AD] Failed to send update email:", err));
 
-      if (c.executionCtx && typeof c.executionCtx.waitUntil === "function") {
-        c.executionCtx.waitUntil(emailPromise);
-      }
+      safeWaitUntil(c, emailPromise);
     }
 
     return c.json(formattedAd as any, HttpStatusCodes.OK);

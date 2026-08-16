@@ -4,6 +4,7 @@ import { eq, or, and, gte, lte, lt, count, desc, asc, ilike } from "drizzle-orm"
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import * as HttpStatusPhrases from "stoker/http-status-phrases";
 import { formatIsoDate } from "@/server/helpers/date-utils";
+import { safeWaitUntil } from "@/server/helpers/execution-context";
 import type { AppRouteHandler } from "@/types/server";
 import type { ListRoute, GetOneRoute, TrendingRoute } from "./ad.routes";
 
@@ -52,12 +53,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       }
     };
 
-    if (c.executionCtx && typeof c.executionCtx.waitUntil === 'function') {
-      c.executionCtx.waitUntil(expireBoosts());
-    } else {
-      // Fallback for environments without executionCtx (like Node dev server)
-      expireBoosts();
-    }
+    safeWaitUntil(c, expireBoosts());
 
     const conditions = [];
 

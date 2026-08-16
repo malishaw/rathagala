@@ -4,6 +4,7 @@ import { eq, and, gte, lte, not } from "drizzle-orm";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import * as HttpStatusPhrases from "stoker/http-status-phrases";
 import { formatIsoDate } from "@/server/helpers/date-utils";
+import { safeWaitUntil } from "@/server/helpers/execution-context";
 import type { AppRouteHandler } from "@/types/server";
 import type { ApproveRoute, RejectRoute, IncrementViewRoute, RenewRoute, SendExpiryRemindersRoute } from "./ad.routes";
 import { sendAdApprovalEmail, sendListingRenewalConfirmationEmail, sendListingExpiryReminderEmail } from "@/lib/email";
@@ -69,9 +70,7 @@ export const approve: AppRouteHandler<ApproveRoute> = async (c) => {
         console.error("[APPROVE AD] Failed to send approval email:", emailError);
       });
 
-      if (c.executionCtx && typeof c.executionCtx.waitUntil === "function") {
-        c.executionCtx.waitUntil(emailPromise);
-      }
+      safeWaitUntil(c, emailPromise);
     }
 
     const formattedAd = {
@@ -253,9 +252,7 @@ export const renew: AppRouteHandler<RenewRoute> = async (c) => {
         newExpiryDate,
       }).catch((err) => console.error("[RENEW AD] Failed to send renewal email:", err));
 
-      if (c.executionCtx && typeof c.executionCtx.waitUntil === "function") {
-        c.executionCtx.waitUntil(emailPromise);
-      }
+      safeWaitUntil(c, emailPromise);
     }
 
     return c.json(
