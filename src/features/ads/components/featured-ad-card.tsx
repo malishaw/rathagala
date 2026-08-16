@@ -38,7 +38,7 @@ export function FeaturedAdCard({
       <div className="p-2">
         <div className="flex gap-3">
           {/* Image Container - Single Compact Image */}
-          <div className="w-24 sm:w-28 h-18 sm:h-20 flex-shrink-0 rounded-lg overflow-hidden bg-slate-55 border border-slate-100 relative">
+          <div className="w-24 sm:w-28 h-16 sm:h-20 flex-shrink-0 rounded-lg overflow-hidden bg-slate-50 border border-slate-100 relative">
             <Image
               src={vehicle?.media?.[0]?.media?.url || "/placeholder-image.jpg"}
               alt={vehicle.title || "Vehicle"}

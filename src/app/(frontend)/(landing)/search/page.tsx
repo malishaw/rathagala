@@ -1149,7 +1149,7 @@ export default function SearchPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {Array.from({ length: 6 }).map((_, idx) => (
                   <div key={idx} className="rounded-xl border border-slate-200/60 p-3 bg-white flex gap-3 animate-pulse">
-                    <div className="w-24 sm:w-28 h-18 sm:h-20 bg-slate-100 rounded-lg flex-shrink-0" />
+                    <div className="w-24 sm:w-28 h-16 sm:h-20 bg-slate-100 rounded-lg flex-shrink-0" />
                     <div className="flex-1 space-y-2 py-1">
                       <div className="h-2.5 bg-slate-100 rounded w-1/4" />
                       <div className="h-4 bg-slate-100 rounded w-3/4" />
@@ -1237,7 +1237,7 @@ export default function SearchPage() {
                         <div className="p-3">
                           <div className="flex gap-3">
                             {/* Vehicle Image Container */}
-                            <div className="w-24 sm:w-28 h-18 sm:h-20 flex-shrink-0 relative overflow-hidden bg-slate-55 border border-slate-100 rounded-lg">
+                            <div className="w-24 sm:w-28 h-16 sm:h-20 flex-shrink-0 relative overflow-hidden bg-slate-50 border border-slate-100 rounded-lg">
                               {/* Urgency Badge */}
                               {isUrgent && (
                                 <Badge className="absolute top-1 left-1 z-10 bg-red-600 text-white border-0 text-[8px] font-bold px-1.5 py-0.5 shadow-[0_2px_4px_rgba(220,38,38,0.2)] rounded-full uppercase tracking-wider animate-pulse flex items-center gap-0.5">
