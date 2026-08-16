@@ -982,7 +982,7 @@ export default function VehicleMarketplace() {
             <div className="flex-1">
               <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-slate-800 mb-3 md:mb-0">
-                  Browse Vehicles
+                  Browse Vehiclesd
                 </h2>
                 <div className="flex flex-col md:flex-row md:items-center space-y-3 md:space-y-0 md:space-x-4">
                   <span className="text-slate-600 text-sm">

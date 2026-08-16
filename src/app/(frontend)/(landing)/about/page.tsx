@@ -289,7 +289,7 @@ export default function AboutPage() {
                   className="border-teal-700 text-teal-700 hover:bg-teal-50"
                   size="lg"
                 >
-                  Browse Vehiclesd
+                  Browse Vehiclesdd
                 </Button>
               </Link>
             </div>
