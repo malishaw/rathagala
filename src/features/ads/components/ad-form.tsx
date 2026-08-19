@@ -483,7 +483,7 @@ export function AdForm({
       description: formData.description,
       type: resolvedType as any,
       listingType: formData.listingType,
-      price: formData.price ? parseFloat(formData.price) : undefined,
+      price: formData.price && parseFloat(formData.price) > 0 ? parseFloat(formData.price) : undefined,
 
       // Include all the dynamic fields
       condition: formData.condition || undefined,

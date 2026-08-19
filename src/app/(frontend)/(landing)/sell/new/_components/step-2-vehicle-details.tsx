@@ -29,8 +29,6 @@ export function Step2VehicleDetails({ onBack, onNext, canProceed }: Step2Props) 
       const missing: string[] = [];
       
       if (values.listingType === "SELL") {
-        const hasPrice = values.metadata?.isNegotiable || (values.price !== undefined && values.price !== null && values.price > 0);
-        if (!hasPrice) missing.push("Price or Negotiable");
         if (!values.description) missing.push("Description");
 
         if (values.type === "CAR") {
@@ -150,54 +148,35 @@ export function Step2VehicleDetails({ onBack, onNext, canProceed }: Step2Props) 
             name="price"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Price (Rs)</FormLabel>
+                <div className="flex items-center justify-between">
+                  <FormLabel>Price (Rs)</FormLabel>
+                  <span className="text-xs text-muted-foreground">Optional</span>
+                </div>
                 <FormControl>
                   <Input
                     type="text"
-                    placeholder="e.g., 2,500,000"
+                    placeholder="e.g., 2,500,000 (leave blank for Negotiable)"
                     {...field}
                     value={field.value ? field.value.toLocaleString('en-US') : ""}
                     onChange={(e) => {
                       const rawValue = e.target.value.replace(/[^0-9]/g, '');
+                      if (!rawValue) {
+                        field.onChange(undefined);
+                        return;
+                      }
                       const val = parseInt(rawValue, 10);
-                      field.onChange(isNaN(val) ? undefined : val);
+                      field.onChange(isNaN(val) || val <= 0 ? undefined : val);
                     }}
                   />
                 </FormControl>
                 {field.value ? (
                   <p className="text-xs font-medium text-teal-700 mt-1">{formatPrice(field.value)}</p>
-                ) : null}
+                ) : (
+                  <p className="text-xs text-muted-foreground mt-1">Leave blank to display as &ldquo;Negotiable&rdquo;</p>
+                )}
                 <FormMessage />
               </FormItem>
             )}
-          />
-
-          <FormField
-            control={form.control}
-            name="metadata"
-            render={({ field }) => {
-              const isNegotiable = field.value?.isNegotiable || false;
-              return (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md p-2">
-                  <FormControl>
-                    <Checkbox
-                      checked={isNegotiable}
-                      onCheckedChange={(checked) => {
-                        field.onChange({
-                          ...(field.value || {}),
-                          isNegotiable: checked
-                        });
-                      }}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel className="text-sm font-medium cursor-pointer">
-                      Price is Negotiable
-                    </FormLabel>
-                  </div>
-                </FormItem>
-              );
-            }}
           />
 
           {/* Dynamic fields based on vehicle type */}

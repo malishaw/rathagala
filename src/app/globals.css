@@ -147,7 +147,9 @@
   }
   
   /* Prevent right-click context menu on ad detail page images */
-  .aspect-video img {
+  .aspect-video img,
+  .aspect-\[4\/3\] img,
+  .img-protected img {
     -webkit-user-select: none !important;
     -moz-user-select: none !important;
     -ms-user-select: none !important;
@@ -161,7 +163,9 @@
   }
   
   /* Prevent context menu on image containers */
-  .aspect-video {
+  .aspect-video,
+  .aspect-\[4\/3\],
+  .img-protected {
     -webkit-context-menu: none;
     -moz-context-menu: none;
     context-menu: none;

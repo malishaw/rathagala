@@ -31,8 +31,8 @@ export default function Loading() {
           <div className="lg:col-span-2 space-y-4">
             {/* Image viewer */}
             <div className="bg-white border border-gray-200 rounded overflow-hidden">
-              {/* Main image area — aspect-video */}
-              <div className="relative w-full" style={{ paddingTop: "56.25%" }}>
+              {/* Main image area — aspect-[4/3] */}
+              <div className="relative w-full aspect-[4/3]">
                 <Skeleton className="absolute inset-0 w-full h-full rounded-none" />
                 {/* image counter badge position */}
                 <div className="absolute bottom-2 right-2 w-12 h-5 bg-black/20 rounded animate-pulse" />

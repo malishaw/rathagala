@@ -188,25 +188,24 @@ export default function QuickAdCreatePage() {
         if (listingType !== "SELL") {
           return !!description;
         }
-        let priceRequired = metadata?.isNegotiable || (price !== undefined && price !== null && price > 0);
-        let detailsRequired = priceRequired && description;
+        let detailsRequired = !!description;
 
         if (type === "CAR") {
-          detailsRequired = detailsRequired && fuelType && transmission;
+          detailsRequired = detailsRequired && !!fuelType && !!transmission;
         } else if (type === "MOTORCYCLE") {
-          detailsRequired = detailsRequired && watchAll.engineCapacity;
+          detailsRequired = detailsRequired && !!watchAll.engineCapacity;
         } else if (type === "AUTO_SERVICE" || type === "RENTAL") {
-          detailsRequired = detailsRequired && serviceType;
+          detailsRequired = detailsRequired && !!serviceType;
         } else if (type === "AUTO_PARTS") {
-          detailsRequired = priceRequired && description;
+          detailsRequired = !!description;
         } else if (type === "MAINTENANCE") {
-          detailsRequired = detailsRequired && maintenanceType;
+          detailsRequired = detailsRequired && !!maintenanceType;
         } else if (type === "HEAVY_DUTY") {
-          detailsRequired = detailsRequired && vehicleType;
+          detailsRequired = detailsRequired && !!vehicleType;
         } else if (["THREE_WHEEL", "BUS", "LORRY", "TRACTOR"].includes(type)) {
-          detailsRequired = detailsRequired && fuelType;
+          detailsRequired = detailsRequired && !!fuelType;
         }
-        return !!detailsRequired;
+        return detailsRequired;
 
       case 3:
         return !!(name && phoneNumber && province && district && city && location && termsAndConditions && selectedImages.length > 0);

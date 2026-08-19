@@ -75,16 +75,9 @@ interface AdData {
   partName?: string;
 }
 
-const formatPrice = (price: number | null, isNegotiable?: boolean): React.ReactNode => {
-  if (!price) return "Negotiable";
-  return (
-    <>
-      Rs. {price.toLocaleString()}
-      {isNegotiable && (
-        <span className="text-[10px] font-normal opacity-70 ml-1">Negotiable</span>
-      )}
-    </>
-  );
+const formatPrice = (price: number | null | undefined): React.ReactNode => {
+  if (!price || price <= 0) return "Negotiable";
+  return `Rs. ${price.toLocaleString()}`;
 };
 
 export default function AutoPartsPage() {
@@ -650,7 +643,7 @@ export default function AutoPartsPage() {
                                 {vehicle.city || vehicle.location || ""}
                               </div>
                               <div className="text-sm font-semibold text-teal-700 mb-1">
-                                {formatPrice(vehicle.price, vehicle.metadata?.isNegotiable as boolean | undefined)}
+                                {formatPrice(vehicle.price)}
                               </div>
                               {categoryName && (
                                 <div className="text-xs text-slate-500 truncate">{categoryName}</div>

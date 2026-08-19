@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocations } from "@/hooks/use-locations";
 import { toast } from "sonner";
@@ -36,7 +36,6 @@ import {
   Pagination,
   PaginationContent,
   PaginationItem,
-  PaginationLink,
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
@@ -140,7 +139,13 @@ export default function AddressManagementPage() {
     enabled: !!selectedDistrict,
   });
 
-  const citiesTextForDistrict = citiesData?.cities.map((c) => c.name).join(", ") ?? "";
+  useEffect(() => {
+    if (citiesData?.cities) {
+      setCitiesText(citiesData.cities.map((c) => c.name).join(", "));
+    } else {
+      setCitiesText("");
+    }
+  }, [citiesData, selectedDistrict?.id]);
 
   // ─── Province mutations ───────────────────────────────────────────────────
 
@@ -310,69 +315,141 @@ export default function AddressManagementPage() {
   const paginatedDistricts = districts.slice((districtPage - 1) * itemsPerPage, districtPage * itemsPerPage);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-5 space-y-4 max-w-[1400px]">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <MapPin className="h-6 w-6" />
+          <h1 className="text-xl font-bold flex items-center gap-2 tracking-tight">
+            <MapPin className="h-5 w-5 text-primary" />
             Address Management
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">
+          <p className="text-muted-foreground text-xs mt-0.5">
             Manage provinces, districts, and cities used throughout the platform
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={handleSeedFromEnv} disabled={seeding}>
-          {seeding ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 px-3 text-xs self-start sm:self-auto"
+          onClick={handleSeedFromEnv}
+          disabled={seeding}
+        >
+          {seeding ? (
+            <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+          ) : (
+            <Download className="h-3.5 w-3.5 mr-1.5" />
+          )}
           Import from ENV
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Provinces Column */}
-        <Card>
-          <CardHeader className="pb-3">
+        <Card className="shadow-sm border">
+          <CardHeader className="py-2.5 px-3.5 border-b bg-muted/20">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-base">Provinces</CardTitle>
-                <span className="text-sm text-muted-foreground font-normal">({provinces.length})</span>
+              <div className="flex items-center gap-1.5">
+                <CardTitle className="text-sm font-semibold">Provinces</CardTitle>
+                <Badge variant="secondary" className="text-[11px] h-4 px-1.5 font-normal">
+                  {provinces.length}
+                </Badge>
               </div>
-              <Button size="sm" onClick={() => { setProvinceName(""); setProvinceDialog({ open: true }); }}>
-                <Plus className="h-4 w-4" />
+              <Button
+                size="sm"
+                variant="default"
+                className="h-6 w-6 p-0 rounded"
+                onClick={() => {
+                  setProvinceName("");
+                  setProvinceDialog({ open: true });
+                }}
+              >
+                <Plus className="h-3.5 w-3.5" />
               </Button>
             </div>
           </CardHeader>
           <CardContent className="p-0">
             {loadingProvinces ? (
-              <div className="px-4 pb-4 space-y-2">
-                {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-9 w-full" />)}
+              <div className="p-3 space-y-1.5">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-7 w-full" />
+                ))}
               </div>
             ) : provinces.length === 0 ? (
-              <p className="px-4 pb-4 text-sm text-muted-foreground">
+              <p className="p-4 text-xs text-muted-foreground text-center">
                 No provinces yet.{" "}
-                <button onClick={() => { setProvinceName(""); setProvinceDialog({ open: true }); }} className="text-primary underline">Add one</button>
-                {" "}or{" "}
-                <button onClick={handleSeedFromEnv} className="text-primary underline">import from ENV</button>.
+                <button
+                  onClick={() => {
+                    setProvinceName("");
+                    setProvinceDialog({ open: true });
+                  }}
+                  className="text-primary underline font-medium"
+                >
+                  Add one
+                </button>{" "}
+                or{" "}
+                <button
+                  onClick={handleSeedFromEnv}
+                  className="text-primary underline font-medium"
+                >
+                  import from ENV
+                </button>
+                .
               </p>
             ) : (
-              <ul className="divide-y text-sm">
+              <ul className="divide-y text-xs">
                 {paginatedProvinces.map((p) => (
                   <li
                     key={p.id}
-                    className={`flex items-center justify-between px-3 py-1.5 cursor-pointer hover:bg-muted/50 transition-colors ${selectedProvince?.id === p.id ? "bg-muted" : ""}`}
-                    onClick={() => { setSelectedProvince(p); setSelectedDistrict(null); setCitiesText(""); setDistrictPage(1); }}
+                    className={`flex items-center justify-between px-3 py-1.5 cursor-pointer hover:bg-muted/60 transition-colors ${
+                      selectedProvince?.id === p.id ? "bg-primary/10 text-primary font-medium" : ""
+                    }`}
+                    onClick={() => {
+                      setSelectedProvince(p);
+                      setSelectedDistrict(null);
+                      setCitiesText("");
+                      setDistrictPage(1);
+                    }}
                   >
-                    <div className="flex items-center gap-2 min-w-0">
-                      {selectedProvince?.id === p.id
-                        ? <ChevronDown className="h-4 w-4 shrink-0 text-primary" />
-                        : <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />}
-                      <span className="text-sm font-medium truncate">{p.name}</span>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      {selectedProvince?.id === p.id ? (
+                        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-primary" />
+                      ) : (
+                        <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      )}
+                      <span className="truncate">{p.name}</span>
+                      {p._count?.districts !== undefined && (
+                        <span className="text-[10px] text-muted-foreground">
+                          ({p._count.districts})
+                        </span>
+                      )}
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setProvinceName(p.name); setProvinceDialog({ open: true, edit: p }); }}>
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 hover:bg-muted"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setProvinceName(p.name);
+                          setProvinceDialog({ open: true, edit: p });
+                        }}
+                      >
                         <Pencil className="h-3 w-3" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteDialog({ open: true, type: "province", id: p.id, name: p.name }); }}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteDialog({
+                            open: true,
+                            type: "province",
+                            id: p.id,
+                            name: p.name,
+                          });
+                        }}
+                      >
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
@@ -382,24 +459,28 @@ export default function AddressManagementPage() {
             )}
           </CardContent>
           {!loadingProvinces && totalProvincePages > 1 && (
-            <div className="py-2 border-t">
+            <div className="py-1.5 border-t bg-muted/10">
               <Pagination>
-                <PaginationContent>
+                <PaginationContent className="gap-1">
                   <PaginationItem>
-                    <PaginationPrevious 
-                      onClick={() => setProvincePage(p => Math.max(1, p - 1))} 
-                      className={`h-7 px-2 ${provincePage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}`} 
+                    <PaginationPrevious
+                      onClick={() => setProvincePage((p) => Math.max(1, p - 1))}
+                      className={`h-6 px-1.5 text-xs ${
+                        provincePage === 1 ? "pointer-events-none opacity-40" : "cursor-pointer"
+                      }`}
                     />
                   </PaginationItem>
                   <PaginationItem>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-[11px] text-muted-foreground px-1">
                       {provincePage} / {totalProvincePages}
                     </span>
                   </PaginationItem>
                   <PaginationItem>
-                    <PaginationNext 
-                      onClick={() => setProvincePage(p => Math.min(totalProvincePages, p + 1))} 
-                      className={`h-7 px-2 ${provincePage === totalProvincePages ? "pointer-events-none opacity-50" : "cursor-pointer"}`} 
+                    <PaginationNext
+                      onClick={() => setProvincePage((p) => Math.min(totalProvincePages, p + 1))}
+                      className={`h-6 px-1.5 text-xs ${
+                        provincePage === totalProvincePages ? "pointer-events-none opacity-40" : "cursor-pointer"
+                      }`}
                     />
                   </PaginationItem>
                 </PaginationContent>
@@ -409,53 +490,108 @@ export default function AddressManagementPage() {
         </Card>
 
         {/* Districts Column */}
-        <Card>
-          <CardHeader className="pb-3">
+        <Card className="shadow-sm border">
+          <CardHeader className="py-2.5 px-3.5 border-b bg-muted/20">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-base">Districts</CardTitle>
-                <span className="text-sm text-muted-foreground font-normal">
-                  ({selectedProvince ? districts.length : allDistricts.length})
-                </span>
+              <div className="flex items-center gap-1.5">
+                <CardTitle className="text-sm font-semibold">Districts</CardTitle>
+                <Badge variant="secondary" className="text-[11px] h-4 px-1.5 font-normal">
+                  {selectedProvince ? districts.length : allDistricts.length}
+                </Badge>
               </div>
               {selectedProvince && (
-                <Button size="sm" onClick={() => { setDistrictName(""); setDistrictDialog({ open: true }); }}>
-                  <Plus className="h-4 w-4" />
+                <Button
+                  size="sm"
+                  variant="default"
+                  className="h-6 w-6 p-0 rounded"
+                  onClick={() => {
+                    setDistrictName("");
+                    setDistrictDialog({ open: true });
+                  }}
+                >
+                  <Plus className="h-3.5 w-3.5" />
                 </Button>
               )}
             </div>
           </CardHeader>
           <CardContent className="p-0">
             {!selectedProvince ? (
-              <p className="px-4 pb-4 text-sm text-muted-foreground">Select a province to view its districts.</p>
+              <p className="p-4 text-xs text-muted-foreground text-center">
+                Select a province to view its districts.
+              </p>
             ) : loadingDistricts ? (
-              <div className="px-4 pb-4 space-y-2">
-                {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-9 w-full" />)}
+              <div className="p-3 space-y-1.5">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-7 w-full" />
+                ))}
               </div>
             ) : districts.length === 0 ? (
-              <p className="px-4 pb-4 text-sm text-muted-foreground">
+              <p className="p-4 text-xs text-muted-foreground text-center">
                 No districts yet.{" "}
-                <button onClick={() => { setDistrictName(""); setDistrictDialog({ open: true }); }} className="text-primary underline">Add one</button>.
+                <button
+                  onClick={() => {
+                    setDistrictName("");
+                    setDistrictDialog({ open: true });
+                  }}
+                  className="text-primary underline font-medium"
+                >
+                  Add one
+                </button>
+                .
               </p>
             ) : (
-              <ul className="divide-y text-sm">
+              <ul className="divide-y text-xs">
                 {paginatedDistricts.map((d) => (
                   <li
                     key={d.id}
-                    className={`flex items-center justify-between px-3 py-1.5 cursor-pointer hover:bg-muted/50 transition-colors ${selectedDistrict?.id === d.id ? "bg-muted" : ""}`}
-                    onClick={() => { setSelectedDistrict(d); setCitiesText(""); }}
+                    className={`flex items-center justify-between px-3 py-1.5 cursor-pointer hover:bg-muted/60 transition-colors ${
+                      selectedDistrict?.id === d.id ? "bg-primary/10 text-primary font-medium" : ""
+                    }`}
+                    onClick={() => {
+                      setSelectedDistrict(d);
+                      setCitiesText("");
+                    }}
                   >
-                    <div className="flex items-center gap-2 min-w-0">
-                      {selectedDistrict?.id === d.id
-                        ? <ChevronDown className="h-4 w-4 shrink-0 text-primary" />
-                        : <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />}
-                      <span className="text-sm font-medium truncate">{d.name}</span>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      {selectedDistrict?.id === d.id ? (
+                        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-primary" />
+                      ) : (
+                        <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      )}
+                      <span className="truncate">{d.name}</span>
+                      {d._count?.cities !== undefined && (
+                        <span className="text-[10px] text-muted-foreground">
+                          ({d._count.cities})
+                        </span>
+                      )}
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setDistrictName(d.name); setDistrictDialog({ open: true, edit: d }); }}>
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 hover:bg-muted"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDistrictName(d.name);
+                          setDistrictDialog({ open: true, edit: d });
+                        }}
+                      >
                         <Pencil className="h-3 w-3" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteDialog({ open: true, type: "district", id: d.id, name: d.name }); }}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteDialog({
+                            open: true,
+                            type: "district",
+                            id: d.id,
+                            name: d.name,
+                          });
+                        }}
+                      >
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
@@ -465,24 +601,28 @@ export default function AddressManagementPage() {
             )}
           </CardContent>
           {!loadingDistricts && totalDistrictPages > 1 && (
-            <div className="py-2 border-t">
+            <div className="py-1.5 border-t bg-muted/10">
               <Pagination>
-                <PaginationContent>
+                <PaginationContent className="gap-1">
                   <PaginationItem>
-                    <PaginationPrevious 
-                      onClick={() => setDistrictPage(p => Math.max(1, p - 1))} 
-                      className={`h-7 px-2 ${districtPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}`} 
+                    <PaginationPrevious
+                      onClick={() => setDistrictPage((p) => Math.max(1, p - 1))}
+                      className={`h-6 px-1.5 text-xs ${
+                        districtPage === 1 ? "pointer-events-none opacity-40" : "cursor-pointer"
+                      }`}
                     />
                   </PaginationItem>
                   <PaginationItem>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-[11px] text-muted-foreground px-1">
                       {districtPage} / {totalDistrictPages}
                     </span>
                   </PaginationItem>
                   <PaginationItem>
-                    <PaginationNext 
-                      onClick={() => setDistrictPage(p => Math.min(totalDistrictPages, p + 1))} 
-                      className={`h-7 px-2 ${districtPage === totalDistrictPages ? "pointer-events-none opacity-50" : "cursor-pointer"}`} 
+                    <PaginationNext
+                      onClick={() => setDistrictPage((p) => Math.min(totalDistrictPages, p + 1))}
+                      className={`h-6 px-1.5 text-xs ${
+                        districtPage === totalDistrictPages ? "pointer-events-none opacity-40" : "cursor-pointer"
+                      }`}
                     />
                   </PaginationItem>
                 </PaginationContent>
@@ -492,54 +632,73 @@ export default function AddressManagementPage() {
         </Card>
 
         {/* Cities Column */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-base">Cities</CardTitle>
-              <span className="text-sm text-muted-foreground font-normal">
-                ({selectedDistrict ? cities.length : allCities.length})
-              </span>
+        <Card className="shadow-sm border">
+          <CardHeader className="py-2.5 px-3.5 border-b bg-muted/20">
+            <div className="flex items-center gap-1.5">
+              <CardTitle className="text-sm font-semibold">Cities</CardTitle>
+              <Badge variant="secondary" className="text-[11px] h-4 px-1.5 font-normal">
+                {selectedDistrict ? cities.length : allCities.length}
+              </Badge>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3.5">
             {!selectedDistrict ? (
-              <p className="text-sm text-muted-foreground">Select a district to manage its cities.</p>
+              <p className="text-xs text-muted-foreground text-center py-6">
+                Select a district to manage its cities.
+              </p>
             ) : loadingCities ? (
               <div className="space-y-2">
-                <Skeleton className="h-32 w-full" />
-                <Skeleton className="h-9 w-24" />
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-7 w-20" />
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 <div className="space-y-1">
-                  <Label htmlFor="cities-textarea">
+                  <Label htmlFor="cities-textarea" className="text-xs font-medium">
                     Cities <span className="text-muted-foreground font-normal">(comma-separated)</span>
                   </Label>
                   <Textarea
                     id="cities-textarea"
-                    key={selectedDistrict.id}
-                    defaultValue={citiesTextForDistrict}
+                    value={citiesText}
                     onChange={(e) => setCitiesText(e.target.value)}
                     placeholder="e.g. Colombo, Dehiwala, Mount Lavinia"
-                    className="min-h-[140px] resize-y text-sm"
+                    className="min-h-[100px] resize-y text-xs"
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Separate each city with a comma. Saving will replace all existing cities.
+                  <p className="text-[11px] text-muted-foreground">
+                    Separate each city with a comma. Saving will update all cities for this district.
                   </p>
                 </div>
-                {(citiesText || citiesTextForDistrict) && (
-                  <div className="flex flex-wrap gap-1">
-                    {(citiesText || citiesTextForDistrict).split(",").map((c) => c.trim()).filter(Boolean).map((city, i) => (
-                      <Badge key={i} variant="secondary" className="text-xs">{city}</Badge>
-                    ))}
+                {citiesText && (
+                  <div className="flex flex-wrap gap-1 max-h-[120px] overflow-y-auto p-1.5 bg-muted/30 rounded border border-border/50">
+                    {citiesText
+                      .split(",")
+                      .map((c) => c.trim())
+                      .filter(Boolean)
+                      .map((city, i) => (
+                        <Badge
+                          key={i}
+                          variant="secondary"
+                          className="text-[10px] py-0 px-1.5 h-4 font-normal"
+                        >
+                          {city}
+                        </Badge>
+                      ))}
                   </div>
                 )}
                 <Button
                   size="sm"
-                  disabled={saveCities.isPending}
-                  onClick={() => saveCities.mutate({ districtId: selectedDistrict.id, citiesText: citiesText || citiesTextForDistrict })}
+                  className="h-7 px-3 text-xs w-full sm:w-auto"
+                  disabled={saveCities.isPending || !selectedDistrict}
+                  onClick={() =>
+                    saveCities.mutate({
+                      districtId: selectedDistrict.id,
+                      citiesText,
+                    })
+                  }
                 >
-                  {saveCities.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+                  {saveCities.isPending && (
+                    <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                  )}
                   Save Cities
                 </Button>
               </div>
@@ -550,37 +709,55 @@ export default function AddressManagementPage() {
 
       {/* Province Dialog */}
       <Dialog open={provinceDialog.open} onOpenChange={(o) => !o && setProvinceDialog({ open: false })}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{provinceDialog.edit ? "Edit Province" : "Add Province"}</DialogTitle>
+            <DialogTitle className="text-base">
+              {provinceDialog.edit ? "Edit Province" : "Add Province"}
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="province-name">Province Name</Label>
+          <div className="space-y-3 py-1">
+            <div className="space-y-1.5">
+              <Label htmlFor="province-name" className="text-xs">
+                Province Name
+              </Label>
               <Input
                 id="province-name"
                 value={provinceName}
                 onChange={(e) => setProvinceName(e.target.value)}
                 placeholder="e.g. Western"
+                className="h-8 text-xs"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && provinceName.trim()) {
-                    if (provinceDialog.edit) updateProvince.mutate({ id: provinceDialog.edit.id, name: provinceName });
+                    if (provinceDialog.edit)
+                      updateProvince.mutate({ id: provinceDialog.edit.id, name: provinceName });
                     else createProvince.mutate(provinceName);
                   }
                 }}
               />
             </div>
           </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setProvinceDialog({ open: false })}>Cancel</Button>
+          <div className="flex justify-end gap-2 pt-2">
             <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs px-3"
+              onClick={() => setProvinceDialog({ open: false })}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              className="h-7 text-xs px-3"
               disabled={!provinceName.trim() || createProvince.isPending || updateProvince.isPending}
               onClick={() => {
-                if (provinceDialog.edit) updateProvince.mutate({ id: provinceDialog.edit.id, name: provinceName });
+                if (provinceDialog.edit)
+                  updateProvince.mutate({ id: provinceDialog.edit.id, name: provinceName });
                 else createProvince.mutate(provinceName);
               }}
             >
-              {(createProvince.isPending || updateProvince.isPending) && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+              {(createProvince.isPending || updateProvince.isPending) && (
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              )}
               {provinceDialog.edit ? "Save Changes" : "Add Province"}
             </Button>
           </div>
@@ -589,37 +766,63 @@ export default function AddressManagementPage() {
 
       {/* District Dialog */}
       <Dialog open={districtDialog.open} onOpenChange={(o) => !o && setDistrictDialog({ open: false })}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{districtDialog.edit ? "Edit District" : "Add District"}</DialogTitle>
+            <DialogTitle className="text-base">
+              {districtDialog.edit ? "Edit District" : "Add District"}
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="district-name">District Name</Label>
+          <div className="space-y-3 py-1">
+            <div className="space-y-1.5">
+              <Label htmlFor="district-name" className="text-xs">
+                District Name
+              </Label>
               <Input
                 id="district-name"
                 value={districtName}
                 onChange={(e) => setDistrictName(e.target.value)}
                 placeholder="e.g. Colombo"
+                className="h-8 text-xs"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && districtName.trim() && selectedProvince) {
-                    if (districtDialog.edit) updateDistrict.mutate({ id: districtDialog.edit.id, name: districtName });
-                    else createDistrict.mutate({ name: districtName, provinceId: selectedProvince.id });
+                    if (districtDialog.edit)
+                      updateDistrict.mutate({ id: districtDialog.edit.id, name: districtName });
+                    else
+                      createDistrict.mutate({
+                        name: districtName,
+                        provinceId: selectedProvince.id,
+                      });
                   }
                 }}
               />
             </div>
           </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setDistrictDialog({ open: false })}>Cancel</Button>
+          <div className="flex justify-end gap-2 pt-2">
             <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs px-3"
+              onClick={() => setDistrictDialog({ open: false })}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              className="h-7 text-xs px-3"
               disabled={!districtName.trim() || createDistrict.isPending || updateDistrict.isPending}
               onClick={() => {
-                if (districtDialog.edit) updateDistrict.mutate({ id: districtDialog.edit.id, name: districtName });
-                else if (selectedProvince) createDistrict.mutate({ name: districtName, provinceId: selectedProvince.id });
+                if (districtDialog.edit)
+                  updateDistrict.mutate({ id: districtDialog.edit.id, name: districtName });
+                else if (selectedProvince)
+                  createDistrict.mutate({
+                    name: districtName,
+                    provinceId: selectedProvince.id,
+                  });
               }}
             >
-              {(createDistrict.isPending || updateDistrict.isPending) && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+              {(createDistrict.isPending || updateDistrict.isPending) && (
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              )}
               {districtDialog.edit ? "Save Changes" : "Add District"}
             </Button>
           </div>
@@ -628,27 +831,31 @@ export default function AddressManagementPage() {
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteDialog} onOpenChange={(o) => !o && setDeleteDialog(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {deleteDialog?.type === "province" ? "Province" : "District"}</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-base">
+              Delete {deleteDialog?.type === "province" ? "Province" : "District"}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs">
               Are you sure you want to delete <strong>{deleteDialog?.name}</strong>?{" "}
               {deleteDialog?.type === "province"
                 ? "All districts and cities within it will also be deleted."
                 : "All cities within it will also be deleted."}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="pt-2">
+            <AlertDialogCancel className="h-7 text-xs px-3">Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="h-7 text-xs px-3 bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => {
                 if (!deleteDialog) return;
                 if (deleteDialog.type === "province") deleteProvince.mutate(deleteDialog.id);
                 else deleteDistrict.mutate(deleteDialog.id);
               }}
             >
-              {(deleteProvince.isPending || deleteDistrict.isPending) && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+              {(deleteProvince.isPending || deleteDistrict.isPending) && (
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              )}
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

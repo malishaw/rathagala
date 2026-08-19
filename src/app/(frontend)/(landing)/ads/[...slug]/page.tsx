@@ -36,10 +36,11 @@ import {
   Check,
   ExternalLink,
   TrendingUp,
+  Maximize2,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { authClient } from "@/lib/auth-client";
 import { buildAdUrl } from "@/lib/ad-url";
 import { FaFacebookSquare, FaWhatsappSquare } from "react-icons/fa";
@@ -47,6 +48,7 @@ import { FaSquareXTwitter, FaTelegram } from "react-icons/fa6";
 import { AdIdDisplay } from "./ad-id-display";
 import { client } from "@/lib/rpc";
 import { getRelativeTime } from "@/lib/utils";
+import { ImageLightbox } from "./image-lightbox";
 
 // Lazy-load analytics — not needed for normal ad view
 const VehicleAnalyticsContent = dynamic(() => import("./vehicle-analytics"), {
@@ -86,13 +88,11 @@ const formatAdTitle = (ad: any): string => {
   return vehicleInfo;
 };
 
-const formatPrice = (price: number | null | undefined, isNegotiable = false) => {
-  if (!price && isNegotiable) return "Negotiable";
-  if (!price) return "Price Negotiable";
+const formatPrice = (price: number | null | undefined) => {
+  if (!price || price <= 0) return "Negotiable";
   const formatted = new Intl.NumberFormat("en-LK", {
     style: "currency", currency: "LKR", minimumFractionDigits: 0,
   }).format(price).replace("LKR", "Rs.");
-  if (isNegotiable) return `${formatted} (Negotiable)`;
   return formatted;
 };
 
@@ -105,7 +105,7 @@ function DetailSkeleton() {
       <div className="max-w-5xl mx-auto px-4 py-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 space-y-4">
-            <Skeleton className="aspect-video w-full rounded" />
+            <Skeleton className="aspect-[4/3] w-full rounded" />
             <div className="flex gap-2">
               {[1,2,3,4].map(i => <Skeleton key={i} className="h-14 w-20 rounded shrink-0" />)}
             </div>
@@ -148,12 +148,17 @@ export default function AdDetailPage() {
   // ── All hooks must be called unconditionally before any early returns ──
   const router = useRouter();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [reportDetails, setReportDetails] = useState("");
   const [isCopied, setIsCopied] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [similarPage, setSimilarPage] = useState(1);
+
+  const mainTouchStartX = useRef<number | null>(null);
+  const mainTouchEndX = useRef<number | null>(null);
+  const hasSwiped = useRef<boolean>(false);
 
   const { data: session } = authClient.useSession();
   const { data: ad, isLoading, isError } = useGetAdById({ adId: adId || "" });
@@ -280,8 +285,8 @@ export default function AdDetailPage() {
 
   const adTitle = formatAdTitle(ad);
   const adPrice = (ad as any).discountPrice
-    ? formatPrice((ad as any).discountPrice, (ad as any).metadata?.isNegotiable)
-    : formatPrice(ad.price, (ad as any).metadata?.isNegotiable);
+    ? formatPrice((ad as any).discountPrice)
+    : formatPrice(ad.price);
 
   const location = [ad.city, ad.district].filter(Boolean).join(", ") || ad.location || "";
 
@@ -396,15 +401,48 @@ export default function AdDetailPage() {
           {/* ── Left Column ── */}
           <div className="lg:col-span-2 space-y-4">
             {/* Image Viewer */}
-            <div className="bg-white border border-gray-200 rounded overflow-hidden">
-              <div className="relative img-protected aspect-video bg-gray-100">
+            <div className="bg-white border border-gray-200 rounded overflow-hidden shadow-sm">
+              <div
+                className="relative img-protected aspect-[4/3] bg-gray-100 cursor-pointer group"
+                onClick={() => {
+                  if (!hasSwiped.current) {
+                    setIsLightboxOpen(true);
+                  }
+                  hasSwiped.current = false;
+                }}
+                onTouchStart={(e) => {
+                  mainTouchStartX.current = e.touches[0].clientX;
+                  hasSwiped.current = false;
+                }}
+                onTouchMove={(e) => {
+                  mainTouchEndX.current = e.touches[0].clientX;
+                }}
+                onTouchEnd={() => {
+                  if (mainTouchStartX.current !== null && mainTouchEndX.current !== null) {
+                    const diff = mainTouchStartX.current - mainTouchEndX.current;
+                    if (Math.abs(diff) > 40) {
+                      hasSwiped.current = true;
+                      if (diff > 0) {
+                        setCurrentImageIndex((p) => (p + 1) % originalImages.length);
+                      } else {
+                        setCurrentImageIndex((p) => (p - 1 + originalImages.length) % originalImages.length);
+                      }
+                    }
+                  }
+                  mainTouchStartX.current = null;
+                  mainTouchEndX.current = null;
+                }}
+              >
                 <img
                   src={mainImage}
                   alt={`${adTitle} — image ${currentImageIndex + 1}`}
-                  className="w-full h-full object-cover select-none pointer-events-none"
+                  className="w-full h-full object-cover select-none pointer-events-none transition-transform duration-300 group-hover:scale-[1.01]"
                   draggable={false}
                   fetchPriority="high"
-                  onContextMenu={e => { e.preventDefault(); e.stopPropagation(); }}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.onerror = null;
@@ -412,9 +450,29 @@ export default function AdDetailPage() {
                   }}
                 />
                 {/* Transparent overlay blocks right-click */}
-                <div className="absolute inset-0 z-10" style={{ userSelect: "none", WebkitUserSelect: "none" }}
-                  onContextMenu={e => { e.preventDefault(); e.stopPropagation(); }}
+                <div
+                  className="absolute inset-0 z-10"
+                  style={{ userSelect: "none", WebkitUserSelect: "none" }}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                 />
+
+                {/* Full View Expand Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsLightboxOpen(true);
+                  }}
+                  className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1.5 bg-black/60 hover:bg-black/80 text-white text-xs px-2.5 py-1 rounded-md backdrop-blur-sm transition-all hover:scale-105 shadow-md"
+                  title="View in Full Screen / Slide View"
+                  aria-label="View in Full Screen"
+                >
+                  <Maximize2 className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline font-medium">Full View</span>
+                </button>
+
                 {/* Image counter badge */}
                 {originalImages.length > 1 && (
                   <span className="absolute bottom-2 right-2 z-20 bg-black/50 text-white text-xs px-2 py-0.5 rounded">
@@ -425,14 +483,22 @@ export default function AdDetailPage() {
                 {originalImages.length > 1 && (
                   <>
                     <button
-                      onClick={() => setCurrentImageIndex(p => (p - 1 + originalImages.length) % originalImages.length)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentImageIndex(
+                          (p) => (p - 1 + originalImages.length) % originalImages.length
+                        );
+                      }}
                       className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-black/40 hover:bg-black/60 text-white p-1.5 rounded-full transition-colors"
                       aria-label="Previous image"
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => setCurrentImageIndex(p => (p + 1) % originalImages.length)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentImageIndex((p) => (p + 1) % originalImages.length);
+                      }}
                       className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-black/40 hover:bg-black/60 text-white p-1.5 rounded-full transition-colors"
                       aria-label="Next image"
                     >
@@ -448,8 +514,8 @@ export default function AdDetailPage() {
                     <button
                       key={i}
                       onClick={() => setCurrentImageIndex(i)}
-                      className={`flex-shrink-0 w-16 h-12 rounded overflow-hidden border-2 transition-colors ${
-                        i === currentImageIndex ? "border-[#024950]" : "border-transparent"
+                      className={`flex-shrink-0 aspect-[4/3] w-18 h-14 sm:w-20 sm:h-15 rounded overflow-hidden border-2 transition-all ${
+                        i === currentImageIndex ? "border-[#024950] ring-1 ring-[#024950]/30 shadow-xs" : "border-transparent opacity-80 hover:opacity-100"
                       }`}
                     >
                       <img
@@ -537,7 +603,7 @@ export default function AdDetailPage() {
                     <div className="grid grid-cols-3 gap-3">
                       {[1,2,3].map(i => (
                         <div key={i} className="border rounded p-2">
-                          <Skeleton className="aspect-video w-full mb-2 rounded" />
+                          <Skeleton className="aspect-[4/3] w-full mb-2 rounded" />
                           <Skeleton className="h-3 w-3/4 mb-1" />
                           <Skeleton className="h-3 w-1/2" />
                         </div>
@@ -566,7 +632,7 @@ export default function AdDetailPage() {
                             <div className="p-2">
                               <div className="text-xs font-medium text-gray-800 line-clamp-1">{v.title}</div>
                               <div className="text-xs font-bold text-[#024950] mt-0.5">
-                                {formatPrice(v.price, (v as any).metadata?.isNegotiable)}
+                                {formatPrice(v.price)}
                               </div>
                               {v.location && (
                                 <div className="flex items-center gap-0.5 text-[10px] text-gray-400 mt-0.5">
@@ -799,7 +865,7 @@ export default function AdDetailPage() {
             <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Similar Vehicles</h2>
             {loadingSimilar ? (
               <div className="grid grid-cols-3 gap-2">
-                {[1,2,3].map(i => <Skeleton key={i} className="aspect-video rounded" />)}
+                {[1,2,3].map(i => <Skeleton key={i} className="aspect-[4/3] rounded" />)}
               </div>
             ) : (
               <div className="grid grid-cols-3 gap-2">
@@ -823,7 +889,7 @@ export default function AdDetailPage() {
                     <div className="p-1.5">
                       <div className="text-[10px] font-medium line-clamp-1">{v.title}</div>
                       <div className="text-[10px] font-bold text-[#024950]">
-                        {formatPrice(v.price, (v as any).metadata?.isNegotiable)}
+                        {formatPrice(v.price)}
                       </div>
                     </div>
                   </button>
@@ -877,6 +943,16 @@ export default function AdDetailPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ── Fullscreen Lightbox & Slide View Modal ── */}
+      <ImageLightbox
+        isOpen={isLightboxOpen}
+        onClose={() => setIsLightboxOpen(false)}
+        images={originalImages}
+        initialIndex={currentImageIndex}
+        title={adTitle}
+        getWatermarked={getWatermarked}
+      />
     </div>
   );
 }

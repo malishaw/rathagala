@@ -86,7 +86,7 @@ export function TopAdCard({ vehicle, vehicleTypeLabels, formatPrice, formatAdTit
             {/* Price & Views */}
             <div className="flex items-end justify-between mt-1">
               <div className="text-xs sm:text-sm font-bold text-teal-700 leading-none">
-                {formatPrice(vehicle.price, (vehicle as any).metadata?.isNegotiable)}
+                {formatPrice(vehicle.price)}
               </div>
 
               {/* Views and relative time */}

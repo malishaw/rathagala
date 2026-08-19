@@ -361,14 +361,9 @@ export default function BrandPage() {
   ).length;
 
   // Format price
-  const formatPrice = (price: number | null, isNegotiable = false) => {
-    if (!price && isNegotiable) return "Negotiable";
-    if (!price) return "Negotiable";
-    const formatted = `Rs. ${price.toLocaleString()}`;
-    if (isNegotiable) {
-      return <>{formatted}<span className="text-[10px] font-normal opacity-70 ml-1">Negotiable</span></>;
-    }
-    return formatted;
+  const formatPrice = (price: number | null | undefined) => {
+    if (!price || price <= 0) return "Negotiable";
+    return `Rs. ${price.toLocaleString()}`;
   };
 
   // Generate years
@@ -1061,7 +1056,7 @@ export default function BrandPage() {
                               </div>
 
                               <div className="text-sm font-semibold text-teal-700 mb-1">
-                                {formatPrice(vehicle.price, vehicle.metadata?.isNegotiable as boolean | undefined)}
+                                {formatPrice(vehicle.price)}
                               </div>
 
                               <div className="text-xs text-slate-500">

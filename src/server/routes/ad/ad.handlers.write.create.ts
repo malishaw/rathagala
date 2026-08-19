@@ -7,7 +7,7 @@ import { formatIsoDate } from "@/server/helpers/date-utils";
 import { safeWaitUntil } from "@/server/helpers/execution-context";
 import type { AppRouteHandler } from "@/types/server";
 import type { CreateRoute } from "./ad.routes";
-import { sendAdPostedEmail } from "@/lib/email";
+import { sendAdPostedEmail, sendNewAdSubmittedAdminEmail } from "@/lib/email";
 
 export const create: AppRouteHandler<CreateRoute> = async (c) => {
   try {
@@ -143,16 +143,39 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
       metadata: typeof createdAd.metadata === "object" ? createdAd.metadata : null,
     };
 
-    if (adStatus === "PENDING_REVIEW" && user.email) {
-      const emailPromise = sendAdPostedEmail({
-        email: user.email,
-        name: user.name || "User",
-        adTitle: createdAd.title || ""
+    if (adStatus === "PENDING_REVIEW") {
+      if (user.email) {
+        const userEmailPromise = sendAdPostedEmail({
+          email: user.email,
+          name: user.name || "User",
+          adTitle: createdAd.title || "",
+        }).catch((emailError) => {
+          console.error("Failed to send ad posted email:", emailError);
+        });
+
+        safeWaitUntil(c, userEmailPromise);
+      }
+
+      const adminEmailPromise = sendNewAdSubmittedAdminEmail({
+        adId: createdAd.id,
+        adTitle: createdAd.title || "",
+        category: createdAd.categoryId,
+        type: createdAd.type,
+        brand: createdAd.brand,
+        model: createdAd.model,
+        price: createdAd.price,
+        city: createdAd.city,
+        district: createdAd.district,
+        sellerName: user.name || createdAd.name || "User",
+        sellerEmail: user.email || undefined,
+        sellerPhone: createdAd.phoneNumber || undefined,
+        sellerWhatsapp: createdAd.whatsappNumber || undefined,
+        submittedAt: createdAd.createdAt,
       }).catch((emailError) => {
-        console.error("Failed to send ad posted email:", emailError);
+        console.error("Failed to send new ad admin notification email:", emailError);
       });
 
-      safeWaitUntil(c, emailPromise);
+      safeWaitUntil(c, adminEmailPromise);
     }
 
     return c.json(formattedAd as any, HttpStatusCodes.CREATED);

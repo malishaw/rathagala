@@ -1278,6 +1278,214 @@ If you have any questions, contact us at support@rathagala.lk
   }
 }
 
+// Send notification to admin when someone submits a new ad
+export interface SendNewAdSubmittedAdminEmailParams {
+  adId: string;
+  adTitle: string;
+  category?: string | null;
+  type?: string | null;
+  brand?: string | null;
+  model?: string | null;
+  price?: number | null;
+  city?: string | null;
+  district?: string | null;
+  sellerName?: string | null;
+  sellerEmail?: string | null;
+  sellerPhone?: string | null;
+  sellerWhatsapp?: string | null;
+  submittedAt?: Date | string | null;
+}
+
+export async function sendNewAdSubmittedAdminEmail({
+  adId,
+  adTitle,
+  category,
+  type,
+  brand,
+  model,
+  price,
+  city,
+  district,
+  sellerName,
+  sellerEmail,
+  sellerPhone,
+  sellerWhatsapp,
+  submittedAt,
+}: SendNewAdSubmittedAdminEmailParams) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://rathagala.lk";
+  const adminEmail =
+    process.env.ADMIN_NOTIFICATION_EMAIL ||
+    process.env.ADMIN_EMAIL ||
+    process.env.EMAIL_FROM ||
+    "support@rathagala.lk";
+
+  const formattedPrice =
+    price != null && !isNaN(Number(price))
+      ? `Rs. ${Number(price).toLocaleString()}`
+      : "Not specified";
+
+  const locationText =
+    [city, district].filter(Boolean).join(", ") || "Not specified";
+  const vehicleText =
+    [brand, model].filter(Boolean).join(" ") || "Not specified";
+  const formattedDate = submittedAt
+    ? new Date(submittedAt).toLocaleString("en-GB", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      })
+    : new Date().toLocaleString("en-GB", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      });
+
+  const adminReviewUrl = `${appUrl}/dashboard/ads/${adId}`;
+  const allAdsUrl = `${appUrl}/dashboard/ads-manage?status=PENDING_REVIEW`;
+
+  try {
+    await transporter.sendMail({
+      from: `"Rathagala Admin Alert" <${process.env.EMAIL_FROM || "support@rathagala.lk"}>`,
+      to: adminEmail,
+      subject: `🔔 New Ad Submitted: ${adTitle || "Untitled Ad"} - Rathagala`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background-color: #024950; color: white; padding: 20px; text-align: center; border-radius: 6px 6px 0 0; }
+              .content { background-color: #f9f9f9; padding: 25px; border-radius: 0 0 6px 6px; border: 1px solid #e5e7eb; border-top: none; }
+              .badge { display: inline-block; background-color: #f59e0b; color: white; font-size: 13px; font-weight: bold; padding: 6px 14px; border-radius: 20px; margin-bottom: 15px; }
+              .section-card { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 18px; margin: 15px 0; }
+              .section-title { font-size: 15px; font-weight: bold; color: #024950; margin-top: 0; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; }
+              .cta-button { display: inline-block; background-color: #024950; color: #ffffff !important; padding: 12px 28px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px; margin: 10px 5px; }
+              .secondary-link { color: #024950; font-size: 13px; text-decoration: underline; }
+              .footer { text-align: center; margin-top: 20px; color: #64748b; font-size: 12px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1 style="margin: 0; font-size: 22px;">Rathagala Admin Notification</h1>
+                <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.9;">New Ad Submitted for Review</p>
+              </div>
+              <div class="content">
+                <div style="text-align: center;">
+                  <span class="badge">⏳ Pending Review</span>
+                </div>
+                <p style="margin-top: 0; font-size: 15px;">A new advertisement has been submitted on Rathagala and is waiting for your review.</p>
+                
+                <div class="section-card">
+                  <h3 class="section-title">🚗 Ad Details</h3>
+                  <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <tr>
+                      <td style="padding: 6px 0; color: #64748b; font-weight: 600; width: 120px;">Title:</td>
+                      <td style="padding: 6px 0; color: #1e293b; font-weight: bold;">${adTitle || "Untitled Ad"}</td>
+                    </tr>
+                    ${type ? `
+                    <tr>
+                      <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Type:</td>
+                      <td style="padding: 6px 0; color: #1e293b;">${type}</td>
+                    </tr>` : ""}
+                    ${vehicleText !== "Not specified" ? `
+                    <tr>
+                      <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Vehicle:</td>
+                      <td style="padding: 6px 0; color: #1e293b;">${vehicleText}</td>
+                    </tr>` : ""}
+                    <tr>
+                      <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Price:</td>
+                      <td style="padding: 6px 0; color: #024950; font-weight: bold;">${formattedPrice}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Location:</td>
+                      <td style="padding: 6px 0; color: #1e293b;">${locationText}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Submitted:</td>
+                      <td style="padding: 6px 0; color: #1e293b;">${formattedDate}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Ad ID:</td>
+                      <td style="padding: 6px 0; color: #64748b; font-family: monospace; font-size: 12px;">${adId}</td>
+                    </tr>
+                  </table>
+                </div>
+
+                <div class="section-card">
+                  <h3 class="section-title">👤 Seller Information</h3>
+                  <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <tr>
+                      <td style="padding: 6px 0; color: #64748b; font-weight: 600; width: 120px;">Name:</td>
+                      <td style="padding: 6px 0; color: #1e293b; font-weight: bold;">${sellerName || "N/A"}</td>
+                    </tr>
+                    ${sellerEmail ? `
+                    <tr>
+                      <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Email:</td>
+                      <td style="padding: 6px 0; color: #1e293b;"><a href="mailto:${sellerEmail}" style="color: #024950;">${sellerEmail}</a></td>
+                    </tr>` : ""}
+                    ${sellerPhone ? `
+                    <tr>
+                      <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Phone:</td>
+                      <td style="padding: 6px 0; color: #1e293b;"><a href="tel:${sellerPhone}" style="color: #024950;">${sellerPhone}</a></td>
+                    </tr>` : ""}
+                    ${sellerWhatsapp ? `
+                    <tr>
+                      <td style="padding: 6px 0; color: #64748b; font-weight: 600;">WhatsApp:</td>
+                      <td style="padding: 6px 0; color: #1e293b;"><a href="https://wa.me/${sellerWhatsapp.replace(/[^0-9]/g, "")}" style="color: #25D366;">${sellerWhatsapp}</a></td>
+                    </tr>` : ""}
+                  </table>
+                </div>
+
+                <div style="text-align: center; margin: 25px 0 15px 0;">
+                  <a href="${adminReviewUrl}" class="cta-button" style="display: inline-block; background-color: #024950; color: #ffffff !important; padding: 12px 28px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px;">Review Ad Now</a>
+                </div>
+
+                <div style="text-align: center; margin-bottom: 10px;">
+                  <a href="${allAdsUrl}" class="secondary-link">View all pending ads in dashboard →</a>
+                </div>
+              </div>
+              <div class="footer">
+                <p>© ${new Date().getFullYear()} Rathagala Admin Portal. All rights reserved.</p>
+                <p>This is an automated administrative notification sent from Rathagala.</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+      text: `
+🔔 New Ad Submitted for Review - Rathagala Admin
+
+A new advertisement has been submitted and is awaiting your review.
+
+AD DETAILS:
+- Title: ${adTitle || "Untitled Ad"}
+- Ad ID: ${adId}
+- Type: ${type || "N/A"}
+- Vehicle: ${vehicleText}
+- Price: ${formattedPrice}
+- Location: ${locationText}
+- Submitted: ${formattedDate}
+
+SELLER INFORMATION:
+- Name: ${sellerName || "N/A"}
+- Email: ${sellerEmail || "N/A"}
+- Phone: ${sellerPhone || "N/A"}
+- WhatsApp: ${sellerWhatsapp || "N/A"}
+
+Review this ad: ${adminReviewUrl}
+View all pending ads: ${allAdsUrl}
+
+© ${new Date().getFullYear()} Rathagala Admin Portal
+      `,
+    });
+    console.log("New ad admin notification email sent successfully for ad:", adId);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send new ad admin notification email:", error);
+    throw error;
+  }
+}
+
 // Generate a 6-digit verification code
 export function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();

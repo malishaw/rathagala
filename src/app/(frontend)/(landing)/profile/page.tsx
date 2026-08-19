@@ -313,14 +313,9 @@ export default function ProfilePage() {
   };
 
   // Format price to display with commas
-  const formatPrice = (price: number | null, isNegotiable = false) => {
-    if (price === null && isNegotiable) return "Negotiable";
-    if (price === null) return "Price on request";
-    const formatted = price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-    if (isNegotiable) {
-      return <>{formatted}<span className="text-sm font-normal opacity-70"> Negotiable</span></>;
-    }
-    return formatted;
+  const formatPrice = (price: number | null | undefined) => {
+    if (!price || price <= 0) return "Negotiable";
+    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
   // Get phone verification badge
@@ -1136,7 +1131,7 @@ export default function ProfilePage() {
                                 </div>
 
                                 <div className="text-sm font-bold text-zinc-900">
-                                  Rs {formatPrice(ad.price, (ad as any).metadata?.isNegotiable)}
+                                  {ad.price ? `Rs. ${formatPrice(ad.price)}` : "Negotiable"}
                                 </div>
                               </div>
 
@@ -1324,9 +1319,7 @@ export default function ProfilePage() {
                               </div>
 
                               <div className="text-xs sm:text-sm font-bold text-zinc-900">
-                                {ad.price
-                                  ? <>{`Rs. ${ad.price.toLocaleString()}`}{(ad as any).metadata?.isNegotiable && <span className="text-[10px] sm:text-xs font-normal opacity-70"> Neg</span>}</>
-                                  : ((ad as any).metadata?.isNegotiable ? "Negotiable" : "N/A")}
+                                {ad.price ? `Rs. ${ad.price.toLocaleString()}` : "Negotiable"}
                               </div>
                             </div>
 

@@ -407,14 +407,9 @@ export default function SearchPage() {
   ).length;
 
   // Format price
-  const formatPrice = (price: number | null, isNegotiable = false) => {
-    if (!price && isNegotiable) return "Negotiable";
-    if (!price) return "Negotiable";
-    const formatted = `Rs. ${price.toLocaleString()}`;
-    if (isNegotiable) {
-      return <>{formatted}<span className="text-[10px] font-normal opacity-70 ml-1">Negotiable</span></>;
-    }
-    return formatted;
+  const formatPrice = (price: number | null | undefined) => {
+    if (!price || price <= 0) return "Negotiable";
+    return `Rs. ${price.toLocaleString()}`;
   };
 
   // Generate years
@@ -1300,7 +1295,7 @@ export default function SearchPage() {
 
                               <div className="flex items-end justify-between mt-1">
                                 <div className="text-xs sm:text-sm font-bold text-teal-700 leading-none">
-                                  {formatPrice(vehicle.price, (vehicle as any).metadata?.isNegotiable)}
+                                  {formatPrice(vehicle.price)}
                                 </div>
 
                                 {/* Views and relative time */}

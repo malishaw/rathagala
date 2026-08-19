@@ -7,7 +7,11 @@ import { formatIsoDate } from "@/server/helpers/date-utils";
 import { safeWaitUntil } from "@/server/helpers/execution-context";
 import type { AppRouteHandler } from "@/types/server";
 import type { UpdateRoute } from "./ad.routes";
-import { sendListingUpdatedEmail } from "@/lib/email";
+import {
+  sendListingUpdatedEmail,
+  sendAdPostedEmail,
+  sendNewAdSubmittedAdminEmail,
+} from "@/lib/email";
 
 export const update: AppRouteHandler<UpdateRoute> = async (c) => {
   try {
@@ -177,7 +181,44 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
         typeof updatedAd.metadata === "object" ? updatedAd.metadata : null,
     };
 
-    if (user.email && updatedAd.status === "ACTIVE") {
+    const isNowPendingReview =
+      existingAd.status !== "PENDING_REVIEW" &&
+      updatedAd.status === "PENDING_REVIEW";
+
+    if (isNowPendingReview) {
+      if (user.email) {
+        const userEmailPromise = sendAdPostedEmail({
+          email: user.email,
+          name: user.name || "User",
+          adTitle: updatedAd.title || "",
+        }).catch((emailError) => {
+          console.error("[UPDATE AD] Failed to send ad posted email:", emailError);
+        });
+
+        safeWaitUntil(c, userEmailPromise);
+      }
+
+      const adminEmailPromise = sendNewAdSubmittedAdminEmail({
+        adId: existingAd.id,
+        adTitle: updatedAd.title || "",
+        category: updatedAd.categoryId,
+        type: updatedAd.type,
+        brand: updatedAd.brand,
+        model: updatedAd.model,
+        price: updatedAd.price,
+        city: updatedAd.city,
+        district: updatedAd.district,
+        sellerName: user.name || updatedAd.name || "User",
+        sellerEmail: user.email || undefined,
+        sellerPhone: updatedAd.phoneNumber || undefined,
+        sellerWhatsapp: updatedAd.whatsappNumber || undefined,
+        submittedAt: updatedAd.updatedAt,
+      }).catch((emailError) => {
+        console.error("[UPDATE AD] Failed to send new ad admin notification email:", emailError);
+      });
+
+      safeWaitUntil(c, adminEmailPromise);
+    } else if (user.email && updatedAd.status === "ACTIVE") {
       const emailPromise = sendListingUpdatedEmail({
         email: user.email,
         name: user.name || "User",

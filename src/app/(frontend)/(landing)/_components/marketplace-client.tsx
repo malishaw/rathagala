@@ -378,14 +378,9 @@ export default function VehicleMarketplace() {
   };
 
   // Format price for display
-  const formatPrice = (price: number | null, isNegotiable = false) => {
-    if (price === null && isNegotiable) return "Negotiable";
-    if (price === null) return "Price on request";
-    const formatted = `Rs. ${price.toLocaleString()}`;
-    if (isNegotiable) {
-      return <>{formatted}<span className="text-[10px] font-normal opacity-70 ml-1">Negotiable</span></>;
-    }
-    return formatted;
+  const formatPrice = (price: number | null | undefined) => {
+    if (!price || price <= 0) return "Negotiable";
+    return `Rs. ${price.toLocaleString()}`;
   };
 
   // Generate year options
@@ -982,7 +977,7 @@ export default function VehicleMarketplace() {
             <div className="flex-1">
               <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-slate-800 mb-3 md:mb-0">
-                  Browse Vehiclesd
+                  Browse Vehicles
                 </h2>
                 <div className="flex flex-col md:flex-row md:items-center space-y-3 md:space-y-0 md:space-x-4">
                   <span className="text-slate-600 text-sm">
@@ -1192,7 +1187,7 @@ export default function VehicleMarketplace() {
 
                               <div className="flex items-end justify-between mt-1">
                                 <div className="text-xs sm:text-sm font-bold text-teal-700 leading-none">
-                                  {formatPrice(vehicle.price, (vehicle as any).metadata?.isNegotiable)}
+                                  {formatPrice(vehicle.price)}
                                 </div>
 
                                 {/* Views and relative time */}
@@ -1418,7 +1413,7 @@ export default function VehicleMarketplace() {
 
                           <div className="flex items-end justify-between mt-2 pt-1.5 border-t border-slate-100">
                             <div className="text-xs sm:text-sm font-bold text-teal-700 leading-none">
-                              {formatPrice(vehicle.price, (vehicle as any).metadata?.isNegotiable)}
+                              {formatPrice(vehicle.price)}
                             </div>
 
                             {/* Views and relative time */}

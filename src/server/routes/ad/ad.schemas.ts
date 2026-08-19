@@ -101,7 +101,11 @@ export const createAdBaseSchema = z
     listingType: z.enum(["SELL", "WANT", "RENT", "HIRE"]).default("SELL"),
 
     // Optional basic fields
-    price: z.number().positive().optional(),
+    price: z
+      .preprocess(
+        (v) => (v === "" || v === null || v === undefined || Number(v) === 0 ? null : Number(v)),
+        z.number().positive().nullable().optional()
+      ),
     published: z.boolean().default(false),
     isDraft: z.boolean().default(true),
     // SEO fields
