@@ -491,13 +491,37 @@ function AdminActionsCell({ ad }: { ad: AdType }) {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="rejection-description">Rejection Reason (Optional)</Label>
+              <Label htmlFor="rejection-description">Rejection Reason</Label>
+              <div className="flex flex-wrap gap-1.5 pb-1">
+                {[
+                  "Duplicate",
+                  "Invalid Details",
+                  "Incomplete Information",
+                  "Incorrect Price",
+                  "Inappropriate Images",
+                  "Fake / Suspicious Ad",
+                ].map((reason) => (
+                  <button
+                    key={reason}
+                    type="button"
+                    onClick={() => setRejectionDescription(reason)}
+                    className={cn(
+                      "text-xs px-2.5 py-1 rounded-full border transition-all cursor-pointer font-medium",
+                      rejectionDescription === reason
+                        ? "bg-red-500 text-white border-red-500 shadow-xs"
+                        : "bg-muted/40 hover:bg-muted text-muted-foreground border-border/70 hover:text-foreground"
+                    )}
+                  >
+                    {reason}
+                  </button>
+                ))}
+              </div>
               <Textarea
                 id="rejection-description"
-                placeholder="Enter the reason for rejection..."
+                placeholder="Select a reason above or type a custom reason..."
                 value={rejectionDescription}
                 onChange={(e) => setRejectionDescription(e.target.value)}
-                rows={4}
+                rows={3}
                 className="resize-none"
               />
             </div>

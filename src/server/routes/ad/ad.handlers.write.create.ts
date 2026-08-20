@@ -71,7 +71,7 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
       categoryId: adDetails.categoryId || null,
       tags: adDetails.tags || [],
 
-      price: adDetails.price || null,
+      price: (adDetails.price && Number(adDetails.price) > 0) ? Number(adDetails.price) : null,
 
       condition: adDetails.condition || null,
       brand: adDetails.brand || null,
@@ -111,7 +111,12 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
       city: adDetails.city || null,
 
       specialNote: adDetails.specialNote || null,
-      metadata: adDetails.metadata || {},
+      metadata: {
+        ...(adDetails.metadata || {}),
+        isNegotiable: (!adDetails.price || Number(adDetails.price) <= 0)
+          ? true
+          : ((adDetails.metadata as any)?.isNegotiable ?? false),
+      },
       
       createdAt: new Date(),
       updatedAt: new Date(),

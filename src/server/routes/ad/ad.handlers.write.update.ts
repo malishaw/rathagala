@@ -62,7 +62,9 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
     if (adUpdates.description !== undefined)
       updateData.description = adUpdates.description;
     if (adUpdates.type !== undefined) updateData.type = adUpdates.type;
-    if (adUpdates.price !== undefined) updateData.price = adUpdates.price;
+    if (adUpdates.price !== undefined) {
+      updateData.price = (adUpdates.price && Number(adUpdates.price) > 0) ? Number(adUpdates.price) : null;
+    }
     if (adUpdates.published !== undefined)
       updateData.published = adUpdates.published;
     if (adUpdates.isDraft !== undefined) updateData.isDraft = adUpdates.isDraft;
@@ -145,10 +147,19 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
       updateData.district = adUpdates.district;
     if (adUpdates.city !== undefined) updateData.city = adUpdates.city;
 
-    if (adUpdates.specialNote !== undefined)
-      updateData.specialNote = adUpdates.specialNote;
-    if (adUpdates.metadata !== undefined)
-      updateData.metadata = adUpdates.metadata;
+    if (adUpdates.metadata !== undefined || adUpdates.price !== undefined) {
+      const effectivePrice = updateData.price !== undefined ? updateData.price : existingAd.price;
+      const baseMetadata = {
+        ...((existingAd.metadata as any) || {}),
+        ...((adUpdates.metadata as any) || {}),
+      };
+      
+      baseMetadata.isNegotiable = !effectivePrice || effectivePrice <= 0
+        ? true
+        : ((adUpdates.metadata as any)?.isNegotiable ?? baseMetadata.isNegotiable ?? false);
+
+      updateData.metadata = baseMetadata;
+    }
 
     if (adUpdates.mediaIds !== undefined && Array.isArray(adUpdates.mediaIds)) {
       await db.delete(adMedia).where(eq(adMedia.adId, existingAd.id));

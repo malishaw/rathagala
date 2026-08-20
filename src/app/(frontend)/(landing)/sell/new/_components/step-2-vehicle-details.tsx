@@ -170,12 +170,46 @@ export function Step2VehicleDetails({ onBack, onNext, canProceed }: Step2Props) 
                   />
                 </FormControl>
                 {field.value ? (
-                  <p className="text-xs font-medium text-teal-700 mt-1">{formatPrice(field.value)}</p>
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="text-xs font-semibold text-teal-700">
+                      {formatPrice(field.value)}
+                      {form.watch("metadata.isNegotiable" as any) && (
+                        <span className="ml-1.5 text-xs text-amber-700 font-medium">(Negotiable)</span>
+                      )}
+                    </p>
+                  </div>
                 ) : (
-                  <p className="text-xs text-muted-foreground mt-1">Leave blank to display as &ldquo;Negotiable&rdquo;</p>
+                  <p className="text-xs text-emerald-700 font-medium mt-1">
+                    No price specified — ad will be displayed as <strong>&ldquo;Negotiable&rdquo;</strong>
+                  </p>
                 )}
                 <FormMessage />
               </FormItem>
+            )}
+          />
+
+          {/* Negotiable Checkbox */}
+          <FormField
+            control={form.control}
+            name={"metadata.isNegotiable" as any}
+            render={({ field }) => (
+              <div className="flex items-center space-x-2.5 bg-slate-50 border border-slate-200/80 rounded-xl p-3">
+                <Checkbox
+                  id="isNegotiable"
+                  checked={!!field.value}
+                  onCheckedChange={(checked) => field.onChange(!!checked)}
+                  className="data-[state=checked]:bg-teal-700 data-[state=checked]:border-teal-700"
+                />
+                <label
+                  htmlFor="isNegotiable"
+                  className="text-xs font-semibold text-slate-700 cursor-pointer select-none flex-1"
+                >
+                  Price is negotiable
+                  <span className="block text-[11px] font-normal text-muted-foreground">
+                    Check this if you are willing to negotiate the price with buyers
+                  </span>
+                </label>
+              </div>
             )}
           />
 

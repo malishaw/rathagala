@@ -378,9 +378,10 @@ export default function VehicleMarketplace() {
   };
 
   // Format price for display
-  const formatPrice = (price: number | null | undefined) => {
+  const formatPrice = (price: number | null | undefined, isNegotiable?: boolean) => {
     if (!price || price <= 0) return "Negotiable";
-    return `Rs. ${price.toLocaleString()}`;
+    const formatted = `Rs. ${price.toLocaleString()}`;
+    return isNegotiable ? `${formatted} (Negotiable)` : formatted;
   };
 
   // Generate year options

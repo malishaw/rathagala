@@ -62,9 +62,9 @@ export function Step3ContactDetails({
 
   // Handle media selection from gallery
   const handleMediaSelect = (media: MediaFile[]) => {
-    // Check if we exceed the maximum allowed (6 images)
-    if (media.length > 6) {
-      setSelectedImages(media.slice(0, 6));
+    // Check if we exceed the maximum allowed (10 images)
+    if (media.length > 10) {
+      setSelectedImages(media.slice(0, 10));
     } else {
       setSelectedImages(media);
     }
@@ -320,7 +320,7 @@ export function Step3ContactDetails({
       <div className="pt-2">
         <label className="block text-sm font-medium mb-2">Vehicle Images<span className="ms-1 text-red-500">*</span></label>
         <p className="text-xs text-slate-500 mb-3">
-          Select up to 6 images from your media gallery. First image will be the main photo.
+          Select up to 10 images from your media gallery. First image will be the main photo.
         </p>
 
         {/* Media Gallery Button */}
@@ -331,9 +331,9 @@ export function Step3ContactDetails({
               <p className="text-sm font-medium">
                 {selectedImages.length === 0
                   ? "No images selected yet"
-                  : selectedImages.length >= 6
-                    ? "Maximum images selected (6/6)"
-                    : `${selectedImages.length} image(s) selected, you can add ${6 - selectedImages.length
+                  : selectedImages.length >= 10
+                    ? "Maximum images selected (10/10)"
+                    : `${selectedImages.length} image(s) selected, you can add ${10 - selectedImages.length
                     } more`}
               </p>
               <p className="text-xs text-slate-500">
@@ -353,7 +353,7 @@ export function Step3ContactDetails({
                 variant="outline"
                 onClick={() => setIsGalleryOpen(true)}
                 className="flex items-center gap-2"
-                disabled={selectedImages.length >= 6}
+                disabled={selectedImages.length >= 10}
               >
                 <PlusCircle className="h-4 w-4" />
                 {selectedImages.length === 0 ? "Select Images" : "Select More"}
@@ -367,13 +367,13 @@ export function Step3ContactDetails({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium">
-                {selectedImages.length} of 6 images
+                {selectedImages.length} of 10 images
               </p>
               <p className="text-xs text-slate-500">
-                {selectedImages.length === 6 ? "Maximum reached" : "First image is main"}
+                {selectedImages.length === 10 ? "Maximum reached" : "First image is main"}
               </p>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
               {selectedImages.map((image, index) => (
                 <div key={image.id} className="relative group aspect-square">
                   <img

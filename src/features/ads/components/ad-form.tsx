@@ -61,6 +61,7 @@ import { CreateAdSchema } from "@/server/routes/ad/ad.schemas";
 import { authClient } from "@/lib/auth-client";
 import { useLocations } from "@/hooks/use-locations";
 import { useManufactureYears } from "@/hooks/use-manufacture-years";
+import { useVehicleColors } from "@/hooks/use-vehicle-colors";
 import { CitySearchDropdown } from "@/components/ui/city-search-dropdown";
 import { ModelSearchDropdown } from "@/components/ui/model-search-dropdown";
 import { GradeSearchDropdown } from "@/components/ui/grade-search-dropdown";
@@ -191,6 +192,7 @@ export function AdForm({
     fuelType: "",
     transmission: "",
     bodyType: "",
+    color: "",
     bikeType: "",
     vehicleType: "",
     serviceType: "",
@@ -255,6 +257,7 @@ export function AdForm({
         fuelType: initialData.fuelType || "",
         transmission: initialData.transmission || "",
         bodyType: initialData.bodyType || "",
+        color: initialData.color || "",
         bikeType: initialData.bikeType || "",
         vehicleType: initialData.vehicleType || "",
         serviceType: initialData.serviceType || "",
@@ -349,7 +352,7 @@ export function AdForm({
           combined.push(item);
         }
       }
-      return combined.slice(0, 6);
+      return combined.slice(0, 10);
     });
   };
 
@@ -498,6 +501,7 @@ export function AdForm({
       fuelType: (formData.fuelType as "PETROL" | "DIESEL" | "HYBRID" | "ELECTRIC" | "GAS") || undefined,
       transmission: (formData.transmission as "MANUAL" | "AUTOMATIC" | "CVT") || undefined,
       bodyType: (formData.bodyType as "SALOON" | "HATCHBACK" | "STATION_WAGON" | "SUV") || undefined,
+      color: formData.color || undefined,
       bikeType: (formData.bikeType as "SCOOTER" | "E_BIKE" | "MOTORBIKES" | "QUADRICYCLES") || undefined,
       vehicleType: (formData.vehicleType as "BED_TRAILER" | "BOWSER" | "BULLDOZER" | "CRANE" | "DUMP_TRUCK" | "EXCAVATOR" | "LOADER" | "OTHER" | undefined) || undefined,
       serviceType: formData.serviceType || undefined,
@@ -1824,23 +1828,23 @@ export function AdForm({
                   <div>
                     <CardTitle className="text-lg font-semibold tracking-tight">Vehicle Photos</CardTitle>
                     <CardDescription className="text-xs text-muted-foreground mt-0.5">
-                      Upload up to 6 photos. Photo #1 is your main cover photo shown on search results.
+                      Upload up to 10 photos. Photo #1 is your main cover photo shown on search results.
                     </CardDescription>
                   </div>
                   <span className="text-xs font-semibold px-3 py-1 rounded-full bg-muted text-foreground">
-                    {selectedMedia.length} / 6 Photos
+                    {selectedMedia.length} / 10 Photos
                   </span>
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Direct Inline Drag & Drop Zone */}
-                {selectedMedia.length < 6 && (
+                {selectedMedia.length < 10 && (
                   <div className="space-y-2">
                     <MediaUploader
                       onUpload={(file) => {
                         setSelectedMedia((prev) => {
                           if (prev.some((m) => m.id === file.id)) return prev;
-                          if (prev.length >= 6) return prev;
+                          if (prev.length >= 10) return prev;
                           return [...prev, file];
                         });
                       }}
@@ -1874,19 +1878,19 @@ export function AdForm({
                   </div>
                 )}
 
-                {/* 6 Photo Slots Grid */}
+                {/* 10 Photo Slots Grid */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <Label className="text-xs font-semibold text-foreground">
-                      Photo Slots ({selectedMedia.length}/6)
+                      Photo Slots ({selectedMedia.length}/10)
                     </Label>
                     <span className="text-xs text-muted-foreground">
                       Hover photo to set main cover or remove
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-3.5">
-                    {Array.from({ length: 6 }).map((_, index) => {
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3.5">
+                    {Array.from({ length: 10 }).map((_, index) => {
                       const media = selectedMedia[index];
 
                       if (media) {
@@ -1952,7 +1956,7 @@ export function AdForm({
                         <div
                           key={`empty-slot-${index}`}
                           onClick={() => {
-                            if (selectedMedia.length < 6) {
+                            if (selectedMedia.length < 10) {
                               const fileInput = document.querySelector<HTMLInputElement>("input[type='file']");
                               fileInput?.click();
                             }

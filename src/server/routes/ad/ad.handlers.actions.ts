@@ -7,7 +7,7 @@ import { formatIsoDate } from "@/server/helpers/date-utils";
 import { safeWaitUntil } from "@/server/helpers/execution-context";
 import type { AppRouteHandler } from "@/types/server";
 import type { ApproveRoute, RejectRoute, IncrementViewRoute, RenewRoute, SendExpiryRemindersRoute } from "./ad.routes";
-import { sendAdApprovalEmail, sendListingRenewalConfirmationEmail, sendListingExpiryReminderEmail } from "@/lib/email";
+import { sendAdApprovalEmail, sendAdRejectionEmail, sendListingRenewalConfirmationEmail, sendListingExpiryReminderEmail } from "@/lib/email";
 
 export const approve: AppRouteHandler<ApproveRoute> = async (c) => {
   try {
@@ -112,8 +112,24 @@ export const reject: AppRouteHandler<RejectRoute> = async (c) => {
       );
     }
 
-    const body = await c.req.json();
-    const rejectionReason = body.rejectionReason;
+    const existingAd = await db.query.ads.findFirst({
+      where: eq(ads.id, adId),
+      with: {
+        user: {
+          columns: { id: true, name: true, email: true },
+        },
+      },
+    });
+
+    if (!existingAd) {
+      return c.json(
+        { message: "Ad not found" },
+        HttpStatusCodes.NOT_FOUND
+      );
+    }
+
+    const body = await c.req.json().catch(() => ({}));
+    const rejectionReason = (body.rejectionDescription || body.rejectionReason || "").trim();
 
     const [updatedAd] = await db.update(ads)
       .set({
@@ -124,6 +140,21 @@ export const reject: AppRouteHandler<RejectRoute> = async (c) => {
       })
       .where(eq(ads.id, adId))
       .returning();
+
+    // Send rejection notification email if seller has an email
+    const sellerEmail = existingAd.user?.email;
+    if (sellerEmail) {
+      const emailPromise = sendAdRejectionEmail({
+        email: sellerEmail,
+        name: existingAd.user?.name || existingAd.name || "User",
+        adTitle: existingAd.title || "Vehicle Listing",
+        rejectionReason: rejectionReason || undefined,
+      }).catch((emailError) => {
+        console.error("[REJECT AD] Failed to send rejection email:", emailError);
+      });
+
+      safeWaitUntil(c, emailPromise);
+    }
 
     const formattedAd = {
       ...updatedAd,

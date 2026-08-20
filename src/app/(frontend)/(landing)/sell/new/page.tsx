@@ -39,51 +39,71 @@ export default function QuickAdCreatePage() {
   const [adMode, setAdMode] = useState<"vehicle" | "auto_part">("vehicle");
 
   const pendingModalActionRef = useRef<"createAnother" | "none">("none");
+  const userProfileRef = useRef<any>(null);
+  const isSubmittedRef = useRef<boolean>(false);
   const [hasAutoFilled, setHasAutoFilled] = useState(false);
   const [isDraftLoaded, setIsDraftLoaded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const getDefaultValues = (userData?: any): CreateAdSchema => ({
+    listingType: "SELL",
+    type: "CAR",
+    brand: "",
+    model: "",
+    grade: "",
+    manufacturedYear: "",
+    modelYear: "",
+    price: undefined,
+    condition: "",
+    description: "",
+    transmission: undefined,
+    fuelType: undefined,
+    mileage: undefined,
+    engineCapacity: undefined,
+    trimEdition: "",
+    color: "",
+    bikeType: undefined,
+    bodyType: undefined,
+    serviceType: "",
+    partType: "",
+    maintenanceType: "",
+    vehicleType: undefined,
+    partName: "",
+    partCategoryId: "",
+    compatibleVehicleType: "",
+    name: userData?.name || "",
+    phoneNumber: userData?.phone || "",
+    whatsappNumber: userData?.whatsappNumber || "",
+    province: userData?.province || "",
+    district: userData?.district || "",
+    city: userData?.city || "",
+    location: userData?.location || "",
+    termsAndConditions: true,
+    published: true,
+    isDraft: false,
+    metadata: { isNegotiable: false },
+  });
+
   const form = useForm<CreateAdSchema>({
     resolver: zodResolver(createAdSchema) as any,
-    defaultValues: {
-      listingType: "SELL",
-      type: "CAR",
-      brand: "",
-      model: "",
-      grade: "",
-      manufacturedYear: "",
-      modelYear: "",
-      price: undefined,
-      condition: "",
-      description: "",
-      transmission: undefined,
-      fuelType: undefined,
-      mileage: undefined,
-      engineCapacity: undefined,
-      trimEdition: "",
-      bikeType: undefined,
-      bodyType: undefined,
-      serviceType: "",
-      partType: "",
-      maintenanceType: "",
-      vehicleType: undefined,
-      partName: "",
-      partCategoryId: "",
-      compatibleVehicleType: "",
-      name: "",
-      phoneNumber: "",
-      whatsappNumber: "",
-      province: "",
-      district: "",
-      city: "",
-      location: "",
-      termsAndConditions: true,
-      published: true,
-      isDraft: false,
-      metadata: { isNegotiable: false },
-    },
+    defaultValues: getDefaultValues(),
     mode: "onChange",
   });
+
+  const resetFormToDefaults = () => {
+    isSubmittedRef.current = true;
+    try {
+      localStorage.removeItem("rathagala_draft_ad");
+    } catch (e) {
+      console.error("Failed to clear localStorage draft", e);
+    }
+    setSelectedImages([]);
+    setCurrentStep(1);
+    setAdMode("vehicle");
+    setBoostSelection(null);
+    setShowBoostDialog(false);
+    form.reset(getDefaultValues(userProfileRef.current));
+  };
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -91,6 +111,7 @@ export default function QuickAdCreatePage() {
         const response = await client.api.users.me.$get();
         if (response.ok) {
           const userData = await response.json();
+          userProfileRef.current = userData;
           const currentValues = form.getValues();
           
           if (!currentValues.name && userData.name) form.setValue("name", userData.name);
@@ -133,9 +154,22 @@ export default function QuickAdCreatePage() {
 
   const watchAll = form.watch();
 
-  // Save to local storage
+  // Save to local storage only if not recently submitted and has actual vehicle/content data
   useEffect(() => {
-    if (!isDraftLoaded) return;
+    if (!isDraftLoaded || isSubmittedRef.current) return;
+    const hasMeaningfulContent = !!(
+      watchAll.brand ||
+      watchAll.model ||
+      watchAll.description ||
+      watchAll.price ||
+      watchAll.partName ||
+      selectedImages.length > 0
+    );
+
+    if (!hasMeaningfulContent) {
+      return;
+    }
+
     try {
       const draft = {
         formValues: watchAll,
@@ -267,8 +301,16 @@ export default function QuickAdCreatePage() {
       title = sellParts.join(" ");
     }
 
+    const isNegotiable = !data.price || data.price <= 0 ? true : !!(data.metadata as any)?.isNegotiable;
+    const finalPrice = data.price && data.price > 0 ? data.price : undefined;
+
     const adData: CreateAdSchema = {
       ...data,
+      price: finalPrice,
+      metadata: {
+        ...((data.metadata as any) || {}),
+        isNegotiable,
+      },
       title,
       mediaIds: selectedImages.map(img => img.id),
       published: true,
@@ -280,7 +322,7 @@ export default function QuickAdCreatePage() {
       {
         onSuccess: (responseData) => {
           setIsSubmitting(false);
-          localStorage.removeItem("rathagala_draft_ad");
+          resetFormToDefaults();
           setCreatedAdId(responseData.id);
           if (showBoostDialog && boostSelection && boostSelection.boostTypes.length > 0) {
             requestBoost({
@@ -463,12 +505,9 @@ export default function QuickAdCreatePage() {
         }}
         onGoBack={() => {}}
         onCreateAnother={() => {
-          localStorage.removeItem("rathagala_draft_ad");
           pendingModalActionRef.current = "createAnother";
-          setCurrentStep(1);
-          setAdMode("vehicle");
-          form.reset();
-          setSelectedImages([]);
+          isSubmittedRef.current = false;
+          resetFormToDefaults();
         }}
       />
     </div>

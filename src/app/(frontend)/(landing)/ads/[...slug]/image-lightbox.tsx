@@ -258,7 +258,7 @@ export function ImageLightbox({
       <div className="bg-black/60 border-t border-white/10 p-3 z-20">
         <div
           ref={thumbnailContainerRef}
-          className="flex items-center justify-center gap-2 overflow-x-auto max-w-4xl mx-auto py-1 scrollbar-thin scrollbar-thumb-white/20"
+          className="flex items-center sm:justify-center gap-2 overflow-x-auto max-w-4xl mx-auto py-1 px-2 scrollbar-thin scrollbar-thumb-white/20"
         >
           {images.map((src, i) => (
             <button

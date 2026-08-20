@@ -107,6 +107,21 @@ export default function EditAdPage() {
           </div>
         </div>
 
+        {/* Rejection Notice Banner */}
+        {ad?.status === "REJECTED" && (
+          <div className="rounded-2xl border border-red-200 bg-red-50/60 p-4 space-y-1">
+            <div className="flex items-center gap-2 text-sm font-bold text-red-800">
+              <span>Rejection Reason:</span>
+              <span className="font-semibold text-red-700">
+                {ad.rejectionDescription || (ad as any).rejectionReason || "Listing did not meet guidelines"}
+              </span>
+            </div>
+            <p className="text-xs text-red-600">
+              Please update the required information below and click Update Ad to resubmit for review.
+            </p>
+          </div>
+        )}
+
         {/* Ad Form */}
         <AdForm
           initialData={ad}

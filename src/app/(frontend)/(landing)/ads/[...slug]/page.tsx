@@ -691,7 +691,14 @@ export default function AdDetailPage() {
               <div className="bg-white border border-gray-200 rounded p-4">
                 {/* Price */}
                 <div className="mb-3">
-                  <div className="text-xl font-bold text-[#024950]">{adPrice}</div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="text-xl font-bold text-[#024950]">{adPrice}</div>
+                    {ad.price && ad.price > 0 && (ad.metadata as any)?.isNegotiable && (
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-teal-50 text-teal-800 border border-teal-200">
+                        Negotiable
+                      </span>
+                    )}
+                  </div>
                   {(ad as any).discountPrice && ad.price && (ad as any).discountPrice < ad.price && (
                     <div className="text-sm line-through text-gray-400">
                       {formatPrice(ad.price)}

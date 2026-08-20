@@ -224,6 +224,16 @@ export const vehicleModels = pgTable("vehicle_model", {
   unq: uniqueIndex("vehicle_model_unq").on(t.name, t.brand),
 }));
 
+export const vehicleColors = pgTable("vehicle_color", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull().unique(),
+  hexCode: text("hex_code"),
+  order: integer("order").default(0).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // ==========================================
 // ADS & BOOSTS
 // ==========================================

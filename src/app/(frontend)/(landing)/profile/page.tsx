@@ -58,6 +58,7 @@ interface UserAd {
   updatedAt?: string | null;
   seoSlug?: string | null;
   status?: string;
+  rejectionDescription?: string | null;
   media?: Array<{
     media: {
       url: string;
@@ -1128,10 +1129,24 @@ export default function ProfilePage() {
                                     {ad.title}
                                   </button>
                                   <span className="inline-block">{getStatusBadge(ad.status)}</span>
+                                  {ad.status === "REJECTED" && (ad.rejectionDescription || (ad as any).rejectionReason) && (
+                                    <span className="inline-flex items-center text-sm font-bold text-red-600">
+                                      {ad.rejectionDescription || (ad as any).rejectionReason}
+                                    </span>
+                                  )}
                                 </div>
 
-                                <div className="text-sm font-bold text-zinc-900">
-                                  {ad.price ? `Rs. ${formatPrice(ad.price)}` : "Negotiable"}
+                                <div className="text-sm font-bold text-zinc-900 flex items-center gap-1.5">
+                                  {ad.price && ad.price > 0 ? (
+                                    <>
+                                      <span>Rs. {formatPrice(ad.price)}</span>
+                                      {(ad as any).metadata?.isNegotiable && (
+                                        <span className="text-xs font-medium text-amber-700">(Negotiable)</span>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <span>Negotiable</span>
+                                  )}
                                 </div>
                               </div>
 
@@ -1211,6 +1226,20 @@ export default function ProfilePage() {
                               </div>
                             </div>
                           </div>
+
+                          {ad.status === "REJECTED" && (
+                            <div className="w-full rounded-xl border border-red-200 bg-red-50/40 p-3.5 space-y-1">
+                              <p className="text-xs font-bold text-red-800">
+                                Ad Rejected
+                                {ad.rejectionDescription && (
+                                  <span className="font-normal text-red-700"> — {ad.rejectionDescription}</span>
+                                )}
+                              </p>
+                              <p className="text-[11px] text-red-600">
+                                Please click <strong>Edit</strong> to update the details and resubmit for approval.
+                              </p>
+                            </div>
+                          )}
 
                           {ad.status === "PENDING_REVIEW" && (
                             <div className="w-full rounded-lg border border-amber-200/60 bg-amber-50/20 p-3.5">

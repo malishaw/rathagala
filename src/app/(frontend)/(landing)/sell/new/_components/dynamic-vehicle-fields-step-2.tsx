@@ -5,10 +5,12 @@ import { CreateAdSchema } from "@/server/routes/ad/ad.schemas";
 import { Input } from "@/components/ui/input";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useVehicleColors } from "@/hooks/use-vehicle-colors";
 
 export function DynamicVehicleFieldsStep2() {
   const form = useFormContext<CreateAdSchema>();
   const type = form.watch("type");
+  const { colors: vehicleColorsList } = useVehicleColors();
 
   const renderMileage = (label = "Mileage (km)", placeholder = "e.g., 45000", description?: string) => {
     const quickSelects = [0, 10000, 25000, 50000, 100000];
@@ -148,11 +150,6 @@ export function DynamicVehicleFieldsStep2() {
   );
 
   const renderColor = () => {
-    const commonColors = [
-      "Black", "White", "Silver", "Grey", "Red", "Blue", 
-      "Brown", "Beige", "Green", "Yellow", "Orange", "Gold", 
-      "Bronze", "Purple", "Maroon", "Other"
-    ];
     return (
       <FormField
         control={form.control}
@@ -167,7 +164,7 @@ export function DynamicVehicleFieldsStep2() {
                 </SelectTrigger>
               </FormControl>
               <SelectContent className="max-h-[220px]">
-                {commonColors.map((c) => (
+                {vehicleColorsList.map((c) => (
                   <SelectItem key={c} value={c}>{c}</SelectItem>
                 ))}
               </SelectContent>
