@@ -48,7 +48,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useRouter } from "next/navigation";
 import { FaInfoCircle, FaMobileAlt, FaWhatsapp } from "react-icons/fa";
-import { getRelativeTime } from "@/lib/utils";
+import { cn, getRelativeTime } from "@/lib/utils";
 import { DELETE_AD_REASONS, type DeleteAdReason } from "@/constants/delete-reasons";
 
 // This type is used to define the shape of our data.
