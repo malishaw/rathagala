@@ -60,17 +60,32 @@ export const approve: AppRouteHandler<ApproveRoute> = async (c) => {
       .where(eq(ads.id, adId))
       .returning();
 
-    if (existingAd.user?.email) {
-      const emailPromise = sendAdApprovalEmail({
-        email: existingAd.user.email,
-        name: existingAd.user.name || "User",
-        adTitle: existingAd.title || "",
-        adId: adId,
-      }).catch((emailError) => {
-        console.error("[APPROVE AD] Failed to send approval email:", emailError);
-      });
+    let sellerEmail = existingAd.user?.email;
+    let sellerName = existingAd.user?.name || existingAd.name || "User";
 
-      safeWaitUntil(c, emailPromise);
+    if (!sellerEmail && existingAd.createdBy) {
+      const creator = await db.query.users.findFirst({
+        where: eq(users.id, existingAd.createdBy),
+        columns: { email: true, name: true },
+      });
+      if (creator?.email) {
+        sellerEmail = creator.email;
+        if (creator.name) sellerName = creator.name;
+      }
+    }
+
+    if (sellerEmail) {
+      try {
+        await sendAdApprovalEmail({
+          email: sellerEmail,
+          name: sellerName,
+          adTitle: existingAd.title || "Vehicle Listing",
+          adId: adId,
+        });
+        console.log(`[APPROVE AD] Approval email sent successfully to ${sellerEmail} for ad ${adId}`);
+      } catch (emailError) {
+        console.error("[APPROVE AD] Failed to send approval email:", emailError);
+      }
     }
 
     const formattedAd = {
@@ -142,18 +157,32 @@ export const reject: AppRouteHandler<RejectRoute> = async (c) => {
       .returning();
 
     // Send rejection notification email if seller has an email
-    const sellerEmail = existingAd.user?.email;
-    if (sellerEmail) {
-      const emailPromise = sendAdRejectionEmail({
-        email: sellerEmail,
-        name: existingAd.user?.name || existingAd.name || "User",
-        adTitle: existingAd.title || "Vehicle Listing",
-        rejectionReason: rejectionReason || undefined,
-      }).catch((emailError) => {
-        console.error("[REJECT AD] Failed to send rejection email:", emailError);
-      });
+    let sellerEmail = existingAd.user?.email;
+    let sellerName = existingAd.user?.name || existingAd.name || "User";
 
-      safeWaitUntil(c, emailPromise);
+    if (!sellerEmail && existingAd.createdBy) {
+      const creator = await db.query.users.findFirst({
+        where: eq(users.id, existingAd.createdBy),
+        columns: { email: true, name: true },
+      });
+      if (creator?.email) {
+        sellerEmail = creator.email;
+        if (creator.name) sellerName = creator.name;
+      }
+    }
+
+    if (sellerEmail) {
+      try {
+        await sendAdRejectionEmail({
+          email: sellerEmail,
+          name: sellerName,
+          adTitle: existingAd.title || "Vehicle Listing",
+          rejectionReason: rejectionReason || undefined,
+        });
+        console.log(`[REJECT AD] Rejection email sent successfully to ${sellerEmail} for ad ${adId}`);
+      } catch (emailError) {
+        console.error("[REJECT AD] Failed to send rejection email:", emailError);
+      }
     }
 
     const formattedAd = {

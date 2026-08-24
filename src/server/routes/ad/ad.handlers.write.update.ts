@@ -69,14 +69,28 @@ export const update: AppRouteHandler<UpdateRoute> = async (c) => {
       updateData.published = adUpdates.published;
     if (adUpdates.isDraft !== undefined) updateData.isDraft = adUpdates.isDraft;
 
-    const willBePublished = (adUpdates.published !== undefined ? adUpdates.published : existingAd.published) &&
-      (adUpdates.isDraft !== undefined ? !adUpdates.isDraft : !existingAd.isDraft);
-    const willBeDraft = adUpdates.isDraft !== undefined ? adUpdates.isDraft : existingAd.isDraft;
+    if (isAdmin && (adUpdates as any).status !== undefined) {
+      updateData.status = (adUpdates as any).status;
+      if ((adUpdates as any).status === "ACTIVE") {
+        updateData.published = true;
+        updateData.isDraft = false;
+      }
+    } else {
+      const willBePublished = (adUpdates.published !== undefined ? adUpdates.published : existingAd.published) &&
+        (adUpdates.isDraft !== undefined ? !adUpdates.isDraft : !existingAd.isDraft);
+      const willBeDraft = adUpdates.isDraft !== undefined ? adUpdates.isDraft : existingAd.isDraft;
 
-    if (willBePublished && !willBeDraft) {
-      updateData.status = "PENDING_REVIEW";
-    } else if (willBeDraft) {
-      updateData.status = "DRAFT";
+      if (willBePublished && !willBeDraft) {
+        updateData.status = "PENDING_REVIEW";
+      } else if (willBeDraft) {
+        updateData.status = "DRAFT";
+      }
+    }
+
+    if (isAdmin) {
+      if ((adUpdates as any).boosted !== undefined) updateData.boosted = (adUpdates as any).boosted;
+      if ((adUpdates as any).featured !== undefined) updateData.featured = (adUpdates as any).featured;
+      if ((adUpdates as any).rejectionDescription !== undefined) updateData.rejectionDescription = (adUpdates as any).rejectionDescription;
     }
 
     if (adUpdates.seoTitle !== undefined)

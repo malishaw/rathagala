@@ -6,6 +6,7 @@ import { format, subMonths, startOfMonth, endOfMonth, startOfDay, endOfDay, isBe
 import { getRelativeTime } from "@/lib/utils";
 import Image from "next/image";
 import { toast } from "sonner";
+import { MediaService } from "@/modules/media/service";
 import {
   ArrowUpAZ,
   Calendar,
@@ -518,17 +519,14 @@ export default function AdminGalleryPage() {
     setUploadProgress(true);
     let successCount = 0;
     try {
+      const mediaService = MediaService.getInstance();
       for (const file of uploadFiles) {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("path", "gallery");
-
-        const res = await fetch("/api/media/upload", {
-          method: "POST",
-          body: formData,
-          credentials: "include",
-        });
-        if (res.ok) successCount++;
+        try {
+          await mediaService.uploadFile({ file, path: "gallery" });
+          successCount++;
+        } catch (e) {
+          console.error("File upload error:", e);
+        }
       }
       toast.success(`Uploaded ${successCount}/${uploadFiles.length} files`);
       setUploadFiles([]);

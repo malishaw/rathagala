@@ -112,17 +112,19 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="flex flex-1 flex-col space-y-4">
-      <div className="relative flex flex-1">
-        <div className="absolute bottom-0 left-0 right-0 top-0 flex overflow-scroll rounded-md border md:overflow-auto">
-          <ScrollArea className="flex-1">
-            <Table className="relative">
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
+      <div className="relative flex flex-1 overflow-hidden rounded-lg border bg-card shadow-xs">
+        <div className="flex-1 overflow-auto max-h-[calc(100vh-280px)]">
+          <Table className="relative w-full border-collapse">
+            <TableHeader className="sticky top-0 z-30 bg-muted/90 backdrop-blur-xs shadow-xs">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id} className="hover:bg-transparent border-b">
+                  {headerGroup.headers.map((header) => {
+                    const meta = header.column.columnDef.meta as any;
+                    return (
                       <TableHead
                         key={header.id}
                         style={{ width: header.getSize(), minWidth: header.getSize(), maxWidth: header.getSize() }}
+                        className={meta?.headerClassName || meta?.className || ""}
                       >
                         {header.isPlaceholder
                           ? null
@@ -131,47 +133,50 @@ export function DataTable<TData, TValue>({
                               header.getContext()
                             )}
                       </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => {
-                    return (
-                      <TableRow
-                        key={row.id}
-                        data-state={row.getIsSelected() && "selected"}
-                        className={rowClassName ? rowClassName(row.original) : undefined}
-                      >
-                        {row.getVisibleCells().map((cell) => (
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => {
+                  return (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                      className={`group transition-colors ${rowClassName ? rowClassName(row.original) : ""}`}
+                    >
+                      {row.getVisibleCells().map((cell) => {
+                        const meta = cell.column.columnDef.meta as any;
+                        return (
                           <TableCell
                             key={cell.id}
                             style={{ width: cell.column.getSize(), minWidth: cell.column.getSize(), maxWidth: cell.column.getSize() }}
+                            className={meta?.cellClassName || meta?.className || ""}
                           >
                             {flexRender(
                               cell.column.columnDef.cell,
                               cell.getContext()
                             )}
                           </TableCell>
-                        ))}
-                      </TableRow>
-                    );
-                  })
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center"
-                    >
-                      No results.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
+                        );
+                      })}
+                    </TableRow>
+                  );
+                })
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-32 text-center text-muted-foreground text-sm"
+                  >
+                    No ads found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
       </div>
 

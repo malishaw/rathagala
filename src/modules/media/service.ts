@@ -16,18 +16,75 @@ export class MediaService {
     return MediaService.instance;
   }
 
-  async uploadFile({ file, path = "" }: UploadParams): Promise<MediaFile> {
-    // Upload via API route (handles S3 server-side)
-    const formData = new FormData();
-    formData.append('file', file);
-    if (path) {
-      formData.append('path', path);
+  async uploadFile({ file, path = "ads" }: UploadParams): Promise<MediaFile> {
+    try {
+      // Step 1: Request presigned URL from Worker (CPU cost: ~1ms, file bytes stay in browser)
+      const presignRes = await fetch("/api/media/upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type || "image/jpeg",
+          path,
+          size: file.size,
+        }),
+        credentials: "include",
+      });
+
+      if (presignRes.ok) {
+        const { uploadUrl, publicUrl, type } = await presignRes.json();
+
+        // Step 2: Directly upload raw file bytes from browser to Cloudflare R2 (0 Worker CPU!)
+        const r2UploadRes = await fetch(uploadUrl, {
+          method: "PUT",
+          headers: {
+            "Content-Type": file.type || "image/jpeg",
+          },
+          body: file,
+        });
+
+        if (r2UploadRes.ok) {
+          // Step 3: Register media item in database
+          const confirmRes = await fetch("/api/media/confirm", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              url: publicUrl,
+              filename: file.name,
+              type: type || getMediaType(file.type || "image/jpeg"),
+              size: file.size,
+            }),
+            credentials: "include",
+          });
+
+          if (confirmRes.ok) {
+            const data = await confirmRes.json();
+            return {
+              id: data.id,
+              url: data.url,
+              type: data.type,
+              filename: data.filename,
+              size: data.size,
+              createdAt: new Date(data.createdAt),
+            };
+          }
+        }
+      }
+    } catch (directUploadErr) {
+      console.warn("Direct R2 upload encountered an issue, attempting fallback:", directUploadErr);
     }
 
-    const response = await fetch('/api/media/upload', {
-      method: 'POST',
+    // Fallback: If direct R2 upload encounters an issue (e.g. CORS), fallback to proxy upload
+    const formData = new FormData();
+    formData.append("file", file);
+    if (path) {
+      formData.append("path", path);
+    }
+
+    const response = await fetch("/api/media/upload", {
+      method: "POST",
       body: formData,
-      credentials: 'include'
+      credentials: "include",
     });
 
     if (!response.ok) {
@@ -43,7 +100,7 @@ export class MediaService {
       type: data.type,
       filename: data.filename,
       size: data.size,
-      createdAt: new Date(data.createdAt)
+      createdAt: new Date(data.createdAt),
     };
   }
 
