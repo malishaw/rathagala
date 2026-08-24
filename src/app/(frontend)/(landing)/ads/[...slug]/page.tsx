@@ -19,6 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { useGetAdById } from "@/features/ads/api/use-get-ad-by-id";
 import { useGetSimilarVehicles } from "@/features/ads/api/use-get-similar-vehicles";
 import { FavoriteButton } from "@/features/saved-ads/components/favorite-button";
+import { BoostBadges } from "@/features/boost/components/boost-badges";
 import { useCreateReport } from "@/features/report/api/use-create-report";
 import { ReportReasons } from "@/server/routes/report/report.schemas";
 import {
@@ -290,6 +291,12 @@ export default function AdDetailPage() {
 
   const location = [ad.city, ad.district].filter(Boolean).join(", ") || ad.location || "";
 
+  const isUrgent = Boolean((ad as any).urgentActive || (ad as any).boostTypes?.includes("URGENT"));
+  const isTopAd = Boolean((ad as any).topAdActive || (ad as any).boostTypes?.includes("TOP_AD"));
+  const isFeatured = Boolean((ad as any).featuredActive || (ad as any).featured || (ad as any).boostTypes?.includes("FEATURED"));
+  const isBump = Boolean((ad as any).bumpActive || (ad as any).boostTypes?.includes("BUMP"));
+  const hasPromotion = isUrgent || isTopAd || isFeatured || isBump;
+
   const perPage = 6;
   const totalPages = Math.ceil(modelFiltered.length / perPage);
   const paginated = modelFiltered.slice((similarPage - 1) * perPage, similarPage * perPage);
@@ -336,8 +343,19 @@ export default function AdDetailPage() {
             <ChevronLeft className="w-4 h-4" />
             Back
           </button>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 flex items-center gap-2">
             <h1 className="text-sm font-medium truncate">{adTitle}</h1>
+            {hasPromotion && (
+              <div className="shrink-0 scale-90 origin-left">
+                <BoostBadges
+                  bumpActive={isBump}
+                  topAdActive={isTopAd}
+                  featuredActive={isFeatured}
+                  urgentActive={isUrgent}
+                  size="sm"
+                />
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-1">
             <FavoriteButton adId={adId || ""} className="text-white hover:bg-white/10 h-8 w-8" iconClassName="w-4 h-4" />
@@ -458,6 +476,19 @@ export default function AdDetailPage() {
                     e.stopPropagation();
                   }}
                 />
+
+                {/* Promotion / Urgent Badges */}
+                {hasPromotion && (
+                  <div className="absolute top-2.5 left-2.5 z-20 pointer-events-none">
+                    <BoostBadges
+                      bumpActive={isBump}
+                      topAdActive={isTopAd}
+                      featuredActive={isFeatured}
+                      urgentActive={isUrgent}
+                      size="md"
+                    />
+                  </div>
+                )}
 
                 {/* Full View Expand Button */}
                 <button
@@ -689,6 +720,22 @@ export default function AdDetailPage() {
             {/* Price & Contact — sticky on desktop */}
             <div className="lg:sticky lg:top-4 space-y-3">
               <div className="bg-white border border-gray-200 rounded p-4">
+                {/* Promotion Badges */}
+                {hasPromotion && (
+                  <div className="mb-2.5 pb-2 border-b border-gray-100 flex items-center justify-between">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
+                      Promotion
+                    </span>
+                    <BoostBadges
+                      bumpActive={isBump}
+                      topAdActive={isTopAd}
+                      featuredActive={isFeatured}
+                      urgentActive={isUrgent}
+                      size="sm"
+                    />
+                  </div>
+                )}
+
                 {/* Price */}
                 <div className="mb-3">
                   <div className="flex items-center gap-2 flex-wrap">

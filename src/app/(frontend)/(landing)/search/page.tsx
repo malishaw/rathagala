@@ -1234,13 +1234,6 @@ export default function SearchPage() {
                           <div className="flex gap-3">
                             {/* Vehicle Image Container */}
                             <div className="w-24 sm:w-28 h-16 sm:h-20 flex-shrink-0 relative overflow-hidden bg-slate-50 border border-slate-100 rounded-lg">
-                              {/* Urgency Badge */}
-                              {isUrgent && (
-                                <Badge className="absolute top-1 left-1 z-10 bg-red-600 text-white border-0 text-[8px] font-bold px-1.5 py-0.5 shadow-[0_2px_4px_rgba(220,38,38,0.2)] rounded-full uppercase tracking-wider animate-pulse flex items-center gap-0.5">
-                                  <Zap className="h-2 w-2 fill-white" /> Urgent
-                                </Badge>
-                              )}
-
                               {(vehicle as any)?.media && (vehicle as any).media.length > 0 && (vehicle as any).media[0]?.media?.url ? (
                                 <img
                                   src={(vehicle as any).media[0].media.url}

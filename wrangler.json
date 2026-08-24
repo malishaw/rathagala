@@ -18,6 +18,7 @@
   "vars": {
     "NEXT_PUBLIC_APP_URL": "https://rathagala.lk",
     "BETTER_AUTH_URL": "https://rathagala.lk",
+    "BETTER_AUTH_SECRET": "bv8NxQ4Zre5vte4qB6wmqfKkKWKRJZ60",
     "DATABASE_URL": "postgresql://neondb_owner:npg_gjJUyzx0uRp6@ep-wispy-waterfall-aoeo5l9n-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
     "R2_ACCESS_KEY_ID": "ec4d1083a0716136ae3e1faac5bd68b3",
     "R2_SECRET_ACCESS_KEY": "67d0d5822886f52b86b04d0d0bdbd90f832aff80684f4f809ede7f0fc383ee67",
