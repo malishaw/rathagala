@@ -75,17 +75,16 @@ export const approve: AppRouteHandler<ApproveRoute> = async (c) => {
     }
 
     if (sellerEmail) {
-      try {
-        await sendAdApprovalEmail({
-          email: sellerEmail,
-          name: sellerName,
-          adTitle: existingAd.title || "Vehicle Listing",
-          adId: adId,
-        });
-        console.log(`[APPROVE AD] Approval email sent successfully to ${sellerEmail} for ad ${adId}`);
-      } catch (emailError) {
+      const emailPromise = sendAdApprovalEmail({
+        email: sellerEmail,
+        name: sellerName,
+        adTitle: existingAd.title || "Vehicle Listing",
+        adId: adId,
+      }).catch((emailError) => {
         console.error("[APPROVE AD] Failed to send approval email:", emailError);
-      }
+      });
+
+      safeWaitUntil(c, emailPromise);
     }
 
     const formattedAd = {
@@ -172,17 +171,16 @@ export const reject: AppRouteHandler<RejectRoute> = async (c) => {
     }
 
     if (sellerEmail) {
-      try {
-        await sendAdRejectionEmail({
-          email: sellerEmail,
-          name: sellerName,
-          adTitle: existingAd.title || "Vehicle Listing",
-          rejectionReason: rejectionReason || undefined,
-        });
-        console.log(`[REJECT AD] Rejection email sent successfully to ${sellerEmail} for ad ${adId}`);
-      } catch (emailError) {
+      const emailPromise = sendAdRejectionEmail({
+        email: sellerEmail,
+        name: sellerName,
+        adTitle: existingAd.title || "Vehicle Listing",
+        rejectionReason: rejectionReason || undefined,
+      }).catch((emailError) => {
         console.error("[REJECT AD] Failed to send rejection email:", emailError);
-      }
+      });
+
+      safeWaitUntil(c, emailPromise);
     }
 
     const formattedAd = {
