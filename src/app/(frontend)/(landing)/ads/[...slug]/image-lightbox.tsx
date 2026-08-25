@@ -13,13 +13,15 @@ import {
   Maximize2,
 } from "lucide-react";
 
+import { WatermarkOverlay } from "@/components/ui/watermark-overlay";
+
 interface ImageLightboxProps {
   isOpen: boolean;
   onClose: () => void;
   images: string[];
   initialIndex?: number;
   title?: string;
-  getWatermarked: (url: string) => string;
+  getWatermarked?: (url: string) => string;
 }
 
 export function ImageLightbox({
@@ -28,7 +30,6 @@ export function ImageLightbox({
   images,
   initialIndex = 0,
   title = "Vehicle Images",
-  getWatermarked,
 }: ImageLightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -133,7 +134,6 @@ export function ImageLightbox({
   if (!isOpen) return null;
 
   const currentSrc = images[currentIndex] || images[0];
-  const watermarkedSrc = getWatermarked(currentSrc);
 
   return (
     <div
@@ -216,7 +216,7 @@ export function ImageLightbox({
           }}
         >
           <img
-            src={watermarkedSrc}
+            src={currentSrc}
             alt={`${title} - Image ${currentIndex + 1}`}
             className="max-h-[72vh] sm:max-h-[78vh] max-w-[95vw] object-contain rounded select-none pointer-events-none drop-shadow-2xl"
             draggable={false}
@@ -231,9 +231,12 @@ export function ImageLightbox({
             }}
           />
 
+          {/* Client-side Zero-CPU Watermark */}
+          <WatermarkOverlay size="lg" />
+
           {/* Transparent Overlay for extra contextmenu / dragging protection */}
           <div
-            className="absolute inset-0"
+            className="absolute inset-0 z-20"
             style={{ userSelect: "none", WebkitUserSelect: "none" }}
             onContextMenu={(e) => {
               e.preventDefault();

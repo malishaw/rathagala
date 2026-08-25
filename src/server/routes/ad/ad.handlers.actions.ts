@@ -352,6 +352,7 @@ export const sendExpiryReminders: AppRouteHandler<SendExpiryRemindersRoute> = as
       gte(ads.createdAt, start),
       lte(ads.createdAt, end)
     ),
+    limit: 25,
     with: {
       user: { columns: { name: true, email: true } },
     },

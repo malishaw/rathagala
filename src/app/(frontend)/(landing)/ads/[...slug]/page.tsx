@@ -50,6 +50,7 @@ import { AdIdDisplay } from "./ad-id-display";
 import { client } from "@/lib/rpc";
 import { getRelativeTime } from "@/lib/utils";
 import { ImageLightbox } from "./image-lightbox";
+import { WatermarkOverlay } from "@/components/ui/watermark-overlay";
 
 // Lazy-load analytics — not needed for normal ad view
 const VehicleAnalyticsContent = dynamic(() => import("./vehicle-analytics"), {
@@ -276,13 +277,8 @@ export default function AdDetailPage() {
         .map((item: any) => item?.media?.url)
     : ["/placeholder-image.jpg"];
 
-  const getWatermarked = (url: string) =>
-    url.includes("placeholder") || url.startsWith("/")
-      ? url
-      : `/api/watermark?url=${encodeURIComponent(url)}&v=2`;
-
-  // Only watermark the CURRENT displayed image for thumbnails use raw URLs
-  const mainImage = getWatermarked(originalImages[currentImageIndex] || originalImages[0]);
+  // Direct image URL (Zero-CPU: Watermark is overlaid on the client)
+  const mainImage = originalImages[currentImageIndex] || originalImages[0];
 
   const adTitle = formatAdTitle(ad);
   const adPrice = (ad as any).discountPrice
@@ -467,6 +463,9 @@ export default function AdDetailPage() {
                     target.src = "/placeholder-image.jpg";
                   }}
                 />
+                {/* Client-side Zero-CPU Watermark */}
+                <WatermarkOverlay size="md" />
+
                 {/* Transparent overlay blocks right-click */}
                 <div
                   className="absolute inset-0 z-10"
@@ -1005,7 +1004,6 @@ export default function AdDetailPage() {
         images={originalImages}
         initialIndex={currentImageIndex}
         title={adTitle}
-        getWatermarked={getWatermarked}
       />
     </div>
   );

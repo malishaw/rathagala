@@ -1,12 +1,15 @@
 import { db } from "@/server/db";
-import { ads, boostRequests, users, media, adMedia } from "@/server/db/schema";
-import { eq, or, and, gte, lte, lt, count, desc, asc, ilike } from "drizzle-orm";
+import { ads, boostRequests, users } from "@/server/db/schema";
+import { eq, or, and, gte, lte, lt, count, desc, asc, ilike, inArray, sql } from "drizzle-orm";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import * as HttpStatusPhrases from "stoker/http-status-phrases";
 import { formatIsoDate } from "@/server/helpers/date-utils";
 import { safeWaitUntil } from "@/server/helpers/execution-context";
 import type { AppRouteHandler } from "@/types/server";
 import type { ListRoute, GetOneRoute, TrendingRoute } from "./ad.routes";
+
+let lastBoostExpiryCheck = 0;
+const BOOST_CHECK_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
 
 export const list: AppRouteHandler<ListRoute> = async (c) => {
   try {
@@ -33,27 +36,30 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
 
     const now = new Date();
     
-    // Run boost expiration updates asynchronously in the background if possible
-    const expireBoosts = async () => {
-      try {
-        await db.update(ads).set({
-          boostStatus: "EXPIRED" as any,
-          bumpActive: false,
-          topAdActive: false,
-          urgentActive: false,
-          featuredActive: false,
-          boostTypes: [] as any,
-        }).where(and(eq(ads.boostStatus, "ACTIVE" as any), lt(ads.boostEndAt, now)));
+    // Throttle boost expiration updates so it does not hammer DB writes on every single GET read query
+    if (Date.now() - lastBoostExpiryCheck > BOOST_CHECK_INTERVAL_MS) {
+      lastBoostExpiryCheck = Date.now();
+      const expireBoosts = async () => {
+        try {
+          await db.update(ads).set({
+            boostStatus: "EXPIRED" as any,
+            bumpActive: false,
+            topAdActive: false,
+            urgentActive: false,
+            featuredActive: false,
+            boostTypes: [] as any,
+          }).where(and(eq(ads.boostStatus, "ACTIVE" as any), lt(ads.boostEndAt, now)));
 
-        await db.update(boostRequests).set({
-          status: "EXPIRED" as any,
-        }).where(and(eq(boostRequests.status, "ACTIVE" as any), lt(boostRequests.expiresAt, now)));
-      } catch (err) {
-        console.error("Failed to expire boosts", err);
-      }
-    };
+          await db.update(boostRequests).set({
+            status: "EXPIRED" as any,
+          }).where(and(eq(boostRequests.status, "ACTIVE" as any), lt(boostRequests.expiresAt, now)));
+        } catch (err) {
+          console.error("Failed to expire boosts", err);
+        }
+      };
 
-    safeWaitUntil(c, expireBoosts());
+      safeWaitUntil(c, expireBoosts());
+    }
 
     const conditions = [];
 
@@ -77,9 +83,8 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
         conditions.push(eq(ads.id, search.trim()));
       } else {
         const searchTerm = `%${search.trim()}%`;
-        // Find users matching search term to include in OR clause
-        const matchingUsers = await db.select({ id: users.id }).from(users).where(or(ilike(users.name, searchTerm), ilike(users.email, searchTerm)));
-        const userIds = matchingUsers.map(u => u.id);
+        // Use direct SQL subquery to avoid sequential HTTP DB round-trips
+        const userSubquery = db.select({ id: users.id }).from(users).where(or(ilike(users.name, searchTerm), ilike(users.email, searchTerm)));
 
         const textConditions = [
           ilike(ads.title, searchTerm),
@@ -88,13 +93,8 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
           ilike(ads.model, searchTerm),
           ilike(ads.phoneNumber, searchTerm),
           ilike(ads.whatsappNumber, searchTerm),
+          inArray(ads.createdBy, userSubquery),
         ];
-
-        if (userIds.length > 0) {
-          // Since Drizzle inArray requires at least 1 element, we conditionally add it
-          const { inArray } = await import("drizzle-orm");
-          textConditions.push(inArray(ads.createdBy, userIds));
-        }
 
         conditions.push(or(...textConditions));
       }
@@ -150,19 +150,20 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       }
     }
 
-    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-    const shouldFetchAll = query.filterByUser === true;
+    // Filter soft-deleted ads in SQL rather than pulling all rows into worker memory
+    const includeDeleted = query.includeDeleted === "true" || query.includeDeleted === true;
+    if (!includeDeleted) {
+      conditions.push(sql`coalesce((${ads.metadata}->>'deletedByUser')::boolean, false) = false`);
+    }
 
-    // Filter soft-deleted if not explicit
-    let finalAds = [];
-    let totalAdsCount = 0;
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     const [totalAdsRes, fetchedAds] = await Promise.all([
       db.select({ value: count() }).from(ads).where(whereClause),
       db.query.ads.findMany({
         where: whereClause,
-        offset: shouldFetchAll ? undefined : offset,
-        limit: shouldFetchAll ? undefined : limitNum,
+        offset: offset,
+        limit: limitNum,
         orderBy: (ads, { desc }) => [desc(ads.createdAt)],
         with: {
           media: {
@@ -183,25 +184,8 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
       }),
     ]);
 
-    totalAdsCount = totalAdsRes?.[0]?.value ?? 0;
-    let mappedAds = fetchedAds.map(ad => ({ ...ad, creator: ad.user }));
-
-    if (query.filterByUser === true) {
-      mappedAds = mappedAds.filter((ad: any) => {
-        const metadata = ad.metadata || {};
-        return metadata.deletedByUser !== true;
-      });
-      totalAdsCount = mappedAds.length;
-      mappedAds = mappedAds.slice(offset, offset + limitNum);
-    }
-
-    const includeDeleted = query.includeDeleted === "true";
-    if (isAdmin && !query.filterByUser && !includeDeleted) {
-      mappedAds = mappedAds.filter((ad: any) => {
-        const metadata = ad.metadata || {};
-        return metadata.deletedByUser !== true;
-      });
-    }
+    const totalAdsCount = totalAdsRes?.[0]?.value ?? 0;
+    const mappedAds = fetchedAds.map(ad => ({ ...ad, creator: ad.user }));
 
     const formattedAds = mappedAds.map((ad: any) => ({
       ...ad,
