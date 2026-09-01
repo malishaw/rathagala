@@ -59,10 +59,11 @@ class UniversalTransporter {
 
     // Fallback: nodemailer for local Node.js development
     const nodemailer = await import("nodemailer");
+    const isDirectTLS = this.config.port === 465;
     const transport = nodemailer.createTransport({
       host: this.config.host,
       port: this.config.port,
-      secure: false,
+      secure: isDirectTLS,
       auth: {
         user: this.config.user,
         pass: this.config.pass,
@@ -79,7 +80,7 @@ export function getTransporter(): UniversalTransporter {
   if (!_transporter) {
     _transporter = new UniversalTransporter({
       host: process.env.SMTP_HOST ?? "smtp.titan.email",
-      port: parseInt(process.env.SMTP_PORT ?? "587", 10),
+      port: parseInt(process.env.SMTP_PORT ?? "465", 10),
       user: process.env.SMTP_USER ?? "",
       pass: process.env.SMTP_PASS ?? "",
     });

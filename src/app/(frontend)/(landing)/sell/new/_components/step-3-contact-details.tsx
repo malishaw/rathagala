@@ -9,7 +9,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CitySearchDropdown } from "@/components/ui/city-search-dropdown";
 import { useLocations } from "@/hooks/use-locations";
-import { useState } from "react";
+import { useState, useMemo, type Dispatch, type SetStateAction } from "react";
 import { MediaGallery } from "@/modules/media/components/media-gallery";
 import type { MediaFile } from "@/modules/media/types";
 import { Camera, PlusCircle, X, Loader2, Zap } from "lucide-react";
@@ -24,9 +24,9 @@ interface Step3Props {
   onSubmit: () => void;
   isPending: boolean;
   showBoostDialog: boolean;
-  setShowBoostDialog: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowBoostDialog: Dispatch<SetStateAction<boolean>>;
   selectedImages: MediaFile[];
-  setSelectedImages: React.Dispatch<React.SetStateAction<MediaFile[]>>;
+  setSelectedImages: Dispatch<SetStateAction<MediaFile[]>>;
   canProceed: boolean;
 }
 
@@ -47,18 +47,18 @@ export function Step3ContactDetails({
   const province = form.watch("province");
   const district = form.watch("district");
 
-  // Get available districts based on selected province
-  const getAvailableDistricts = () => {
+  // Memoize available districts based on selected province
+  const availableDistricts = useMemo(() => {
     if (!province) return [];
     return Object.keys(locationData[province] || {});
-  };
+  }, [locationData, province]);
 
-  // Get available cities based on selected district
-  const getAvailableCities = () => {
+  // Memoize available cities based on selected district
+  const availableCities = useMemo(() => {
     if (!province || !district) return [];
     const provinceData = locationData[province];
     return provinceData?.[district] || [];
-  };
+  }, [locationData, province, district]);
 
   // Handle media selection from gallery
   const handleMediaSelect = (media: MediaFile[]) => {
@@ -250,7 +250,7 @@ export function Step3ContactDetails({
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {getAvailableDistricts().map(dist => (
+                {availableDistricts.map(dist => (
                   <SelectItem key={dist} value={dist}>{dist}</SelectItem>
                 ))}
               </SelectContent>
@@ -268,7 +268,7 @@ export function Step3ContactDetails({
             <FormLabel>City<span className="text-red-500">*</span></FormLabel>
             <FormControl>
               <CitySearchDropdown
-                cities={getAvailableCities()}
+                cities={availableCities}
                 value={field.value || ""}
                 onChange={field.onChange}
                 disabled={!district}

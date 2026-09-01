@@ -26,7 +26,7 @@
     "R2_BUCKET_NAME": "rathagala",
     "R2_CUSTOM_DOMAIN": "rathagala.lk",
     "SMTP_HOST": "smtp.titan.email",
-    "SMTP_PORT": "587",
+    "SMTP_PORT": "465",
     "SMTP_USER": "support@rathagala.lk",
     "SMTP_PASS": ">396\"-;mMzxwUz9",
     "EMAIL_FROM": "support@rathagala.lk"

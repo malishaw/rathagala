@@ -1,10 +1,10 @@
 import { db } from "@/server/db";
 import { ads, users, adAnalytics } from "@/server/db/schema";
-import { eq, and, gte, lte, not } from "drizzle-orm";
+import { eq, and, gte, lte, not, sql } from "drizzle-orm";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import * as HttpStatusPhrases from "stoker/http-status-phrases";
 import { formatIsoDate } from "@/server/helpers/date-utils";
-import { safeWaitUntil } from "@/server/helpers/execution-context";
+import { safeBackgroundJob } from "@/server/helpers/execution-context";
 import type { AppRouteHandler } from "@/types/server";
 import type { ApproveRoute, RejectRoute, IncrementViewRoute, RenewRoute, SendExpiryRemindersRoute } from "./ad.routes";
 import { sendAdApprovalEmail, sendAdRejectionEmail, sendListingRenewalConfirmationEmail, sendListingExpiryReminderEmail } from "@/lib/email";
@@ -84,7 +84,7 @@ export const approve: AppRouteHandler<ApproveRoute> = async (c) => {
         console.error("[APPROVE AD] Failed to send approval email:", emailError);
       });
 
-      safeWaitUntil(c, emailPromise);
+      await safeBackgroundJob(c, emailPromise, 3500);
     }
 
     const formattedAd = {
@@ -180,7 +180,7 @@ export const reject: AppRouteHandler<RejectRoute> = async (c) => {
         console.error("[REJECT AD] Failed to send rejection email:", emailError);
       });
 
-      safeWaitUntil(c, emailPromise);
+      await safeBackgroundJob(c, emailPromise, 3500);
     }
 
     const formattedAd = {
@@ -206,52 +206,27 @@ export const incrementView: AppRouteHandler<IncrementViewRoute> = async (c) => {
   try {
     const { id } = c.req.param();
 
-    const ad = await db.query.ads.findFirst({
-      where: eq(ads.id, id),
-      columns: { id: true, status: true },
-    });
-
-    if (!ad) {
-      return c.json(
-        { message: "Ad not found" },
-        HttpStatusCodes.NOT_FOUND
-      );
-    }
-
-    if (ad.status !== "ACTIVE") {
-      return c.json(
-        { success: false, views: 0 },
-        HttpStatusCodes.OK
-      );
-    }
-
-    const existingAnalytics = await db.query.adAnalytics.findFirst({
-      where: eq(adAnalytics.adId, id),
-    });
-
-    let newViews = 1;
-    if (existingAnalytics) {
-      const [updated] = await db.update(adAnalytics)
-        .set({ views: (existingAnalytics.views ?? 0) + 1 })
-        .where(eq(adAnalytics.adId, id))
-        .returning();
-      newViews = updated.views ?? 1;
-    } else {
-      const [inserted] = await db.insert(adAnalytics)
-        .values({
-          adId: id,
-          views: 1,
-          clicks: 0,
-          impressions: 0,
-        })
-        .returning();
-      newViews = inserted.views ?? 1;
-    }
+    // Atomic upsert: 1 single DB query instead of 3 sequential round-trips
+    const [result] = await db
+      .insert(adAnalytics)
+      .values({
+        adId: id,
+        views: 1,
+        clicks: 0,
+        impressions: 0,
+      })
+      .onConflictDoUpdate({
+        target: adAnalytics.adId,
+        set: {
+          views: sql`coalesce(${adAnalytics.views}, 0) + 1`,
+        },
+      })
+      .returning({ views: adAnalytics.views });
 
     return c.json(
       {
         success: true,
-        views: newViews,
+        views: result?.views ?? 1,
       },
       HttpStatusCodes.OK
     );
@@ -310,7 +285,7 @@ export const renew: AppRouteHandler<RenewRoute> = async (c) => {
         newExpiryDate,
       }).catch((err) => console.error("[RENEW AD] Failed to send renewal email:", err));
 
-      safeWaitUntil(c, emailPromise);
+      await safeBackgroundJob(c, emailPromise, 3500);
     }
 
     return c.json(

@@ -361,6 +361,10 @@ export const getOne: AppRouteHandler<GetOneRoute> = async (c) => {
       boostEndAt: formatIsoDate(fetchedAd.boostEndAt),
     };
 
+    if (fetchedAd.published && fetchedAd.status === "ACTIVE") {
+      c.header("Cache-Control", "public, max-age=60, s-maxage=300, stale-while-revalidate=600");
+    }
+
     return c.json(formattedAd as any, HttpStatusCodes.OK);
   } catch (error: any) {
     console.error("[GET AD] Error:", error);

@@ -5,6 +5,7 @@ import { eq, and, gte } from "drizzle-orm";
 import { AppRouteHandler } from "@/types/server";
 import type { SendVerificationCodeRoute, VerifyCodeRoute } from "./verification.routes";
 import { sendVerificationCode as sendCode, generateVerificationCode, sendWelcomeEmail, sendProfileCompletionReminderEmail } from "@/lib/email";
+import { safeBackgroundJob } from "@/server/helpers/execution-context";
 
 // Send verification code
 export const sendVerificationCode: AppRouteHandler<SendVerificationCodeRoute> = async (c) => {
@@ -119,9 +120,15 @@ export const verifyCode: AppRouteHandler<VerifyCodeRoute> = async (c) => {
       if (!user.location) missingFields.push("location");
 
       if (missingFields.length > 0) {
-        sendProfileCompletionReminderEmail({ email, name: user.name || "User", missingFields }).catch((err) => {
+        const reminderPromise = sendProfileCompletionReminderEmail({
+          email,
+          name: user.name || "User",
+          missingFields,
+        }).catch((err) => {
           console.error("Failed to send profile completion reminder:", err);
         });
+
+        await safeBackgroundJob(c, reminderPromise, 3500);
       }
     }
 

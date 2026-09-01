@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import * as HttpStatusPhrases from "stoker/http-status-phrases";
 import { formatIsoDate } from "@/server/helpers/date-utils";
-import { safeWaitUntil } from "@/server/helpers/execution-context";
+import { safeBackgroundJob } from "@/server/helpers/execution-context";
 import type { AppRouteHandler } from "@/types/server";
 import type { CreateRoute } from "./ad.routes";
 import { sendAdPostedEmail, sendNewAdSubmittedAdminEmail } from "@/lib/email";
@@ -149,38 +149,42 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
     };
 
     if (adStatus === "PENDING_REVIEW") {
-      if (user.email) {
-        const userEmailPromise = sendAdPostedEmail({
-          email: user.email,
-          name: user.name || "User",
-          adTitle: createdAd.title || "",
-        }).catch((emailError) => {
-          console.error("Failed to send ad posted email:", emailError);
-        });
+      const emailJobs: Promise<any>[] = [];
 
-        safeWaitUntil(c, userEmailPromise);
+      if (user.email) {
+        emailJobs.push(
+          sendAdPostedEmail({
+            email: user.email,
+            name: user.name || "User",
+            adTitle: createdAd.title || "",
+          }).catch((emailError) => {
+            console.error("Failed to send ad posted email:", emailError);
+          })
+        );
       }
 
-      const adminEmailPromise = sendNewAdSubmittedAdminEmail({
-        adId: createdAd.id,
-        adTitle: createdAd.title || "",
-        category: createdAd.categoryId,
-        type: createdAd.type,
-        brand: createdAd.brand,
-        model: createdAd.model,
-        price: createdAd.price,
-        city: createdAd.city,
-        district: createdAd.district,
-        sellerName: user.name || createdAd.name || "User",
-        sellerEmail: user.email || undefined,
-        sellerPhone: createdAd.phoneNumber || undefined,
-        sellerWhatsapp: createdAd.whatsappNumber || undefined,
-        submittedAt: createdAd.createdAt,
-      }).catch((emailError) => {
-        console.error("Failed to send new ad admin notification email:", emailError);
-      });
+      emailJobs.push(
+        sendNewAdSubmittedAdminEmail({
+          adId: createdAd.id,
+          adTitle: createdAd.title || "",
+          category: createdAd.categoryId,
+          type: createdAd.type,
+          brand: createdAd.brand,
+          model: createdAd.model,
+          price: createdAd.price,
+          city: createdAd.city,
+          district: createdAd.district,
+          sellerName: user.name || createdAd.name || "User",
+          sellerEmail: user.email || undefined,
+          sellerPhone: createdAd.phoneNumber || undefined,
+          sellerWhatsapp: createdAd.whatsappNumber || undefined,
+          submittedAt: createdAd.createdAt,
+        }).catch((emailError) => {
+          console.error("Failed to send new ad admin notification email:", emailError);
+        })
+      );
 
-      safeWaitUntil(c, adminEmailPromise);
+      await safeBackgroundJob(c, emailJobs, 3500);
     }
 
     return c.json(formattedAd as any, HttpStatusCodes.CREATED);
